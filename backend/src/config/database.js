@@ -1,0 +1,16 @@
+const { Sequelize } = require('sequelize');
+require('dotenv').config();
+
+const sequelize = new Sequelize(
+  process.env.DB_NAME || 'intern_system',
+  process.env.DB_USER || 'postgres',
+  process.env.DB_PASSWORD || 'postgres',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    logging: false, // เปลี่ยนเป็น console.log ถ้าอยากเห็น SQL ที่ Sequelize รันจริง
+  }
+);
+
+module.exports = sequelize;
