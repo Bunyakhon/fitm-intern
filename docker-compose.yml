@@ -69,6 +69,21 @@ services:
     depends_on:
       - backend
 
+  nlp-service:
+    build:
+      context: ./nlp-service
+      dockerfile: Dockerfile
+    container_name: intern_nlp_service
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nlp-service/app:/app/app    # dev mode: sync โค้ดสด แก้ไฟล์แล้วเห็นผลทันที (uvicorn --reload)
+      - ./nlp-service/data:/app/data  # ข้อมูล/โมเดล mount แยกจาก image ไม่ต้อง rebuild เวลาข้อมูลเปลี่ยน
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
 volumes:
   postgres_data:
   pgadmin_data:

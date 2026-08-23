@@ -20,6 +20,30 @@ __pycache__/
 venv/
 env/
 
+# ===== NLP-service data (ไฟล์ใหญ่ / อาจมี PII) =====
+# raw, models, embeddings: ignore ทั้งหมด เก็บแค่ .gitkeep ไว้ให้ git track โฟลเดอร์
+nlp-service/data/raw/*
+!nlp-service/data/raw/.gitkeep
+
+nlp-service/data/models/*
+!nlp-service/data/models/.gitkeep
+!nlp-service/data/models/matching/
+nlp-service/data/models/matching/*
+!nlp-service/data/models/matching/.gitkeep
+!nlp-service/data/models/chatbot/
+nlp-service/data/models/chatbot/*
+!nlp-service/data/models/chatbot/.gitkeep
+
+nlp-service/data/embeddings/*
+!nlp-service/data/embeddings/.gitkeep
+
+# processed: ignore หมดยกเว้น faq_seed.json (ชุดข้อมูลเทรน chatbot ที่เป็นซอร์สโค้ด ไม่ใช่ข้อมูลนักศึกษาจริง)
+nlp-service/data/processed/*
+!nlp-service/data/processed/.gitkeep
+!nlp-service/data/processed/chatbot/
+nlp-service/data/processed/chatbot/*
+!nlp-service/data/processed/chatbot/faq_seed.json
+
 # ===== Docker =====
 # (ไม่ต้อง ignore docker-compose.yml เพราะต้อง commit ไฟล์นี้)
 
