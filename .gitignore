@@ -2,9 +2,10 @@
 .env
 .env.local
 backend/.env
+frontend/.env
 nlp-service/.env
 
-# ===== Node.js (backend) =====
+# ===== Node.js (backend / frontend) =====
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -38,3 +39,9 @@ logs/
 # ===== Build output =====
 dist/
 build/
+frontend/dist/
+
+# ===== Secrets / Keys =====
+*.pem
+*.key
+*.crt

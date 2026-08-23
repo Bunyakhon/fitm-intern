@@ -33,6 +33,42 @@ services:
       postgres:
         condition: service_healthy
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: intern_backend
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      # ค่านี้จะ override .env ที่อยู่ใน container เพราะ dotenv ไม่ทับ env var ที่ถูกตั้งไว้แล้ว
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: intern_system
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app        # dev mode: sync โค้ดสด แก้ไฟล์แล้วเห็นผลทันทีผ่าน nodemon
+      - /app/node_modules      # กัน volume ทับ node_modules ที่ install ไว้ใน image
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000
+    container_name: intern_frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
   pgadmin_data:
