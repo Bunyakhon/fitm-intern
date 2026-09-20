@@ -1,122 +1,254 @@
 <!doctype html>
+
 <html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>สมัครสมาชิก | ระบบฝึกงาน IT KMUTNB</title>
-  <link rel="stylesheet" href="/src/styles/main.css" />
-</head>
-<body class="min-h-screen lg:flex">
+  <head>
+    <meta charset="UTF-8" />
 
-  <!-- ฝั่งซ้าย: journey ของนักศึกษาในระบบ ไล่ตามขั้นตอนจริง ไม่ใช่ decoration ลอยๆ -->
-  <aside class="hidden lg:flex lg:w-[38%] bg-[var(--color-ink)] text-white flex-col justify-between p-10">
-    <div>
-      <p class="font-mono text-xs tracking-widest text-[var(--color-accent)] uppercase">
-        IT · KMUTNB
-      </p>
-      <h2 class="font-display text-2xl font-bold mt-3 leading-snug">
-        เส้นทางสู่การฝึกงาน<br />เริ่มต้นที่นี่
-      </h2>
-    </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <ol class="space-y-0" aria-label="ขั้นตอนการฝึกงาน">
-      <li class="flex gap-4 pb-8 relative">
-        <span class="absolute left-[11px] top-6 bottom-0 w-px bg-white/20"></span>
-        <span class="flex-none w-6 h-6 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-xs font-bold">1</span>
-        <div>
-          <p class="font-medium">สมัครสมาชิก</p>
-          <p class="text-sm text-white/60 mt-0.5">กรอกข้อมูลนักศึกษาเบื้องต้น</p>
-        </div>
-      </li>
-      <li class="flex gap-4 pb-8 relative opacity-50">
-        <span class="absolute left-[11px] top-6 bottom-0 w-px bg-white/20"></span>
-        <span class="flex-none w-6 h-6 rounded-full border border-white/40 flex items-center justify-center text-xs">2</span>
-        <div>
-          <p class="font-medium">เลือกสถานประกอบการ</p>
-          <p class="text-sm text-white/60 mt-0.5">ค้นหาและยื่นใบสมัครฝึกงาน</p>
-        </div>
-      </li>
-      <li class="flex gap-4 pb-8 relative opacity-50">
-        <span class="absolute left-[11px] top-6 bottom-0 w-px bg-white/20"></span>
-        <span class="flex-none w-6 h-6 rounded-full border border-white/40 flex items-center justify-center text-xs">3</span>
-        <div>
-          <p class="font-medium">ฝึกงาน / สหกิจศึกษา</p>
-          <p class="text-sm text-white/60 mt-0.5">บันทึกการปฏิบัติงานรายวัน</p>
-        </div>
-      </li>
-      <li class="flex gap-4 opacity-50">
-        <span class="flex-none w-6 h-6 rounded-full border border-white/40 flex items-center justify-center text-xs">4</span>
-        <div>
-          <p class="font-medium">ประเมินผล</p>
-          <p class="text-sm text-white/60 mt-0.5">สรุปผลการฝึกงานทั้งหมด</p>
-        </div>
-      </li>
-    </ol>
+    <title>สมัครสมาชิก | KIWI</title>
 
-    <p class="text-xs text-white/40">© ภาควิชาเทคโนโลยีสารสนเทศ มจพ.</p>
-  </aside>
+    <link rel="stylesheet" href="/src/styles/main.css" />
 
-  <!-- ฝั่งขวา: ฟอร์มสมัครสมาชิก -->
-  <main class="flex-1 flex items-center justify-center px-6 py-12">
-    <div class="w-full max-w-sm">
-      <h1 class="font-display text-2xl font-bold mb-1">สมัครสมาชิก</h1>
-      <p class="text-[var(--color-muted)] mb-8 text-sm">
-        ใช้อีเมล @email.kmutnb.ac.th เท่านั้น
-      </p>
+    <link rel="stylesheet" href="/src/styles/auth.css" />
 
-      <form id="register-form" class="space-y-4" novalidate>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="field-label" for="first_name">ชื่อ</label>
-            <input class="input-field" type="text" id="first_name" name="first_name" required />
-          </div>
-          <div>
-            <label class="field-label" for="last_name">นามสกุล</label>
-            <input class="input-field" type="text" id="last_name" name="last_name" required />
-          </div>
-        </div>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
-        <div>
-          <label class="field-label" for="student_id">รหัสประจำตัวนักศึกษา</label>
-          <input class="input-field" type="text" id="student_id" name="student_id" required />
-        </div>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
 
-        <div>
-          <label class="field-label" for="email">อีเมล</label>
-          <input
-            class="input-field"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="yourname@email.kmutnb.ac.th"
-            required
+  <body class="register-page">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="brand">
+          <img
+            src="/images/logo_kiwi.png"
+            alt="KIWI Logo"
+            class="brand-logo"
           />
+
+          <span>ระบบจัดการสหกิจศึกษา</span>
+        </a>
+
+        <div class="auth-buttons">
+          <a href="login.html" class="btn-login">
+            มีบัญชีแล้ว? เข้าสู่ระบบ
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Register -->
+    <main class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1>สมัครสมาชิก</h1>
+
+          <p>สมัครใช้งานระบบ KIWI สำหรับนักศึกษาสหกิจศึกษา</p>
         </div>
 
-        <div>
-          <label class="field-label" for="password">รหัสผ่าน</label>
-          <input class="input-field" type="password" id="password" name="password" minlength="8" required />
-          <p class="text-xs text-[var(--color-muted)] mt-1">อย่างน้อย 8 ตัวอักษร</p>
-        </div>
+        <form class="auth-form" id="registerForm">
+          <!-- Student ID -->
+          <div class="form-group">
+            <label for="regStudentId">
+              รหัสประจำตัวนักศึกษา
+            </label>
 
-        <div>
-          <label class="field-label" for="confirm_password">ยืนยันรหัสผ่าน</label>
-          <input class="input-field" type="password" id="confirm_password" name="confirm_password" required />
-        </div>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-id-card input-icon"></i>
 
-        <p id="form-error" class="field-error hidden"></p>
+              <input
+                type="text"
+                id="regStudentId"
+                name="regStudentId"
+                placeholder="เช่น 6706022510107"
+                autocomplete="off"
+                required
+              />
+            </div>
+          </div>
 
-        <button type="submit" class="btn-primary mt-2" id="submit-btn">
-          สมัครสมาชิก
-        </button>
-      </form>
+          <!-- First Name -->
+          <div class="form-group">
+            <label for="regFirstName">
+              ชื่อ
+            </label>
 
-      <p class="text-center text-sm text-[var(--color-muted)] mt-6">
-        มีบัญชีอยู่แล้ว? <a href="/login.html" class="text-[var(--color-accent)] font-medium hover:underline">เข้าสู่ระบบ</a>
-      </p>
-    </div>
-  </main>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-user input-icon"></i>
 
-  <script type="module" src="/src/pages/register.js"></script>
-</body>
+              <input
+                type="text"
+                id="regFirstName"
+                name="regFirstName"
+                placeholder="กรอกชื่อ"
+                autocomplete="given-name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Last Name -->
+          <div class="form-group">
+            <label for="regLastName">
+              นามสกุล
+            </label>
+
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-user input-icon"></i>
+
+              <input
+                type="text"
+                id="regLastName"
+                name="regLastName"
+                placeholder="กรอกนามสกุล"
+                autocomplete="family-name"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="regEmail">
+              อีเมลมหาวิทยาลัย
+            </label>
+
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-envelope input-icon"></i>
+
+              <input
+                type="email"
+                id="regEmail"
+                name="regEmail"
+                placeholder="เช่น s6706022510107@email.kmutnb.ac.th"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label for="regPassword">
+              รหัสผ่าน
+            </label>
+
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock input-icon"></i>
+
+              <input
+                type="password"
+                id="regPassword"
+                name="regPassword"
+                placeholder="อย่างน้อย 8 ตัวอักษร"
+                minlength="8"
+                autocomplete="new-password"
+                required
+              />
+
+              <button
+                type="button"
+                class="toggle-password"
+                id="toggleRegPassword"
+                aria-label="แสดงหรือซ่อนรหัสผ่าน"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group">
+            <label for="regConfirm">
+              ยืนยันรหัสผ่าน
+            </label>
+
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock input-icon"></i>
+
+              <input
+                type="password"
+                id="regConfirm"
+                name="regConfirm"
+                placeholder="กรอกรหัสผ่านอีกครั้ง"
+                autocomplete="new-password"
+                required
+              />
+
+              <button
+                type="button"
+                class="toggle-password"
+                id="toggleRegConfirm"
+                aria-label="แสดงหรือซ่อนรหัสผ่าน"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <label class="register-terms">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              required
+            />
+
+            <span>
+              ฉันยอมรับ
+              <a href="#">เงื่อนไขการใช้งาน</a>
+              และนโยบายความเป็นส่วนตัวของระบบ
+            </span>
+          </label>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            class="btn-submit"
+            id="registerSubmitBtn"
+          >
+            <i class="fa-solid fa-user-plus"></i>
+
+            <span>สมัครสมาชิก</span>
+          </button>
+
+          <div
+            class="register-message"
+            id="registerMessage"
+            role="alert"
+          ></div>
+        </form>
+
+        <p class="auth-footer">
+          มีบัญชีผู้ใช้งานอยู่แล้ว?
+
+          <a href="login.html">
+            เข้าสู่ระบบที่นี่
+          </a>
+        </p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-copyright">
+        <p>
+          © KIWI — Co-operative Education Management System
+        </p>
+      </div>
+    </footer>
+
+    <script
+      type="module"
+      src="/src/pages/register.js"
+    ></script>
+  </body>
 </html>

@@ -1,88 +1,128 @@
 services:
+
   postgres:
     image: postgres:16-alpine
     container_name: intern_postgres
     restart: unless-stopped
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: intern_system
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d intern_system"]
       interval: 5s
       timeout: 5s
       retries: 5
+
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: intern_pgadmin
     restart: unless-stopped
+
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
+
     ports:
       - "5050:80"
+
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+
     depends_on:
       postgres:
         condition: service_healthy
+
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+
     container_name: intern_backend
     restart: unless-stopped
+
     environment:
       PORT: 5000
-      # ค่านี้จะ override .env ที่อยู่ใน container เพราะ dotenv ไม่ทับ env var ที่ถูกตั้งไว้แล้ว
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: intern_system
       DB_USER: postgres
       DB_PASSWORD: postgres
+
     ports:
       - "5000:5000"
+
     volumes:
-      - ./backend:/app        # dev mode: sync โค้ดสด แก้ไฟล์แล้วเห็นผลทันทีผ่าน nodemon
-      - /app/node_modules      # กัน volume ทับ node_modules ที่ install ไว้ใน image
+      - ./backend:/app
+      - /app/node_modules
+
     depends_on:
       postgres:
         condition: service_healthy
+
+    command: npm run dev
+
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: http://localhost:5000
+
     container_name: intern_frontend
     restart: unless-stopped
+
+    environment:
+      VITE_API_URL: http://localhost:5000
+      CHOKIDAR_USEPOLLING: "true"
+
     ports:
-      - "8080:80"
+      - "5173:5173"
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
     depends_on:
       - backend
+
+    command: npm run dev -- --host 0.0.0.0
+
 
   nlp-service:
     build:
       context: ./nlp-service
       dockerfile: Dockerfile
+
     container_name: intern_nlp_service
     restart: unless-stopped
+
     environment:
       PORT: 8000
+
     ports:
       - "8000:8000"
+
     volumes:
-      - ./nlp-service/app:/app/app    # dev mode: sync โค้ดสด แก้ไฟล์แล้วเห็นผลทันที (uvicorn --reload)
-      - ./nlp-service/data:/app/data  # ข้อมูล/โมเดล mount แยกจาก image ไม่ต้อง rebuild เวลาข้อมูลเปลี่ยน
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./nlp-service/app:/app/app
+      - ./nlp-service/data:/app/data
+
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
 
 volumes:
   postgres_data:

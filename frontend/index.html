@@ -1,31 +1,391 @@
 <!doctype html>
+
 <html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบจัดการฝึกงานและสหกิจศึกษา | IT KMUTNB</title>
-  <link rel="stylesheet" href="/src/styles/main.css" />
-</head>
-<body class="min-h-screen flex items-center justify-center px-6">
-  <main class="max-w-md text-center">
-    <p class="font-mono text-xs tracking-widest text-[var(--color-accent)] uppercase mb-3">
-      ภาควิชาเทคโนโลยีสารสนเทศ · KMUTNB
-    </p>
-    <h1 class="font-display text-3xl font-bold mb-4">
-      ระบบจัดการฝึกงาน<br />และสหกิจศึกษา
-    </h1>
-    <p class="text-[var(--color-muted)] mb-8">
-      สมัครฝึกงาน ติดตามสถานะ และจัดการเอกสารได้ในที่เดียว
-    </p>
-    <div class="flex flex-col gap-3">
-      <a href="/login.html" class="btn-primary text-center">เข้าสู่ระบบ</a>
-      <a
-        href="/register.html"
-        class="w-full rounded-lg border border-[var(--color-line)] px-4 py-2.5 font-medium text-[var(--color-ink)] hover:bg-white transition-colors text-center"
-      >
-        สมัครสมาชิก
-      </a>
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>KIWI | ระบบจัดการสหกิจศึกษา</title>
+
+    <link rel="stylesheet" href="/src/styles/main.css" />
+
+    <link rel="stylesheet" href="/src/styles/index.css" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="brand">
+          <img
+            src="/images/logo_kiwi.png"
+            alt="KIWI Logo"
+            class="brand-logo"
+          />
+
+          <span>ระบบจัดการสหกิจศึกษา</span>
+        </a>
+
+        <ul class="nav-links">
+          <li class="active">
+            <a href="index.html">หน้าแรก</a>
+          </li>
+
+          <li>
+            <a href="search_company.html">
+              ค้นหาสถานประกอบการ
+            </a>
+          </li>
+
+          <li>
+            <a href="recruit_student.html">
+              ลงประกาศรับนักศึกษาสหกิจศึกษา
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://sites.google.com/fitm.kmutnb.ac.th/it-coop"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              คู่มือ
+            </a>
+          </li>
+
+          <li>
+            <a href="#" id="navChatbotBtn">
+              แชทบอท
+            </a>
+          </li>
+        </ul>
+
+        <!-- index.js จะสร้าง Login/Register
+             หรือ ชื่อผู้ใช้/Logout ในส่วนนี้ -->
+        <div class="auth-buttons" id="navAuth"></div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content">
+      <!-- Hero -->
+      <section class="hero-section">
+        <h1>KIWI จัดการสหกิจศึกษาในระบบเดียว</h1>
+
+        <p>
+          ค้นหาสถานประกอบการ ยื่นคำร้อง ติดตามสถานะเอกสาร
+          และจัดการโครงการสหกิจศึกษา
+        </p>
+
+        <div class="search-filter-wrapper">
+          <div class="search-input-group">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="ค้นหาตำแหน่งงานหรือชื่อสถานประกอบการ (พิมพ์แล้วกด Enter)"
+            />
+          </div>
+
+          <button
+            class="btn-search-icon"
+            id="btnSearch"
+            type="button"
+            aria-label="ค้นหา"
+          >
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+
+          <button
+            class="btn-filter-toggle"
+            id="btnOpenFilter"
+            type="button"
+          >
+            <i class="fa-solid fa-sliders"></i>
+            <span>ตัวกรอง</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Job Recommend -->
+      <section class="job-recommend-section">
+        <div class="section-header">
+          <h2>ตำแหน่งสหกิจศึกษาแนะนำ</h2>
+
+          <p>
+            คัดเลือกจากสถานประกอบการที่เปิดรับนักศึกษาสหกิจศึกษาในระบบ
+
+            <a href="search_company.html" class="link-all-jobs">
+              ดูตำแหน่งงานทั้งหมด
+            </a>
+          </p>
+        </div>
+
+        <div class="carousel-wrapper">
+          <button
+            class="nav-btn prev-btn"
+            id="prevBtn"
+            type="button"
+            aria-label="ก่อนหน้า"
+          >
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+
+          <div
+            class="job-cards-container"
+            id="cardsContainer"
+          ></div>
+
+          <button
+            class="nav-btn next-btn"
+            id="nextBtn"
+            type="button"
+            aria-label="ถัดไป"
+          >
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div
+          class="slider-dots"
+          id="dotsContainer"
+        ></div>
+      </section>
+    </main>
+
+    <!-- Filter Modal -->
+    <div class="modal-overlay hidden" id="filterModal">
+      <div class="filter-modal-card">
+        <div class="filter-modal-header">
+          <h3>ค้นหาสถานประกอบการ</h3>
+
+          <button
+            class="btn-close-modal"
+            id="btnCloseFilter"
+            type="button"
+            aria-label="ปิดตัวกรอง"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="filter-modal-body">
+          <div class="filter-field">
+            <label for="filterCompany">
+              ชื่อสถานประกอบการ
+            </label>
+
+            <input
+              id="filterCompany"
+              type="text"
+              class="filter-input"
+              placeholder="เช่น เทค โซลูชันส์"
+            />
+          </div>
+
+          <div class="filter-field">
+            <label for="filterPosition">
+              ตำแหน่งงาน
+            </label>
+
+            <input
+              id="filterPosition"
+              type="text"
+              class="filter-input"
+              placeholder="เช่น Frontend Developer"
+            />
+          </div>
+
+          <div class="filter-field">
+            <label for="filterProvince">
+              จังหวัดที่ตั้ง
+            </label>
+
+            <select
+              id="filterProvince"
+              class="filter-select"
+            >
+              <option>ทั้งหมด</option>
+              <option>กรุงเทพมหานคร</option>
+              <option>เชียงใหม่</option>
+              <option>ชลบุรี</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filterOrganization">
+              รูปแบบองค์กร
+            </label>
+
+            <select
+              id="filterOrganization"
+              class="filter-select"
+            >
+              <option>ทั้งหมด</option>
+              <option>บริษัทเอกชน</option>
+              <option>หน่วยงานรัฐบาล / รัฐวิสาหกิจ</option>
+              <option>Startup</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filterWorkType">
+              สถานที่ปฏิบัติงาน
+            </label>
+
+            <select
+              id="filterWorkType"
+              class="filter-select"
+            >
+              <option>ทั้งหมด</option>
+              <option>On-site</option>
+              <option>Work from Home</option>
+              <option>Hybrid</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filterWorkDays">
+              จำนวนวันการปฏิบัติงาน
+            </label>
+
+            <select
+              id="filterWorkDays"
+              class="filter-select"
+            >
+              <option>ทั้งหมด</option>
+              <option>5 วัน/สัปดาห์</option>
+              <option>6 วัน/สัปดาห์</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filterSalary">
+              ค่าตอบแทน
+            </label>
+
+            <select
+              id="filterSalary"
+              class="filter-select"
+            >
+              <option>ทั้งหมด</option>
+              <option>มีเบี้ยเลี้ยง / ค่าตอบแทน</option>
+              <option>ไม่มีเบี้ยเลี้ยง / ค่าตอบแทน</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-modal-footer">
+          <button
+            class="btn-reset-filter"
+            id="btnResetFilter"
+            type="button"
+          >
+            รีเซ็ต
+          </button>
+
+          <button
+            class="btn-apply-filter"
+            id="btnApplyFilter"
+            type="button"
+          >
+            ค้นหา
+          </button>
+        </div>
+      </div>
     </div>
-  </main>
-</body>
+
+    <!-- Chatbot -->
+    <div class="chatbot-container">
+      <button
+        class="chat-toggle-btn"
+        id="btnToggleChat"
+        type="button"
+        aria-label="เปิดแชทบอท"
+      >
+        <i class="fa-solid fa-comment-dots"></i>
+
+        <span class="notification-badge"></span>
+      </button>
+
+      <div class="chat-window hidden" id="chatWindow">
+        <div class="chat-header">
+          <div class="bot-info">
+            <div class="bot-avatar">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+
+            <div>
+              <h3>KIWI Chatbot</h3>
+
+              <span class="online-status">
+                ● ออนไลน์
+              </span>
+            </div>
+          </div>
+
+          <button
+            class="btn-close-chat"
+            id="btnCloseChat"
+            type="button"
+            aria-label="ปิดแชท"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div
+          class="chat-body"
+          id="chatBody"
+        ></div>
+
+        <div
+          class="chat-quick-replies"
+          id="quickReplies"
+        ></div>
+
+        <div class="chat-footer">
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="สอบถามเกี่ยวกับสหกิจศึกษา..."
+          />
+
+          <button
+            id="btnSend"
+            type="button"
+            aria-label="ส่งข้อความ"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-copyright">
+        <p>
+          © KIWI — Co-operative Education Management System
+        </p>
+      </div>
+    </footer>
+
+    <script
+      type="module"
+      src="/src/pages/index.js"
+    ></script>
+  </body>
 </html>

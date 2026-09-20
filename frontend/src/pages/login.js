@@ -1,54 +1,135 @@
-import apiClient from '../api/client.js';
+console.log("KIWI login page loaded");
 
-const form = document.getElementById('login-form');
-const errorEl = document.getElementById('form-error');
-const submitBtn = document.getElementById('submit-btn');
+const loginForm = document.getElementById("loginForm");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const togglePassword = document.getElementById("togglePassword");
+const googleLoginBtn = document.getElementById("googleLoginBtn");
+const loginMessage = document.getElementById("loginMessage");
 
-function showError(message) {
-  errorEl.textContent = message;
-  errorEl.classList.remove('hidden');
-}
+const loginSubmitBtn = loginForm.querySelector('button[type="submit"]');
 
-function clearError() {
-  errorEl.textContent = '';
-  errorEl.classList.add('hidden');
-}
+// ==============================
+// แสดง / ซ่อนรหัสผ่าน
+// ==============================
 
-function setLoading(isLoading) {
-  submitBtn.disabled = isLoading;
-  submitBtn.textContent = isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ';
-}
+togglePassword.addEventListener("click", () => {
+  const isPassword = loginPassword.type === "password";
 
-// ถ้ามาจากหน้าสมัครสมาชิกสำเร็จ แจ้งเตือนสั้นๆ
-const params = new URLSearchParams(window.location.search);
-if (params.get('registered') === '1') {
-  errorEl.textContent = 'สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ';
-  errorEl.classList.remove('hidden');
-  errorEl.classList.remove('text-[var(--color-error)]');
-  errorEl.classList.add('text-[var(--color-success)]');
-}
+  loginPassword.type = isPassword ? "text" : "password";
 
-form.addEventListener('submit', async (event) => {
+  togglePassword.innerHTML = isPassword
+    ? '<i class="fa-solid fa-eye-slash"></i>'
+    : '<i class="fa-solid fa-eye"></i>';
+});
+
+// ==============================
+// Login Form
+// ==============================
+
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  clearError();
 
-  const formData = new FormData(form);
-  const payload = {
-    email: formData.get('email').trim().toLowerCase(),
-    password: formData.get('password'),
-  };
+  const email = loginEmail.value.trim().toLowerCase();
+  const password = loginPassword.value;
 
-  setLoading(true);
-  try {
-    const { data } = await apiClient.post('/api/login', payload);
-    // เก็บ token ไว้ใช้เรียก API ที่ต้อง auth ต่อ (จะต่อ route protected ทีหลัง)
-    if (data?.token) {
-      localStorage.setItem('auth_token', data.token);
-    }
-    window.location.href = '/'; // ทีหลังจะเปลี่ยนเป็นหน้า dashboard
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    setLoading(false);
+  loginMessage.textContent = "";
+  loginMessage.className = "login-message";
+
+  if (!email || !password) {
+    loginMessage.textContent = "กรุณากรอกอีเมลและรหัสผ่าน";
+    loginMessage.classList.add("error");
+    return;
   }
+
+  // ปิดปุ่มชั่วคราว ป้องกันกดซ้ำ
+  loginSubmitBtn.disabled = true;
+
+  loginSubmitBtn.innerHTML = `
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <span>กำลังเข้าสู่ระบบ...</span>
+  `;
+
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/auth/login",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || "ไม่สามารถเข้าสู่ระบบได้"
+      );
+    }
+
+    // ต้องมี token จาก Backend
+    if (!result.token) {
+      throw new Error("ไม่พบ Token จากระบบ");
+    }
+
+    // ==============================
+    // เก็บ JWT
+    // ==============================
+
+    localStorage.setItem("token", result.token);
+
+    // ==============================
+    // เก็บข้อมูล Student
+    // ==============================
+
+    localStorage.setItem(
+      "student",
+      JSON.stringify(result.data)
+    );
+
+    loginMessage.textContent =
+      result.message || "เข้าสู่ระบบสำเร็จ";
+
+    loginMessage.classList.add("success");
+
+    console.log("LOGIN SUCCESS:", result.data);
+
+    // ไปหน้าแรก
+    setTimeout(() => {
+      window.location.href = "/student_coop/student_coop.html";
+    }, 1000);
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+
+    loginMessage.textContent =
+      error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+
+    loginMessage.classList.add("error");
+  } finally {
+    loginSubmitBtn.disabled = false;
+
+    loginSubmitBtn.innerHTML = `
+      <i class="fa-solid fa-right-to-bracket"></i>
+      <span>เข้าสู่ระบบ</span>
+    `;
+  }
+});
+
+// ==============================
+// Google Login
+// ==============================
+
+googleLoginBtn.addEventListener("click", () => {
+  loginMessage.textContent =
+    "Google Login จะเชื่อมต่อ Google OAuth ภายหลัง";
+
+  loginMessage.className = "login-message";
 });

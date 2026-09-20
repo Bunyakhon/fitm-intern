@@ -1,0 +1,384 @@
+/* =========================================
+   KIWI - auth.css
+   Login + Register styles
+   ========================================= */
+
+/* =========================================
+   LOGIN PAGE
+   ========================================= */
+
+.login-page,
+.register-page {
+  min-height: 100vh;
+  background: #f7f9fc;
+}
+
+/* =========================================
+   AUTH WRAPPER
+   ========================================= */
+
+.auth-wrapper {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+/* =========================================
+   AUTH CARD
+   ========================================= */
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 36px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+}
+
+/* =========================================
+   AUTH HEADER
+   ========================================= */
+
+.auth-header {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.auth-header h1 {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.auth-header p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* =========================================
+   GOOGLE BUTTON
+   ========================================= */
+
+.btn-google {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.btn-google:hover {
+  border-color: #b7c4d8;
+  background: #f8fafc;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* =========================================
+   DIVIDER
+   ========================================= */
+
+.divider {
+  width: 100%;
+  margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #98a2b3;
+  font-size: 0.82rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider span {
+  white-space: nowrap;
+}
+
+/* =========================================
+   AUTH FORM
+   ========================================= */
+
+.auth-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 7px;
+  color: #344054;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* =========================================
+   INPUT
+   ========================================= */
+
+.input-icon-wrapper {
+  width: 100%;
+  height: 48px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  transition: 0.2s ease;
+}
+
+.input-icon-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 4px rgba(20, 80, 163, 0.08);
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  color: #98a2b3;
+  font-size: 0.9rem;
+}
+
+.input-icon-wrapper input {
+  width: 100%;
+  height: 100%;
+  padding: 0 44px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.input-icon-wrapper input::placeholder {
+  color: #98a2b3;
+}
+
+/* =========================================
+   SHOW PASSWORD
+   ========================================= */
+
+.toggle-password {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #667085;
+  font-size: 0.9rem;
+}
+
+.toggle-password:hover {
+  color: var(--primary);
+}
+
+/* =========================================
+   FORM ACTIONS
+   ========================================= */
+
+.form-actions {
+  width: 100%;
+  margin: 4px 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #475467;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.remember-me input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+}
+
+.forgot-password {
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   REGISTER TERMS
+   ========================================= */
+
+.register-terms {
+  margin: 2px 0 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #475467;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.register-terms input {
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+
+.register-terms a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-terms a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   SUBMIT BUTTON
+   ========================================= */
+
+.btn-submit {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(20, 80, 163, 0.18);
+  transition: 0.2s ease;
+}
+
+.btn-submit:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+}
+
+/* =========================================
+   LOGIN MESSAGE
+   ========================================= */
+
+.login-message {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.login-message.error {
+  color: #d92d20;
+}
+
+.login-message.success {
+  color: #039855;
+}
+
+/* =========================================
+   AUTH FOOTER
+   ========================================= */
+
+.auth-footer {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   LOGIN RESPONSIVE
+   ========================================= */
+
+@media (max-width: 600px) {
+  .auth-wrapper {
+    padding: 30px 16px;
+  }
+  .auth-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+  .auth-header h1 {
+    font-size: 1.7rem;
+  }
+  .form-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.register-message {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.register-message.error {
+  color: #d92d20;
+}
+
+.register-message.success {
+  color: #039855;
+}

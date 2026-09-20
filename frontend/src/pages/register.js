@@ -1,60 +1,144 @@
-import apiClient from '../api/client.js';
+const registerForm = document.getElementById("registerForm");
 
-const form = document.getElementById('register-form');
-const errorEl = document.getElementById('form-error');
-const submitBtn = document.getElementById('submit-btn');
+const regStudentId = document.getElementById("regStudentId");
+const regFirstName = document.getElementById("regFirstName");
+const regLastName = document.getElementById("regLastName");
+const regEmail = document.getElementById("regEmail");
+const regPassword = document.getElementById("regPassword");
+const regConfirm = document.getElementById("regConfirm");
 
-function showError(message) {
-  errorEl.textContent = message;
-  errorEl.classList.remove('hidden');
+const toggleRegPassword = document.getElementById("toggleRegPassword");
+const toggleRegConfirm = document.getElementById("toggleRegConfirm");
+
+const registerMessage = document.getElementById("registerMessage");
+const registerSubmitBtn = document.getElementById("registerSubmitBtn");
+
+function togglePassword(input, button) {
+  const isPassword = input.type === "password";
+
+  input.type = isPassword ? "text" : "password";
+
+  button.innerHTML = isPassword
+    ? '<i class="fa-solid fa-eye-slash"></i>'
+    : '<i class="fa-solid fa-eye"></i>';
 }
 
-function clearError() {
-  errorEl.textContent = '';
-  errorEl.classList.add('hidden');
-}
+toggleRegPassword.addEventListener("click", () => {
+  togglePassword(regPassword, toggleRegPassword);
+});
 
-function setLoading(isLoading) {
-  submitBtn.disabled = isLoading;
-  submitBtn.textContent = isLoading ? 'กำลังสมัคร...' : 'สมัครสมาชิก';
-}
+toggleRegConfirm.addEventListener("click", () => {
+  togglePassword(regConfirm, toggleRegConfirm);
+});
 
-form.addEventListener('submit', async (event) => {
+registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  clearError();
 
-  const formData = new FormData(form);
-  const payload = {
-    first_name: formData.get('first_name').trim(),
-    last_name: formData.get('last_name').trim(),
-    student_id: formData.get('student_id').trim(),
-    email: formData.get('email').trim().toLowerCase(),
-    password: formData.get('password'),
-  };
-  const confirmPassword = formData.get('confirm_password');
+  const studentId = regStudentId.value.trim();
+  const firstName = regFirstName.value.trim();
+  const lastName = regLastName.value.trim();
+  const email = regEmail.value.trim().toLowerCase();
+  const password = regPassword.value;
+  const confirmPassword = regConfirm.value;
 
-  // validate ฝั่ง client ก่อนยิง request กันเปลือง round-trip
-  if (payload.password !== confirmPassword) {
-    showError('รหัสผ่านไม่ตรงกัน กรุณากรอกใหม่');
-    return;
-  }
-  if (!payload.email.endsWith('@email.kmutnb.ac.th')) {
-    showError('กรุณาใช้อีเมล @email.kmutnb.ac.th เท่านั้น');
-    return;
-  }
-  if (payload.password.length < 8) {
-    showError('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
+  registerMessage.textContent = "";
+  registerMessage.className = "register-message";
+
+  if (
+    !studentId ||
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !confirmPassword
+  ) {
+    registerMessage.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
+    registerMessage.classList.add("error");
     return;
   }
 
-  setLoading(true);
+  if (password !== confirmPassword) {
+    registerMessage.textContent =
+      "รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน";
+
+    registerMessage.classList.add("error");
+    return;
+  }
+
+  if (password.length < 8) {
+    registerMessage.textContent =
+      "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+
+    registerMessage.classList.add("error");
+    return;
+  }
+
+  if (!email.endsWith("@email.kmutnb.ac.th")) {
+    registerMessage.textContent =
+      "กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th";
+
+    registerMessage.classList.add("error");
+    return;
+  }
+
+  registerSubmitBtn.disabled = true;
+
+  registerSubmitBtn.innerHTML = `
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <span>กำลังสมัครสมาชิก...</span>
+  `;
+
   try {
-    await apiClient.post('/api/register', payload);
-    // สมัครสำเร็จ พาไปหน้า login พร้อมข้อความแจ้งเตือน
-    window.location.href = '/login.html?registered=1';
-  } catch (err) {
-    showError(err.message);
+    const response = await fetch(
+      "http://localhost:5000/api/auth/register",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          student_id: studentId,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          password,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || "ไม่สามารถสมัครสมาชิกได้"
+      );
+    }
+
+    registerMessage.textContent =
+      result.message || "สมัครสมาชิกสำเร็จ";
+
+    registerMessage.classList.add("success");
+
+    registerForm.reset();
+
+    setTimeout(() => {
+      window.location.href = "/login.html";
+    }, 1500);
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+
+    registerMessage.textContent =
+      error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
+
+    registerMessage.classList.add("error");
   } finally {
-    setLoading(false);
+    registerSubmitBtn.disabled = false;
+
+    registerSubmitBtn.innerHTML = `
+      <i class="fa-solid fa-user-plus"></i>
+      <span>สมัครสมาชิก</span>
+    `;
   }
 });
