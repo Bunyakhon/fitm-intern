@@ -66,6 +66,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - intern_storage:/app/storage
 
     depends_on:
       postgres:
@@ -127,3 +128,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  intern_storage:

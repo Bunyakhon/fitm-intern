@@ -16,6 +16,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
 
+    <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/student_coop.css" />
   </head>
 
@@ -276,19 +277,37 @@
         </section>
 
         <!-- ==============================
-     Profile
+     ประวัตินักศึกษา
      ============================== -->
 
         <section class="content-panel" id="panel-profile">
           <div class="panel-header">
             <h2>ประวัตินักศึกษา</h2>
-
-            <p>ข้อมูลประวัติของนักศึกษาที่เข้าสู่ระบบ</p>
+            <p>ข้อมูลประวัตินักศึกษาจากระบบ</p>
           </div>
 
+          <!-- ==============================
+       Profile Header
+       ============================== -->
+
           <div class="profile-card">
-            <div class="profile-avatar">
-              <i class="fa-solid fa-user"></i>
+            <div
+              class="profile-avatar profile-avatar-editable"
+              id="profileAvatarButton"
+              role="button"
+              tabindex="0"
+              aria-label="เปลี่ยนรูปโปรไฟล์"
+            >
+              <i
+                id="profileAvatarPlaceholder"
+                class="fa-solid fa-user"
+                aria-hidden="true"
+              ></i>
+              <img id="profileAvatarImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
+              <div class="profile-avatar-overlay" aria-hidden="true">
+                <i class="fa-solid fa-camera"></i>
+                <span>เปลี่ยนรูป</span>
+              </div>
             </div>
 
             <div class="profile-main">
@@ -298,137 +317,189 @@
 
               <p>
                 รหัสประจำตัวนักศึกษา:
-                <strong id="profileStudentId">-</strong>
+                <strong id="profileStudentId"> - </strong>
               </p>
 
               <p>
                 อีเมล:
-                <strong id="profileEmail">-</strong>
+                <strong id="profileEmail"> - </strong>
               </p>
+              <button type="button" class="btn-primary" id="btnEditProfile">
+                <i class="fa-solid fa-pen-to-square"></i>
+                แก้ไขประวัติ
+              </button>
             </div>
           </div>
 
-          <!-- ข้อมูลนักศึกษา -->
-          <div class="info-card">
+          <!-- ==============================
+       ข้อมูลนักศึกษา
+       ============================== -->
+
+          <div class="info-card student-info-card">
             <div class="card-title">
-              <i class="fa-solid fa-circle-user"></i>
+              <i class="fa-solid fa-graduation-cap"></i>
               ข้อมูลนักศึกษา
             </div>
 
-            <div class="info-grid">
-              <div class="info-item">
-                <span>ชื่อ</span>
-                <strong id="profileFirstName">-</strong>
+            <form id="studentInfoForm" class="student-info-form" novalidate>
+              <div class="student-info-form-grid">
+                <div class="form-group">
+                  <label for="studentFullName">ชื่อ-นามสกุล</label>
+                  <input type="text" id="studentFullName" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="studentIdInput">รหัสนักศึกษา</label>
+                  <input type="text" id="studentIdInput" readonly />
+                </div>
+                <div class="form-group student-info-form-full">
+                  <label for="studentEmailInput">Email</label>
+                  <input type="email" id="studentEmailInput" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="studentMajorInput">สาขา</label>
+                  <select id="studentMajorInput" required>
+                    <option value="">เลือกสาขา</option>
+                    <option value="IT">IT</option>
+                    <option value="INE">INE</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="studentYearLevelInput">ชั้นปี</label>
+                  <select id="studentYearLevelInput" required>
+                    <option value="">เลือกชั้นปี</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="studentGpaInput">GPA</label>
+                  <input
+                    type="number"
+                    id="studentGpaInput"
+                    min="0"
+                    max="4"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="studentAdvisorInput"
+                    >อาจารย์ที่ปรึกษาประจำชั้น</label
+                  >
+                  <select id="studentAdvisorInput">
+                    <option value="">ยังไม่ได้กำหนด</option>
+                  </select>
+                </div>
+                <div class="form-group student-info-form-full">
+                  <label for="studentCoopAdvisorInput"
+                    >อาจารย์ที่ปรึกษาสหกิจศึกษา / อาจารย์นิเทศ</label
+                  >
+                  <input
+                    type="text"
+                    id="studentCoopAdvisorInput"
+                    value="ยังไม่ได้กำหนด"
+                    readonly
+                  />
+                </div>
               </div>
 
-              <div class="info-item">
-                <span>นามสกุล</span>
-                <strong id="profileLastName">-</strong>
+              <div class="student-info-submit">
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  id="saveStudentInfoBtn"
+                >
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  บันทึกข้อมูลนักศึกษา
+                </button>
+                <p
+                  class="message"
+                  id="studentInfoMessage"
+                  aria-live="polite"
+                ></p>
               </div>
-
-              <div class="info-item">
-                <span>รหัสนักศึกษา</span>
-                <strong id="profileStudentIdDetail">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>อีเมล</span>
-                <strong id="profileEmailDetail">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>สาขาวิชา</span>
-                <strong id="profileMajor">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>ชั้นปี</span>
-                <strong id="profileYear">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>GPA</span>
-                <strong id="profileGpa">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>ประเภทนักศึกษา</span>
-                <strong id="profileTrack">สหกิจศึกษา</strong>
-              </div>
-            </div>
+            </form>
           </div>
 
-          <!-- ข้อมูลส่วนตัวเพิ่มเติม -->
+          <!-- ==============================
+       ข้อมูลส่วนตัว
+       ============================== -->
+
           <div class="info-card">
             <div class="card-title">
-              <i class="fa-solid fa-address-card"></i>
-              ข้อมูลส่วนตัวเพิ่มเติม
+              <i class="fa-solid fa-circle-user"></i>
+              ข้อมูลส่วนตัว
             </div>
 
             <div class="info-grid">
               <div class="info-item">
                 <span>วันเกิด</span>
-                <strong id="profileBirthDate">-</strong>
+                <strong id="profileBirthDate"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>อายุ</span>
-                <strong id="profileAge">-</strong>
+                <strong id="profileAge"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ส่วนสูง</span>
-                <strong id="profileHeight">-</strong>
+                <strong id="profileHeight"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>น้ำหนัก</span>
-                <strong id="profileWeight">-</strong>
+                <strong id="profileWeight"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>สัญชาติ</span>
-                <strong id="profileNationality">-</strong>
+                <strong id="profileNationality"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>เชื้อชาติ</span>
-                <strong id="profileEthnicity">-</strong>
+                <strong id="profileEthnicity"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ศาสนา</span>
-                <strong id="profileReligion">-</strong>
+                <strong id="profileReligion"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>กรุ๊ปเลือด</span>
-                <strong id="profileBloodType">-</strong>
+                <strong id="profileBloodType"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>โรคประจำตัว</span>
-                <strong id="profileMedicalConditions">-</strong>
+                <strong id="profileMedicalConditions"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>อาการแพ้</span>
-                <strong id="profileAllergies">-</strong>
+                <strong id="profileAllergies"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ความสามารถพิเศษ</span>
-                <strong id="profileSpecialAbilities">-</strong>
+                <strong id="profileSpecialAbilities"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span>
-                <strong id="profileRelatedSkills">-</strong>
+                <strong id="profileRelatedSkills"> - </strong>
               </div>
             </div>
           </div>
 
-          <!-- ข้อมูลที่อยู่ -->
+          <!-- ==============================
+       ข้อมูลที่อยู่
+       ============================== -->
+
           <div class="info-card">
             <div class="card-title">
               <i class="fa-solid fa-location-dot"></i>
@@ -438,102 +509,134 @@
             <div class="info-grid">
               <div class="info-item">
                 <span>ภูมิลำเนา</span>
-                <strong id="profileHometownAddress">-</strong>
+                <strong id="profileHometownAddress"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>โทรศัพท์ภูมิลำเนา</span>
-                <strong id="profileHometownPhone">-</strong>
+                <strong id="profileHometownPhone"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ที่อยู่ปัจจุบัน</span>
-                <strong id="profileCurrentAddress">-</strong>
+                <strong id="profileCurrentAddress"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>โทรศัพท์ปัจจุบัน</span>
-                <strong id="profileCurrentPhone">-</strong>
+                <strong id="profileCurrentPhone"> - </strong>
               </div>
             </div>
           </div>
 
-          <!-- ข้อมูลบิดามารดา -->
+          <!-- ==============================
+       ข้อมูลบิดา
+       ============================== -->
+
           <div class="info-card">
             <div class="card-title">
-              <i class="fa-solid fa-people-roof"></i>
-              ข้อมูลบิดามารดา
+              <i class="fa-solid fa-person"></i>
+              ข้อมูลบิดา
             </div>
 
             <div class="info-grid">
               <div class="info-item">
                 <span>ชื่อบิดา</span>
-                <strong id="profileFatherName">-</strong>
+                <strong id="profileFatherName"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>อายุบิดา</span>
-                <strong id="profileFatherAge">-</strong>
+                <strong id="profileFatherAge"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>อาชีพบิดา</span>
-                <strong id="profileFatherOccupation">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>ชื่อมารดา</span>
-                <strong id="profileMotherName">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>อายุมารดา</span>
-                <strong id="profileMotherAge">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>อาชีพมารดา</span>
-                <strong id="profileMotherOccupation">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>ที่อยู่สำหรับติดต่อผู้ปกครอง</span>
-                <strong id="profileParentAddress">-</strong>
-              </div>
-
-              <div class="info-item">
-                <span>โทรศัพท์ผู้ปกครอง</span>
-                <strong id="profileParentPhone">-</strong>
+                <strong id="profileFatherOccupation"> - </strong>
               </div>
             </div>
           </div>
 
-          <!-- ผู้ติดต่อกรณีฉุกเฉิน -->
+          <!-- ==============================
+       ข้อมูลมารดา
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-person-dress"></i>
+              ข้อมูลมารดา
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ชื่อมารดา</span>
+                <strong id="profileMotherName"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อายุมารดา</span>
+                <strong id="profileMotherAge"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อาชีพมารดา</span>
+                <strong id="profileMotherOccupation"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลผู้ปกครอง
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-people-roof"></i>
+              ข้อมูลผู้ปกครอง
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ที่อยู่ที่สามารถติดต่อได้</span>
+                <strong id="profileParentAddress"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โทรศัพท์</span>
+                <strong id="profileParentPhone"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน
+       ============================== -->
+
           <div class="info-card">
             <div class="card-title">
               <i class="fa-solid fa-phone-volume"></i>
-              ผู้ติดต่อกรณีฉุกเฉิน
+              บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน
             </div>
 
             <div class="info-grid">
               <div class="info-item">
                 <span>ชื่อ-นามสกุล</span>
-                <strong id="profileEmergencyName">-</strong>
+                <strong id="profileEmergencyName"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ความเกี่ยวข้อง</span>
-                <strong id="profileEmergencyRelation">-</strong>
+                <strong id="profileEmergencyRelation"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>ที่อยู่</span>
-                <strong id="profileEmergencyAddress">-</strong>
+                <strong id="profileEmergencyAddress"> - </strong>
               </div>
 
               <div class="info-item">
                 <span>โทรศัพท์</span>
-                <strong id="profileEmergencyPhone">-</strong>
+                <strong id="profileEmergencyPhone"> - </strong>
               </div>
             </div>
           </div>
@@ -720,27 +823,72 @@
         </section>
 
         <!-- ==============================
-           Mentor
-           ============================== -->
-
+     Mentor
+     ============================== -->
         <section class="content-panel" id="panel-mentor">
           <div class="panel-header">
             <h2>ข้อมูลพี่เลี้ยง</h2>
 
-            <p>ข้อมูลพี่เลี้ยงของนักศึกษาสหกิจศึกษา</p>
+            <p>จัดการข้อมูลพี่เลี้ยงสำหรับสหกิจศึกษา</p>
           </div>
 
           <div class="section-card">
-            <div class="empty-state" id="mentorEmpty">
-              <i class="fa-solid fa-user-tie"></i>
+            <div class="request-card-head">
+              <div>
+                <h4>
+                  <i class="fa-solid fa-user-tie"></i>
+                  ข้อมูลพี่เลี้ยงปัจจุบัน
+                </h4>
 
-              <h4>ยังไม่มีข้อมูลพี่เลี้ยง</h4>
+                <p>ข้อมูลที่ใช้ติดต่อและประสานงานระหว่างสหกิจศึกษา</p>
+              </div>
+            </div>
 
-              <p>สามารถเพิ่มข้อมูลพี่เลี้ยงได้ภายหลัง</p>
+            <div class="info-grid" style="margin-top: 14px">
+              <div class="info-item">
+                <span>Email</span>
 
-              <button type="button" class="btn-primary" id="addMentorBtn">
+                <strong id="mentorEmail">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>ชื่อ</span>
+
+                <strong id="mentorFirstName">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>นามสกุล</span>
+
+                <strong id="mentorLastName">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>ตำแหน่ง</span>
+
+                <strong id="mentorPosition">-</strong>
+              </div>
+            </div>
+
+            <div class="request-actions">
+              <button type="button" class="btn-mock-sm solid" id="btnAddMentor">
                 <i class="fa-solid fa-plus"></i>
                 เพิ่มข้อมูลพี่เลี้ยง
+              </button>
+
+              <button type="button" class="btn-mock-sm" id="btnEditMentor">
+                <i class="fa-solid fa-pen"></i>
+                แก้ไขข้อมูลพี่เลี้ยง
+              </button>
+
+              <button
+                type="button"
+                class="btn-danger-outline"
+                id="btnDeleteMentor"
+                style="cursor: pointer"
+              >
+                <i class="fa-solid fa-trash"></i>
+                ลบข้อมูลพี่เลี้ยง
               </button>
             </div>
           </div>
@@ -851,7 +999,511 @@
         </div>
       </div>
     </div>
+    <!-- ==============================
+     Modal แก้ไขประวัตินักศึกษา
+     ============================== -->
 
+    <div class="modal-overlay" id="profileEditModal" aria-hidden="true">
+      <div class="modal-box profile-edit-modal">
+        <!-- Header -->
+        <div class="modal-header">
+          <div>
+            <h3>
+              <i class="fa-solid fa-user-pen"></i>
+              แก้ไขประวัตินักศึกษา
+            </h3>
+
+            <p>แก้ไขข้อมูลส่วนตัวของนักศึกษาสหกิจศึกษา</p>
+          </div>
+
+          <button
+            type="button"
+            class="modal-close"
+            id="closeProfileEditModal"
+            aria-label="ปิด"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <form id="profileEditForm">
+            <div
+              class="profile-form-section profile-image-form-section"
+              id="profileImageEditorSection"
+            >
+              <div class="profile-form-title">
+                <i class="fa-solid fa-camera"></i>
+                <div>
+                  <h4>รูปโปรไฟล์</h4>
+                  <p>เลือกรูปใหม่และอัปโหลดเมื่อพร้อม</p>
+                </div>
+              </div>
+
+              <div class="modal-profile-image-editor">
+                <div class="modal-profile-image-preview" aria-live="polite">
+                  <i
+                    id="modalProfileImagePlaceholder"
+                    class="fa-solid fa-user"
+                    aria-hidden="true"
+                  ></i>
+                  <img id="modalProfileImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
+                </div>
+
+                <div class="modal-profile-image-actions">
+                  <label for="profileImageInput" class="btn-secondary">
+                    <i class="fa-solid fa-image"></i>
+                    เลือกรูปใหม่
+                  </label>
+                  <input
+                    type="file"
+                    id="profileImageInput"
+                    accept="image/jpeg,image/png,image/webp"
+                  />
+                  <small>รองรับ JPG, PNG และ WEBP ขนาดไม่เกิน 5 MB</small>
+                  <button
+                    type="button"
+                    class="btn-primary"
+                    id="uploadProfileImageBtn"
+                    disabled
+                  >
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    อัปโหลดรูป
+                  </button>
+                  <p
+                    class="message"
+                    id="profileImageMessage"
+                    aria-live="polite"
+                  ></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลส่วนตัว
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-circle-user"></i>
+
+                <div>
+                  <h4>ข้อมูลส่วนตัว</h4>
+                  <p>ข้อมูลทั่วไปและข้อมูลสุขภาพของนักศึกษา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editBirthDate"> วันเกิด </label>
+
+                  <input type="date" id="editBirthDate" name="birth_date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="editHeight"> ส่วนสูง (ซม.) </label>
+
+                  <input
+                    type="number"
+                    id="editHeight"
+                    name="height_cm"
+                    min="1"
+                    placeholder="เช่น 172"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editWeight"> น้ำหนัก (กก.) </label>
+
+                  <input
+                    type="number"
+                    id="editWeight"
+                    name="weight_kg"
+                    min="1"
+                    step="0.1"
+                    placeholder="เช่น 67"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editNationality"> สัญชาติ </label>
+
+                  <input
+                    type="text"
+                    id="editNationality"
+                    name="nationality"
+                    placeholder="เช่น ไทย"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editEthnicity"> เชื้อชาติ </label>
+
+                  <input
+                    type="text"
+                    id="editEthnicity"
+                    name="ethnicity"
+                    placeholder="เช่น ไทย"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editReligion"> ศาสนา </label>
+
+                  <input
+                    type="text"
+                    id="editReligion"
+                    name="religion"
+                    placeholder="เช่น พุทธ"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editBloodType"> กรุ๊ปเลือด </label>
+
+                  <select id="editBloodType" name="blood_type">
+                    <option value="">-- เลือกกรุ๊ปเลือด --</option>
+
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="AB">AB</option>
+                    <option value="O">O</option>
+                  </select>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editMedicalConditions"> โรคประจำตัว </label>
+
+                  <textarea
+                    id="editMedicalConditions"
+                    name="medical_conditions"
+                    rows="3"
+                    placeholder="ระบุโรคประจำตัว หากไม่มีสามารถเว้นว่าง"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editAllergies"> อาการแพ้ </label>
+
+                  <textarea
+                    id="editAllergies"
+                    name="allergies"
+                    rows="3"
+                    placeholder="ระบุยา อาหาร หรือสิ่งที่แพ้"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editSpecialAbilities"> ความสามารถพิเศษ </label>
+
+                  <textarea
+                    id="editSpecialAbilities"
+                    name="special_abilities"
+                    rows="3"
+                    placeholder="ระบุความสามารถพิเศษ"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editRelatedSkills">
+                    ทักษะที่เกี่ยวข้องกับสหกิจศึกษา
+                  </label>
+
+                  <textarea
+                    id="editRelatedSkills"
+                    name="related_skills"
+                    rows="3"
+                    placeholder="เช่น HTML, CSS, JavaScript, React, SQL"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลที่อยู่
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-location-dot"></i>
+
+                <div>
+                  <h4>ข้อมูลที่อยู่</h4>
+                  <p>ภูมิลำเนาและที่อยู่ปัจจุบัน</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group profile-form-full">
+                  <label for="editHometownAddress"> ภูมิลำเนา </label>
+
+                  <textarea
+                    id="editHometownAddress"
+                    name="hometown_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ภูมิลำเนา"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editHometownPhone"> โทรศัพท์ภูมิลำเนา </label>
+
+                  <input
+                    type="tel"
+                    id="editHometownPhone"
+                    name="hometown_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editCurrentAddress"> ที่อยู่ปัจจุบัน </label>
+
+                  <textarea
+                    id="editCurrentAddress"
+                    name="current_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ปัจจุบัน"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editCurrentPhone"> โทรศัพท์ปัจจุบัน </label>
+
+                  <input
+                    type="tel"
+                    id="editCurrentPhone"
+                    name="current_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลบิดา
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-person"></i>
+
+                <div>
+                  <h4>ข้อมูลบิดา</h4>
+                  <p>ข้อมูลพื้นฐานของบิดา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editFatherName"> ชื่อบิดา </label>
+
+                  <input
+                    type="text"
+                    id="editFatherName"
+                    name="father_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editFatherAge"> อายุบิดา </label>
+
+                  <input
+                    type="number"
+                    id="editFatherAge"
+                    name="father_age"
+                    min="1"
+                    placeholder="อายุ"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editFatherOccupation"> อาชีพบิดา </label>
+
+                  <input
+                    type="text"
+                    id="editFatherOccupation"
+                    name="father_occupation"
+                    placeholder="อาชีพ"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลมารดา
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-person-dress"></i>
+
+                <div>
+                  <h4>ข้อมูลมารดา</h4>
+                  <p>ข้อมูลพื้นฐานของมารดา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editMotherName"> ชื่อมารดา </label>
+
+                  <input
+                    type="text"
+                    id="editMotherName"
+                    name="mother_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editMotherAge"> อายุมารดา </label>
+
+                  <input
+                    type="number"
+                    id="editMotherAge"
+                    name="mother_age"
+                    min="1"
+                    placeholder="อายุ"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editMotherOccupation"> อาชีพมารดา </label>
+
+                  <input
+                    type="text"
+                    id="editMotherOccupation"
+                    name="mother_occupation"
+                    placeholder="อาชีพ"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลผู้ปกครอง
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-people-roof"></i>
+
+                <div>
+                  <h4>ข้อมูลผู้ปกครอง</h4>
+                  <p>ข้อมูลสำหรับติดต่อผู้ปกครอง</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group profile-form-full">
+                  <label for="editParentAddress">
+                    ที่อยู่ที่สามารถติดต่อได้
+                  </label>
+
+                  <textarea
+                    id="editParentAddress"
+                    name="parent_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ผู้ปกครอง"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editParentPhone"> โทรศัพท์ </label>
+
+                  <input
+                    type="tel"
+                    id="editParentPhone"
+                    name="parent_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ผู้ติดต่อกรณีฉุกเฉิน
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-phone-volume"></i>
+
+                <div>
+                  <h4>บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน</h4>
+
+                  <p>ข้อมูลบุคคลสำหรับติดต่อในกรณีฉุกเฉิน</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editEmergencyName"> ชื่อ-นามสกุล </label>
+
+                  <input
+                    type="text"
+                    id="editEmergencyName"
+                    name="emergency_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editEmergencyRelation"> ความเกี่ยวข้อง </label>
+
+                  <input
+                    type="text"
+                    id="editEmergencyRelation"
+                    name="emergency_relation"
+                    placeholder="เช่น บิดา มารดา พี่สาว"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editEmergencyAddress"> ที่อยู่ </label>
+
+                  <textarea
+                    id="editEmergencyAddress"
+                    name="emergency_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editEmergencyPhone"> โทรศัพท์ </label>
+
+                  <input
+                    type="tel"
+                    id="editEmergencyPhone"
+                    name="emergency_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <p class="message" id="profileEditMessage"></p>
+          </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelProfileEditBtn">
+            <i class="fa-solid fa-xmark"></i>
+            ยกเลิก
+          </button>
+
+          <button type="button" class="btn-primary" id="saveProfileBtn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            บันทึกข้อมูล
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- ==============================
        Footer
        ============================== -->

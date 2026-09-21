@@ -144,6 +144,53 @@ const profileEmergencyPhone =
   document.getElementById("profileEmergencyPhone");
 
 // ==============================
+// Profile Edit Modal
+// ==============================
+
+let currentStudentProfile = null;
+let currentStudent = null;
+let selectedProfileImageFile = null;
+let profileImageObjectUrl = null;
+
+const btnEditProfile =
+  document.getElementById("btnEditProfile");
+
+const profileEditModal =
+  document.getElementById("profileEditModal");
+
+const closeProfileEditModal =
+  document.getElementById("closeProfileEditModal");
+
+const cancelProfileEditBtn =
+  document.getElementById("cancelProfileEditBtn");
+
+const saveProfileBtn =
+  document.getElementById("saveProfileBtn");
+
+const profileEditMessage =
+  document.getElementById("profileEditMessage");
+
+const studentInfoForm = document.getElementById("studentInfoForm");
+const studentFullNameInput = document.getElementById("studentFullName");
+const studentIdInput = document.getElementById("studentIdInput");
+const studentEmailInput = document.getElementById("studentEmailInput");
+const studentMajorInput = document.getElementById("studentMajorInput");
+const studentYearLevelInput = document.getElementById("studentYearLevelInput");
+const studentGpaInput = document.getElementById("studentGpaInput");
+const studentAdvisorInput = document.getElementById("studentAdvisorInput");
+const studentCoopAdvisorInput = document.getElementById("studentCoopAdvisorInput");
+const studentInfoMessage = document.getElementById("studentInfoMessage");
+const profileAvatarButton = document.getElementById("profileAvatarButton");
+const profileAvatarImage = document.getElementById("profileAvatarImage");
+const profileAvatarPlaceholder = document.getElementById("profileAvatarPlaceholder");
+const modalProfileImage = document.getElementById("modalProfileImage");
+const modalProfileImagePlaceholder = document.getElementById("modalProfileImagePlaceholder");
+const profileImageEditorSection = document.getElementById("profileImageEditorSection");
+const profileImageInput = document.getElementById("profileImageInput");
+const uploadProfileImageBtn = document.getElementById("uploadProfileImageBtn");
+const profileImageMessage = document.getElementById("profileImageMessage");
+
+// ==============================
 // Authentication
 // ==============================
 
@@ -206,7 +253,8 @@ async function checkAuthentication() {
     renderStudent(student);
 
     // โหลดข้อมูลเพิ่มเติมจาก student_profiles
-    await loadStudentProfile(token);
+    const studentProfile = await loadStudentProfile(token);
+    await loadTeachers(token, studentProfile?.advisor_teacher_id);
   } catch (error) {
     console.error(
       "AUTH CHECK ERROR:",
@@ -258,9 +306,17 @@ async function loadStudentProfile(token) {
     // แสดงข้อมูลพื้นฐานจาก students อีกครั้ง
     renderStudent(result.student);
 
+    currentStudent = result.student;
+    populateStudentInfoForm(result.student);
+    await loadProfileImage(token, Boolean(result.student.profile_image));
+
+    // เก็บข้อมูล student_profiles ปัจจุบัน
+    currentStudentProfile =
+      result.student.profile || null;
+
     // แสดงข้อมูลจาก student_profiles
     renderStudentProfile(
-      result.student.profile
+      currentStudentProfile
     );
 
     return result.student;
@@ -270,6 +326,8 @@ async function loadStudentProfile(token) {
       error
     );
 
+    currentStudentProfile = null;
+
     return null;
   }
 }
@@ -277,6 +335,368 @@ async function loadStudentProfile(token) {
 // ==============================
 // Render Student
 // ==============================
+
+function formatTeacherName(teacher) {
+  if (!teacher) {
+    return "-";
+  }
+
+  return [teacher.academic_title, teacher.first_name, teacher.last_name]
+    .filter(Boolean)
+    .join(" ") || "-";
+}
+
+function getStudentCode(student) {
+  const rawStudentId = String(student?.student_id || "").trim();
+  const email = String(student?.email || "").trim();
+
+  if (/^s\d{13}$/.test(rawStudentId)) {
+    return rawStudentId;
+  }
+
+  const emailLocalPart = email.split("@")[0];
+  if (/^s\d{13}$/.test(emailLocalPart)) {
+    return emailLocalPart;
+  }
+
+  const studentIdLocalPart = rawStudentId.split("@")[0];
+  if (/^s\d{13}$/.test(studentIdLocalPart)) {
+    return studentIdLocalPart;
+  }
+
+  return rawStudentId || "-";
+}
+
+function populateStudentInfoForm(student) {
+  if (!student) {
+    return;
+  }
+
+  const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim();
+  setInputElementValue(studentFullNameInput, fullName);
+  setInputElementValue(studentIdInput, getStudentCode(student));
+  setInputElementValue(studentEmailInput, student.email);
+
+  const major = student.major || "";
+  if (
+    studentMajorInput &&
+    major &&
+    !Array.from(studentMajorInput.options).some((option) => option.value === major)
+  ) {
+    const option = document.createElement("option");
+    option.value = major;
+    option.textContent = major;
+    studentMajorInput.appendChild(option);
+  }
+
+  setInputElementValue(studentMajorInput, major);
+  setInputElementValue(studentYearLevelInput, student.year_level ?? "");
+  setInputElementValue(studentGpaInput, student.gpa ?? "");
+  setInputElementValue(
+    studentCoopAdvisorInput,
+    student.coopAdvisorTeacher
+      ? formatTeacherName(student.coopAdvisorTeacher)
+      : "ยังไม่ได้กำหนด"
+  );
+
+  if (studentAdvisorInput) {
+    studentAdvisorInput.value = student.advisor_teacher_id || "";
+  }
+}
+
+function setInputElementValue(element, value) {
+  if (element) {
+    element.value = value ?? "";
+  }
+}
+
+async function loadTeachers(token, selectedTeacherId = currentStudent?.advisor_teacher_id) {
+  if (!studentAdvisorInput) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/teachers`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || "ไม่สามารถโหลดรายชื่ออาจารย์ได้");
+    }
+
+    studentAdvisorInput.replaceChildren();
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "ยังไม่ได้กำหนด";
+    studentAdvisorInput.appendChild(emptyOption);
+
+    (result.teachers || []).forEach((teacher) => {
+      const option = document.createElement("option");
+      option.value = teacher.id;
+      option.textContent = formatTeacherName(teacher);
+      studentAdvisorInput.appendChild(option);
+    });
+
+    studentAdvisorInput.value = selectedTeacherId || "";
+  } catch (error) {
+    console.error("LOAD TEACHERS ERROR:", error);
+    showMessage(studentInfoMessage, error.message || "ไม่สามารถโหลดรายชื่ออาจารย์ได้", "error");
+  }
+}
+
+function clearProfileImageObjectUrl() {
+  if (profileImageObjectUrl) {
+    URL.revokeObjectURL(profileImageObjectUrl);
+    profileImageObjectUrl = null;
+  }
+}
+
+function resetProfileImagePreview() {
+  clearProfileImageObjectUrl();
+  if (profileAvatarImage) {
+    profileAvatarImage.removeAttribute("src");
+    profileAvatarImage.hidden = true;
+  }
+  if (profileAvatarPlaceholder) {
+    profileAvatarPlaceholder.hidden = false;
+    profileAvatarPlaceholder.style.display = "flex";
+  }
+  if (modalProfileImage) {
+    modalProfileImage.removeAttribute("src");
+    modalProfileImage.hidden = true;
+  }
+  if (modalProfileImagePlaceholder) {
+    modalProfileImagePlaceholder.hidden = false;
+  }
+}
+
+function showProfileImagePreview(objectUrl) {
+  clearProfileImageObjectUrl();
+  profileImageObjectUrl = objectUrl;
+  if (profileAvatarImage) {
+    profileAvatarImage.src = objectUrl;
+    profileAvatarImage.hidden = false;
+  }
+  if (profileAvatarPlaceholder) {
+    profileAvatarPlaceholder.hidden = true;
+    profileAvatarPlaceholder.style.display = "none";
+  }
+  if (modalProfileImage) {
+    modalProfileImage.src = objectUrl;
+    modalProfileImage.hidden = false;
+  }
+  if (modalProfileImagePlaceholder) {
+    modalProfileImagePlaceholder.hidden = true;
+  }
+}
+
+async function loadProfileImage(token, hasProfileImage) {
+  if (!hasProfileImage) {
+    resetProfileImagePreview();
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/student-profile/profile-image`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+
+    if (!response.ok) {
+      resetProfileImagePreview();
+      return;
+    }
+
+    showProfileImagePreview(URL.createObjectURL(await response.blob()));
+  } catch (error) {
+    console.error("LOAD PROFILE IMAGE ERROR:", error);
+    resetProfileImagePreview();
+  }
+}
+
+function setStudentInfoButtonState(button, isLoading, loadingLabel, defaultLabel) {
+  if (!button) {
+    return;
+  }
+
+  button.disabled = isLoading;
+  button.innerHTML = isLoading
+    ? `<i class="fa-solid fa-spinner fa-spin"></i>${loadingLabel}`
+    : defaultLabel;
+}
+
+async function uploadSelectedProfileImage() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    redirectToLogin();
+    return;
+  }
+
+  if (!selectedProfileImageFile) {
+    showMessage(profileImageMessage, "กรุณาเลือกรูปโปรไฟล์", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("profile_image", selectedProfileImageFile);
+  clearMessage(profileImageMessage);
+  setStudentInfoButtonState(
+    uploadProfileImageBtn,
+    true,
+    "กำลังอัปโหลด...",
+    '<i class="fa-solid fa-cloud-arrow-up"></i>อัปโหลดรูป'
+  );
+
+  try {
+    const response = await fetch(`${API_URL}/api/student-profile/profile-image`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (response.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(result.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้");
+    }
+
+    selectedProfileImageFile = null;
+    if (profileImageInput) {
+      profileImageInput.value = "";
+    }
+    currentStudent = {
+      ...(currentStudent || {}),
+      profile_image: result.profile_image || true,
+    };
+    await loadProfileImage(token, true);
+    showMessage(profileImageMessage, "อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
+  } catch (error) {
+    console.error("UPLOAD PROFILE IMAGE ERROR:", error);
+    showMessage(profileImageMessage, error.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้", "error");
+  } finally {
+    setStudentInfoButtonState(
+      uploadProfileImageBtn,
+      false,
+      "",
+      '<i class="fa-solid fa-cloud-arrow-up"></i>อัปโหลดรูป'
+    );
+  }
+}
+
+async function saveStudentInfo(event) {
+  event.preventDefault();
+  const token = localStorage.getItem("token");
+  if (!token) {
+    redirectToLogin();
+    return;
+  }
+
+  const major = studentMajorInput?.value.trim() || "";
+  const yearLevel = Number(studentYearLevelInput?.value);
+  const gpaValue = studentGpaInput?.value.trim() || "";
+  const gpa = Number(gpaValue);
+
+  clearMessage(studentInfoMessage);
+  if (!major || !Number.isInteger(yearLevel) || yearLevel < 1 || yearLevel > 4) {
+    showMessage(studentInfoMessage, "กรุณากรอกสาขาและชั้นปีให้ถูกต้อง", "error");
+    return;
+  }
+  if (!gpaValue || !Number.isFinite(gpa) || gpa < 0 || gpa > 4) {
+    showMessage(studentInfoMessage, "GPA ต้องอยู่ระหว่าง 0.00 ถึง 4.00", "error");
+    return;
+  }
+
+  const payload = {
+    major,
+    year_level: yearLevel,
+    gpa,
+    advisor_teacher_id: studentAdvisorInput?.value || null,
+  };
+
+  const defaultButtonLabel = '<i class="fa-solid fa-floppy-disk"></i>บันทึกข้อมูลนักศึกษา';
+  const saveStudentInfoBtn = document.getElementById("saveStudentInfoBtn");
+  setStudentInfoButtonState(saveStudentInfoBtn, true, "กำลังบันทึก...", defaultButtonLabel);
+
+  try {
+    const response = await fetch(`${API_URL}/api/student-profile/student-info`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+
+    if (response.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+    if (!response.ok) {
+      throw new Error(result.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้");
+    }
+
+    const student = await loadStudentProfile(token);
+    await loadTeachers(token, student?.advisor_teacher_id);
+    showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
+  } catch (error) {
+    console.error("SAVE STUDENT INFO ERROR:", error);
+    showMessage(studentInfoMessage, error.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้", "error");
+  } finally {
+    setStudentInfoButtonState(saveStudentInfoBtn, false, "", defaultButtonLabel);
+  }
+}
+
+profileImageInput?.addEventListener("change", () => {
+  const file = profileImageInput.files?.[0];
+  clearMessage(profileImageMessage);
+
+  if (!file) {
+    selectedProfileImageFile = null;
+    uploadProfileImageBtn.disabled = true;
+    return;
+  }
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    profileImageInput.value = "";
+    selectedProfileImageFile = null;
+    uploadProfileImageBtn.disabled = true;
+    showMessage(profileImageMessage, "รองรับเฉพาะ JPG, PNG และ WEBP", "error");
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    profileImageInput.value = "";
+    selectedProfileImageFile = null;
+    uploadProfileImageBtn.disabled = true;
+    showMessage(profileImageMessage, "ขนาดรูปต้องไม่เกิน 5 MB", "error");
+    return;
+  }
+
+  selectedProfileImageFile = file;
+  showProfileImagePreview(URL.createObjectURL(file));
+  uploadProfileImageBtn.disabled = false;
+});
+
+uploadProfileImageBtn?.addEventListener("click", uploadSelectedProfileImage);
+studentInfoForm?.addEventListener("submit", saveStudentInfo);
+window.addEventListener("beforeunload", clearProfileImageObjectUrl);
 
 function renderStudent(student) {
   const firstName =
@@ -289,8 +709,7 @@ function renderStudent(student) {
     `${firstName} ${lastName}`.trim() ||
     "-";
 
-  const studentId =
-    student.student_id || "-";
+  const studentId = getStudentCode(student);
 
   const email =
     student.email || "-";
@@ -629,6 +1048,533 @@ function setText(
       value ?? "-";
   }
 }
+
+// ==============================
+// Edit Student Profile Modal
+// ==============================
+
+function openProfileEditModal() {
+  fillProfileEditForm(
+    currentStudentProfile
+  );
+
+  clearMessage(
+    profileEditMessage
+  );
+
+  profileEditModal?.classList.add(
+    "open"
+  );
+
+  profileEditModal?.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  document.body.style.overflow =
+    "hidden";
+}
+
+function closeProfileModal() {
+  profileEditModal?.classList.remove(
+    "open"
+  );
+
+  profileEditModal?.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  document.body.style.overflow = "";
+}
+
+function openProfileImageEditor() {
+  openProfileEditModal();
+
+  window.setTimeout(() => {
+    profileImageEditorSection?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 0);
+}
+
+function fillProfileEditForm(profile) {
+  const data = profile || {};
+
+  setInputValue(
+    "editBirthDate",
+    data.birth_date
+  );
+
+  setInputValue(
+    "editHeight",
+    data.height_cm
+  );
+
+  setInputValue(
+    "editWeight",
+    data.weight_kg
+  );
+
+  setInputValue(
+    "editNationality",
+    data.nationality
+  );
+
+  setInputValue(
+    "editEthnicity",
+    data.ethnicity
+  );
+
+  setInputValue(
+    "editReligion",
+    data.religion
+  );
+
+  setInputValue(
+    "editBloodType",
+    data.blood_type
+  );
+
+  setInputValue(
+    "editMedicalConditions",
+    data.medical_conditions
+  );
+
+  setInputValue(
+    "editAllergies",
+    data.allergies
+  );
+
+  setInputValue(
+    "editSpecialAbilities",
+    data.special_abilities
+  );
+
+  setInputValue(
+    "editRelatedSkills",
+    data.related_skills
+  );
+
+  // ที่อยู่
+  setInputValue(
+    "editHometownAddress",
+    data.hometown_address
+  );
+
+  setInputValue(
+    "editHometownPhone",
+    data.hometown_phone
+  );
+
+  setInputValue(
+    "editCurrentAddress",
+    data.current_address
+  );
+
+  setInputValue(
+    "editCurrentPhone",
+    data.current_phone
+  );
+
+  // บิดา
+  setInputValue(
+    "editFatherName",
+    data.father_name
+  );
+
+  setInputValue(
+    "editFatherAge",
+    data.father_age
+  );
+
+  setInputValue(
+    "editFatherOccupation",
+    data.father_occupation
+  );
+
+  // มารดา
+  setInputValue(
+    "editMotherName",
+    data.mother_name
+  );
+
+  setInputValue(
+    "editMotherAge",
+    data.mother_age
+  );
+
+  setInputValue(
+    "editMotherOccupation",
+    data.mother_occupation
+  );
+
+  // ผู้ปกครอง
+  setInputValue(
+    "editParentAddress",
+    data.parent_contact_address
+  );
+
+  setInputValue(
+    "editParentPhone",
+    data.parent_phone
+  );
+
+  // ผู้ติดต่อฉุกเฉิน
+  setInputValue(
+    "editEmergencyName",
+    data.emergency_contact_name
+  );
+
+  setInputValue(
+    "editEmergencyRelation",
+    data.emergency_contact_relation
+  );
+
+  setInputValue(
+    "editEmergencyAddress",
+    data.emergency_contact_address
+  );
+
+  setInputValue(
+    "editEmergencyPhone",
+    data.emergency_contact_phone
+  );
+}
+
+function setInputValue(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return;
+  }
+
+  element.value =
+    value ?? "";
+}
+
+function getInputValue(id) {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return "";
+  }
+
+  return element.value.trim();
+}
+
+function getNullableText(id) {
+  const value =
+    getInputValue(id);
+
+  return value === ""
+    ? null
+    : value;
+}
+
+function getNumberValue(id) {
+  const value =
+    getInputValue(id);
+
+  if (value === "") {
+    return null;
+  }
+
+  const number = Number(value);
+
+  return Number.isNaN(number)
+    ? null
+    : number;
+}
+
+async function saveStudentProfile() {
+  const token =
+    localStorage.getItem("token");
+
+  if (!token) {
+    redirectToLogin();
+    return;
+  }
+
+  clearMessage(
+    profileEditMessage
+  );
+
+  const payload = {
+    birth_date:
+      getNullableText(
+        "editBirthDate"
+      ),
+
+    height_cm:
+      getNumberValue(
+        "editHeight"
+      ),
+
+    weight_kg:
+      getNumberValue(
+        "editWeight"
+      ),
+
+    nationality:
+      getNullableText(
+        "editNationality"
+      ),
+
+    ethnicity:
+      getNullableText(
+        "editEthnicity"
+      ),
+
+    religion:
+      getNullableText(
+        "editReligion"
+      ),
+
+    blood_type:
+      getNullableText(
+        "editBloodType"
+      ),
+
+    medical_conditions:
+      getNullableText(
+        "editMedicalConditions"
+      ),
+
+    allergies:
+      getNullableText(
+        "editAllergies"
+      ),
+
+    special_abilities:
+      getNullableText(
+        "editSpecialAbilities"
+      ),
+
+    related_skills:
+      getNullableText(
+        "editRelatedSkills"
+      ),
+
+    hometown_address:
+      getNullableText(
+        "editHometownAddress"
+      ),
+
+    hometown_phone:
+      getNullableText(
+        "editHometownPhone"
+      ),
+
+    current_address:
+      getNullableText(
+        "editCurrentAddress"
+      ),
+
+    current_phone:
+      getNullableText(
+        "editCurrentPhone"
+      ),
+
+    father_name:
+      getNullableText(
+        "editFatherName"
+      ),
+
+    father_age:
+      getNumberValue(
+        "editFatherAge"
+      ),
+
+    father_occupation:
+      getNullableText(
+        "editFatherOccupation"
+      ),
+
+    mother_name:
+      getNullableText(
+        "editMotherName"
+      ),
+
+    mother_age:
+      getNumberValue(
+        "editMotherAge"
+      ),
+
+    mother_occupation:
+      getNullableText(
+        "editMotherOccupation"
+      ),
+
+    parent_contact_address:
+      getNullableText(
+        "editParentAddress"
+      ),
+
+    parent_phone:
+      getNullableText(
+        "editParentPhone"
+      ),
+
+    emergency_contact_name:
+      getNullableText(
+        "editEmergencyName"
+      ),
+
+    emergency_contact_relation:
+      getNullableText(
+        "editEmergencyRelation"
+      ),
+
+    emergency_contact_address:
+      getNullableText(
+        "editEmergencyAddress"
+      ),
+
+    emergency_contact_phone:
+      getNullableText(
+        "editEmergencyPhone"
+      ),
+  };
+
+  try {
+    if (saveProfileBtn) {
+      saveProfileBtn.disabled = true;
+
+      saveProfileBtn.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        กำลังบันทึก...
+      `;
+    }
+
+    const response =
+      await fetch(
+        `${API_URL}/api/student-profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type":
+              "application/json",
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify(
+            payload
+          ),
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
+        "ไม่สามารถบันทึกข้อมูลได้"
+      );
+    }
+
+    // โหลดข้อมูลจริงจาก Database ใหม่
+    await loadStudentProfile(
+      token
+    );
+
+    showMessage(
+      profileEditMessage,
+      "บันทึกข้อมูลเรียบร้อยแล้ว",
+      "success"
+    );
+
+    setTimeout(
+      () => {
+        closeProfileModal();
+      },
+      500
+    );
+  } catch (error) {
+    console.error(
+      "SAVE STUDENT PROFILE ERROR:",
+      error
+    );
+
+    showMessage(
+      profileEditMessage,
+      error.message ||
+        "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+      "error"
+    );
+  } finally {
+    if (saveProfileBtn) {
+      saveProfileBtn.disabled = false;
+
+      saveProfileBtn.innerHTML = `
+        <i class="fa-solid fa-floppy-disk"></i>
+        บันทึกข้อมูล
+      `;
+    }
+  }
+}
+
+btnEditProfile?.addEventListener(
+  "click",
+  openProfileEditModal
+);
+
+profileAvatarButton?.addEventListener("click", openProfileImageEditor);
+
+profileAvatarButton?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    openProfileImageEditor();
+  }
+});
+
+closeProfileEditModal?.addEventListener(
+  "click",
+  closeProfileModal
+);
+
+cancelProfileEditBtn?.addEventListener(
+  "click",
+  closeProfileModal
+);
+
+saveProfileBtn?.addEventListener(
+  "click",
+  saveStudentProfile
+);
+
+profileEditModal?.addEventListener(
+  "click",
+  (event) => {
+    if (
+      event.target ===
+      profileEditModal
+    ) {
+      closeProfileModal();
+    }
+  }
+);
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (
+      event.key === "Escape" &&
+      profileEditModal?.classList.contains(
+        "open"
+      )
+    ) {
+      closeProfileModal();
+    }
+  }
+);
 
 // ==============================
 // Translate Status

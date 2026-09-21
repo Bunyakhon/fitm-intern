@@ -1,15 +1,12 @@
+/* =========================================
+   KIWI - student_coop.css
+   Page-specific styles for Student Co-op Dashboard
+   Theme variables come from main.css
+   ========================================= */
+
 :root {
-  --primary: #34785f;
-  --primary-dark: #27604b;
-  --primary-light: #eaf4ef;
-  --background: #f6f8fa;
-  --white: #ffffff;
-  --text: #202833;
-  --text-muted: #77808b;
-  --border: #e2e8ee;
   --danger: #c94b4b;
   --danger-light: #fff1f1;
-  --shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
 }
 
 * {
@@ -24,7 +21,7 @@ html {
 
 body {
   font-family: "Noto Sans Thai", sans-serif;
-  background: var(--background);
+  background: var(--bg);
   color: var(--text);
 }
 
@@ -95,7 +92,8 @@ a {
 .brand-text span {
   margin-top: 3px;
   font-size: 0.76rem;
-  color: var(--text-muted);
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .nav-right {
@@ -117,7 +115,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-light);
+  background: var(--primary-soft);
   color: var(--primary);
 }
 
@@ -128,7 +126,7 @@ a {
 
 .nav-user-info small {
   font-size: 0.68rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .nav-user-info span {
@@ -208,7 +206,7 @@ a {
   margin-top: 5px;
   padding-left: 23px;
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .sidebar-menu {
@@ -244,7 +242,7 @@ a {
   align-items: center;
   justify-content: center;
   background: #f4f6f8;
-  color: #77808b;
+  color: var(--muted);
   transition: 0.2s;
 }
 
@@ -253,7 +251,7 @@ a {
 }
 
 .sidebar-item:hover {
-  background: var(--primary-light);
+  background: var(--primary-soft);
   color: var(--primary);
   transform: translateX(2px);
 }
@@ -265,7 +263,7 @@ a {
 }
 
 .sidebar-item.active {
-  background: var(--primary-light);
+  background: var(--primary-soft);
   color: var(--primary);
   font-weight: 700;
   box-shadow: inset 3px 0 0 var(--primary);
@@ -333,33 +331,81 @@ a {
 }
 
 .panel-header {
+  position: relative;
   margin-bottom: 20px;
+  padding: 20px 22px 20px 26px;
+  overflow: hidden;
+
+  background: linear-gradient(
+    135deg,
+    var(--white),
+    var(--primary-soft)
+  );
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header::before {
+  content: "";
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 5px;
+  height: 100%;
+
+  background: var(--primary);
 }
 
 .panel-header h2 {
+  margin: 0;
+
   font-family: "Sarabun", sans-serif;
   font-size: 1.35rem;
+  font-weight: 700;
+
+  color: var(--primary);
 }
 
 .panel-header p {
-  margin-top: 4px;
+  margin-top: 5px;
+
   font-size: 0.82rem;
-  color: var(--text-muted);
+  line-height: 1.6;
+
+  color: var(--muted);
 }
+
+/* ==============================
+   Dashboard Banner
+   ============================== */
 
 .dashboard-banner {
   min-height: 112px;
   padding: 24px 26px;
+
   display: flex;
   align-items: center;
+
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--primary), #4b977a);
+
+  background: linear-gradient(
+    135deg,
+    var(--primary),
+    var(--primary-dark)
+  );
+
   color: var(--white);
-  box-shadow: var(--shadow);
+
+  box-shadow: var(--shadow-sm);
 }
 
 .dashboard-banner b {
   display: block;
+
   font-family: "Sarabun", sans-serif;
   font-size: 1.25rem;
 }
@@ -367,6 +413,7 @@ a {
 .dashboard-banner span {
   display: block;
   margin-top: 5px;
+
   font-size: 0.8rem;
   opacity: 0.9;
 }
@@ -377,37 +424,49 @@ a {
 
 .stat-row {
   margin-top: 20px;
+
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+
   gap: 16px;
 }
 
 .stat-box {
   min-height: 100px;
   padding: 18px;
+
   display: flex;
   align-items: center;
+
   gap: 14px;
+
   background: var(--white);
+
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: var(--shadow);
+
+  box-shadow: var(--shadow-sm);
 }
 
 .stat-icon {
   width: 44px;
   height: 44px;
+
   flex: 0 0 44px;
+
   border-radius: 12px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-light);
+
+  background: var(--primary-soft);
   color: var(--primary);
 }
 
 .stat-box b {
   display: block;
+
   font-family: "Sarabun", sans-serif;
   font-size: 1.05rem;
 }
@@ -415,8 +474,9 @@ a {
 .stat-box span {
   display: block;
   margin-top: 3px;
+
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 /* ==============================
@@ -428,15 +488,19 @@ a {
 .profile-card {
   margin-top: 18px;
   padding: 20px;
+
   background: var(--white);
+
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: var(--shadow);
+
+  box-shadow: var(--shadow-sm);
 }
 
 .section-card-header {
   display: flex;
   justify-content: space-between;
+
   gap: 12px;
 }
 
@@ -455,8 +519,9 @@ a {
 
 .section-card-header p {
   margin-top: 4px;
+
   font-size: 0.76rem;
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 /* ==============================
@@ -475,16 +540,20 @@ a {
 
 .empty-state h4 {
   margin-top: 14px;
+
   font-family: "Sarabun", sans-serif;
   font-size: 1rem;
 }
 
 .empty-state p {
   max-width: 500px;
+
   margin: 6px auto 0;
+
   font-size: 0.8rem;
   line-height: 1.7;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
 
 .empty-state .btn-primary {
@@ -498,64 +567,324 @@ a {
 .profile-card {
   display: flex;
   align-items: center;
+
   gap: 20px;
 }
 
 .profile-avatar {
   width: 95px;
   height: 95px;
+
   flex: 0 0 95px;
+
   border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-light);
+
+  background: var(--primary-soft);
   color: var(--primary);
+
   font-size: 2rem;
 }
 
 .profile-label {
   display: block;
+
   font-size: 0.75rem;
   font-weight: 700;
+
   color: var(--primary);
 }
 
 .profile-main h3 {
   margin: 5px 0;
+
   font-family: "Sarabun", sans-serif;
   font-size: 1.25rem;
 }
 
 .profile-main p {
   margin-top: 3px;
+
   font-size: 0.8rem;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
+/* =========================================
+   Student Profile Card
+   ========================================= */
+
+#panel-profile .profile-card {
+  position: relative;
+
+  min-height: 160px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 24px;
+
+  padding: 24px 26px;
+
+  background: linear-gradient(
+    135deg,
+    var(--white) 0%,
+    var(--primary-soft) 100%
+  );
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  box-shadow: var(--shadow-sm);
+
+  overflow: hidden;
+}
+
+/* เส้นตกแต่งด้านบน */
+#panel-profile .profile-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 4px;
+
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--primary-dark)
+  );
+}
+
+/* ==============================
+   Avatar
+   ============================== */
+
+#panel-profile .profile-avatar {
+  width: 110px;
+  height: 110px;
+
+  flex: 0 0 110px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--white);
+
+  border: 4px solid var(--primary-soft);
+
+  color: var(--primary);
+
+  font-size: 2.6rem;
+
+  overflow: hidden;
+
+  position: relative;
+
+  box-shadow:
+    0 6px 18px rgba(16, 24, 40, 0.08),
+    0 0 0 1px var(--border);
+}
+
+/* ==============================
+   Profile information
+   ============================== */
+
+#panel-profile .profile-main {
+  min-width: 0;
+
+  flex: 1;
+}
+
+#panel-profile .profile-label {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 11px;
+
+  margin-bottom: 7px;
+
+  border-radius: 999px;
+
+  background: var(--primary-soft);
+
+  color: var(--primary);
+
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+#panel-profile .profile-main h3 {
+  margin: 0 0 8px;
+
+  font-family: "Sarabun", sans-serif;
+
+  font-size: 1.45rem;
+  font-weight: 700;
+
+  color: var(--text);
+}
+
+/* ==============================
+   Student details
+   ============================== */
+
+#panel-profile .profile-main p {
+  margin-top: 5px;
+
+  display: flex;
+  align-items: baseline;
+
+  gap: 6px;
+
+  color: var(--muted);
+
+  font-size: 0.8rem;
+}
+
+#panel-profile .profile-main p strong {
+  color: var(--text);
+
+  font-size: 0.84rem;
+  font-weight: 600;
+
+  word-break: break-word;
+}
+
+/* ==============================
+   Edit Profile Button
+   ============================== */
+
+#panel-profile #btnEditProfile {
+  margin-top: 16px;
+
+  padding: 9px 17px;
+
+  border-radius: 9px;
+
+  background: var(--primary);
+
+  color: var(--white);
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  box-shadow: 0 4px 12px rgba(20, 80, 163, 0.18);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#panel-profile #btnEditProfile:hover {
+  background: var(--primary-dark);
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 6px 16px rgba(20, 80, 163, 0.24);
+}
+
+#panel-profile #btnEditProfile:active {
+  transform: translateY(0);
+}
+
+#panel-profile #btnEditProfile i {
+  font-size: 0.78rem;
+}
+
+/* ==============================
+   Responsive
+   ============================== */
+
+@media (max-width: 700px) {
+  #panel-profile .profile-card {
+    flex-direction: column;
+
+    align-items: center;
+
+    padding: 24px 18px;
+
+    text-align: center;
+  }
+
+  #panel-profile .profile-avatar {
+    width: 90px;
+    height: 90px;
+
+    flex-basis: 90px;
+
+    font-size: 2.1rem;
+  }
+
+  #panel-profile .profile-main {
+    width: 100%;
+  }
+
+  #panel-profile .profile-label {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #panel-profile .profile-main h3 {
+    font-size: 1.25rem;
+  }
+
+  #panel-profile .profile-main p {
+    justify-content: center;
+
+    flex-wrap: wrap;
+  }
+
+  #panel-profile #btnEditProfile {
+    margin-top: 16px;
+  }
+}
+/* ==============================
+   Information Grid
+   ============================== */
 
 .info-grid {
   margin-top: 16px;
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+
   gap: 14px 20px;
 }
 
 .info-item {
   padding: 12px 0;
+
   border-bottom: 1px solid #edf1f4;
 }
 
 .info-item span {
   display: block;
+
   margin-bottom: 3px;
+
   font-size: 0.74rem;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
 
 .info-item strong {
   display: block;
+
   font-size: 0.86rem;
   font-weight: 600;
+
   word-break: break-word;
 }
 
@@ -569,7 +898,9 @@ a {
 
 .form-group label {
   display: block;
+
   margin-bottom: 6px;
+
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -578,10 +909,14 @@ a {
 .form-group select,
 .form-group textarea {
   width: 100%;
+
   padding: 10px 12px;
+
   border: 1px solid var(--border);
   border-radius: 9px;
+
   outline: none;
+
   background: var(--white);
   color: var(--text);
 }
@@ -594,7 +929,8 @@ a {
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
+
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 /* ==============================
@@ -603,30 +939,38 @@ a {
 
 .upload-box {
   padding: 40px 20px;
+
   border: 2px dashed var(--border);
   border-radius: 12px;
+
   text-align: center;
 }
 
 .upload-box > i {
   font-size: 2rem;
+
   color: var(--primary);
 }
 
 .upload-box h3 {
   margin-top: 10px;
+
   font-family: "Sarabun", sans-serif;
 }
 
 .upload-box p {
   margin: 4px 0 15px;
+
   font-size: 0.78rem;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
 
 .upload-box input {
   display: block;
+
   max-width: 400px;
+
   margin: 0 auto 14px;
 }
 
@@ -638,14 +982,20 @@ a {
 .btn-secondary,
 .btn-danger {
   padding: 8px 16px;
+
   border-radius: 20px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   gap: 7px;
+
   font-size: 0.78rem;
   font-weight: 600;
+
   cursor: pointer;
+
   transition: 0.2s;
 }
 
@@ -660,7 +1010,9 @@ a {
 
 .btn-secondary {
   border: 1px solid var(--border);
+
   background: var(--white);
+
   color: var(--text);
 }
 
@@ -679,13 +1031,16 @@ a {
 
 .section-actions {
   margin-bottom: 14px;
+
   display: flex;
   justify-content: flex-end;
 }
 
 .message {
   min-height: 22px;
+
   margin-top: 12px;
+
   font-size: 0.78rem;
 }
 
@@ -697,34 +1052,133 @@ a {
   color: var(--danger);
 }
 
+#panel-profile .profile-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
+}
+
+#panel-profile .profile-avatar img[hidden] {
+  display: none;
+}
+
+#panel-profile .profile-avatar-editable {
+  cursor: pointer;
+}
+
+#panel-profile .profile-avatar-editable:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+#panel-profile .profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(16, 24, 40, 0.52);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#panel-profile .profile-avatar-overlay i {
+  font-size: 1.1rem;
+}
+
+#panel-profile .profile-avatar-editable:hover .profile-avatar-overlay,
+#panel-profile .profile-avatar-editable:focus-visible .profile-avatar-overlay {
+  opacity: 1;
+}
+
+/* ==============================
+   Student information editor
+   ============================== */
+
+.student-info-form {
+  margin-top: 16px;
+}
+
+.student-info-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+
+.student-info-form-grid .form-group {
+  margin-bottom: 16px;
+}
+
+.student-info-form-full {
+  grid-column: 1 / -1;
+}
+
+.student-info-form input[readonly] {
+  cursor: default;
+  background: #f6f8fa;
+  color: var(--muted);
+}
+
+.student-info-submit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.student-info-submit .message {
+  margin: 0;
+}
+
 /* ==============================
    Table
    ============================== */
 
 .table-wrapper {
   overflow-x: auto;
+
   border: 1px solid var(--border);
   border-radius: 12px;
+
   background: var(--white);
 }
 
 .data-table {
   width: 100%;
+
   border-collapse: collapse;
+
   min-width: 650px;
 }
 
 .data-table th,
 .data-table td {
   padding: 13px 15px;
+
   border-bottom: 1px solid var(--border);
+
   text-align: left;
+
   font-size: 0.8rem;
 }
 
 .data-table th {
   background: #f8fafb;
-  color: #667085;
+
+  color: var(--muted);
+
   font-size: 0.74rem;
   font-weight: 700;
 }
@@ -735,8 +1189,10 @@ a {
 
 .empty-table-row td {
   padding: 42px 15px;
+
   text-align: center;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
 
 /* ==============================
@@ -745,12 +1201,17 @@ a {
 
 .modal-overlay {
   position: fixed;
+
   inset: 0;
+
   z-index: 1000;
+
   padding: 20px;
+
   display: none;
   align-items: center;
   justify-content: center;
+
   background: rgba(15, 23, 42, 0.5);
 }
 
@@ -760,19 +1221,27 @@ a {
 
 .modal-box {
   width: min(600px, 100%);
+
   max-height: 90vh;
+
   overflow-y: auto;
+
   background: var(--white);
+
   border-radius: 16px;
+
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
   padding: 18px 20px;
+
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+
   gap: 16px;
+
   border-bottom: 1px solid var(--border);
 }
 
@@ -783,22 +1252,28 @@ a {
 
 .modal-header p {
   margin-top: 3px;
+
   font-size: 0.75rem;
-  color: var(--text-muted);
+
+  color: var(--muted);
 }
 
 .modal-close {
   width: 34px;
   height: 34px;
+
   flex: 0 0 34px;
+
   border-radius: 50%;
+
   background: #f2f4f6;
-  color: #667085;
+  color: var(--muted);
+
   cursor: pointer;
 }
 
 .modal-close:hover {
-  background: var(--primary-light);
+  background: var(--primary-soft);
   color: var(--primary);
 }
 
@@ -808,9 +1283,12 @@ a {
 
 .modal-footer {
   padding: 14px 20px 20px;
+
   display: flex;
   justify-content: flex-end;
+
   gap: 9px;
+
   border-top: 1px solid var(--border);
 }
 
@@ -819,15 +1297,23 @@ a {
    ============================== */
 
 .footer {
-  padding: 20px;
-  background: var(--white);
-  border-top: 1px solid var(--border);
+  width: 100%;
+
+  padding: 18px;
+
+  flex-shrink: 0;
+
+  background: #101828;
+
+  border-top: 0;
+
   text-align: center;
 }
 
 .footer p {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  color: #f2f4f7;
+
+  font-size: 0.8rem;
 }
 
 /* ==============================
@@ -876,7 +1362,9 @@ a {
   .btn-logout {
     width: 40px;
     height: 40px;
+
     padding: 0;
+
     justify-content: center;
   }
 
@@ -890,6 +1378,7 @@ a {
 
   .dashboard-sidebar {
     padding: 9px 10px;
+
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -901,14 +1390,19 @@ a {
 
   .sidebar-menu {
     flex-direction: row;
+
     overflow-x: auto;
+
     gap: 7px;
+
     padding-bottom: 4px;
   }
 
   .sidebar-item {
     flex: 0 0 auto;
+
     width: auto;
+
     white-space: nowrap;
   }
 
@@ -920,12 +1414,500 @@ a {
     padding: 16px;
   }
 
+  .panel-header {
+    padding: 16px 18px 16px 22px;
+
+    border-radius: 12px;
+  }
+
+  .panel-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .panel-header p {
+    font-size: 0.76rem;
+  }
+
   .profile-card {
     flex-direction: column;
+
     text-align: center;
   }
 }
+/* =========================================
+   Edit Student Profile Modal
+   ========================================= */
 
+.profile-edit-modal {
+  width: min(850px, 100%);
+}
+
+.profile-edit-modal .modal-body {
+  padding: 22px;
+}
+
+.profile-edit-modal .modal-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-edit-modal .modal-header h3 i {
+  color: var(--primary);
+}
+
+/* ==============================
+   Form Section
+   ============================== */
+
+.profile-image-form-section {
+  padding-top: 0;
+}
+
+.modal-profile-image-editor {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #edf1f4;
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.modal-profile-image-preview {
+  width: 100px;
+  height: 100px;
+  flex: 0 0 100px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 2.2rem;
+}
+
+.modal-profile-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-profile-image-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.modal-profile-image-actions label {
+  cursor: pointer;
+}
+
+.modal-profile-image-actions input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-profile-image-actions small,
+.modal-profile-image-actions .message {
+  width: 100%;
+}
+
+.modal-profile-image-actions small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.modal-profile-image-actions .message {
+  margin: 0;
+}
+
+.profile-form-section {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-form-section:first-child {
+  padding-top: 0;
+}
+
+.profile-form-section:last-of-type {
+  border-bottom: 0;
+}
+
+.profile-form-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 18px;
+}
+
+.profile-form-title > i {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.profile-form-title h4 {
+  margin: 0;
+
+  font-family: "Sarabun", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+
+  color: var(--text);
+}
+
+.profile-form-title p {
+  margin-top: 3px;
+
+  font-size: 0.72rem;
+
+  color: var(--muted);
+}
+
+/* ==============================
+   Form Grid
+   ============================== */
+
+.profile-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 0 18px;
+}
+
+.profile-form-full {
+  grid-column: 1 / -1;
+}
+
+/* ==============================
+   Profile Form Fields
+   ============================== */
+
+.profile-edit-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.profile-edit-modal .form-group label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--text);
+
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.profile-edit-modal .form-group input,
+.profile-edit-modal .form-group select,
+.profile-edit-modal .form-group textarea {
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  outline: none;
+
+  background: var(--white);
+  color: var(--text);
+
+  font-size: 0.8rem;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.profile-edit-modal .form-group input:focus,
+.profile-edit-modal .form-group select:focus,
+.profile-edit-modal .form-group textarea:focus {
+  border-color: var(--primary);
+
+  box-shadow:
+    0 0 0 3px var(--primary-soft);
+}
+
+.profile-edit-modal .form-group textarea {
+  resize: vertical;
+
+  min-height: 85px;
+}
+
+/* Placeholder */
+
+.profile-edit-modal
+.form-group
+input::placeholder,
+.profile-edit-modal
+.form-group
+textarea::placeholder {
+  color: #a4acb6;
+}
+/* =========================================================
+   Mentor Section
+   ========================================================= */
+
+#panel-mentor .section-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 22px;
+  margin-top: 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+/* หัวข้อข้อมูลพี่เลี้ยง */
+#panel-mentor .request-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+#panel-mentor .request-card-head h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+}
+
+#panel-mentor .request-card-head h4 i {
+  color: #1d4ed8;
+  font-size: 18px;
+}
+
+#panel-mentor .request-card-head p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   Mentor Information
+   ========================================================= */
+
+#panel-mentor .info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+  padding: 18px 0;
+}
+
+#panel-mentor .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+#panel-mentor .info-item span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+#panel-mentor .info-item strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Mentor Action Buttons
+   ========================================================= */
+
+#panel-mentor .request-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f7;
+}
+
+/* ปุ่มทั่วไป */
+#panel-mentor .btn-mock-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 38px;
+
+  padding: 8px 14px;
+
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #2563eb;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+#panel-mentor .btn-mock-sm:hover {
+  background: #eff6ff;
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+}
+
+#panel-mentor .btn-mock-sm:active {
+  transform: scale(0.98);
+}
+
+/* ปุ่มเพิ่มข้อมูล */
+#panel-mentor .btn-mock-sm.solid {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+#panel-mentor .btn-mock-sm.solid:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* =========================================================
+   Delete Button
+   ========================================================= */
+
+#panel-mentor .btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 38px;
+
+  padding: 8px 14px;
+
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #dc2626;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+#panel-mentor .btn-danger-outline:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+
+#panel-mentor .btn-danger-outline:active {
+  transform: scale(0.98);
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 768px) {
+  #panel-mentor .section-card {
+    padding: 18px;
+  }
+
+  #panel-mentor .info-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  #panel-mentor .request-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #panel-mentor .btn-mock-sm,
+  #panel-mentor .btn-danger-outline {
+    width: 100%;
+  }
+}
+/* ==============================
+   Profile Modal Responsive
+   ============================== */
+
+@media (max-width: 700px) {
+  .profile-edit-modal {
+    max-height: 94vh;
+  }
+
+  .profile-edit-modal .modal-body {
+    padding: 18px;
+  }
+
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-form-full {
+    grid-column: auto;
+  }
+
+  .profile-form-section {
+    padding: 18px 0;
+  }
+
+  .profile-edit-modal .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .profile-edit-modal .modal-footer button {
+    width: 100%;
+  }
+}
 @media (max-width: 480px) {
   .dashboard-content {
     padding: 12px;
@@ -939,5 +1921,21 @@ a {
   .info-card,
   .profile-card {
     padding: 16px;
+  }
+}
+
+@media (max-width: 620px) {
+  .modal-profile-image-editor {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .student-info-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .student-info-form-full {
+    grid-column: auto;
   }
 }

@@ -1,11 +1,18 @@
 require("dotenv").config();
 
 const express = require("express");
+
 const cors = require("cors");
+
 const sequelize = require("./config/database");
 
 const authRoutes = require("./routes/auth.routes");
+
 const studentProfileRoutes = require("./routes/studentProfile.routes");
+
+const teacherRoutes = require("./routes/teacher.routes");
+
+const mentorRoutes = require("./routes/mentor.routes");
 
 // โหลด models ทั้งหมด
 // Student, StudentProfile และ associate()
@@ -17,6 +24,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+
 app.use(express.json());
 
 // ==============================
@@ -51,7 +59,22 @@ app.get("/health/db", async (req, res) => {
 app.use("/api/auth", authRoutes);
 
 // Student Profile routes
-app.use("/api/student-profile", studentProfileRoutes);
+app.use(
+  "/api/student-profile",
+  studentProfileRoutes,
+);
+
+// Teacher routes
+app.use(
+  "/api/teachers",
+  teacherRoutes,
+);
+
+// Mentor routes
+app.use(
+  "/api/mentors",
+  mentorRoutes,
+);
 
 // ==============================
 // Database + Server
@@ -72,13 +95,15 @@ sequelize
     console.log("Models synced.");
 
     app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(
+        `Server is running on http://localhost:${PORT}`,
+      );
     });
   })
   .catch((error) => {
     console.error(
       "Unable to connect to the database:",
-      error
+      error,
     );
 
     process.exit(1);
