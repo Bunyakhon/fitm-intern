@@ -1,3 +1,5 @@
+import { registerStudent } from "../api/auth.api.js";
+
 const registerForm = document.getElementById("registerForm");
 
 const regStudentId = document.getElementById("regStudentId");
@@ -89,32 +91,13 @@ registerForm.addEventListener("submit", async (event) => {
   `;
 
   try {
-    const response = await fetch(
-      "http://localhost:5000/api/auth/register",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          student_id: studentId,
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          password,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message || "ไม่สามารถสมัครสมาชิกได้"
-      );
-    }
+    const result = await registerStudent({
+      student_id: studentId,
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      password,
+    });
 
     registerMessage.textContent =
       result.message || "สมัครสมาชิกสำเร็จ";

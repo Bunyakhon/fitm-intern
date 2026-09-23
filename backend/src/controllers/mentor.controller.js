@@ -1,6 +1,15 @@
 const {
   Mentor,
+  sequelize,
 } = require("../models");
+
+const {
+  createMentorVerificationToken,
+} = require("../services/mentorToken.service");
+
+const {
+  sendMentorVerificationEmail,
+} = require("../services/email.service");
 
 // ==============================
 // Helper
@@ -78,6 +87,8 @@ exports.getMyMentor = async (req, res) => {
 // ==============================
 
 exports.createMentor = async (req, res) => {
+  let transaction;
+
   try {
     const studentId = req.user.id;
 
@@ -132,6 +143,8 @@ exports.createMentor = async (req, res) => {
     // เริ่มต้นเป็น pending
     // ==============================
 
+    transaction = await sequelize.transaction();
+
     const mentor =
       await Mentor.create({
         student_id: studentId,
@@ -153,15 +166,48 @@ exports.createMentor = async (req, res) => {
         status: "pending",
 
         verified_at: null,
+      }, {
+        transaction,
       });
+
+    const { token } =
+      await createMentorVerificationToken(
+        mentor.id,
+        { transaction },
+      );
+
+    await transaction.commit();
+    transaction = null;
+
+    let verificationEmailSent = true;
+
+    try {
+      await sendMentorVerificationEmail({
+        to: mentor.email,
+        firstName: mentor.first_name,
+        lastName: mentor.last_name,
+        token,
+      });
+    } catch (emailError) {
+      verificationEmailSent = false;
+      console.error("MENTOR VERIFICATION EMAIL ERROR");
+    }
 
     return res.status(201).json({
       success: true,
-      message:
-        "เพิ่มข้อมูลพี่เลี้ยงสำเร็จ",
-      data: mentor,
+      message: verificationEmailSent
+        ? "บันทึกข้อมูลพี่เลี้ยงและส่งอีเมลยืนยันเรียบร้อยแล้ว"
+        : "บันทึกข้อมูลพี่เลี้ยงเรียบร้อยแล้ว แต่ไม่สามารถส่งอีเมลยืนยันได้",
+      data: {
+        mentor,
+        verification_email_sent: verificationEmailSent,
+      },
     });
   } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
     console.error(
       "CREATE MENTOR ERROR:",
       error,
@@ -217,6 +263,8 @@ exports.updateMyMentor = async (
   req,
   res,
 ) => {
+  let transaction;
+
   try {
     const studentId = req.user.id;
 
@@ -272,6 +320,8 @@ exports.updateMyMentor = async (
     // ต้องกลับไปรอยืนยันใหม่
     // ==============================
 
+    transaction = await sequelize.transaction();
+
     mentor.email =
       email
         .toLowerCase()
@@ -290,15 +340,46 @@ exports.updateMyMentor = async (
 
     mentor.verified_at = null;
 
-    await mentor.save();
+    await mentor.save({ transaction });
+
+    const { token } =
+      await createMentorVerificationToken(
+        mentor.id,
+        { transaction },
+      );
+
+    await transaction.commit();
+    transaction = null;
+
+    let verificationEmailSent = true;
+
+    try {
+      await sendMentorVerificationEmail({
+        to: mentor.email,
+        firstName: mentor.first_name,
+        lastName: mentor.last_name,
+        token,
+      });
+    } catch (emailError) {
+      verificationEmailSent = false;
+      console.error("MENTOR VERIFICATION EMAIL ERROR");
+    }
 
     return res.status(200).json({
       success: true,
-      message:
-        "แก้ไขข้อมูลพี่เลี้ยงสำเร็จ",
-      data: mentor,
+      message: verificationEmailSent
+        ? "แก้ไขข้อมูลพี่เลี้ยงและส่งอีเมลยืนยันเรียบร้อยแล้ว"
+        : "แก้ไขข้อมูลพี่เลี้ยงเรียบร้อยแล้ว แต่ไม่สามารถส่งอีเมลยืนยันได้",
+      data: {
+        mentor,
+        verification_email_sent: verificationEmailSent,
+      },
     });
   } catch (error) {
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+
     console.error(
       "UPDATE MENTOR ERROR:",
       error,

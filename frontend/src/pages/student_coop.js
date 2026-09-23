@@ -1,6 +1,14 @@
-console.log("KIWI student cooperative dashboard loaded");
+import { getCurrentStudent } from "../api/auth.api.js";
+import {
+  getMyStudentProfile,
+  getStudentProfileImage,
+  updateMyStudentProfile,
+  updateStudentInfo,
+  uploadStudentProfileImage,
+} from "../api/studentProfile.api.js";
+import { getTeachers } from "../api/teacher.api.js";
 
-const API_URL = "http://localhost:5000";
+console.log("KIWI student cooperative dashboard loaded");
 
 // ==============================
 // Elements
@@ -21,6 +29,9 @@ const logoutBtn =
 
 const profileFullName =
   document.getElementById("profileFullName");
+
+const profilePrefix =
+  document.getElementById("profilePrefix");
 
 const profileStudentId =
   document.getElementById("profileStudentId");
@@ -203,24 +214,7 @@ async function checkAuthentication() {
   }
 
   try {
-    const response = await fetch(
-      `${API_URL}/api/auth/me`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message ||
-        "ไม่สามารถตรวจสอบผู้ใช้งานได้"
-      );
-    }
+    const result = await getCurrentStudent();
 
     if (!result.data) {
       throw new Error(
@@ -253,8 +247,8 @@ async function checkAuthentication() {
     renderStudent(student);
 
     // โหลดข้อมูลเพิ่มเติมจาก student_profiles
-    const studentProfile = await loadStudentProfile(token);
-    await loadTeachers(token, studentProfile?.advisor_teacher_id);
+    const studentProfile = await loadStudentProfile();
+    await loadTeachers(studentProfile?.advisor_teacher_id);
   } catch (error) {
     console.error(
       "AUTH CHECK ERROR:",
@@ -271,26 +265,9 @@ async function checkAuthentication() {
 // Load Student Profile
 // ==============================
 
-async function loadStudentProfile(token) {
+async function loadStudentProfile() {
   try {
-    const response = await fetch(
-      `${API_URL}/api/student-profile`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message ||
-        "ไม่สามารถโหลดข้อมูลประวัตินักศึกษาได้"
-      );
-    }
+    const result = await getMyStudentProfile();
 
     if (!result.student) {
       throw new Error(
@@ -308,11 +285,14 @@ async function loadStudentProfile(token) {
 
     currentStudent = result.student;
     populateStudentInfoForm(result.student);
-    await loadProfileImage(token, Boolean(result.student.profile_image));
+    await loadProfileImage(Boolean(result.student.profile_image));
 
     // เก็บข้อมูล student_profiles ปัจจุบัน
     currentStudentProfile =
       result.student.profile || null;
+
+    // Re-render once the profile is available so its prefix is included in the name.
+    renderStudent(currentStudent);
 
     // แสดงข้อมูลจาก student_profiles
     renderStudentProfile(
@@ -347,24 +327,9 @@ function formatTeacherName(teacher) {
 }
 
 function getStudentCode(student) {
-  const rawStudentId = String(student?.student_id || "").trim();
-  const email = String(student?.email || "").trim();
-
-  if (/^s\d{13}$/.test(rawStudentId)) {
-    return rawStudentId;
-  }
-
-  const emailLocalPart = email.split("@")[0];
-  if (/^s\d{13}$/.test(emailLocalPart)) {
-    return emailLocalPart;
-  }
-
-  const studentIdLocalPart = rawStudentId.split("@")[0];
-  if (/^s\d{13}$/.test(studentIdLocalPart)) {
-    return studentIdLocalPart;
-  }
-
-  return rawStudentId || "-";
+  // The student code is authoritative only when read from students.student_id.
+  // Email may legitimately begin with "s" and must never be used as a fallback.
+  return String(student?.student_id || "").trim() || "-";
 }
 
 function populateStudentInfoForm(student) {
@@ -410,27 +375,13 @@ function setInputElementValue(element, value) {
   }
 }
 
-async function loadTeachers(token, selectedTeacherId = currentStudent?.advisor_teacher_id) {
+async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_id) {
   if (!studentAdvisorInput) {
     return;
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/teachers`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.status === 401) {
-      clearAuthentication();
-      redirectToLogin();
-      return;
-    }
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message || "ไม่สามารถโหลดรายชื่ออาจารย์ได้");
-    }
+    const result = await getTeachers();
 
     studentAdvisorInput.replaceChildren();
     const emptyOption = document.createElement("option");
@@ -448,6 +399,13 @@ async function loadTeachers(token, selectedTeacherId = currentStudent?.advisor_t
     studentAdvisorInput.value = selectedTeacherId || "";
   } catch (error) {
     console.error("LOAD TEACHERS ERROR:", error);
+
+    if (error.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+
     showMessage(studentInfoMessage, error.message || "ไม่สามารถโหลดรายชื่ออาจารย์ได้", "error");
   }
 }
@@ -498,31 +456,24 @@ function showProfileImagePreview(objectUrl) {
   }
 }
 
-async function loadProfileImage(token, hasProfileImage) {
+async function loadProfileImage(hasProfileImage) {
   if (!hasProfileImage) {
     resetProfileImagePreview();
     return;
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/student-profile/profile-image`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const image = await getStudentProfileImage();
+    showProfileImagePreview(URL.createObjectURL(image));
+  } catch (error) {
+    console.error("LOAD PROFILE IMAGE ERROR:", error);
 
-    if (response.status === 401) {
+    if (error.status === 401) {
       clearAuthentication();
       redirectToLogin();
       return;
     }
 
-    if (!response.ok) {
-      resetProfileImagePreview();
-      return;
-    }
-
-    showProfileImagePreview(URL.createObjectURL(await response.blob()));
-  } catch (error) {
-    console.error("LOAD PROFILE IMAGE ERROR:", error);
     resetProfileImagePreview();
   }
 }
@@ -561,21 +512,7 @@ async function uploadSelectedProfileImage() {
   );
 
   try {
-    const response = await fetch(`${API_URL}/api/student-profile/profile-image`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const result = await response.json();
-    if (response.status === 401) {
-      clearAuthentication();
-      redirectToLogin();
-      return;
-    }
-    if (!response.ok) {
-      throw new Error(result.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้");
-    }
+    const result = await uploadStudentProfileImage(formData);
 
     selectedProfileImageFile = null;
     if (profileImageInput) {
@@ -585,10 +522,17 @@ async function uploadSelectedProfileImage() {
       ...(currentStudent || {}),
       profile_image: result.profile_image || true,
     };
-    await loadProfileImage(token, true);
+    await loadProfileImage(true);
     showMessage(profileImageMessage, "อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
   } catch (error) {
     console.error("UPLOAD PROFILE IMAGE ERROR:", error);
+
+    if (error.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+
     showMessage(profileImageMessage, error.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้", "error");
   } finally {
     setStudentInfoButtonState(
@@ -635,30 +579,20 @@ async function saveStudentInfo(event) {
   setStudentInfoButtonState(saveStudentInfoBtn, true, "กำลังบันทึก...", defaultButtonLabel);
 
   try {
-    const response = await fetch(`${API_URL}/api/student-profile/student-info`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json();
+    await updateStudentInfo(payload);
 
-    if (response.status === 401) {
+    const student = await loadStudentProfile();
+    await loadTeachers(student?.advisor_teacher_id);
+    showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
+  } catch (error) {
+    console.error("SAVE STUDENT INFO ERROR:", error);
+
+    if (error.status === 401) {
       clearAuthentication();
       redirectToLogin();
       return;
     }
-    if (!response.ok) {
-      throw new Error(result.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้");
-    }
 
-    const student = await loadStudentProfile(token);
-    await loadTeachers(token, student?.advisor_teacher_id);
-    showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
-  } catch (error) {
-    console.error("SAVE STUDENT INFO ERROR:", error);
     showMessage(studentInfoMessage, error.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้", "error");
   } finally {
     setStudentInfoButtonState(saveStudentInfoBtn, false, "", defaultButtonLabel);
@@ -694,6 +628,10 @@ profileImageInput?.addEventListener("change", () => {
   uploadProfileImageBtn.disabled = false;
 });
 
+document.getElementById("editBirthDate")?.addEventListener("change", () => {
+  setInputValue("editAge", calculateAge(getInputValue("editBirthDate")));
+});
+
 uploadProfileImageBtn?.addEventListener("click", uploadSelectedProfileImage);
 studentInfoForm?.addEventListener("submit", saveStudentInfo);
 window.addEventListener("beforeunload", clearProfileImageObjectUrl);
@@ -705,9 +643,8 @@ function renderStudent(student) {
   const lastName =
     student.last_name || "";
 
-  const fullName =
-    `${firstName} ${lastName}`.trim() ||
-    "-";
+  const prefix = String(currentStudentProfile?.prefix || "").trim();
+  const fullName = [prefix, firstName, lastName].filter(Boolean).join(" ") || "-";
 
   const studentId = getStudentCode(student);
 
@@ -813,6 +750,8 @@ function renderStudentProfile(profile) {
 
     return;
   }
+
+  setText(profilePrefix, profile.prefix || "-");
 
   setText(
     profileBirthDate,
@@ -1103,8 +1042,18 @@ function fillProfileEditForm(profile) {
   const data = profile || {};
 
   setInputValue(
+    "editPrefix",
+    data.prefix
+  );
+
+  setInputValue(
     "editBirthDate",
     data.birth_date
+  );
+
+  setInputValue(
+    "editAge",
+    data.birth_date ? calculateAge(data.birth_date) : ""
   );
 
   setInputValue(
@@ -1307,6 +1256,11 @@ async function saveStudentProfile() {
   );
 
   const payload = {
+    prefix:
+      getNullableText(
+        "editPrefix"
+      ),
+
     birth_date:
       getNullableText(
         "editBirthDate"
@@ -1453,37 +1407,10 @@ async function saveStudentProfile() {
       `;
     }
 
-    const response =
-      await fetch(
-        `${API_URL}/api/student-profile`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type":
-              "application/json",
-            Authorization:
-              `Bearer ${token}`,
-          },
-          body: JSON.stringify(
-            payload
-          ),
-        }
-      );
-
-    const result =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message ||
-        "ไม่สามารถบันทึกข้อมูลได้"
-      );
-    }
+    await updateMyStudentProfile(payload);
 
     // โหลดข้อมูลจริงจาก Database ใหม่
-    await loadStudentProfile(
-      token
-    );
+    await loadStudentProfile();
 
     showMessage(
       profileEditMessage,

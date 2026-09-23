@@ -2,7 +2,9 @@ const express = require("express");
 
 const {
   getStudentProfile,
+  getMyProfile,
   upsertStudentProfile,
+  updateMyProfile,
   updateStudentInfo,
   uploadProfileImage,
   getProfileImage,
@@ -20,6 +22,9 @@ const {
 const router = express.Router();
 
 // ดูข้อมูลประวัตินักศึกษาของผู้ที่ Login อยู่
+router.get("/me", authenticateToken, getMyProfile);
+router.put("/me", authenticateToken, updateMyProfile);
+
 router.get("/", authenticateToken, getStudentProfile);
 
 router.get("/profile-image", authenticateToken, getProfileImage);

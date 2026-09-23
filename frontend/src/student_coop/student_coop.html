@@ -316,6 +316,11 @@
               <h3 id="profileFullName">-</h3>
 
               <p>
+                คำนำหน้า:
+                <strong id="profilePrefix"> - </strong>
+              </p>
+
+              <p>
                 รหัสประจำตัวนักศึกษา:
                 <strong id="profileStudentId"> - </strong>
               </p>
@@ -470,6 +475,25 @@
               </div>
 
               <div class="info-item">
+                <span>ความสามารถพิเศษ</span>
+                <strong id="profileSpecialAbilities"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span>
+                <strong id="profileRelatedSkills"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-heart-pulse"></i>
+              ข้อมูลสุขภาพ
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
                 <span>กรุ๊ปเลือด</span>
                 <strong id="profileBloodType"> - </strong>
               </div>
@@ -482,16 +506,6 @@
               <div class="info-item">
                 <span>อาการแพ้</span>
                 <strong id="profileAllergies"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ความสามารถพิเศษ</span>
-                <strong id="profileSpecialAbilities"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span>
-                <strong id="profileRelatedSkills"> - </strong>
               </div>
             </div>
           </div>
@@ -1096,9 +1110,26 @@
 
               <div class="profile-form-grid">
                 <div class="form-group">
+                  <label for="editPrefix">คำนำหน้า</label>
+
+                  <select id="editPrefix" name="prefix">
+                    <option value="">-- เลือกคำนำหน้า --</option>
+                    <option value="นาย">นาย</option>
+                    <option value="นางสาว">นางสาว</option>
+                    <option value="นาง">นาง</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
                   <label for="editBirthDate"> วันเกิด </label>
 
                   <input type="date" id="editBirthDate" name="birth_date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="editAge">อายุ</label>
+
+                  <input type="text" id="editAge" readonly />
                 </div>
 
                 <div class="form-group">
@@ -1169,6 +1200,7 @@
                     <option value="B">B</option>
                     <option value="AB">AB</option>
                     <option value="O">O</option>
+                    <option value="ไม่ทราบ">ไม่ทราบ</option>
                   </select>
                 </div>
 

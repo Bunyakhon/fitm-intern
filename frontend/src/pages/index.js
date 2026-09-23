@@ -1,3 +1,5 @@
+import { getCurrentStudent } from "../api/auth.api.js";
+
 console.log("KIWI index page loaded");
 
 // ==============================
@@ -16,24 +18,7 @@ async function checkAuth() {
   }
 
   try {
-    const response = await fetch(
-      "http://localhost:5000/api/auth/me",
-      {
-        method: "GET",
-
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message || "ไม่สามารถตรวจสอบผู้ใช้งานได้"
-      );
-    }
+    const result = await getCurrentStudent();
 
     // อัปเดตข้อมูล student ล่าสุดจาก Backend
     localStorage.setItem(

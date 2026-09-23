@@ -12,6 +12,82 @@ const {
   toStorageRelativePath,
 } = require("../config/storage");
 
+const PROFILE_FIELDS = [
+  "prefix", "birth_date", "height_cm", "weight_kg", "nationality",
+  "ethnicity", "religion", "blood_type", "medical_conditions", "allergies",
+  "special_abilities", "related_skills", "hometown_address", "hometown_phone",
+  "current_address", "current_phone", "father_name", "father_age",
+  "father_occupation", "mother_name", "mother_age", "mother_occupation",
+  "parent_contact_address", "parent_phone", "emergency_contact_name",
+  "emergency_contact_relation", "emergency_contact_address", "emergency_contact_phone",
+];
+
+const TEXT_FIELDS = new Set([
+  "prefix", "nationality", "ethnicity", "religion", "blood_type",
+  "medical_conditions", "allergies", "special_abilities", "related_skills",
+  "hometown_address", "current_address", "father_name", "father_occupation",
+  "mother_name", "mother_occupation", "parent_contact_address",
+  "emergency_contact_name", "emergency_contact_relation", "emergency_contact_address",
+]);
+const PHONE_FIELDS = new Set(["hometown_phone", "current_phone", "parent_phone", "emergency_contact_phone"]);
+const POSITIVE_NUMBER_FIELDS = new Set(["height_cm", "weight_kg"]);
+const POSITIVE_INTEGER_FIELDS = new Set(["father_age", "mother_age"]);
+const PREFIXES = new Set(["นาย", "นางสาว", "นาง"]);
+const BLOOD_TYPES = new Set(["A", "B", "AB", "O", "ไม่ทราบ"]);
+
+const validationError = (message) => Object.assign(new Error(message), { status: 400 });
+
+const normalizeOptionalText = (value, field) => {
+  if (value === null || value === "") return null;
+  if (typeof value !== "string") throw validationError(`${field} ต้องเป็นข้อความหรือค่าว่าง`);
+  return value.trim() || null;
+};
+
+const normalizeProfileData = (body) => {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw validationError("ข้อมูลที่ส่งมาต้องเป็น JSON object");
+  }
+  const unsupported = Object.keys(body).filter((field) => !PROFILE_FIELDS.includes(field));
+  if (unsupported.length) throw validationError(`ไม่อนุญาตให้แก้ไขข้อมูล: ${unsupported.join(", ")}`);
+
+  const data = {};
+  for (const field of PROFILE_FIELDS) {
+    if (body[field] === undefined) continue;
+    const value = body[field];
+    if (TEXT_FIELDS.has(field)) {
+      data[field] = normalizeOptionalText(value, field);
+    } else if (PHONE_FIELDS.has(field)) {
+      const phone = normalizeOptionalText(value, field);
+      const digitCount = (phone?.match(/\d/g) || []).length;
+      if (phone && (!/^[+\d\s()-]+$/.test(phone) || digitCount < 7 || digitCount > 20)) {
+        throw validationError(`${field} มีรูปแบบหมายเลขโทรศัพท์ไม่ถูกต้อง`);
+      }
+      data[field] = phone;
+    } else if (POSITIVE_NUMBER_FIELDS.has(field)) {
+      if (value === null || value === "") data[field] = null;
+      else if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) throw validationError(`${field} ต้องเป็นจำนวนบวก`);
+      else data[field] = value;
+    } else if (POSITIVE_INTEGER_FIELDS.has(field)) {
+      if (value === null || value === "") data[field] = null;
+      else if (!Number.isInteger(value) || value <= 0) throw validationError(`${field} ต้องเป็นจำนวนเต็มบวกหรือค่าว่าง`);
+      else data[field] = value;
+    } else if (field === "birth_date") {
+      if (value === null || value === "") data[field] = null;
+      else if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw validationError("birth_date ต้องอยู่ในรูปแบบ YYYY-MM-DD");
+      else {
+        const birthDate = new Date(`${value}T00:00:00Z`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (Number.isNaN(birthDate.getTime()) || birthDate > today) throw validationError("birth_date ต้องไม่เป็นวันที่ในอนาคต");
+        data[field] = value;
+      }
+    }
+  }
+  if (data.prefix && !PREFIXES.has(data.prefix)) throw validationError("prefix ต้องเป็น นาย, นางสาว หรือ นาง");
+  if (data.blood_type && !BLOOD_TYPES.has(data.blood_type)) throw validationError("blood_type ต้องเป็น A, B, AB, O หรือ ไม่ทราบ");
+  return data;
+};
+
 // ==============================
 // GET ข้อมูลประวัตินักศึกษา
 // ของผู้ที่ Login อยู่
@@ -118,9 +194,12 @@ const getStudentProfile = async (req, res) => {
     }
 
     return res.status(200).json({
+      success: true,
       message:
         "ดึงข้อมูลประวัตินักศึกษาสำเร็จ",
 
+      data: student,
+      // Kept temporarily for the existing student dashboard caller.
       student,
     });
   } catch (error) {
@@ -161,6 +240,7 @@ const upsertStudentProfile = async (
     }
 
     const allowedFields = [
+      "prefix",
       "birth_date",
       "height_cm",
       "weight_kg",
@@ -204,6 +284,10 @@ const upsertStudentProfile = async (
       },
     );
 
+    const normalizedProfileData = normalizeProfileData(req.body);
+    Object.keys(profileData).forEach((field) => delete profileData[field]);
+    Object.assign(profileData, normalizedProfileData);
+
     let profile =
       await StudentProfile.findOne({
         where: {
@@ -243,17 +327,12 @@ const upsertStudentProfile = async (
       error,
     );
 
-    if (
-      error.name ===
-      "SequelizeValidationError"
-    ) {
+    if (error.status === 400 || error.name === "SequelizeValidationError") {
       return res.status(400).json({
         message:
-          "ข้อมูลไม่ถูกต้อง",
+          error.status === 400 ? error.message : "ข้อมูลไม่ถูกต้อง",
 
-        errors: error.errors.map(
-          (item) => item.message,
-        ),
+        errors: error.errors?.map((item) => item.message) || [error.message],
       });
     }
 
@@ -315,9 +394,9 @@ const updateStudentInfo = async (req, res) => {
       updateData.year_level !== null &&
       (!Number.isInteger(updateData.year_level) ||
         updateData.year_level < 1 ||
-        updateData.year_level > 8)
+        updateData.year_level > 4)
     ) {
-      return res.status(400).json({ message: "year_level ต้องเป็นจำนวนเต็มระหว่าง 1 ถึง 8 หรือ null" });
+      return res.status(400).json({ message: "year_level ต้องเป็นจำนวนเต็มระหว่าง 1 ถึง 4 หรือ null" });
     }
 
     if (
@@ -577,7 +656,9 @@ const uploadResume = async (req, res) => {
 
 module.exports = {
   getStudentProfile,
+  getMyProfile: getStudentProfile,
   upsertStudentProfile,
+  updateMyProfile: upsertStudentProfile,
   updateStudentInfo,
   uploadProfileImage,
   getProfileImage,

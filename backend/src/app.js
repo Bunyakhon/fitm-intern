@@ -13,7 +13,7 @@ const studentProfileRoutes = require("./routes/studentProfile.routes");
 const teacherRoutes = require("./routes/teacher.routes");
 
 const mentorRoutes = require("./routes/mentor.routes");
-
+const mentorVerificationRoutes = require("./routes/mentorVerification.routes");
 // โหลด models ทั้งหมด
 // Student, StudentProfile และ associate()
 require("./models");
@@ -59,22 +59,15 @@ app.get("/health/db", async (req, res) => {
 app.use("/api/auth", authRoutes);
 
 // Student Profile routes
-app.use(
-  "/api/student-profile",
-  studentProfileRoutes,
-);
+app.use("/api/student-profile", studentProfileRoutes);
 
 // Teacher routes
-app.use(
-  "/api/teachers",
-  teacherRoutes,
-);
+app.use("/api/teachers", teacherRoutes);
 
 // Mentor routes
-app.use(
-  "/api/mentors",
-  mentorRoutes,
-);
+app.use("/api/mentors", mentorRoutes);
+app.use("/api/mentor-verification", mentorVerificationRoutes);
+
 
 // ==============================
 // Database + Server
@@ -95,16 +88,11 @@ sequelize
     console.log("Models synced.");
 
     app.listen(PORT, () => {
-      console.log(
-        `Server is running on http://localhost:${PORT}`,
-      );
+      console.log(`Server is running on http://localhost:${PORT}`);
     });
   })
   .catch((error) => {
-    console.error(
-      "Unable to connect to the database:",
-      error,
-    );
+    console.error("Unable to connect to the database:", error);
 
     process.exit(1);
   });

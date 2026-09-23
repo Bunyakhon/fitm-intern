@@ -1,3 +1,5 @@
+import { loginStudent } from "../api/auth.api.js";
+
 console.log("KIWI login page loaded");
 
 const loginForm = document.getElementById("loginForm");
@@ -51,29 +53,10 @@ loginForm.addEventListener("submit", async (event) => {
   `;
 
   try {
-    const response = await fetch(
-      "http://localhost:5000/api/auth/login",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.message || "ไม่สามารถเข้าสู่ระบบได้"
-      );
-    }
+    const result = await loginStudent({
+      email,
+      password,
+    });
 
     // ต้องมี token จาก Backend
     if (!result.token) {
@@ -104,7 +87,7 @@ loginForm.addEventListener("submit", async (event) => {
 
     // ไปหน้าแรก
     setTimeout(() => {
-      window.location.href = "/student_coop/student_coop.html";
+      window.location.href = "/src/student_coop/student_coop.html";
     }, 1000);
   } catch (error) {
     console.error("LOGIN ERROR:", error);
