@@ -15,6 +15,13 @@
   flex: 1;
 }
 
+.landing-page .hero-section,
+.landing-page .job-recommend-section {
+  animation: landing-enter 460ms ease-out both;
+}
+
+.landing-page .job-recommend-section { animation-delay: 100ms; }
+
 /* =========================================
    HERO
    ========================================= */
@@ -27,7 +34,23 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
 }
+
+.hero-section::before {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  right: -112px;
+  top: -145px;
+  border-radius: 50%;
+  background: rgba(20, 80, 163, 0.055);
+  pointer-events: none;
+}
+
+.hero-section > * { position: relative; }
 
 .hero-section h1 {
   margin-bottom: 12px;
@@ -249,7 +272,12 @@
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
   transition: 0.2s ease;
+  animation: card-enter 380ms ease-out both;
 }
+
+.job-card:nth-child(2) { animation-delay: 70ms; }
+.job-card:nth-child(3) { animation-delay: 140ms; }
+.job-card:nth-child(4) { animation-delay: 210ms; }
 
 .job-card:hover {
   transform: translateY(-4px);
@@ -392,6 +420,7 @@
   background: var(--white);
   border-radius: 18px;
   box-shadow: 0 12px 30px rgba(16, 24, 40, 0.15);
+  animation: filter-modal-enter 200ms ease-out;
 }
 
 .filter-modal-header {
@@ -454,6 +483,21 @@
 .filter-select:focus {
   background: var(--white);
   border-color: var(--primary);
+}
+
+@keyframes landing-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes filter-modal-enter {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .filter-modal-footer {

@@ -7,6 +7,13 @@ import {
   uploadStudentProfileImage,
 } from "../api/studentProfile.api.js";
 import { getTeachers } from "../api/teacher.api.js";
+import {
+  createMentor,
+  deleteMyMentor,
+  getMyMentor,
+  updateMyMentor,
+} from "../api/mentor.api.js";
+import { showConfirmModal, showToast } from "../ui/feedback.js";
 
 console.log("KIWI student cooperative dashboard loaded");
 
@@ -200,6 +207,12 @@ const profileImageEditorSection = document.getElementById("profileImageEditorSec
 const profileImageInput = document.getElementById("profileImageInput");
 const uploadProfileImageBtn = document.getElementById("uploadProfileImageBtn");
 const profileImageMessage = document.getElementById("profileImageMessage");
+const profilePanel = document.getElementById("panel-profile");
+const profileLoadMessage = document.getElementById("profileLoadMessage");
+
+let isStudentInfoSaving = false;
+let isProfileImageUploading = false;
+let isStudentProfileSaving = false;
 
 // ==============================
 // Authentication
@@ -266,6 +279,9 @@ async function checkAuthentication() {
 // ==============================
 
 async function loadStudentProfile() {
+  setProfileLoading(true);
+  showMessage(profileLoadMessage, "กำลังโหลดข้อมูลประวัตินักศึกษา...", "loading");
+
   try {
     const result = await getMyStudentProfile();
 
@@ -299,6 +315,12 @@ async function loadStudentProfile() {
       currentStudentProfile
     );
 
+    if (currentStudentProfile) {
+      clearMessage(profileLoadMessage);
+    } else {
+      showMessage(profileLoadMessage, "ยังไม่มีรายละเอียดประวัติเพิ่มเติม", "info");
+    }
+
     return result.student;
   } catch (error) {
     console.error(
@@ -308,8 +330,28 @@ async function loadStudentProfile() {
 
     currentStudentProfile = null;
 
+    if (error.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return null;
+    }
+
+    showMessage(
+      profileLoadMessage,
+      error.message || "ไม่สามารถโหลดข้อมูลประวัตินักศึกษาได้",
+      "error"
+    );
+
     return null;
+  } finally {
+    setProfileLoading(false);
   }
+}
+
+function setProfileLoading(isLoading) {
+  profilePanel?.classList.toggle("is-loading", isLoading);
+  profilePanel?.classList.toggle("is-ready", !isLoading);
+  profilePanel?.setAttribute("aria-busy", String(isLoading));
 }
 
 // ==============================
@@ -380,6 +422,14 @@ async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_
     return;
   }
 
+  studentAdvisorInput.disabled = true;
+  studentAdvisorInput.setAttribute("aria-busy", "true");
+  studentAdvisorInput.replaceChildren();
+  const loadingOption = document.createElement("option");
+  loadingOption.value = "";
+  loadingOption.textContent = "กำลังโหลดรายชื่ออาจารย์...";
+  studentAdvisorInput.appendChild(loadingOption);
+
   try {
     const result = await getTeachers();
 
@@ -389,12 +439,21 @@ async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_
     emptyOption.textContent = "ยังไม่ได้กำหนด";
     studentAdvisorInput.appendChild(emptyOption);
 
-    (result.teachers || []).forEach((teacher) => {
+    const teachers = Array.isArray(result.teachers) ? result.teachers : [];
+    teachers.forEach((teacher) => {
       const option = document.createElement("option");
       option.value = teacher.id;
       option.textContent = formatTeacherName(teacher);
       studentAdvisorInput.appendChild(option);
     });
+
+    if (teachers.length === 0) {
+      const noTeacherOption = document.createElement("option");
+      noTeacherOption.value = "";
+      noTeacherOption.textContent = "ไม่พบรายชื่ออาจารย์";
+      noTeacherOption.disabled = true;
+      studentAdvisorInput.appendChild(noTeacherOption);
+    }
 
     studentAdvisorInput.value = selectedTeacherId || "";
   } catch (error) {
@@ -407,6 +466,9 @@ async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_
     }
 
     showMessage(studentInfoMessage, error.message || "ไม่สามารถโหลดรายชื่ออาจารย์ได้", "error");
+  } finally {
+    studentAdvisorInput.disabled = false;
+    studentAdvisorInput.setAttribute("aria-busy", "false");
   }
 }
 
@@ -490,6 +552,10 @@ function setStudentInfoButtonState(button, isLoading, loadingLabel, defaultLabel
 }
 
 async function uploadSelectedProfileImage() {
+  if (isProfileImageUploading || isStudentProfileSaving) {
+    return;
+  }
+
   const token = localStorage.getItem("token");
   if (!token) {
     redirectToLogin();
@@ -503,7 +569,9 @@ async function uploadSelectedProfileImage() {
 
   const formData = new FormData();
   formData.append("profile_image", selectedProfileImageFile);
+  isProfileImageUploading = true;
   clearMessage(profileImageMessage);
+  profileImageInput.disabled = true;
   setStudentInfoButtonState(
     uploadProfileImageBtn,
     true,
@@ -524,6 +592,7 @@ async function uploadSelectedProfileImage() {
     };
     await loadProfileImage(true);
     showMessage(profileImageMessage, "อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
+    showToast("อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
   } catch (error) {
     console.error("UPLOAD PROFILE IMAGE ERROR:", error);
 
@@ -535,6 +604,8 @@ async function uploadSelectedProfileImage() {
 
     showMessage(profileImageMessage, error.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้", "error");
   } finally {
+    isProfileImageUploading = false;
+    profileImageInput.disabled = false;
     setStudentInfoButtonState(
       uploadProfileImageBtn,
       false,
@@ -546,6 +617,10 @@ async function uploadSelectedProfileImage() {
 
 async function saveStudentInfo(event) {
   event.preventDefault();
+  if (isStudentInfoSaving) {
+    return;
+  }
+
   const token = localStorage.getItem("token");
   if (!token) {
     redirectToLogin();
@@ -576,6 +651,7 @@ async function saveStudentInfo(event) {
 
   const defaultButtonLabel = '<i class="fa-solid fa-floppy-disk"></i>บันทึกข้อมูลนักศึกษา';
   const saveStudentInfoBtn = document.getElementById("saveStudentInfoBtn");
+  isStudentInfoSaving = true;
   setStudentInfoButtonState(saveStudentInfoBtn, true, "กำลังบันทึก...", defaultButtonLabel);
 
   try {
@@ -584,6 +660,7 @@ async function saveStudentInfo(event) {
     const student = await loadStudentProfile();
     await loadTeachers(student?.advisor_teacher_id);
     showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
+    showToast("บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
   } catch (error) {
     console.error("SAVE STUDENT INFO ERROR:", error);
 
@@ -595,6 +672,7 @@ async function saveStudentInfo(event) {
 
     showMessage(studentInfoMessage, error.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้", "error");
   } finally {
+    isStudentInfoSaving = false;
     setStudentInfoButtonState(saveStudentInfoBtn, false, "", defaultButtonLabel);
   }
 }
@@ -993,6 +1071,10 @@ function setText(
 // ==============================
 
 function openProfileEditModal() {
+  if (isStudentProfileSaving || isProfileImageUploading) {
+    return;
+  }
+
   fillProfileEditForm(
     currentStudentProfile
   );
@@ -1015,6 +1097,10 @@ function openProfileEditModal() {
 }
 
 function closeProfileModal() {
+  if (isStudentProfileSaving) {
+    return;
+  }
+
   profileEditModal?.classList.remove(
     "open"
   );
@@ -1243,6 +1329,10 @@ function getNumberValue(id) {
 }
 
 async function saveStudentProfile() {
+  if (isStudentProfileSaving || isProfileImageUploading) {
+    return;
+  }
+
   const token =
     localStorage.getItem("token");
 
@@ -1397,6 +1487,8 @@ async function saveStudentProfile() {
       ),
   };
 
+  isStudentProfileSaving = true;
+
   try {
     if (saveProfileBtn) {
       saveProfileBtn.disabled = true;
@@ -1418,6 +1510,8 @@ async function saveStudentProfile() {
       "success"
     );
 
+    showToast("บันทึกข้อมูลประวัติเรียบร้อยแล้ว", "success");
+
     setTimeout(
       () => {
         closeProfileModal();
@@ -1437,6 +1531,7 @@ async function saveStudentProfile() {
       "error"
     );
   } finally {
+    isStudentProfileSaving = false;
     if (saveProfileBtn) {
       saveProfileBtn.disabled = false;
 
@@ -1614,6 +1709,10 @@ sidebarItems.forEach(
           "active"
         );
 
+        if (targetId === "panel-mentor") {
+          loadMentor();
+        }
+
         window.scrollTo({
           top: 0,
           behavior: "smooth",
@@ -1637,9 +1736,7 @@ searchCompanyLink?.addEventListener(
   (event) => {
     event.preventDefault();
 
-    alert(
-      "หน้าค้นหาสถานประกอบการจะพัฒนาในขั้นตอนถัดไป"
-    );
+    showToast("หน้าค้นหาสถานประกอบการจะพัฒนาในขั้นตอนถัดไป", "info");
   }
 );
 
@@ -1715,9 +1812,7 @@ const createRequestBtn =
 createRequestBtn?.addEventListener(
   "click",
   () => {
-    alert(
-      "ระบบสร้างคำร้องสหกิจศึกษาจะพัฒนาในขั้นตอนถัดไป"
-    );
+    showToast("ระบบสร้างคำร้องสหกิจศึกษาจะพัฒนาในขั้นตอนถัดไป", "info");
   }
 );
 
@@ -1822,9 +1917,7 @@ saveDailyLogBtn?.addEventListener(
       !dateValue ||
       !workValue
     ) {
-      alert(
-        "กรุณากรอกวันที่และรายละเอียดงาน"
-      );
+      showToast("กรุณากรอกวันที่และรายละเอียดงาน", "warning");
 
       return;
     }
@@ -2121,19 +2214,396 @@ uploadProjectBtn?.addEventListener(
 // Mentor
 // ==============================
 
-const addMentorBtn =
-  document.getElementById(
-    "addMentorBtn"
-  );
+const mentorEmail = document.getElementById("mentorEmail");
+const mentorFirstName = document.getElementById("mentorFirstName");
+const mentorLastName = document.getElementById("mentorLastName");
+const mentorPosition = document.getElementById("mentorPosition");
+const mentorVerificationStatusItem = document.getElementById("mentorVerificationStatusItem");
+const mentorVerificationStatus = document.getElementById("mentorVerificationStatus");
+const mentorVerificationStatusLabel = document.getElementById("mentorVerificationStatusLabel");
+const mentorVerificationHint = document.getElementById("mentorVerificationHint");
+const btnResendMentorVerification = document.getElementById("btnResendMentorVerification");
+const mentorResendButtonLabel = document.getElementById("mentorResendButtonLabel");
+const mentorMessage = document.getElementById("mentorMessage");
+const btnAddMentor = document.getElementById("btnAddMentor");
+const btnEditMentor = document.getElementById("btnEditMentor");
+const btnDeleteMentor = document.getElementById("btnDeleteMentor");
+const mentorModal = document.getElementById("mentorModal");
+const mentorModalTitle = document.getElementById("mentorModalTitle");
+const mentorModalDescription = document.getElementById("mentorModalDescription");
+const closeMentorModalBtn = document.getElementById("closeMentorModal");
+const cancelMentorModalBtn = document.getElementById("cancelMentorModal");
+const mentorForm = document.getElementById("mentorForm");
+const mentorFormMessage = document.getElementById("mentorFormMessage");
+const saveMentorBtn = document.getElementById("saveMentorBtn");
+const mentorFormEmail = document.getElementById("mentorFormEmail");
+const mentorFormFirstName = document.getElementById("mentorFormFirstName");
+const mentorFormLastName = document.getElementById("mentorFormLastName");
+const mentorFormPosition = document.getElementById("mentorFormPosition");
 
-addMentorBtn?.addEventListener(
-  "click",
-  () => {
-    alert(
-      "ระบบเพิ่มข้อมูลพี่เลี้ยงจะพัฒนาในขั้นตอนถัดไป"
-    );
+let currentMentor = null;
+let mentorLoading = false;
+let mentorSubmitting = false;
+let mentorDeleting = false;
+let mentorResending = false;
+let mentorFormMode = "create";
+
+function renderMentor() {
+  setText(mentorEmail, currentMentor?.email || "-");
+  setText(mentorFirstName, currentMentor?.first_name || "-");
+  setText(mentorLastName, currentMentor?.last_name || "-");
+  setText(mentorPosition, currentMentor?.position || "-");
+
+  const isPending = currentMentor?.status === "pending";
+  const isVerified = currentMentor?.status === "verified";
+  const shouldShowPendingActions = Boolean(currentMentor) && isPending;
+  const isBusy = mentorLoading || mentorSubmitting || mentorDeleting || mentorResending;
+
+  if (mentorVerificationStatusItem) {
+    mentorVerificationStatusItem.hidden = !currentMentor;
   }
-);
+
+  if (mentorVerificationStatus && mentorVerificationStatusLabel) {
+    const statusClass = isPending
+      ? "is-pending"
+      : isVerified
+        ? "is-verified"
+        : "is-unknown";
+    const statusIcon = isPending
+      ? "fa-clock"
+      : isVerified
+        ? "fa-circle-check"
+        : "fa-circle-question";
+    const statusLabel = isPending
+      ? "รอยืนยัน"
+      : isVerified
+        ? "ยืนยันแล้ว"
+        : "ไม่ทราบสถานะ";
+
+    mentorVerificationStatus.className = `mentor-status-badge ${statusClass}`;
+    const statusIconElement = mentorVerificationStatus.querySelector("i");
+    if (statusIconElement) {
+      statusIconElement.className = `fa-solid ${statusIcon}`;
+    }
+    mentorVerificationStatusLabel.textContent = statusLabel;
+  }
+
+  if (mentorVerificationHint) {
+    mentorVerificationHint.hidden = !shouldShowPendingActions;
+    mentorVerificationHint.textContent = shouldShowPendingActions
+      ? "พี่เลี้ยงยังไม่ได้ยืนยันข้อมูล"
+      : "";
+  }
+
+  if (btnResendMentorVerification) {
+    btnResendMentorVerification.hidden = !shouldShowPendingActions;
+    btnResendMentorVerification.disabled = isBusy;
+  }
+
+  if (mentorResendButtonLabel) {
+    mentorResendButtonLabel.textContent = mentorResending
+      ? "กำลังส่ง..."
+      : "ส่งอีเมลยืนยันอีกครั้ง";
+  }
+
+  if (btnAddMentor) {
+    btnAddMentor.disabled = isBusy || Boolean(currentMentor);
+  }
+
+  if (btnEditMentor) {
+    btnEditMentor.disabled = isBusy || !currentMentor;
+  }
+
+  if (btnDeleteMentor) {
+    btnDeleteMentor.disabled = isBusy || !currentMentor;
+  }
+}
+
+function getMentorErrorMessage(error, action) {
+  if (!error?.status) {
+    return "ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง";
+  }
+
+  const messages = {
+    400: "ข้อมูลพี่เลี้ยงไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง",
+    401: "การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่",
+    404: "ไม่พบข้อมูลพี่เลี้ยง กรุณารีเฟรชข้อมูลแล้วลองใหม่อีกครั้ง",
+    409: "มีข้อมูลพี่เลี้ยงอยู่แล้ว กรุณารีเฟรชข้อมูล",
+    422: "ข้อมูลพี่เลี้ยงไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง",
+    500: `ไม่สามารถ${action}ข้อมูลพี่เลี้ยงได้ กรุณาลองใหม่อีกครั้ง`,
+  };
+
+  return messages[error.status] || `ไม่สามารถ${action}ข้อมูลพี่เลี้ยงได้ กรุณาลองใหม่อีกครั้ง`;
+}
+
+async function loadMentor() {
+  if (mentorLoading || mentorSubmitting || mentorDeleting || mentorResending) {
+    return false;
+  }
+
+  mentorLoading = true;
+  renderMentor();
+  showMessage(mentorMessage, "กำลังโหลดข้อมูลพี่เลี้ยง...", "loading");
+
+  try {
+    const result = await getMyMentor();
+    currentMentor = result?.data || null;
+    renderMentor();
+
+    if (currentMentor) {
+      clearMessage(mentorMessage);
+    } else {
+      showMessage(mentorMessage, "ยังไม่มีข้อมูลพี่เลี้ยง กรุณาเพิ่มข้อมูลเพื่อดำเนินการต่อ", "info");
+    }
+
+    return true;
+  } catch (error) {
+    currentMentor = null;
+    renderMentor();
+    showMessage(mentorMessage, getMentorErrorMessage(error, "โหลด"), "error");
+    return false;
+  } finally {
+    mentorLoading = false;
+    renderMentor();
+  }
+}
+
+function setMentorFormSubmitting(isSubmitting) {
+  const controls = mentorForm?.querySelectorAll("input, button");
+  controls?.forEach((element) => {
+    element.disabled = isSubmitting;
+  });
+
+  const label = saveMentorBtn?.querySelector("span");
+  if (label) {
+    label.textContent = isSubmitting ? "กำลังบันทึก..." : "บันทึกข้อมูล";
+  }
+}
+
+function openMentorModal(mode) {
+  if (mentorSubmitting || (mode === "edit" && !currentMentor)) {
+    return;
+  }
+
+  mentorFormMode = mode;
+  const isEdit = mode === "edit";
+  const mentor = currentMentor || {};
+
+  mentorModalTitle.textContent = isEdit ? "แก้ไขข้อมูลพี่เลี้ยง" : "เพิ่มข้อมูลพี่เลี้ยง";
+  mentorModalDescription.textContent = isEdit
+    ? "แก้ไขข้อมูลติดต่อพี่เลี้ยงและบันทึกเพื่อส่งยืนยันข้อมูลใหม่"
+    : "กรอกข้อมูลสำหรับติดต่อพี่เลี้ยงสหกิจศึกษา";
+  mentorFormEmail.value = isEdit ? mentor.email || "" : "";
+  mentorFormFirstName.value = isEdit ? mentor.first_name || "" : "";
+  mentorFormLastName.value = isEdit ? mentor.last_name || "" : "";
+  mentorFormPosition.value = isEdit ? mentor.position || "" : "";
+  clearMessage(mentorFormMessage);
+  setMentorFormSubmitting(false);
+  mentorModal?.classList.add("open");
+  mentorModal?.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  mentorFormEmail?.focus();
+}
+
+function closeMentorModal() {
+  if (mentorSubmitting) {
+    return;
+  }
+
+  mentorModal?.classList.remove("open");
+  mentorModal?.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function getMentorFormData() {
+  return {
+    email: mentorFormEmail.value.trim(),
+    first_name: mentorFormFirstName.value.trim(),
+    last_name: mentorFormLastName.value.trim(),
+    position: mentorFormPosition.value.trim(),
+  };
+}
+
+function validateMentorForm(data) {
+  if (!data.email || !data.first_name || !data.last_name || !data.position) {
+    return "กรุณากรอกข้อมูลพี่เลี้ยงให้ครบถ้วน";
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return "กรุณากรอกอีเมลให้ถูกต้อง";
+  }
+
+  return null;
+}
+
+async function submitMentorForm(event) {
+  event.preventDefault();
+  if (mentorSubmitting) {
+    return;
+  }
+
+  const data = getMentorFormData();
+  const validationError = validateMentorForm(data);
+  if (validationError) {
+    showMessage(mentorFormMessage, validationError, "error");
+    return;
+  }
+
+  mentorSubmitting = true;
+  setMentorFormSubmitting(true);
+  renderMentor();
+  clearMessage(mentorFormMessage);
+  showMessage(mentorMessage, "กำลังบันทึกข้อมูลพี่เลี้ยง...", "loading");
+
+  try {
+    if (mentorFormMode === "edit") {
+      await updateMyMentor(data);
+    } else {
+      await createMentor(data);
+    }
+
+    mentorSubmitting = false;
+    closeMentorModal();
+    const wasLoaded = await loadMentor();
+    if (wasLoaded) {
+      showMessage(
+        mentorMessage,
+        mentorFormMode === "edit" ? "แก้ไขข้อมูลพี่เลี้ยงสำเร็จ" : "บันทึกข้อมูลพี่เลี้ยงสำเร็จ",
+        "success"
+      );
+      showToast(
+        mentorFormMode === "edit" ? "แก้ไขข้อมูลพี่เลี้ยงสำเร็จ" : "บันทึกข้อมูลพี่เลี้ยงสำเร็จ",
+        "success"
+      );
+    }
+  } catch (error) {
+    showMessage(
+      mentorFormMessage,
+      getMentorErrorMessage(error, mentorFormMode === "edit" ? "แก้ไข" : "บันทึก"),
+      "error"
+    );
+  } finally {
+    mentorSubmitting = false;
+    setMentorFormSubmitting(false);
+    renderMentor();
+  }
+}
+
+async function deleteMentorAfterConfirmation() {
+  if (!currentMentor || mentorDeleting || mentorSubmitting || mentorResending) {
+    return;
+  }
+
+  mentorDeleting = true;
+  renderMentor();
+  showMessage(mentorMessage, "กำลังลบข้อมูลพี่เลี้ยง...", "loading");
+
+  try {
+    await deleteMyMentor();
+    currentMentor = null;
+    renderMentor();
+    showMessage(mentorMessage, "ลบข้อมูลพี่เลี้ยงสำเร็จ", "success");
+    showToast("ลบข้อมูลพี่เลี้ยงสำเร็จ", "success");
+  } catch (error) {
+    showMessage(mentorMessage, getMentorErrorMessage(error, "ลบ"), "error");
+  } finally {
+    mentorDeleting = false;
+    renderMentor();
+  }
+}
+
+function removeMentor() {
+  if (!currentMentor || mentorDeleting || mentorSubmitting || mentorResending) {
+    return;
+  }
+
+  showConfirmModal({
+    title: "ลบข้อมูลพี่เลี้ยง",
+    message: "คุณต้องการลบข้อมูลพี่เลี้ยงใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+    confirmLabel: "ลบข้อมูล",
+    loadingLabel: "กำลังลบ...",
+    onConfirm: deleteMentorAfterConfirmation,
+  });
+}
+
+async function resendMentorVerificationAfterConfirmation() {
+  if (
+    currentMentor?.status !== "pending" ||
+    mentorResending ||
+    mentorSubmitting ||
+    mentorDeleting
+  ) {
+    return;
+  }
+
+  mentorResending = true;
+  renderMentor();
+  showMessage(mentorMessage, "กำลังส่งอีเมลยืนยัน...", "loading");
+
+  try {
+    const result = await updateMyMentor({
+      email: currentMentor.email,
+      first_name: currentMentor.first_name,
+      last_name: currentMentor.last_name,
+      position: currentMentor.position,
+    });
+    const verificationEmailSent = result?.data?.verification_email_sent;
+
+    mentorResending = false;
+    const wasLoaded = await loadMentor();
+    if (!wasLoaded) {
+      return;
+    }
+
+    showMessage(
+      mentorMessage,
+      verificationEmailSent === false
+        ? "บันทึกข้อมูลแล้ว แต่ไม่สามารถส่งอีเมลยืนยันได้ กรุณาลองใหม่อีกครั้ง"
+        : "ส่งอีเมลยืนยันอีกครั้งเรียบร้อยแล้ว",
+      verificationEmailSent === false ? "error" : "success"
+    );
+    if (verificationEmailSent !== false) {
+      showToast("ส่งอีเมลยืนยันอีกครั้งเรียบร้อยแล้ว", "success");
+    }
+  } catch (error) {
+    showMessage(mentorMessage, getMentorErrorMessage(error, "ส่งอีเมลยืนยัน"), "error");
+  } finally {
+    mentorResending = false;
+    renderMentor();
+  }
+}
+
+function resendMentorVerification() {
+  if (
+    currentMentor?.status !== "pending" ||
+    mentorResending ||
+    mentorSubmitting ||
+    mentorDeleting
+  ) {
+    return;
+  }
+
+  showConfirmModal({
+    title: "ส่งอีเมลยืนยันอีกครั้ง",
+    message: "ต้องการส่งอีเมลยืนยันไปยังพี่เลี้ยงอีกครั้งหรือไม่?",
+    confirmLabel: "ส่งอีเมล",
+    loadingLabel: "กำลังส่ง...",
+    onConfirm: resendMentorVerificationAfterConfirmation,
+  });
+}
+
+btnAddMentor?.addEventListener("click", () => openMentorModal("create"));
+btnEditMentor?.addEventListener("click", () => openMentorModal("edit"));
+btnDeleteMentor?.addEventListener("click", removeMentor);
+btnResendMentorVerification?.addEventListener("click", resendMentorVerification);
+mentorForm?.addEventListener("submit", submitMentorForm);
+closeMentorModalBtn?.addEventListener("click", closeMentorModal);
+cancelMentorModalBtn?.addEventListener("click", closeMentorModal);
+mentorModal?.addEventListener("click", (event) => {
+  if (event.target === mentorModal) {
+    closeMentorModal();
+  }
+});
 
 // ==============================
 // Transfer
@@ -2223,6 +2693,7 @@ function clearMessage(
 document.addEventListener(
   "DOMContentLoaded",
   () => {
+    renderMentor();
     checkAuthentication();
 
     updateDailyCount();

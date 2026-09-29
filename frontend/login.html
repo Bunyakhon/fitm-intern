@@ -95,7 +95,7 @@
         <!-- Login Form -->
         <!-- ========================= -->
 
-        <form class="auth-form" id="loginForm">
+        <form class="auth-form" id="loginForm" aria-describedby="loginMessage">
           <!-- Email -->
 
           <div class="form-group">
@@ -110,6 +110,7 @@
                 name="loginEmail"
                 placeholder="กรอกอีเมล"
                 autocomplete="email"
+                aria-describedby="loginMessage"
                 required
               />
             </div>
@@ -129,6 +130,7 @@
                 name="loginPassword"
                 placeholder="กรอกรหัสผ่าน"
                 autocomplete="current-password"
+                aria-describedby="capsLockNotice loginMessage"
                 required
               />
 
@@ -137,10 +139,14 @@
                 class="toggle-password"
                 id="togglePassword"
                 aria-label="แสดงหรือซ่อนรหัสผ่าน"
+                aria-pressed="false"
               >
                 <i class="fa-solid fa-eye"></i>
               </button>
             </div>
+            <p class="caps-lock-notice" id="capsLockNotice" hidden>
+              Caps Lock เปิดอยู่
+            </p>
           </div>
 
           <!-- Action -->
@@ -165,7 +171,7 @@
 
           <!-- Error -->
 
-          <div class="login-message" id="loginMessage" role="alert"></div>
+          <div class="login-message" id="loginMessage" role="status" aria-live="polite"></div>
         </form>
 
         <!-- Footer -->

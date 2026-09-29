@@ -54,7 +54,7 @@
           <p>สมัครใช้งานระบบ KIWI สำหรับนักศึกษาสหกิจศึกษา</p>
         </div>
 
-        <form class="auth-form" id="registerForm">
+        <form class="auth-form" id="registerForm" aria-describedby="registerMessage">
           <!-- Student ID -->
           <div class="form-group">
             <label for="regStudentId">
@@ -70,6 +70,7 @@
                 name="regStudentId"
                 placeholder="เช่น 6706022510107"
                 autocomplete="off"
+                aria-describedby="registerMessage"
                 required
               />
             </div>
@@ -90,6 +91,7 @@
                 name="regFirstName"
                 placeholder="กรอกชื่อ"
                 autocomplete="given-name"
+                aria-describedby="registerMessage"
                 required
               />
             </div>
@@ -110,6 +112,7 @@
                 name="regLastName"
                 placeholder="กรอกนามสกุล"
                 autocomplete="family-name"
+                aria-describedby="registerMessage"
                 required
               />
             </div>
@@ -130,6 +133,7 @@
                 name="regEmail"
                 placeholder="เช่น s6706022510107@email.kmutnb.ac.th"
                 autocomplete="email"
+                aria-describedby="registerMessage"
                 required
               />
             </div>
@@ -151,6 +155,7 @@
                 placeholder="อย่างน้อย 8 ตัวอักษร"
                 minlength="8"
                 autocomplete="new-password"
+                aria-describedby="registerMessage"
                 required
               />
 
@@ -159,6 +164,7 @@
                 class="toggle-password"
                 id="toggleRegPassword"
                 aria-label="แสดงหรือซ่อนรหัสผ่าน"
+                aria-pressed="false"
               >
                 <i class="fa-solid fa-eye"></i>
               </button>
@@ -180,6 +186,7 @@
                 name="regConfirm"
                 placeholder="กรอกรหัสผ่านอีกครั้ง"
                 autocomplete="new-password"
+                aria-describedby="registerMessage"
                 required
               />
 
@@ -188,6 +195,7 @@
                 class="toggle-password"
                 id="toggleRegConfirm"
                 aria-label="แสดงหรือซ่อนรหัสผ่าน"
+                aria-pressed="false"
               >
                 <i class="fa-solid fa-eye"></i>
               </button>
@@ -223,7 +231,8 @@
           <div
             class="register-message"
             id="registerMessage"
-            role="alert"
+            role="status"
+            aria-live="polite"
           ></div>
         </form>
 

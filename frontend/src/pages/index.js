@@ -164,12 +164,19 @@ const filterWorkDays =
 const filterSalary =
   document.getElementById("filterSalary");
 
+let filterTrigger = null;
+
 function openFilter() {
+  filterTrigger = document.activeElement;
   filterModal.classList.remove("hidden");
+  filterModal.setAttribute("aria-hidden", "false");
+  btnCloseFilter.focus();
 }
 
 function closeFilter() {
   filterModal.classList.add("hidden");
+  filterModal.setAttribute("aria-hidden", "true");
+  filterTrigger?.focus?.();
 }
 
 btnOpenFilter.addEventListener(
@@ -191,6 +198,12 @@ filterModal.addEventListener(
     }
   }
 );
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !filterModal.classList.contains("hidden")) {
+    closeFilter();
+  }
+});
 
 // Reset Filter
 btnResetFilter.addEventListener(

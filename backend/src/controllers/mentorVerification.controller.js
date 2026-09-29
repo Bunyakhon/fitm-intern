@@ -1,6 +1,7 @@
 const {
   MentorToken,
   Mentor,
+  Student,
   sequelize,
 } = require("../models");
 
@@ -49,6 +50,16 @@ async function findValidVerification(token, options = {}) {
           "position",
           "status",
           "verified_at",
+        ],
+        include: [
+          {
+            model: Student,
+            as: "student",
+            attributes: [
+              "first_name",
+              "last_name",
+            ],
+          },
         ],
       },
     ],

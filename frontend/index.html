@@ -23,7 +23,7 @@
     />
   </head>
 
-  <body>
+  <body class="landing-page">
     <!-- Navbar -->
     <header class="navbar">
       <div class="nav-container">
@@ -78,10 +78,10 @@
     </header>
 
     <!-- Main -->
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
       <!-- Hero -->
-      <section class="hero-section">
-        <h1>KIWI จัดการสหกิจศึกษาในระบบเดียว</h1>
+      <section class="hero-section" aria-labelledby="heroTitle">
+        <h1 id="heroTitle">KIWI จัดการสหกิจศึกษาในระบบเดียว</h1>
 
         <p>
           ค้นหาสถานประกอบการ ยื่นคำร้อง ติดตามสถานะเอกสาร
@@ -166,10 +166,10 @@
     </main>
 
     <!-- Filter Modal -->
-    <div class="modal-overlay hidden" id="filterModal">
-      <div class="filter-modal-card">
+    <div class="modal-overlay hidden" id="filterModal" aria-hidden="true">
+      <div class="filter-modal-card" role="dialog" aria-modal="true" aria-labelledby="filterModalTitle">
         <div class="filter-modal-header">
-          <h3>ค้นหาสถานประกอบการ</h3>
+          <h3 id="filterModalTitle">ค้นหาสถานประกอบการ</h3>
 
           <button
             class="btn-close-modal"

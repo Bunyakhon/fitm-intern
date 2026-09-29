@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const MENTOR_PAGE_PATH = "/src/mentor_coop/mentor.html";
+const MENTOR_PAGE_PATH = "/src/mentor_coop/mentor_verify_user.html";
 const EMAIL_SUBJECT = "ยืนยันข้อมูลพี่เลี้ยงนักศึกษาสหกิจศึกษา";
 
 function getRequiredSmtpConfig() {

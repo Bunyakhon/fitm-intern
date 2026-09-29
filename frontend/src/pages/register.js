@@ -1,4 +1,5 @@
 import { registerStudent } from "../api/auth.api.js";
+import { setButtonLoading, showToast } from "../ui/feedback.js";
 
 const registerForm = document.getElementById("registerForm");
 
@@ -14,11 +15,23 @@ const toggleRegConfirm = document.getElementById("toggleRegConfirm");
 
 const registerMessage = document.getElementById("registerMessage");
 const registerSubmitBtn = document.getElementById("registerSubmitBtn");
+let isSubmitting = false;
+
+function setRegisterMessage(message, type = "") {
+  registerMessage.textContent = message;
+  registerMessage.className = "register-message";
+  registerMessage.setAttribute("role", type === "error" ? "alert" : "status");
+
+  if (type) {
+    registerMessage.classList.add(type);
+  }
+}
 
 function togglePassword(input, button) {
   const isPassword = input.type === "password";
 
   input.type = isPassword ? "text" : "password";
+  button.setAttribute("aria-pressed", String(isPassword));
 
   button.innerHTML = isPassword
     ? '<i class="fa-solid fa-eye-slash"></i>'
@@ -36,6 +49,10 @@ toggleRegConfirm.addEventListener("click", () => {
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  if (isSubmitting) {
+    return;
+  }
+
   const studentId = regStudentId.value.trim();
   const firstName = regFirstName.value.trim();
   const lastName = regLastName.value.trim();
@@ -43,8 +60,7 @@ registerForm.addEventListener("submit", async (event) => {
   const password = regPassword.value;
   const confirmPassword = regConfirm.value;
 
-  registerMessage.textContent = "";
-  registerMessage.className = "register-message";
+  setRegisterMessage("");
 
   if (
     !studentId ||
@@ -54,41 +70,35 @@ registerForm.addEventListener("submit", async (event) => {
     !password ||
     !confirmPassword
   ) {
-    registerMessage.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-    registerMessage.classList.add("error");
+    setRegisterMessage("กรุณากรอกข้อมูลให้ครบถ้วน", "error");
     return;
   }
 
   if (password !== confirmPassword) {
-    registerMessage.textContent =
-      "รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน";
-
-    registerMessage.classList.add("error");
+    setRegisterMessage("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน", "error");
     return;
   }
 
   if (password.length < 8) {
-    registerMessage.textContent =
-      "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
-
-    registerMessage.classList.add("error");
+    setRegisterMessage("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร", "error");
     return;
   }
 
   if (!email.endsWith("@email.kmutnb.ac.th")) {
-    registerMessage.textContent =
-      "กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th";
-
-    registerMessage.classList.add("error");
+    setRegisterMessage("กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th", "error");
     return;
   }
 
   registerSubmitBtn.disabled = true;
+  isSubmitting = true;
+  registerForm.setAttribute("aria-busy", "true");
 
   registerSubmitBtn.innerHTML = `
     <i class="fa-solid fa-spinner fa-spin"></i>
     <span>กำลังสมัครสมาชิก...</span>
   `;
+
+  setButtonLoading(registerSubmitBtn, true, "กำลังสมัครสมาชิก...", "สมัครสมาชิก");
 
   try {
     const result = await registerStudent({
@@ -99,10 +109,8 @@ registerForm.addEventListener("submit", async (event) => {
       password,
     });
 
-    registerMessage.textContent =
-      result.message || "สมัครสมาชิกสำเร็จ";
-
-    registerMessage.classList.add("success");
+    setRegisterMessage(result.message || "สมัครสมาชิกสำเร็จ", "success");
+    showToast(result.message || "สมัครสมาชิกสำเร็จ", "success", { duration: 1800 });
 
     registerForm.reset();
 
@@ -111,12 +119,13 @@ registerForm.addEventListener("submit", async (event) => {
     }, 1500);
   } catch (error) {
     console.error("REGISTER ERROR:", error);
+    showToast(error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก", "error");
 
-    registerMessage.textContent =
-      error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก";
-
-    registerMessage.classList.add("error");
+    setRegisterMessage(error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก", "error");
   } finally {
+    isSubmitting = false;
+    registerForm.setAttribute("aria-busy", "false");
+    setButtonLoading(registerSubmitBtn, false, "กำลังสมัครสมาชิก...", "สมัครสมาชิก");
     registerSubmitBtn.disabled = false;
 
     registerSubmitBtn.innerHTML = `

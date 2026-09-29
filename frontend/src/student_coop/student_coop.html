@@ -286,6 +286,13 @@
             <p>ข้อมูลประวัตินักศึกษาจากระบบ</p>
           </div>
 
+          <p
+            class="message profile-load-message"
+            id="profileLoadMessage"
+            role="status"
+            aria-live="polite"
+          ></p>
+
           <!-- ==============================
        Profile Header
        ============================== -->
@@ -882,7 +889,30 @@
 
                 <strong id="mentorPosition">-</strong>
               </div>
+
+              <div class="info-item mentor-verification-status" id="mentorVerificationStatusItem" hidden>
+                <span>สถานะการยืนยัน</span>
+
+                <strong id="mentorVerificationStatus" class="mentor-status-badge">
+                  <i aria-hidden="true"></i>
+                  <span id="mentorVerificationStatusLabel"></span>
+                </strong>
+
+                <p id="mentorVerificationHint" class="mentor-verification-hint" hidden></p>
+
+                <button type="button" class="btn-mock-sm mentor-resend-button" id="btnResendMentorVerification" hidden>
+                  <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                  <span id="mentorResendButtonLabel">ส่งอีเมลยืนยันอีกครั้ง</span>
+                </button>
+              </div>
             </div>
+
+            <p
+              class="message mentor-message"
+              id="mentorMessage"
+              role="status"
+              aria-live="polite"
+            ></p>
 
             <div class="request-actions">
               <button type="button" class="btn-mock-sm solid" id="btnAddMentor">
@@ -1534,6 +1564,52 @@
             บันทึกข้อมูล
           </button>
         </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="mentorModal" aria-hidden="true">
+      <div class="modal-box mentor-modal" role="dialog" aria-modal="true" aria-labelledby="mentorModalTitle">
+        <div class="modal-header">
+          <div>
+            <h3 id="mentorModalTitle">เพิ่มข้อมูลพี่เลี้ยง</h3>
+            <p id="mentorModalDescription">กรอกข้อมูลสำหรับติดต่อพี่เลี้ยงสหกิจศึกษา</p>
+          </div>
+          <button type="button" class="modal-close" id="closeMentorModal" aria-label="ปิด">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="mentorForm" novalidate>
+          <div class="modal-body">
+            <div class="mentor-form-grid">
+              <div class="form-group mentor-form-full">
+                <label for="mentorFormEmail">อีเมล</label>
+                <input type="email" id="mentorFormEmail" name="email" autocomplete="email" required />
+              </div>
+              <div class="form-group">
+                <label for="mentorFormFirstName">ชื่อ</label>
+                <input type="text" id="mentorFormFirstName" name="first_name" autocomplete="given-name" required />
+              </div>
+              <div class="form-group">
+                <label for="mentorFormLastName">นามสกุล</label>
+                <input type="text" id="mentorFormLastName" name="last_name" autocomplete="family-name" required />
+              </div>
+              <div class="form-group mentor-form-full">
+                <label for="mentorFormPosition">ตำแหน่ง</label>
+                <input type="text" id="mentorFormPosition" name="position" autocomplete="organization-title" required />
+              </div>
+            </div>
+            <p class="message" id="mentorFormMessage" role="alert" aria-live="assertive"></p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="cancelMentorModal">ยกเลิก</button>
+            <button type="submit" class="btn-primary" id="saveMentorBtn">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>บันทึกข้อมูล</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
     <!-- ==============================

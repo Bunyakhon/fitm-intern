@@ -62,6 +62,185 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(20, 80, 163, 0.38);
+  outline-offset: 3px;
+}
+
+button.is-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button.is-loading::before {
+  content: "";
+  width: 0.9em;
+  height: 0.9em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: app-spinner 0.7s linear infinite;
+}
+
+/* =========================================
+   SHARED FEEDBACK UI
+   ========================================= */
+
+.app-feedback {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  pointer-events: none;
+}
+
+.app-toast {
+  position: relative;
+  width: min(calc(100vw - 32px), 390px);
+  margin: 16px 16px 0 auto;
+  padding: 13px 42px 13px 14px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--shadow-md);
+  color: #344054;
+  pointer-events: auto;
+  animation: app-slide-up 180ms ease-out;
+}
+
+.app-toast.is-leaving,
+.app-confirm-overlay.is-leaving {
+  animation: app-fade-out 180ms ease-in forwards;
+}
+
+.app-toast--success { border-color: #b7e5cb; color: #146c43; }
+.app-toast--error { border-color: #f0c5c3; color: #b42318; }
+.app-toast--warning { border-color: #f4db9d; color: #8a5a00; }
+.app-toast--info { border-color: #bdd7f5; color: #175ea8; }
+
+.app-toast__icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: currentColor;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.app-toast__icon::after { content: "i"; }
+.app-toast--success .app-toast__icon::after { content: "✓"; }
+.app-toast--error .app-toast__icon::after { content: "×"; }
+.app-toast--warning .app-toast__icon::after { content: "!"; }
+
+.app-toast__message { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+
+.app-toast__close {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: currentColor;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.app-toast__close:hover { background: rgba(16, 24, 40, 0.06); }
+
+.app-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 24, 40, 0.48);
+  pointer-events: auto;
+  animation: app-fade-in 180ms ease-out;
+}
+
+.app-confirm-modal {
+  width: min(100%, 430px);
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(16, 24, 40, 0.22);
+  animation: app-scale-in 200ms ease-out;
+}
+
+.app-confirm-modal__icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff4e5;
+  color: #b54708;
+  font-weight: 800;
+}
+
+.app-confirm-modal h2 { margin: 0; color: var(--text); font-size: 1.25rem; }
+.app-confirm-modal p { margin: 9px 0 0; color: var(--muted); line-height: 1.55; }
+
+.app-confirm-modal__actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-confirm-modal__actions button {
+  min-height: 40px;
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.app-confirm-modal__cancel { border: 1px solid #cbd5e1; background: #ffffff; color: #475467; }
+.app-confirm-modal__confirm { border: 1px solid #b42318; background: #c9362c; color: #ffffff; }
+.app-confirm-modal__confirm:hover:not(:disabled) { background: #a9241c; }
+.app-confirm-modal__confirm.is-loading::before { content: ""; }
+
+.has-app-modal { overflow: hidden; }
+
+@keyframes app-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes app-fade-out { to { opacity: 0; } }
+@keyframes app-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes app-scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes app-spinner { to { transform: rotate(360deg); } }
+
+@media (max-width: 500px) {
+  .app-toast { margin: 12px auto 0; }
+  .app-confirm-modal { padding: 23px 20px; }
+  .app-confirm-modal__actions { flex-direction: column-reverse; }
+  .app-confirm-modal__actions button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* =========================================
    NAVBAR
    ========================================= */

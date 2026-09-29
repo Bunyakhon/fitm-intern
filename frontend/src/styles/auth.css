@@ -10,7 +10,9 @@
 .login-page,
 .register-page {
   min-height: 100vh;
-  background: #f7f9fc;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(20, 80, 163, 0.11), transparent 28rem),
+    #f7f9fc;
 }
 
 /* =========================================
@@ -38,6 +40,7 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow-md);
+  animation: auth-enter 420ms ease-out both;
 }
 
 /* =========================================
@@ -163,6 +166,14 @@
     0 0 0 4px rgba(20, 80, 163, 0.08);
 }
 
+.input-icon-wrapper:has(input:invalid:not(:placeholder-shown)) {
+  border-color: #d92d20;
+}
+
+.input-icon-wrapper:has(input:valid:not(:placeholder-shown)) {
+  border-color: #72b98e;
+}
+
 .input-icon {
   position: absolute;
   left: 15px;
@@ -205,6 +216,18 @@
 
 .toggle-password:hover {
   color: var(--primary);
+}
+
+.caps-lock-notice {
+  margin-top: 7px;
+  color: #b54708;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.form-group:has(input[required]) > label::after {
+  content: " *";
+  color: #d92d20;
 }
 
 /* =========================================
@@ -381,4 +404,33 @@
 
 .register-message.success {
   color: #039855;
+}
+
+.login-message:not(:empty),
+.register-message:not(:empty) {
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  line-height: 1.5;
+  animation: auth-message-in 180ms ease-out;
+}
+
+.login-message.error:not(:empty),
+.register-message.error:not(:empty) {
+  background: #fff1f0;
+}
+
+.login-message.success:not(:empty),
+.register-message.success:not(:empty) {
+  background: #ecfdf3;
+}
+
+@keyframes auth-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auth-message-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

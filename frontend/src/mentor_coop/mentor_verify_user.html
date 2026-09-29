@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="หน้ายืนยันและปรับปรุงข้อมูลพี่เลี้ยงสหกิจศึกษา"
+    />
+    <title>ยืนยันข้อมูลพี่เลี้ยง | ระบบสหกิจศึกษา</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+    <link rel="stylesheet" href="/src/styles/mentor.css" />
+  </head>
+  <body>
+    <main class="mentor-verification-page">
+      <section class="mentor-verification-card" aria-labelledby="pageTitle">
+        <header class="mentor-verification-header">
+          <p class="eyebrow">ระบบสหกิจศึกษา</p>
+          <h1 id="pageTitle">ยืนยันข้อมูลพี่เลี้ยง</h1>
+          <p>
+            ตรวจสอบข้อมูลของท่านให้ถูกต้องก่อนยืนยัน เพื่อให้การประสานงานสหกิจศึกษาเป็นไปอย่างราบรื่น
+          </p>
+        </header>
+
+        <div
+          id="verificationState"
+          class="verification-state is-loading"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="state-indicator" aria-hidden="true"></span>
+          <p id="verificationStateMessage">กำลังตรวจสอบลิงก์ยืนยันข้อมูล...</p>
+        </div>
+
+        <section id="mentorContent" class="mentor-content" hidden>
+          <section class="student-context" aria-labelledby="studentContextTitle">
+            <h2 id="studentContextTitle">ข้อมูลการดูแลนักศึกษา</h2>
+
+            <dl class="student-context-list">
+              <div>
+                <dt>มหาวิทยาลัย</dt>
+                <dd>มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</dd>
+              </div>
+              <div>
+                <dt>นักศึกษาที่ท่านดูแล</dt>
+                <dd id="studentName">ไม่พบข้อมูลนักศึกษา</dd>
+              </div>
+            </dl>
+          </section>
+
+          <form id="mentorVerificationForm" novalidate>
+            <fieldset id="mentorFieldset" disabled>
+              <legend>ข้อมูลพี่เลี้ยง</legend>
+
+              <div class="form-grid">
+                <div class="form-group form-group-full">
+                  <label for="mentorEmail">อีเมล</label>
+                  <input
+                    id="mentorEmail"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="mentorFirstName">ชื่อ</label>
+                  <input
+                    id="mentorFirstName"
+                    name="first_name"
+                    type="text"
+                    autocomplete="given-name"
+                    maxlength="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="mentorLastName">นามสกุล</label>
+                  <input
+                    id="mentorLastName"
+                    name="last_name"
+                    type="text"
+                    autocomplete="family-name"
+                    maxlength="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group form-group-full">
+                  <label for="mentorPosition">ตำแหน่ง</label>
+                  <input
+                    id="mentorPosition"
+                    name="position"
+                    type="text"
+                    autocomplete="organization-title"
+                    maxlength="150"
+                    required
+                  />
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button id="saveProfileButton" class="button button-secondary" type="submit">
+                บันทึกการแก้ไข
+              </button>
+              <button id="confirmVerificationButton" class="button button-primary" type="button">
+                ยืนยันข้อมูล
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <p class="security-note">
+          โปรดเก็บลิงก์ยืนยันข้อมูลนี้ไว้เป็นความลับ
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/pages/mentor.js"></script>
+  </body>
+</html>

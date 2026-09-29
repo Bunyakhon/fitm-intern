@@ -1048,8 +1048,40 @@ a {
   color: var(--primary);
 }
 
+.message.info,
+.message.loading {
+  color: #1d4ed8;
+}
+
 .message.error {
   color: var(--danger);
+}
+
+#panel-profile[aria-busy="true"] .profile-card,
+#panel-profile[aria-busy="true"] .info-card {
+  opacity: 0.58;
+  transition: opacity 0.2s ease;
+}
+
+#panel-profile.is-ready .profile-card,
+#panel-profile.is-ready .info-card {
+  animation: student-profile-content-in 220ms ease-out;
+}
+
+.profile-load-message {
+  margin: 12px 0 0;
+}
+
+@keyframes student-profile-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 #panel-profile .profile-avatar img {
@@ -1743,6 +1775,107 @@ textarea::placeholder {
   line-height: 1.5;
 }
 
+#panel-mentor .mentor-message {
+  margin: 0 0 16px;
+}
+
+#panel-mentor .mentor-verification-status {
+  gap: 8px;
+}
+
+#panel-mentor .mentor-status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+#panel-mentor .mentor-status-badge.is-pending {
+  background: #fff7ed;
+  color: #b45309;
+}
+
+#panel-mentor .mentor-status-badge.is-verified {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+#panel-mentor .mentor-status-badge.is-unknown {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+#panel-mentor .mentor-verification-hint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#panel-mentor .mentor-verification-hint[hidden],
+#panel-mentor .mentor-resend-button[hidden] {
+  display: none !important;
+}
+
+#panel-mentor .mentor-resend-button {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+#panel-mentor button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.mentor-modal {
+  width: min(560px, 100%);
+}
+
+.mentor-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mentor-form-full {
+  grid-column: 1 / -1;
+}
+
+.mentor-modal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.mentor-modal .form-group label {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mentor-modal .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.mentor-modal .form-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.mentor-modal .message {
+  margin: 16px 0 0;
+}
+
 /* =========================================================
    Mentor Action Buttons
    ========================================================= */
@@ -1873,6 +2006,14 @@ textarea::placeholder {
   #panel-mentor .btn-mock-sm,
   #panel-mentor .btn-danger-outline {
     width: 100%;
+  }
+
+  .mentor-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mentor-form-full {
+    grid-column: auto;
   }
 }
 /* ==============================
