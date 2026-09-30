@@ -14,6 +14,9 @@ const teacherRoutes = require("./routes/teacher.routes");
 
 const mentorRoutes = require("./routes/mentor.routes");
 const mentorVerificationRoutes = require("./routes/mentorVerification.routes");
+const coopRequestRoutes = require("./routes/coopRequest.routes");
+const jobSubmissionRoutes = require("./routes/jobSubmission.routes");
+const staffAuthRoutes = require("./routes/staffAuth.routes");
 // โหลด models ทั้งหมด
 // Student, StudentProfile และ associate()
 require("./models");
@@ -67,25 +70,20 @@ app.use("/api/teachers", teacherRoutes);
 // Mentor routes
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/mentor-verification", mentorVerificationRoutes);
-
+app.use("/api/coop-requests", coopRequestRoutes);
+app.use("/api/job-submissions", jobSubmissionRoutes);
+app.use("/api/staff/auth", staffAuthRoutes);
 
 // ==============================
 // Database + Server
 // ==============================
 
-// ใช้ alter: true เฉพาะตอน Development
-// เมื่อ Schema นิ่งแล้วควรเปลี่ยนไปใช้ Migration
+// Schema changes are applied explicitly through `npm run db:migrate`.
+// Application startup must not mutate the schema.
 sequelize
   .authenticate()
   .then(() => {
     console.log("Database connected.");
-
-    return sequelize.sync({
-      alter: true,
-    });
-  })
-  .then(() => {
-    console.log("Models synced.");
 
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

@@ -2,6 +2,10 @@ const nodemailer = require("nodemailer");
 
 const MENTOR_PAGE_PATH = "/src/mentor_coop/mentor_verify_user.html";
 const EMAIL_SUBJECT = "ยืนยันข้อมูลพี่เลี้ยงนักศึกษาสหกิจศึกษา";
+const COMPANY_VERIFICATION_PAGE_PATH =
+  "/src/recruit_student/recruit_verify_email.html";
+const COMPANY_VERIFICATION_SUBJECT =
+  "ยืนยันอีเมลสำหรับประกาศรับนักศึกษาสหกิจศึกษา";
 
 function getRequiredSmtpConfig() {
   const {
@@ -76,7 +80,8 @@ async function sendMentorVerificationEmail({ to, firstName, lastName, token }) {
   }
 
   const verificationUrl = buildVerificationUrl(token);
-  const mentorName = [firstName, lastName].filter(Boolean).join(" ") || "พี่เลี้ยง";
+  const mentorName =
+    [firstName, lastName].filter(Boolean).join(" ") || "พี่เลี้ยง";
   const safeMentorName = escapeHtml(mentorName);
   const safeVerificationUrl = escapeHtml(verificationUrl);
 
@@ -110,7 +115,50 @@ FITM Internship System`;
   });
 }
 
+function buildCompanyVerificationUrl(token) {
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl) {
+    throw new Error(
+      "FRONTEND_URL is required to send a company verification email.",
+    );
+  }
+  return `${frontendUrl.replace(/\/$/, "")}${COMPANY_VERIFICATION_PAGE_PATH}?token=${encodeURIComponent(token)}`;
+}
+
+async function sendCompanyVerificationEmail({ to, companyName, token }) {
+  if (!to || !token) {
+    throw new Error("Recipient email and verification token are required.");
+  }
+  const verificationUrl = buildCompanyVerificationUrl(token);
+  const safeCompanyName = escapeHtml(companyName || "สถานประกอบการ");
+  const safeVerificationUrl = escapeHtml(verificationUrl);
+  const text = `เรียน ${companyName || "สถานประกอบการ"}
+
+กรุณายืนยันอีเมลสำหรับประกาศรับนักศึกษาสหกิจศึกษาผ่านลิงก์นี้:
+${verificationUrl}
+
+ลิงก์มีอายุจำกัดและใช้ได้เพียงครั้งเดียว
+FITM Internship System`;
+  const html = `
+    <p>เรียน ${safeCompanyName}</p>
+    <p>กรุณายืนยันอีเมลสำหรับประกาศรับนักศึกษาสหกิจศึกษาผ่านลิงก์ด้านล่าง</p>
+    <p><a href="${safeVerificationUrl}">ยืนยันอีเมล</a></p>
+    <p>ลิงก์มีอายุจำกัดและใช้ได้เพียงครั้งเดียว</p>
+    <p>FITM Internship System</p>
+  `;
+  const { from, fromName } = getRequiredSmtpConfig();
+  const transporter = createTransporter();
+  return transporter.sendMail({
+    from: `"${fromName}" <${from}>`,
+    to,
+    subject: COMPANY_VERIFICATION_SUBJECT,
+    text,
+    html,
+  });
+}
+
 module.exports = {
   verifyEmailConnection,
+  sendCompanyVerificationEmail,
   sendMentorVerificationEmail,
 };

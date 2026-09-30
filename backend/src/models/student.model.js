@@ -51,6 +51,16 @@ module.exports = (sequelize) => {
         },
       );
 
+      Student.hasMany(
+        models.CoopRequest,
+        {
+          foreignKey: "student_id",
+          as: "coopRequests",
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
+        },
+      );
+
       // ==============================
       // Mentor
       // นักศึกษา 1 คน

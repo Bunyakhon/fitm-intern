@@ -13,7 +13,13 @@ import {
   getMyMentor,
   updateMyMentor,
 } from "../api/mentor.api.js";
-import { showConfirmModal, showToast } from "../ui/feedback.js";
+import {
+  cancelCoopRequest,
+  createCoopRequest,
+  getCoopRequestById,
+  getMyCoopRequests,
+} from "../api/coopRequest.api.js";
+import { setButtonLoading, showConfirmModal, showToast } from "../ui/feedback.js";
 
 console.log("KIWI student cooperative dashboard loaded");
 
@@ -1713,6 +1719,10 @@ sidebarItems.forEach(
           loadMentor();
         }
 
+        if (targetId === "panel-request") {
+          loadCoopRequests();
+        }
+
         window.scrollTo({
           top: 0,
           behavior: "smooth",
@@ -1801,20 +1811,559 @@ uploadResumeBtn?.addEventListener(
 );
 
 // ==============================
-// Request
+// Cooperative request
 // ==============================
 
-const createRequestBtn =
-  document.getElementById(
-    "createRequestBtn"
-  );
+const COOP_ACTIVE_STATUSES = new Set([
+  "submitted",
+  "staff_review",
+  "advisor_review",
+  "department_head_review",
+  "approved",
+  "document_issued",
+  "in_progress",
+]);
 
-createRequestBtn?.addEventListener(
-  "click",
-  () => {
-    showToast("ระบบสร้างคำร้องสหกิจศึกษาจะพัฒนาในขั้นตอนถัดไป", "info");
+const COOP_CANCELLABLE_STATUSES = new Set([
+  "submitted",
+  "staff_review",
+  "advisor_review",
+  "department_head_review",
+]);
+
+const COOP_STATUS_META = {
+  submitted: {
+    label: "ยื่นคำร้องแล้ว",
+    summary: "ส่งคำร้องเรียบร้อยแล้ว กำลังรอเจ้าหน้าที่ตรวจสอบ",
+    step: 1,
+  },
+  staff_review: {
+    label: "เจ้าหน้าที่กำลังตรวจสอบ",
+    summary: "คำร้องอยู่ระหว่างการตรวจสอบโดยเจ้าหน้าที่",
+    step: 2,
+  },
+  advisor_review: {
+    label: "รออาจารย์ที่ปรึกษาพิจารณา",
+    summary: "คำร้องอยู่ระหว่างรออาจารย์ที่ปรึกษาพิจารณา",
+    step: 2,
+  },
+  department_head_review: {
+    label: "รอหัวหน้าภาควิชาพิจารณา",
+    summary: "คำร้องอยู่ระหว่างรอหัวหน้าภาควิชาพิจารณา",
+    step: 3,
+  },
+  approved: {
+    label: "อนุมัติแล้ว",
+    summary: "คำร้องได้รับการอนุมัติแล้ว",
+    step: 3,
+  },
+  document_issued: {
+    label: "ออกเอกสารแล้ว",
+    summary: "ระบบดำเนินการออกเอกสารส่งตัวแล้ว",
+    step: 4,
+  },
+  in_progress: {
+    label: "กำลังปฏิบัติงานสหกิจศึกษา",
+    summary: "คุณอยู่ระหว่างปฏิบัติงานสหกิจศึกษา",
+    step: 5,
+  },
+  rejected: {
+    label: "ไม่ได้รับการอนุมัติ",
+    summary: "คำร้องนี้ไม่ได้รับการอนุมัติ คุณสามารถตรวจสอบรายละเอียดได้จากประวัติคำร้อง",
+    step: 0,
+    terminal: true,
+  },
+  cancelled: {
+    label: "ยกเลิกโดยนักศึกษา",
+    summary: "คำร้องนี้ถูกยกเลิกแล้ว คุณสามารถสร้างคำร้องใหม่ได้เมื่อพร้อม",
+    step: 0,
+    terminal: true,
+  },
+};
+
+const COOP_DELIVERY_LABELS = {
+  self_submit: "นักศึกษานำหนังสือไปยื่นด้วยตนเอง",
+  postal: "ให้ภาควิชาฯ จัดส่งให้ทางไปรษณีย์",
+  email: "จัดส่งให้ทาง E-mail",
+};
+
+const createRequestBtn = document.getElementById("createRequestBtn");
+const coopRequestMessage = document.getElementById("coopRequestMessage");
+const coopRequestEmpty = document.getElementById("coopRequestEmpty");
+const coopRequestCurrent = document.getElementById("coopRequestCurrent");
+const coopRequestHistory = document.getElementById("coopRequestHistory");
+const coopRequestHistoryBody = document.getElementById("coopRequestHistoryBody");
+const coopRequestHistoryEmpty = document.getElementById("coopRequestHistoryEmpty");
+const coopCurrentStatus = document.getElementById("coopCurrentStatus");
+const coopCurrentHeading = document.getElementById("coopCurrentHeading");
+const coopCurrentSubheading = document.getElementById("coopCurrentSubheading");
+const coopCurrentStatusSummary = document.getElementById("coopCurrentStatusSummary");
+const coopCurrentCompany = document.getElementById("coopCurrentCompany");
+const coopCurrentProvince = document.getElementById("coopCurrentProvince");
+const coopCurrentSubmittedAt = document.getElementById("coopCurrentSubmittedAt");
+const coopCurrentStartDate = document.getElementById("coopCurrentStartDate");
+const coopCurrentEndDate = document.getElementById("coopCurrentEndDate");
+const coopCurrentDeliveryMethods = document.getElementById("coopCurrentDeliveryMethods");
+const coopCurrentStepper = document.getElementById("coopCurrentStepper");
+const viewCurrentCoopRequestBtn = document.getElementById("viewCurrentCoopRequestBtn");
+const cancelCoopRequestBtn = document.getElementById("cancelCoopRequestBtn");
+const coopRequestModal = document.getElementById("coopRequestModal");
+const closeCoopRequestModalBtn = document.getElementById("closeCoopRequestModal");
+const cancelCoopRequestModalBtn = document.getElementById("cancelCoopRequestModal");
+const coopRequestForm = document.getElementById("coopRequestForm");
+const coopRequestFormMessage = document.getElementById("coopRequestFormMessage");
+const saveCoopRequestBtn = document.getElementById("saveCoopRequestBtn");
+const coopRequestDetailModal = document.getElementById("coopRequestDetailModal");
+const closeCoopRequestDetailModalBtn = document.getElementById("closeCoopRequestDetailModal");
+const coopRequestDetailContent = document.getElementById("coopRequestDetailContent");
+const coopRequestDetailMessage = document.getElementById("coopRequestDetailMessage");
+const coopRequestDetailData = document.getElementById("coopRequestDetailData");
+const coopDetailStudent = document.getElementById("coopDetailStudent");
+const coopDetailDocument = document.getElementById("coopDetailDocument");
+const coopDetailRequest = document.getElementById("coopDetailRequest");
+const coopDetailDeliveryMethods = document.getElementById("coopDetailDeliveryMethods");
+const coopDetailSigner = document.getElementById("coopDetailSigner");
+const coopDetailStepper = document.getElementById("coopDetailStepper");
+const coopDetailStatus = document.getElementById("coopDetailStatus");
+const coopAdvisorName = document.getElementById("coopAdvisorName");
+const coopDetailAdvisorName = document.getElementById("coopDetailAdvisorName");
+const closeCoopRequestDetailFooterBtn = document.getElementById("closeCoopRequestDetailFooterBtn");
+
+let coopRequests = [];
+let currentCoopRequest = null;
+let coopRequestsLoading = false;
+let coopRequestSubmitting = false;
+let coopRequestCancelling = false;
+let coopRequestDetailLoading = false;
+let coopRequestModalReturnFocus = null;
+let coopRequestDetailModalReturnFocus = null;
+
+function getCoopRequestStatusMeta(status) {
+  return COOP_STATUS_META[status] || {
+    label: "ไม่ทราบสถานะ",
+    summary: "ไม่สามารถระบุสถานะคำร้องจากข้อมูลที่ได้รับ",
+    step: 0,
+    terminal: true,
+  };
+}
+
+function getCoopDeliveryMethodLabels(request) {
+  const methods = request?.deliveryMethods || [];
+  return methods
+    .map((item) => COOP_DELIVERY_LABELS[item?.method])
+    .filter(Boolean);
+}
+
+function getCoopDeliveryMethods(request) {
+  const labels = getCoopDeliveryMethodLabels(request);
+  return labels.length ? labels.join(", ") : "ไม่พบข้อมูล";
+}
+
+function getCoopStudentFullName(student, profile) {
+  return [profile?.prefix, student?.first_name, student?.last_name]
+    .filter(Boolean)
+    .join(" ") || "ไม่พบข้อมูล";
+}
+
+function formatCoopDate(value, includeTime = false) {
+  if (!value) return "ไม่พบข้อมูล";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "ไม่พบข้อมูล";
+  return new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium",
+    ...(includeTime ? { timeStyle: "short" } : {}),
+  }).format(date);
+}
+
+function createCoopDetailItem(label, value, full = false) {
+  const item = document.createElement("div");
+  if (full) item.className = "coop-readonly-full";
+  const labelElement = document.createElement("span");
+  const valueElement = document.createElement("strong");
+  labelElement.textContent = label;
+  valueElement.textContent = value || "ไม่พบข้อมูล";
+  item.append(labelElement, valueElement);
+  return item;
+}
+
+function renderCoopStepper(container, request) {
+  if (!container) return;
+  const status = getCoopRequestStatusMeta(request?.status);
+  const steps = ["ยื่นคำร้อง", "เจ้าหน้าที่ตรวจสอบ", "อนุมัติคำร้อง", "ออกเอกสารส่งตัว", "เริ่มสหกิจศึกษา"];
+  container.replaceChildren();
+  steps.forEach((label, index) => {
+    const step = document.createElement("div");
+    const stepNumber = index + 1;
+    step.className = "coop-step";
+    if (!status.terminal && stepNumber < status.step) step.classList.add("is-complete");
+    if (!status.terminal && stepNumber === status.step) step.classList.add("is-current");
+    const marker = document.createElement("span");
+    const text = document.createElement("span");
+    marker.textContent = step.classList.contains("is-complete") ? "✓" : String(stepNumber);
+    marker.setAttribute("aria-hidden", "true");
+    text.textContent = label;
+    step.append(marker, text);
+    container.append(step);
+  });
+  if (status.terminal) {
+    const terminal = document.createElement("p");
+    terminal.className = "coop-terminal-status";
+    terminal.textContent = status.label;
+    container.append(terminal);
   }
-);
+}
+
+function renderCoopRequests() {
+  const isBusy = coopRequestsLoading || coopRequestSubmitting || coopRequestCancelling;
+  currentCoopRequest = coopRequests.find((request) => COOP_ACTIVE_STATUSES.has(request.status)) || null;
+  const history = coopRequests.filter((request) => request.id !== currentCoopRequest?.id);
+
+  if (coopRequestEmpty) coopRequestEmpty.hidden = Boolean(currentCoopRequest) || coopRequestsLoading;
+  if (coopRequestCurrent) coopRequestCurrent.hidden = !currentCoopRequest;
+  if (coopRequestHistory) coopRequestHistory.hidden = coopRequestsLoading || (!currentCoopRequest && history.length === 0);
+  if (createRequestBtn) createRequestBtn.disabled = isBusy || Boolean(currentCoopRequest);
+
+  if (currentCoopRequest) {
+    const status = getCoopRequestStatusMeta(currentCoopRequest.status);
+    coopCurrentStatus.textContent = status.label;
+    coopCurrentStatus.className = `coop-status-badge is-${currentCoopRequest.status}`;
+    setText(
+      coopCurrentHeading,
+      currentCoopRequest.company_name || "ไม่พบข้อมูล",
+    );
+    setText(
+      coopCurrentSubheading,
+      `คำร้องสหกิจศึกษาปัจจุบัน · จังหวัด ${currentCoopRequest.company_province || "ไม่พบข้อมูล"}`,
+    );
+    setText(coopCurrentStatusSummary, status.summary);
+    setText(coopCurrentCompany, currentCoopRequest.company_name || "ไม่พบข้อมูล");
+    setText(coopCurrentProvince, currentCoopRequest.company_province || "ไม่พบข้อมูล");
+    setText(coopCurrentSubmittedAt, formatCoopDate(currentCoopRequest.submitted_at, true));
+    setText(coopCurrentStartDate, formatCoopDate(currentCoopRequest.work_start_date));
+    setText(coopCurrentEndDate, formatCoopDate(currentCoopRequest.work_end_date));
+    setText(coopCurrentDeliveryMethods, getCoopDeliveryMethods(currentCoopRequest));
+    renderCoopStepper(coopCurrentStepper, currentCoopRequest);
+    if (cancelCoopRequestBtn) {
+      cancelCoopRequestBtn.hidden = !COOP_CANCELLABLE_STATUSES.has(currentCoopRequest.status);
+      cancelCoopRequestBtn.disabled = isBusy;
+    }
+    if (viewCurrentCoopRequestBtn) viewCurrentCoopRequestBtn.disabled = isBusy;
+  }
+
+  if (coopRequestHistoryBody) {
+    coopRequestHistoryBody.replaceChildren();
+    history.forEach((request) => {
+      const row = document.createElement("tr");
+      const values = [
+        request.company_name || "ไม่พบข้อมูล",
+        request.company_province || "ไม่พบข้อมูล",
+        formatCoopDate(request.submitted_at),
+        getCoopRequestStatusMeta(request.status).label,
+      ];
+      values.forEach((value, index) => {
+        const cell = document.createElement("td");
+        if (index === 3) {
+          const badge = document.createElement("span");
+          badge.className = `coop-status-badge is-${request.status}`;
+          badge.textContent = value;
+          cell.append(badge);
+        } else {
+          cell.textContent = value;
+        }
+        row.append(cell);
+      });
+      const action = document.createElement("td");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn-secondary coop-history-detail";
+      button.dataset.requestId = request.id;
+      button.disabled = isBusy;
+      button.textContent = "ดูรายละเอียด";
+      action.append(button);
+      row.append(action);
+      coopRequestHistoryBody.append(row);
+    });
+  }
+  if (coopRequestHistoryEmpty) coopRequestHistoryEmpty.hidden = history.length > 0;
+}
+
+function getCoopRequestErrorMessage(error, action) {
+  if (error?.status === 401) return "การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่";
+  if (error?.status === 409) return "คุณมีคำร้องสหกิจศึกษาที่ยังดำเนินการอยู่แล้ว";
+  if (error?.status === 404) return "ไม่พบคำร้องสหกิจศึกษา";
+  return error?.message || `ไม่สามารถ${action}คำร้องสหกิจศึกษาได้ กรุณาลองใหม่อีกครั้ง`;
+}
+
+async function loadCoopRequests() {
+  if (coopRequestsLoading || coopRequestSubmitting || coopRequestCancelling) return false;
+  coopRequestsLoading = true;
+  renderCoopRequests();
+  showMessage(coopRequestMessage, "กำลังโหลดคำร้องสหกิจศึกษา...", "loading");
+  try {
+    const result = await getMyCoopRequests();
+    coopRequests = Array.isArray(result?.data) ? result.data : [];
+    clearMessage(coopRequestMessage);
+    return true;
+  } catch (error) {
+    coopRequests = [];
+    showMessage(coopRequestMessage, getCoopRequestErrorMessage(error, "โหลด"), "error");
+    return false;
+  } finally {
+    coopRequestsLoading = false;
+    renderCoopRequests();
+  }
+}
+
+function renderReadonlyStudentData() {
+  const profile = currentStudentProfile || currentStudent?.profile || {};
+  const fullName = getCoopStudentFullName(currentStudent, profile);
+  setText(document.getElementById("coopStudentName"), fullName);
+  setText(document.getElementById("coopStudentId"), currentStudent?.student_id || "ไม่พบข้อมูล");
+  setText(document.getElementById("coopStudentYear"), currentStudent?.year_level ? `ชั้นปี ${currentStudent.year_level}` : "ไม่พบข้อมูล");
+  setText(document.getElementById("coopStudentGpa"), currentStudent?.gpa ?? "ไม่พบข้อมูล");
+  setText(document.getElementById("coopStudentPhone"), profile.current_phone || "ไม่พบข้อมูล");
+  setText(document.getElementById("coopStudentEmail"), currentStudent?.email || "ไม่พบข้อมูล");
+  setText(document.getElementById("coopSignerName"), fullName);
+  setText(document.getElementById("coopSignerFullName"), fullName);
+  setText(coopAdvisorName, getCoopAdvisorName(currentStudent));
+}
+
+function getCoopAdvisorName(student) {
+  return student?.advisorTeacher
+    ? formatTeacherName(student.advisorTeacher)
+    : "ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น";
+}
+
+function setCoopRequestFormSubmitting(isSubmitting) {
+  coopRequestForm?.setAttribute("aria-busy", String(isSubmitting));
+  coopRequestForm?.querySelectorAll("input, select, textarea, button").forEach((element) => {
+    element.disabled = isSubmitting;
+  });
+  setButtonLoading(
+    saveCoopRequestBtn,
+    isSubmitting,
+    "กำลังยื่นคำร้อง...",
+    "ยื่นคำร้อง",
+  );
+}
+
+function openCoopRequestModal() {
+  if (coopRequestSubmitting || currentCoopRequest) return;
+  coopRequestModalReturnFocus = document.activeElement;
+  renderReadonlyStudentData();
+  coopRequestForm?.reset();
+  clearMessage(coopRequestFormMessage);
+  setCoopRequestFormSubmitting(false);
+  coopRequestModal?.classList.add("open");
+  coopRequestModal?.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  window.requestAnimationFrame(() => document.getElementById("coopCompanyName")?.focus());
+}
+
+function closeCoopRequestModal() {
+  if (coopRequestSubmitting) return;
+  coopRequestModal?.classList.remove("open");
+  coopRequestModal?.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  coopRequestModalReturnFocus?.focus?.();
+  coopRequestModalReturnFocus = null;
+}
+
+function getCoopRequestFormData() {
+  return {
+    company_name: document.getElementById("coopCompanyName").value.trim(),
+    company_province: document.getElementById("coopCompanyProvince").value.trim(),
+    letter_recipient_name: document.getElementById("coopLetterRecipientName").value.trim(),
+    letter_recipient_position_department: document.getElementById("coopRecipientPosition").value.trim(),
+    company_address: document.getElementById("coopCompanyAddress").value.trim(),
+    work_start_date: document.getElementById("coopWorkStartDate").value,
+    work_end_date: document.getElementById("coopWorkEndDate").value,
+    delivery_methods: Array.from(document.querySelectorAll('input[name="delivery_methods"]:checked')).map((input) => input.value),
+  };
+}
+
+function validateCoopRequestForm(data) {
+  const requiredFields = ["company_name", "company_province", "letter_recipient_name", "company_address", "work_start_date", "work_end_date"];
+  if (requiredFields.some((field) => !data[field])) return "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน";
+  if (!data.delivery_methods.length) return "กรุณาเลือกวิธีจัดส่งหนังสืออย่างน้อย 1 วิธี";
+  if (data.work_end_date < data.work_start_date) return "วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มปฏิบัติงาน";
+  return null;
+}
+
+async function submitCoopRequestForm(event) {
+  event.preventDefault();
+  if (coopRequestSubmitting) return;
+  const data = getCoopRequestFormData();
+  const validationError = validateCoopRequestForm(data);
+  if (validationError) {
+    showMessage(coopRequestFormMessage, validationError, "error");
+    return;
+  }
+  coopRequestSubmitting = true;
+  setCoopRequestFormSubmitting(true);
+  renderCoopRequests();
+  try {
+    await createCoopRequest(data);
+    coopRequestSubmitting = false;
+    closeCoopRequestModal();
+    const loaded = await loadCoopRequests();
+    if (loaded) {
+      showMessage(coopRequestMessage, "ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
+      showToast("ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
+    }
+  } catch (error) {
+    showMessage(coopRequestFormMessage, getCoopRequestErrorMessage(error, "ยื่น"), "error");
+  } finally {
+    coopRequestSubmitting = false;
+    setCoopRequestFormSubmitting(false);
+    renderCoopRequests();
+  }
+}
+
+function closeCoopRequestDetailModal() {
+  if (coopRequestDetailLoading) return;
+  coopRequestDetailModal?.classList.remove("open");
+  coopRequestDetailModal?.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  coopRequestDetailModalReturnFocus?.focus?.();
+  coopRequestDetailModalReturnFocus = null;
+}
+
+function renderCoopRequestDetail(request) {
+  const status = getCoopRequestStatusMeta(request.status);
+  const student = request.student || {};
+  const profile = student.profile || {};
+  const fullName = getCoopStudentFullName(student, profile);
+  coopDetailDocument.replaceChildren(
+    createCoopDetailItem("เรื่อง", "ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา", true),
+    createCoopDetailItem("เรียน", "หัวหน้าภาควิชาเทคโนโลยีสารสนเทศ", true),
+  );
+  coopDetailStudent.replaceChildren(
+    createCoopDetailItem("ชื่อ-นามสกุล", fullName),
+    createCoopDetailItem("รหัสนักศึกษา", student.student_id),
+    createCoopDetailItem("ชั้นปี", student.year_level ? `ชั้นปี ${student.year_level}` : "ไม่พบข้อมูล"),
+    createCoopDetailItem("GPA", student.gpa),
+    createCoopDetailItem("เบอร์โทร", profile.current_phone),
+    createCoopDetailItem("Email", student.email),
+  );
+  coopDetailRequest.replaceChildren(
+    createCoopDetailItem("ชื่อบริษัท / หน่วยงาน", request.company_name, true),
+    createCoopDetailItem("เรียนถึง", request.letter_recipient_name),
+    createCoopDetailItem("ตำแหน่ง / หน่วยงานผู้รับหนังสือ", request.letter_recipient_position_department),
+    createCoopDetailItem("จังหวัด", request.company_province),
+    createCoopDetailItem("ที่อยู่", request.company_address, true),
+    createCoopDetailItem("เริ่มปฏิบัติงาน", formatCoopDate(request.work_start_date)),
+    createCoopDetailItem("สิ้นสุดปฏิบัติงาน", formatCoopDate(request.work_end_date)),
+  );
+  coopDetailDeliveryMethods.replaceChildren();
+  const deliveryLabels = getCoopDeliveryMethodLabels(request);
+  if (deliveryLabels.length) {
+    deliveryLabels.forEach((label) => {
+      const item = document.createElement("span");
+      item.className = "coop-detail-chip";
+      item.textContent = label;
+      coopDetailDeliveryMethods.append(item);
+    });
+  } else {
+    const unavailable = document.createElement("p");
+    unavailable.className = "coop-unavailable";
+    unavailable.textContent = "ไม่พบข้อมูลวิธีจัดส่งหนังสือ";
+    coopDetailDeliveryMethods.append(unavailable);
+  }
+  coopDetailSigner.replaceChildren(
+    createCoopDetailItem("ลงชื่อ", fullName),
+    createCoopDetailItem("ชื่อ-สกุล", fullName),
+  );
+  setText(coopDetailAdvisorName, getCoopAdvisorName(student));
+  if (coopDetailStatus) {
+    coopDetailStatus.className = `coop-status-badge is-${request.status}`;
+    coopDetailStatus.textContent = status.label;
+  }
+  renderCoopStepper(coopDetailStepper, request);
+}
+
+async function openCoopRequestDetail(id) {
+  if (!id || coopRequestDetailLoading) return;
+  coopRequestDetailModalReturnFocus = document.activeElement;
+  coopRequestDetailModal?.classList.add("open");
+  coopRequestDetailModal?.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  window.requestAnimationFrame(() => closeCoopRequestDetailModalBtn?.focus());
+  coopRequestDetailLoading = true;
+  coopRequestDetailContent?.setAttribute("aria-busy", "true");
+  coopRequestDetailData.hidden = true;
+  showMessage(coopRequestDetailMessage, "กำลังโหลดรายละเอียดคำร้อง...", "loading");
+  try {
+    const result = await getCoopRequestById(id);
+    renderCoopRequestDetail(result?.data || {});
+    clearMessage(coopRequestDetailMessage);
+    coopRequestDetailData.hidden = false;
+  } catch (error) {
+    showMessage(coopRequestDetailMessage, getCoopRequestErrorMessage(error, "โหลดรายละเอียด"), "error");
+  } finally {
+    coopRequestDetailLoading = false;
+    coopRequestDetailContent?.setAttribute("aria-busy", "false");
+  }
+}
+
+async function cancelCoopRequestAfterConfirmation() {
+  if (!currentCoopRequest || !COOP_CANCELLABLE_STATUSES.has(currentCoopRequest.status) || coopRequestCancelling) return;
+  coopRequestCancelling = true;
+  renderCoopRequests();
+  showMessage(coopRequestMessage, "กำลังยกเลิกคำร้องสหกิจศึกษา...", "loading");
+  try {
+    await cancelCoopRequest(currentCoopRequest.id);
+    coopRequestCancelling = false;
+    const loaded = await loadCoopRequests();
+    if (loaded) {
+      showMessage(coopRequestMessage, "ยกเลิกคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
+      showToast("ยกเลิกคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
+    }
+  } catch (error) {
+    showMessage(coopRequestMessage, getCoopRequestErrorMessage(error, "ยกเลิก"), "error");
+  } finally {
+    coopRequestCancelling = false;
+    renderCoopRequests();
+  }
+}
+
+function confirmCancelCoopRequest() {
+  if (!currentCoopRequest || !COOP_CANCELLABLE_STATUSES.has(currentCoopRequest.status)) return;
+  showConfirmModal({
+    title: "ยกเลิกคำร้องสหกิจศึกษา",
+    message: "คุณต้องการยกเลิกคำร้องนี้ใช่หรือไม่? หลังยกเลิกแล้วสามารถยื่นคำร้องใหม่ได้",
+    confirmLabel: "ยืนยันการยกเลิก",
+    loadingLabel: "กำลังยกเลิก...",
+    onConfirm: cancelCoopRequestAfterConfirmation,
+  });
+}
+
+createRequestBtn?.addEventListener("click", openCoopRequestModal);
+coopRequestForm?.addEventListener("submit", submitCoopRequestForm);
+closeCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);
+cancelCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);
+coopRequestModal?.addEventListener("click", (event) => {
+  if (event.target === coopRequestModal) closeCoopRequestModal();
+});
+viewCurrentCoopRequestBtn?.addEventListener("click", () => openCoopRequestDetail(currentCoopRequest?.id));
+cancelCoopRequestBtn?.addEventListener("click", confirmCancelCoopRequest);
+coopRequestHistoryBody?.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-request-id]");
+  if (button) openCoopRequestDetail(button.dataset.requestId);
+});
+closeCoopRequestDetailModalBtn?.addEventListener("click", closeCoopRequestDetailModal);
+closeCoopRequestDetailFooterBtn?.addEventListener("click", closeCoopRequestDetailModal);
+coopRequestDetailModal?.addEventListener("click", (event) => {
+  if (event.target === coopRequestDetailModal) closeCoopRequestDetailModal();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (coopRequestDetailModal?.classList.contains("open")) {
+    closeCoopRequestDetailModal();
+  } else if (coopRequestModal?.classList.contains("open")) {
+    closeCoopRequestModal();
+  }
+});
 
 // ==============================
 // Daily Log Modal

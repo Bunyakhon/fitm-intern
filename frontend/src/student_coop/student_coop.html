@@ -709,7 +709,38 @@
             <p>ยื่นและติดตามสถานะคำร้องสหกิจศึกษา</p>
           </div>
 
-          <div class="section-card">
+          <p class="message" id="coopRequestMessage" role="status" aria-live="polite"></p>
+
+          <div class="section-card coop-request-current" id="coopRequestCurrent" hidden>
+            <div class="request-card-head coop-current-card-head">
+              <div>
+                <p class="coop-current-eyebrow"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> คำร้องสหกิจศึกษาปัจจุบัน</p>
+                <h4 id="coopCurrentHeading">คำร้องสหกิจศึกษาปัจจุบัน</h4>
+                <p id="coopCurrentSubheading">ข้อมูลคำร้องที่กำลังดำเนินการของคุณ</p>
+              </div>
+              <span class="coop-status-badge" id="coopCurrentStatus"></span>
+            </div>
+            <div class="coop-stepper" id="coopCurrentStepper" aria-label="ความคืบหน้าคำร้องสหกิจศึกษา"></div>
+            <div class="coop-request-summary">
+              <div><span>สถานประกอบการ</span><strong id="coopCurrentCompany"></strong></div>
+              <div><span>จังหวัด</span><strong id="coopCurrentProvince"></strong></div>
+              <div><span>วันที่ยื่นคำร้อง</span><strong id="coopCurrentSubmittedAt"></strong></div>
+              <div><span>วันเริ่มสหกิจศึกษา</span><strong id="coopCurrentStartDate"></strong></div>
+              <div><span>วันสิ้นสุดสหกิจศึกษา</span><strong id="coopCurrentEndDate"></strong></div>
+              <div class="coop-request-summary-full"><span>วิธีจัดส่งหนังสือ</span><strong id="coopCurrentDeliveryMethods"></strong></div>
+            </div>
+            <p class="coop-status-summary" id="coopCurrentStatusSummary" role="status" aria-live="polite"></p>
+            <div class="request-actions">
+              <button type="button" class="btn-secondary" id="viewCurrentCoopRequestBtn">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i> ดูรายละเอียดคำร้อง
+              </button>
+              <button type="button" class="btn-danger-outline" id="cancelCoopRequestBtn">
+                <i class="fa-solid fa-ban" aria-hidden="true"></i> ยกเลิกคำร้อง
+              </button>
+            </div>
+          </div>
+
+          <div class="section-card coop-request-empty" id="coopRequestEmpty">
             <div class="empty-state">
               <i class="fa-solid fa-file-circle-plus"></i>
 
@@ -722,6 +753,22 @@
                 สร้างคำร้อง
               </button>
             </div>
+          </div>
+
+          <div class="section-card coop-request-history" id="coopRequestHistory" hidden>
+            <div class="request-card-head">
+              <div>
+                <h4><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ประวัติคำร้องสหกิจศึกษาทั้งหมด</h4>
+                <p>คำร้องที่สิ้นสุดการดำเนินการแล้ว</p>
+              </div>
+            </div>
+            <div class="table-wrapper coop-history-table-wrapper">
+              <table class="data-table">
+                <thead><tr><th>สถานประกอบการ</th><th>จังหวัด</th><th>วันที่ยื่น</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead>
+                <tbody id="coopRequestHistoryBody"></tbody>
+              </table>
+            </div>
+            <p class="coop-history-empty" id="coopRequestHistoryEmpty" hidden>ยังไม่มีประวัติคำร้อง</p>
           </div>
         </section>
 
@@ -936,6 +983,7 @@
               </button>
             </div>
           </div>
+
         </section>
 
         <!-- ==============================
@@ -1564,6 +1612,106 @@
             บันทึกข้อมูล
           </button>
         </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="coopRequestModal" aria-hidden="true">
+      <div class="modal-box coop-request-modal" role="dialog" aria-modal="true" aria-labelledby="coopRequestModalTitle">
+        <div class="modal-header coop-request-modal-head">
+          <div><h3 id="coopRequestModalTitle">ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</h3><p>แบบคำร้องสำหรับยื่นต่อหัวหน้าภาควิชาเทคโนโลยีสารสนเทศ</p></div>
+          <button type="button" class="modal-close" id="closeCoopRequestModal" aria-label="ปิด"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <form id="coopRequestForm" novalidate>
+          <div class="modal-body coop-request-modal-body">
+            <section class="coop-form-section coop-student-section">
+              <h4>ข้อมูลนักศึกษา <small>ข้อมูลจากระบบ</small></h4>
+              <div class="coop-readonly-grid">
+                <div><span>ชื่อ-นามสกุล</span><strong id="coopStudentName">ไม่พบข้อมูล</strong></div>
+                <div><span>รหัสนักศึกษา</span><strong id="coopStudentId">ไม่พบข้อมูล</strong></div>
+                <div><span>ชั้นปี</span><strong id="coopStudentYear">ไม่พบข้อมูล</strong></div>
+                <div><span>GPA</span><strong id="coopStudentGpa">ไม่พบข้อมูล</strong></div>
+                <div><span>เบอร์โทร</span><strong id="coopStudentPhone">ไม่พบข้อมูล</strong></div>
+                <div><span>Email</span><strong id="coopStudentEmail">ไม่พบข้อมูล</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-system-section">
+              <h4>เรื่อง / เรียน <small>ข้อมูลระบบ</small></h4>
+              <div class="coop-readonly-grid">
+                <div class="coop-readonly-full"><span>เรื่อง</span><strong>ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</strong></div>
+                <div class="coop-readonly-full"><span>เรียน</span><strong>หัวหน้าภาควิชาเทคโนโลยีสารสนเทศ</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-company-section">
+              <h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4>
+              <div class="coop-form-grid">
+                <div class="form-group coop-form-full"><label for="coopCompanyName">ชื่อบริษัท / หน่วยงาน <span aria-hidden="true">*</span></label><input id="coopCompanyName" name="company_name" maxlength="255" required></div>
+                <div class="form-group"><label for="coopCompanyProvince">จังหวัด <span aria-hidden="true">*</span></label><select id="coopCompanyProvince" name="company_province" required><option value="">เลือกจังหวัด</option><option>กรุงเทพมหานคร</option><option>กระบี่</option><option>กาญจนบุรี</option><option>กาฬสินธุ์</option><option>กำแพงเพชร</option><option>ขอนแก่น</option><option>จันทบุรี</option><option>ฉะเชิงเทรา</option><option>ชลบุรี</option><option>ชัยนาท</option><option>ชัยภูมิ</option><option>ชุมพร</option><option>เชียงราย</option><option>เชียงใหม่</option><option>ตรัง</option><option>ตราด</option><option>ตาก</option><option>นครนายก</option><option>นครปฐม</option><option>นครพนม</option><option>นครราชสีมา</option><option>นครศรีธรรมราช</option><option>นครสวรรค์</option><option>นนทบุรี</option><option>นราธิวาส</option><option>น่าน</option><option>บึงกาฬ</option><option>บุรีรัมย์</option><option>ปทุมธานี</option><option>ประจวบคีรีขันธ์</option><option>ปราจีนบุรี</option><option>ปัตตานี</option><option>พระนครศรีอยุธยา</option><option>พะเยา</option><option>พังงา</option><option>พัทลุง</option><option>พิจิตร</option><option>พิษณุโลก</option><option>เพชรบุรี</option><option>เพชรบูรณ์</option><option>แพร่</option><option>ภูเก็ต</option><option>มหาสารคาม</option><option>มุกดาหาร</option><option>แม่ฮ่องสอน</option><option>ยโสธร</option><option>ยะลา</option><option>ร้อยเอ็ด</option><option>ระนอง</option><option>ระยอง</option><option>ราชบุรี</option><option>ลพบุรี</option><option>ลำปาง</option><option>ลำพูน</option><option>เลย</option><option>ศรีสะเกษ</option><option>สกลนคร</option><option>สงขลา</option><option>สตูล</option><option>สมุทรปราการ</option><option>สมุทรสงคราม</option><option>สมุทรสาคร</option><option>สระแก้ว</option><option>สระบุรี</option><option>สิงห์บุรี</option><option>สุโขทัย</option><option>สุพรรณบุรี</option><option>สุราษฎร์ธานี</option><option>สุรินทร์</option><option>หนองคาย</option><option>หนองบัวลำภู</option><option>อ่างทอง</option><option>อำนาจเจริญ</option><option>อุดรธานี</option><option>อุตรดิตถ์</option><option>อุทัยธานี</option><option>อุบลราชธานี</option></select></div>
+                <div class="form-group"><label for="coopLetterRecipientName">เรียนถึง <span aria-hidden="true">*</span></label><input id="coopLetterRecipientName" name="letter_recipient_name" maxlength="255" required></div>
+                <div class="form-group"><label for="coopRecipientPosition">ตำแหน่ง / หน่วยงานผู้รับหนังสือ</label><input id="coopRecipientPosition" name="letter_recipient_position_department" maxlength="255"></div>
+                <div class="form-group coop-form-full"><label for="coopCompanyAddress">ที่อยู่ <span aria-hidden="true">*</span></label><textarea id="coopCompanyAddress" name="company_address" required></textarea></div>
+                <div class="form-group"><label for="coopWorkStartDate">วันเริ่มปฏิบัติงาน <span aria-hidden="true">*</span></label><input type="date" id="coopWorkStartDate" name="work_start_date" required></div>
+                <div class="form-group"><label for="coopWorkEndDate">วันสิ้นสุดปฏิบัติงาน <span aria-hidden="true">*</span></label><input type="date" id="coopWorkEndDate" name="work_end_date" required></div>
+              </div>
+            </section>
+            <fieldset class="coop-form-section coop-delivery-methods"><legend>การดำเนินการจัดส่งหนังสือ <span aria-hidden="true">*</span></legend><p>กรุณาทำเครื่องหมาย ✓ เลือกได้มากกว่า 1 วิธี</p>
+              <div class="coop-check-row">
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="self_submit"> <span>นักศึกษานำหนังสือไปยื่นด้วยตนเอง</span></label>
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="postal"> <span>ให้ภาควิชาฯ จัดส่งให้ทางไปรษณีย์</span></label>
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="email"> <span>จัดส่งให้ทาง E-mail</span></label>
+              </div>
+            </fieldset>
+            <section class="coop-form-section coop-course-section">
+              <h4>รายวิชาที่ต้องผ่านเกณฑ์</h4>
+              <div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody><tr><td colspan="3">ยังไม่มีข้อมูลผลการเรียนที่เชื่อมต่อกับระบบ</td></tr></tbody></table></div>
+            </section>
+            <section class="coop-form-section coop-signer-section">
+              <h4>ลงชื่อผู้ยื่นคำร้อง</h4>
+              <div class="coop-readonly-grid"><div><span>ลงชื่อ</span><strong id="coopSignerName">ไม่พบข้อมูล</strong></div><div><span>ชื่อ-สกุล</span><strong id="coopSignerFullName">ไม่พบข้อมูล</strong></div></div>
+            </section>
+            <section class="coop-form-section coop-approval-section">
+              <h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4>
+              <p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p>
+              <div class="coop-readonly-grid coop-advisor-grid">
+                <div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div>
+                <div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-approval-section">
+              <h4>ความเห็นชอบของหัวหน้าภาควิชา</h4>
+              <p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p>
+            </section>
+            <p class="message" id="coopRequestFormMessage" role="alert" aria-live="assertive"></p>
+          </div>
+          <div class="modal-footer coop-request-modal-foot"><button type="button" class="btn-secondary" id="cancelCoopRequestModal">ปิด</button><button type="submit" class="btn-primary" id="saveCoopRequestBtn"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>ส่งคำร้อง</span></button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="coopRequestDetailModal" aria-hidden="true">
+      <div class="modal-box coop-request-modal" role="dialog" aria-modal="true" aria-labelledby="coopRequestDetailTitle" aria-describedby="coopRequestDetailDescription">
+        <div class="modal-header coop-request-modal-head">
+          <div>
+            <h3 id="coopRequestDetailTitle">ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</h3>
+            <p id="coopRequestDetailDescription">รายละเอียดคำร้องสหกิจศึกษาจากระบบ</p>
+          </div>
+          <button type="button" class="modal-close" id="closeCoopRequestDetailModal" aria-label="ปิด"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body" id="coopRequestDetailContent" aria-busy="false">
+          <p class="message" id="coopRequestDetailMessage" role="status" aria-live="polite"></p>
+          <div id="coopRequestDetailData" hidden>
+            <div class="coop-detail-status"><span>สถานะคำร้อง</span><strong class="coop-status-badge" id="coopDetailStatus"></strong></div>
+            <section class="coop-form-section coop-system-section"><h4>เรื่อง / เรียน</h4><div class="coop-readonly-grid" id="coopDetailDocument"></div></section>
+            <section class="coop-form-section coop-student-section"><h4>ข้อมูลนักศึกษา</h4><div class="coop-readonly-grid" id="coopDetailStudent"></div></section>
+            <section class="coop-form-section coop-company-section"><h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4><div class="coop-readonly-grid" id="coopDetailRequest"></div></section>
+            <section class="coop-form-section coop-delivery-detail"><h4>การดำเนินการจัดส่งหนังสือ</h4><div class="coop-detail-chip-list" id="coopDetailDeliveryMethods"></div></section>
+            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody><tr><td colspan="3">ยังไม่มีข้อมูลผลการเรียนที่เชื่อมต่อกับระบบ</td></tr></tbody></table></div></section>
+            <section class="coop-form-section coop-signer-section"><h4>ลงชื่อผู้ยื่นคำร้อง</h4><div class="coop-readonly-grid" id="coopDetailSigner"></div></section>
+            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p><div class="coop-readonly-grid coop-advisor-grid"><div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopDetailAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div><div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div></div></section>
+            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p></section>
+            <section class="coop-form-section coop-progress-section"><h4>สถานะการดำเนินการ</h4><div class="coop-stepper" id="coopDetailStepper"></div></section>
+          </div>
+        </div>
+        <div class="modal-footer coop-request-modal-foot"><button type="button" class="btn-secondary" id="closeCoopRequestDetailFooterBtn">ปิด</button></div>
       </div>
     </div>
 

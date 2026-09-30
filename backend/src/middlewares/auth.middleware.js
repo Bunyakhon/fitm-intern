@@ -1,4 +1,9 @@
 const jwt = require("jsonwebtoken");
+const { DepartmentStaff } = require("../models");
+const {
+  DEPARTMENT_STAFF_ACTOR_TYPE,
+  DEPARTMENT_STAFF_ROLE,
+} = require("../services/staffAuth.service");
 
 const authenticateToken = (req, res, next) => {
   try {
@@ -54,6 +59,48 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+function createRequireDepartmentStaff({ StaffModel = DepartmentStaff } = {}) {
+  return async (req, res, next) => {
+    const staffId = req.user?.id;
+    if (
+      req.user?.actor_type !== DEPARTMENT_STAFF_ACTOR_TYPE ||
+      req.user?.role !== DEPARTMENT_STAFF_ROLE ||
+      req.user?.staff_id !== staffId ||
+      typeof staffId !== "string"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Department staff authorization is required",
+      });
+    }
+
+    try {
+      const staff = await StaffModel.findOne({
+        where: { id: staffId, is_active: true },
+        attributes: ["id"],
+      });
+      if (!staff) {
+        return res.status(403).json({
+          success: false,
+          message: "Department staff authorization is required",
+        });
+      }
+      req.departmentStaff = staff;
+      return next();
+    } catch (error) {
+      console.error("DEPARTMENT STAFF AUTHORIZATION ERROR:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to verify department staff authorization",
+      });
+    }
+  };
+}
+
+const requireDepartmentStaff = createRequireDepartmentStaff();
+
 module.exports = {
   authenticateToken,
+  createRequireDepartmentStaff,
+  requireDepartmentStaff,
 };
