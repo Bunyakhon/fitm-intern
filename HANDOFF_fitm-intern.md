@@ -380,3 +380,127 @@ DELETE /api/mentors/me
 - ผล test/build
 - ปัญหาที่ยังเหลือ
 - NEXT TASK ล่าสุด
+
+
+---
+
+# LATEST AUDIT — Company / Job Posting Foundation (2026-09-30)
+
+## Decision superseding the previous NEXT TASK
+
+Company / Job Posting is no longer paused. The active development area is now:
+
+- `recruit_student.html`
+- Company
+- Job Posting
+
+Do not start with NLP Matching. Job Matching Contract v1 remains review-pending and is not approved for implementation.
+
+## Source audit result
+
+### Real `fitm-intern` repository
+- Audited current `main` source before planning.
+- `recruit_student.html` does not yet exist in the real frontend.
+- No `Company`, `JobPosting`, or `JobPostingWorkMode` Sequelize model exists.
+- No Company / Job Posting controller, route, API layer, or staff approval API exists.
+- The real landing page still contains hardcoded Mockup recommended jobs in `frontend/src/pages/index.js`; it does not fetch jobs from the Backend.
+- Backend currently mounts Auth, Student Profile, Teacher, Mentor, and Mentor Verification routes only.
+- Backend package dependencies currently do not include a CAPTCHA library/provider SDK or `express-rate-limit`.
+- Docker/backend uses Node 20, Express, Sequelize, PostgreSQL, Nodemailer, JWT, and existing Mentor token utilities.
+- Model discovery is automatic for `*.model.js` files through `backend/src/models/index.js`.
+- Development startup still uses `sequelize.sync({ alter: true })`; there is no migrations directory in the current repository tree.
+- Current authentication is Student-only; the Student JWT has no staff role. A secure staff approval endpoint therefore cannot simply be exposed using the current Student auth.
+
+### Mockup repository
+- `recruit_student.html` exists only in `coop-management-system-mockup`.
+- Current form supports only one job per submission.
+- Company fields are currently only name, email, and a combined location field.
+- Job fields currently include title, category, quota, compensation, work days, and multi-select work format.
+- CAPTCHA is only a normal checkbox (`captchaConfirm`) and is not server verified.
+- Submission creates an object with `Date.now()`, stores it in `localStorage.userPostedJobs`, shows native `alert()`, and redirects to `search_company.html`.
+- `search_company.html` contains a large hardcoded job array and merges `localStorage.userPostedJobs` into it. These are Mock data and must not become production data.
+- `officer.html` contains the closest staff-side design reference: `#panel-companies` displays company/contact + one job per row with work modes and Edit/Delete, but it has no per-JobPosting approval status/workflow yet.
+
+## Existing utilities worth reusing conceptually
+
+- Nodemailer/Brevo SMTP is already centralized in `backend/src/services/email.service.js`.
+- Mentor verification already demonstrates:
+  - cryptographically random token generation
+  - SHA-256 token hash at rest
+  - expiry
+  - invalidation / one-time use
+  - transaction-aware token creation
+- Reuse the security concept, but create Company-specific token/model/service boundaries rather than coupling Company flow to Mentor tables.
+
+## Required source-backed Company posting fields
+
+Company:
+- name
+- email
+- phone
+- address_no
+- moo
+- subdistrict
+- district
+- province
+
+JobPosting:
+- title
+- category / job type
+- description
+- quota
+- compensation
+- days_per_week
+- work modes (many-to-many / child rows; not a single enum)
+
+A Company has many JobPostings. One submission may contain 1..N JobPostings.
+
+## Security / workflow direction
+
+Public submission:
+`recruit_student.html -> CAPTCHA -> backend verify -> validation -> rate limit -> DB pending_email_verification -> one verification email per submission/company -> email verification -> pending_review`
+
+Review is per JobPosting:
+- pending_email_verification
+- pending_review
+- published
+- rejected
+- withdrawn
+- expired
+
+Only `published` JobPostings may enter student Search Jobs / Job Matching corpus.
+
+Company management remains no-login via a secure management link/token. Token authorization must be random, hashed at rest, expirable/revocable, and must never use a predictable Company/Job ID as authorization.
+
+Published-job significant edits must not bypass staff review. Exact edit/re-review workflow still requires a dedicated design pass before implementation.
+
+## Important blocker discovered
+
+The real repository currently has no Staff authentication/authorization model or staff role JWT. Therefore:
+
+- Public Company submission + email verification + management-token foundations can be implemented safely first.
+- Staff review data model/status can be prepared.
+- Do not expose an unprotected staff approval/reject API.
+- Before making JobPosting publication operational, implement or connect a real Staff authorization boundary.
+
+## Database verification limit
+
+This audit verified the latest repository source/model definitions and Docker configuration. It did not connect to the user's local PostgreSQL/pgAdmin runtime, so extra manually-created tables outside Sequelize source cannot be ruled out. Before schema implementation, verify the live database tables in pgAdmin or through the authorized runtime.
+
+# CURRENT NEXT TASK
+
+Create an implementation plan for Company / Job Posting foundation based on this audit, then implement in phases. Do not implement NLP Matching in this phase.
+
+Recommended phase order:
+1. Freeze v1 Company/JobPosting schema and public API contract.
+2. Choose/configure CAPTCHA provider and backend verification.
+3. Add rate limiting for public submission/verification/management endpoints.
+4. Add Company, JobPosting, JobPostingWorkMode and Company verification/management token models.
+5. Add transactional public submission for Company + 1..N JobPostings.
+6. Add one email verification flow per submission/company.
+7. Add secure no-login management link and Company-owned JobPosting CRUD/withdraw.
+8. Add staff authorization prerequisite, then per-JobPosting review/publish/reject.
+9. Replace frontend Mock/localStorage job data with Backend `published` JobPostings only.
+10. Re-audit Job Matching Contract v1 before adding matching fields/algorithm.
+
+Do not implement Matching algorithm during the Company / Job Posting foundation pass.
