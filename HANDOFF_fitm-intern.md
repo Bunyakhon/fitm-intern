@@ -411,3 +411,59 @@ DELETE /api/mentors/me
 - ผล test/build
 - ปัญหาที่ยังเหลือ
 - NEXT TASK ล่าสุด
+
+---
+
+# JOB MATCHING BACKEND ↔ NLP v1 — FRONTEND READY
+
+**BACKEND ↔ NLP JOB MATCHING v1: FRONTEND READY**
+
+- Public endpoint: `POST /api/job-matches/me`.
+- Authentication: required. Send the existing student JWT as `Authorization: Bearer <token>`. Missing/invalid tokens return `401`; authenticated non-student actors return `403`.
+- Request body: none. The existing frontend `apiRequest` client can call the path with `{ method: "POST" }`; no request `Content-Type` is required when no body is sent.
+- Candidate source: trimmed `Student.major + StudentProfile.related_skills`. At least one must contain usable text; otherwise the backend returns `422`.
+- PostgreSQL rule: Express queries `JobPosting` with `status = "published"` only. Non-published jobs never enter the NLP payload. If there are no published jobs, Express returns `200 { "matches": [] }` and does not call NLP.
+- Internal NLP endpoint: `POST /api/v1/job-matches`, with `schema_version: "job-matching.v1"`.
+- Algorithm: PyThaiNLP `newmm` → stopwords → TF-IDF → cosine similarity.
+- Options: `min_score: 0.05`, `top_k: 5`.
+- Deterministic ranking: score descending, then `job_posting_id` ascending; rank is 1-based and contiguous. The threshold is applied before `top_k`, scores are finite values in `0..1` rounded to four decimals, and Express rejects duplicate/unknown IDs, malformed ranks/scores/order, or more than five returned matches.
+- Express owns PostgreSQL. The NLP service has no PostgreSQL access. NLP returns only `job_posting_id`, `score`, and `rank`; Express safely enriches results from the original published query.
+
+Success response (nullable database-backed display fields remain safely nullable where applicable):
+
+```json
+{
+  "matches": [
+    {
+      "job_posting_id": "80605832-7190-4aa4-b43a-ffafdba31165",
+      "score": 0.3187,
+      "rank": 1,
+      "title": "IT Helpdesk Intern",
+      "description": "Job description",
+      "category": "information_technology",
+      "quota": 3,
+      "compensation_text": "350 baht/day",
+      "work_days_per_week": 5,
+      "company": { "name": "Example Company", "province": "Chiang Mai" },
+      "workModes": [{ "mode": "onsite" }]
+    }
+  ]
+}
+```
+
+- Empty success response: `200 { "matches": [] }`.
+- Frontend-relevant errors: `401` missing/invalid/expired JWT (existing auth response); `403 STUDENT_AUTHORIZATION_REQUIRED`; `404 MATCH_STUDENT_NOT_FOUND`; `422 MATCH_CANDIDATE_TEXT_REQUIRED`; `502 NLP_MATCHING_INVALID_RESPONSE`; `503 NLP_MATCHING_UNAVAILABLE`; `504 NLP_MATCHING_TIMEOUT`; `500 JOB_MATCHING_INTERNAL_ERROR`. Responses contain safe messages and no stack traces, secrets, internal URLs, token values, SQL details, or Python exception internals.
+- Configuration: backend uses `NLP_SERVICE_BASE_URL` (Compose: `http://nlp-service:8000`) and `NLP_SERVICE_TIMEOUT_MS` (Compose/default: `5000`). The client has an explicit abort timeout and no automatic retry.
+- PDF extraction: **NOT IMPLEMENTED**.
+- Embeddings/vector DB: **NOT IMPLEMENTED**.
+- Frontend integration: **NOT IMPLEMENTED**.
+- Migrations added: **NONE**.
+- Real acceptance: **PASS**. Authenticated Student → Express → PostgreSQL published jobs → NLP v1 → deterministic ranking → Express enrichment returned `200`; NLP `/health` returned `200`; 20 usable published fixtures were present; 3 matches were returned; every returned ID belonged to the published query; result count was at most 5; ranks were contiguous; and no internal fields leaked.
+- Backend tests: **34 passed, 1 skipped** (the existing opt-in PostgreSQL transaction integration test).
+- Targeted NLP Job Matching tests: **7 passed**.
+- Full NLP suite: **8 passed, 2 failed**. The two failures remain the pre-existing/unrelated chatbot tests whose test client does not execute classifier-training application lifespan; deferred and unchanged. No Job Matching regression was found.
+- `git diff --check`: **PASS**.
+
+## NEXT ACTIVE TASK
+
+Job Matching Frontend Integration

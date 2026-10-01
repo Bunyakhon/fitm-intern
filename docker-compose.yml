@@ -59,6 +59,8 @@ services:
       DB_NAME: intern_system
       DB_USER: postgres
       DB_PASSWORD: postgres
+      NLP_SERVICE_BASE_URL: http://nlp-service:8000
+      NLP_SERVICE_TIMEOUT_MS: 5000
 
     ports:
       - "5000:5000"
@@ -71,6 +73,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      nlp-service:
+        condition: service_started
 
     command: npm run dev
 
