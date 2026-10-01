@@ -195,6 +195,13 @@ button.is-loading::before {
   font-weight: 800;
 }
 
+.app-alert-modal { animation: app-alert-pop-in 220ms cubic-bezier(.2,.8,.2,1); }
+.app-alert-modal__icon { animation: app-alert-icon-in 280ms ease-out; }
+.app-alert-modal__detail { margin-top: 7px !important; font-size: 0.9rem; }
+.app-alert-modal .app-confirm-modal__confirm { border-color: #1769aa; background: #1769aa; }
+.app-alert-modal .app-confirm-modal__confirm:hover:not(:disabled) { background: #12568d; }
+.app-alert-overlay.is-leaving .app-alert-modal { animation: app-alert-pop-out 180ms ease-in forwards; }
+
 .app-confirm-modal h2 { margin: 0; color: var(--text); font-size: 1.25rem; }
 .app-confirm-modal p { margin: 9px 0 0; color: var(--muted); line-height: 1.55; }
 
@@ -223,6 +230,9 @@ button.is-loading::before {
 @keyframes app-fade-out { to { opacity: 0; } }
 @keyframes app-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes app-scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes app-alert-pop-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes app-alert-pop-out { to { opacity: 0; transform: translateY(5px) scale(.98); } }
+@keyframes app-alert-icon-in { from { transform: scale(.7) rotate(-10deg); } to { transform: scale(1) rotate(0); } }
 @keyframes app-spinner { to { transform: rotate(360deg); } }
 
 @media (max-width: 500px) {

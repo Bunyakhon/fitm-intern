@@ -25,6 +25,7 @@ module.exports = (sequelize) => {
         onDelete: "RESTRICT",
         onUpdate: "CASCADE",
       });
+      JobPosting.hasMany(models.CoopRequest, { foreignKey: "job_posting_id", as: "coopRequests", onDelete: "SET NULL", onUpdate: "CASCADE" });
       JobPosting.belongsTo(models.JobSubmission, {
         foreignKey: "submission_id",
         as: "submission",

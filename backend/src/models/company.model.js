@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
         onDelete: "RESTRICT",
         onUpdate: "CASCADE",
       });
+      Company.hasMany(models.CoopRequest, { foreignKey: "company_id", as: "coopRequests", onDelete: "SET NULL", onUpdate: "CASCADE" });
       Company.hasMany(models.JobPosting, {
         foreignKey: "company_id",
         as: "jobPostings",

@@ -4,8 +4,11 @@ const {
   Student,
   StudentProfile,
   Teacher,
+  Company,
+  JobPosting,
   sequelize,
 } = require("../models");
+const { Op } = require("sequelize");
 
 const ACTIVE_STATUSES = new Set([
   "submitted",
@@ -35,6 +38,8 @@ const INPUT_FIELDS = new Set([
   "work_start_date",
   "work_end_date",
   "delivery_methods",
+  "company_id",
+  "job_posting_id",
 ]);
 
 const DELIVERY_METHOD_INCLUDE = {
@@ -109,6 +114,14 @@ function normalizeOptionalText(value, field, maxLength) {
   return normalized || null;
 }
 
+function normalizeOptionalUuid(value, field) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw validationError(`${field} must be a valid identifier`);
+  }
+  return value;
+}
+
 function normalizeDate(value, field) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw validationError(`${field} ต้องอยู่ในรูปแบบ YYYY-MM-DD`);
@@ -156,6 +169,8 @@ function normalizeRequestPayload(body) {
   }
 
   return {
+    company_id: normalizeOptionalUuid(body.company_id, "company_id"),
+    job_posting_id: normalizeOptionalUuid(body.job_posting_id, "job_posting_id"),
     company_name: normalizeRequiredText(body.company_name, "ชื่อบริษัท / หน่วยงาน", 255),
     company_province: normalizeRequiredText(body.company_province, "จังหวัด", 100),
     letter_recipient_name: normalizeRequiredText(body.letter_recipient_name, "เรียนถึง", 255),
@@ -244,6 +259,28 @@ exports.createCoopRequest = async (req, res) => {
     const payload = normalizeRequestPayload(req.body);
     transaction = await sequelize.transaction();
 
+    let company = null;
+    if (payload.company_id) {
+      company = await Company.findByPk(payload.company_id, { transaction });
+      if (!company) { await transaction.rollback(); transaction = null; return res.status(404).json({ success: false, message: "Company was not found" }); }
+      payload.company_name = company.name;
+      payload.company_province = company.province;
+      payload.company_address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
+    }
+    if (payload.job_posting_id) {
+      const jobPosting = await JobPosting.findByPk(payload.job_posting_id, { transaction });
+      if (!jobPosting || jobPosting.status !== "published") { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
+      if (company && jobPosting.company_id !== company.id) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting does not belong to the selected company" }); }
+      if (!company) {
+        company = await Company.findByPk(jobPosting.company_id, { transaction });
+        if (!company) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting company is unavailable" }); }
+        payload.company_id = company.id;
+        payload.company_name = company.name;
+        payload.company_province = company.province;
+        payload.company_address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
+      }
+    }
+
     // Locking the student row serializes submissions from the same owner so that
     // two simultaneous requests cannot both pass the active-request check.
     const student = await Student.findByPk(req.user.id, {
@@ -308,6 +345,41 @@ exports.createCoopRequest = async (req, res) => {
     }
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการยื่นคำร้องสหกิจศึกษา");
   }
+};
+
+exports.searchCompanies = async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (query.length < 2) return res.status(200).json({ success: true, data: [] });
+  try {
+    const companies = await Company.findAll({
+      where: { name: { [Op.iLike]: `%${query.replace(/[\\%_]/g, "\\$&")}%` } },
+      attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"],
+      order: [["name", "ASC"]], limit: 20,
+    });
+    return res.json({ success: true, data: companies });
+  } catch (error) { return toErrorResponse(error, res, "Unable to search companies"); }
+};
+
+exports.checkCompanyDuplicate = async (req, res) => {
+  const name = typeof req.query.name === "string" ? req.query.name.trim() : "";
+  if (!name || name.length > 255) return res.status(400).json({ success: false, message: "Company name is required" });
+  try {
+    const normalized = name.replace(/\s+/gu, " ").toLocaleLowerCase("th-TH");
+    const matches = await Company.findAll({
+      where: { normalized_name: normalized },
+      attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"],
+      limit: 20,
+    });
+    return res.json({ success: true, data: matches });
+  } catch (error) { return toErrorResponse(error, res, "Unable to check company duplicates"); }
+};
+
+exports.getPublishedJobPostingForCoopRequest = async (req, res) => {
+  try {
+    const job = await JobPosting.findOne({ where: { id: req.params.id, status: "published" }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
+    if (!job || !job.company) return res.status(404).json({ success: false, message: "Published job posting was not found" });
+    return res.json({ success: true, data: job });
+  } catch (error) { return toErrorResponse(error, res, "Unable to load job posting"); }
 };
 
 exports.cancelCoopRequest = async (req, res) => {

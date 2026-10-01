@@ -11,6 +11,8 @@ export default defineConfig({
         index: fileURLToPath(new URL('./index.html', import.meta.url)),
         login: fileURLToPath(new URL('./login.html', import.meta.url)),
         register: fileURLToPath(new URL('./register.html', import.meta.url)),
+        studentCoop: fileURLToPath(new URL('./src/student_coop/student_coop.html', import.meta.url)),
+        mentorVerifyUser: fileURLToPath(new URL('./src/mentor_coop/mentor_verify_user.html', import.meta.url)),
         recruitStudent: fileURLToPath(new URL('./src/recruit_student/recruit_student.html', import.meta.url)),
         recruitVerifyEmail: fileURLToPath(new URL('./src/recruit_student/recruit_verify_email.html', import.meta.url)),
       },

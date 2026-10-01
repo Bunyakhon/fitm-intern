@@ -15,6 +15,18 @@ export function createCoopRequest(payload) {
   });
 }
 
+export function searchCompanies(query) {
+  return apiRequest(`/api/coop-requests/companies/search?q=${encodeURIComponent(query)}`, { method: "GET" });
+}
+
+export function checkCompanyDuplicate(name) {
+  return apiRequest(`/api/coop-requests/companies/duplicate-check?name=${encodeURIComponent(name)}`, { method: "GET" });
+}
+
+export function getPublishedJobPostingForCoopRequest(id) {
+  return apiRequest(`/api/coop-requests/job-postings/${encodeURIComponent(id)}`, { method: "GET" });
+}
+
 export function cancelCoopRequest(id) {
   return apiRequest(`/api/coop-requests/${encodeURIComponent(id)}/cancel`, {
     method: "PATCH",

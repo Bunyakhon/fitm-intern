@@ -42,6 +42,70 @@ export function showToast(message, type = "info", options = {}) {
   return toast;
 }
 
+export function showActionModal({
+  title,
+  message,
+  detail = "",
+  actionLabel,
+  closeLabel = "ปิด",
+  onAction,
+}) {
+  const root = getFeedbackRoot();
+  const previousFocus = document.activeElement;
+  const modal = document.createElement("div");
+  modal.className = "app-confirm-overlay app-alert-overlay";
+  modal.innerHTML = `
+    <section class="app-confirm-modal app-alert-modal" role="alertdialog" aria-modal="true" aria-labelledby="appAlertTitle" aria-describedby="appAlertMessage">
+      <div class="app-confirm-modal__icon app-alert-modal__icon" aria-hidden="true">!</div>
+      <h2 id="appAlertTitle"></h2>
+      <p id="appAlertMessage"></p>
+      <p class="app-alert-modal__detail"></p>
+      <div class="app-confirm-modal__actions">
+        <button class="app-confirm-modal__cancel" type="button"></button>
+        <button class="app-confirm-modal__confirm" type="button"></button>
+      </div>
+    </section>
+  `;
+  modal.querySelector("#appAlertTitle").textContent = title;
+  modal.querySelector("#appAlertMessage").textContent = message;
+  const detailElement = modal.querySelector(".app-alert-modal__detail");
+  detailElement.textContent = detail;
+  detailElement.hidden = !detail;
+  const closeButton = modal.querySelector(".app-confirm-modal__cancel");
+  const actionButton = modal.querySelector(".app-confirm-modal__confirm");
+  closeButton.textContent = closeLabel;
+  actionButton.textContent = actionLabel;
+  root.append(modal);
+  document.body.classList.add("has-app-modal");
+
+  let isClosed = false;
+  function close(restoreFocus = true) {
+    if (isClosed) return;
+    isClosed = true;
+    modal.classList.add("is-leaving");
+    document.body.classList.remove("has-app-modal");
+    document.removeEventListener("keydown", handleEscape);
+    window.setTimeout(() => {
+      modal.remove();
+      if (restoreFocus) previousFocus?.focus?.();
+    }, 180);
+  }
+  function handleEscape(event) {
+    if (event.key === "Escape") close();
+  }
+  closeButton.addEventListener("click", () => close());
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) close();
+  });
+  document.addEventListener("keydown", handleEscape);
+  actionButton.addEventListener("click", () => {
+    close(false);
+    onAction?.();
+  });
+  actionButton.focus();
+  return close;
+}
+
 export function setButtonLoading(button, isLoading, loadingLabel, defaultLabel) {
   if (!button) {
     return;

@@ -18,10 +18,13 @@ import {
 import {
   cancelCoopRequest,
   createCoopRequest,
+  searchCompanies,
+  checkCompanyDuplicate,
+  getPublishedJobPostingForCoopRequest,
   getCoopRequestById,
   getMyCoopRequests,
 } from "../api/coopRequest.api.js";
-import { setButtonLoading, showConfirmModal, showToast } from "../ui/feedback.js";
+import { setButtonLoading, showActionModal, showConfirmModal, showToast } from "../ui/feedback.js";
 
 console.log("KIWI student cooperative dashboard loaded");
 
@@ -1674,6 +1677,16 @@ const contentPanels =
     ".content-panel"
   );
 
+function activateDashboardPanel(targetId) {
+  sidebarItems.forEach((item) => item.classList.toggle("active", item.dataset.target === targetId));
+  contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
+  if (targetId === "panel-mentor") loadMentor();
+  if (targetId === "panel-request") return loadCoopRequests();
+  if (targetId === "panel-job-matching") renderJobMatchingSource();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  return Promise.resolve(true);
+}
+
 sidebarItems.forEach(
   (item) => {
     item.addEventListener(
@@ -1686,51 +1699,7 @@ sidebarItems.forEach(
           return;
         }
 
-        sidebarItems.forEach(
-          (sidebarItem) => {
-            sidebarItem.classList.remove(
-              "active"
-            );
-          }
-        );
-
-        contentPanels.forEach(
-          (panel) => {
-            panel.classList.remove(
-              "active"
-            );
-          }
-        );
-
-        item.classList.add(
-          "active"
-        );
-
-        const targetPanel =
-          document.getElementById(
-            targetId
-          );
-
-        targetPanel?.classList.add(
-          "active"
-        );
-
-        if (targetId === "panel-mentor") {
-          loadMentor();
-        }
-
-        if (targetId === "panel-request") {
-          loadCoopRequests();
-        }
-
-        if (targetId === "panel-job-matching") {
-          renderJobMatchingSource();
-        }
-
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
+        activateDashboardPanel(targetId);
       }
     );
   }
@@ -1910,6 +1879,12 @@ function renderJobMatches(matches) {
       const category = createJobMatchingElement("span", categoryLabels[match.category] || match.category, "job-matching-category");
       card.append(category);
     }
+    const coopRequestButton = document.createElement("button");
+    coopRequestButton.type = "button";
+    coopRequestButton.className = "btn-primary job-matching-coop-request";
+    coopRequestButton.dataset.jobPostingId = match.job_posting_id;
+    coopRequestButton.textContent = "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้";
+    card.append(coopRequestButton);
     return card;
   });
   jobMatchingResults.replaceChildren(...cards);
@@ -2209,6 +2184,7 @@ const COOP_DELIVERY_LABELS = {
 };
 
 const createRequestBtn = document.getElementById("createRequestBtn");
+const createAnotherCoopRequestBtn = document.getElementById("createAnotherCoopRequestBtn");
 const coopRequestMessage = document.getElementById("coopRequestMessage");
 const coopRequestEmpty = document.getElementById("coopRequestEmpty");
 const coopRequestCurrent = document.getElementById("coopRequestCurrent");
@@ -2233,6 +2209,14 @@ const closeCoopRequestModalBtn = document.getElementById("closeCoopRequestModal"
 const cancelCoopRequestModalBtn = document.getElementById("cancelCoopRequestModal");
 const coopRequestForm = document.getElementById("coopRequestForm");
 const coopRequestFormMessage = document.getElementById("coopRequestFormMessage");
+const coopCompanySearch = document.getElementById("coopCompanySearch");
+const coopCompanySearchResults = document.getElementById("coopCompanySearchResults");
+const coopManualCompanyBtn = document.getElementById("coopManualCompanyBtn");
+const coopCompanyDuplicateMessage = document.getElementById("coopCompanyDuplicateMessage");
+const coopSelectedJobPosting = document.getElementById("coopSelectedJobPosting");
+let selectedCoopCompanyId = null;
+let selectedCoopJobPostingId = null;
+let companySearchTimer = null;
 const saveCoopRequestBtn = document.getElementById("saveCoopRequestBtn");
 const coopRequestDetailModal = document.getElementById("coopRequestDetailModal");
 const closeCoopRequestDetailModalBtn = document.getElementById("closeCoopRequestDetailModal");
@@ -2258,6 +2242,35 @@ let coopRequestCancelling = false;
 let coopRequestDetailLoading = false;
 let coopRequestModalReturnFocus = null;
 let coopRequestDetailModalReturnFocus = null;
+
+function showDuplicateCoopRequestAlert() {
+  showActionModal({
+    title: "มีคำร้องสหกิจศึกษาที่กำลังดำเนินการอยู่",
+    message: "คุณมีคำร้องสหกิจศึกษาที่ยังดำเนินการอยู่ จึงยังไม่สามารถยื่นคำร้องใหม่ได้",
+    detail: "กรุณาตรวจสอบสถานะหรือยกเลิกคำร้องเดิมก่อน",
+    actionLabel: "ไปยังคำร้องปัจจุบัน",
+    closeLabel: "ปิด",
+    onAction: async () => {
+      await activateDashboardPanel("panel-request");
+      const target = coopRequestCurrent || coopRequestHistory;
+      target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      target?.focus?.({ preventScroll: true });
+    },
+  });
+}
+
+function resetCoopRequestCreateForm() {
+  coopRequestForm?.reset();
+  selectedCoopCompanyId = null;
+  selectedCoopJobPostingId = null;
+  if (coopCompanySearch) coopCompanySearch.value = "";
+  if (coopSelectedJobPosting) {
+    coopSelectedJobPosting.hidden = true;
+    coopSelectedJobPosting.textContent = "";
+  }
+  applyCoopCompany(null);
+  clearMessage(coopRequestFormMessage);
+}
 
 function getCoopRequestStatusMeta(status) {
   return COOP_STATUS_META[status] || {
@@ -2336,13 +2349,18 @@ function renderCoopStepper(container, request) {
 
 function renderCoopRequests() {
   const isBusy = coopRequestsLoading || coopRequestSubmitting || coopRequestCancelling;
-  currentCoopRequest = coopRequests.find((request) => COOP_ACTIVE_STATUSES.has(request.status)) || null;
-  const history = coopRequests.filter((request) => request.id !== currentCoopRequest?.id);
+  const history = [...coopRequests].sort((a, b) => {
+    const submittedDifference = (Date.parse(b.submitted_at) || 0) - (Date.parse(a.submitted_at) || 0);
+    if (submittedDifference) return submittedDifference;
+    return (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0);
+  });
+  currentCoopRequest = history.find((request) => COOP_ACTIVE_STATUSES.has(request.status)) || null;
 
   if (coopRequestEmpty) coopRequestEmpty.hidden = Boolean(currentCoopRequest) || coopRequestsLoading;
   if (coopRequestCurrent) coopRequestCurrent.hidden = !currentCoopRequest;
-  if (coopRequestHistory) coopRequestHistory.hidden = coopRequestsLoading || (!currentCoopRequest && history.length === 0);
-  if (createRequestBtn) createRequestBtn.disabled = isBusy || Boolean(currentCoopRequest);
+  if (coopRequestHistory) coopRequestHistory.hidden = coopRequestsLoading;
+  if (createRequestBtn) createRequestBtn.disabled = isBusy;
+  if (createAnotherCoopRequestBtn) createAnotherCoopRequestBtn.disabled = isBusy;
 
   if (currentCoopRequest) {
     const status = getCoopRequestStatusMeta(currentCoopRequest.status);
@@ -2468,17 +2486,45 @@ function setCoopRequestFormSubmitting(isSubmitting) {
   );
 }
 
+function applyCoopCompany(company) {
+  selectedCoopCompanyId = company?.id || null;
+  const name = document.getElementById("coopCompanyName");
+  const province = document.getElementById("coopCompanyProvince");
+  const address = document.getElementById("coopCompanyAddress");
+  name.value = company?.name || "";
+  province.value = company?.province || "";
+  if (company?.province && province.value !== company.province) {
+    const option = document.createElement("option"); option.value = company.province; option.textContent = company.province; province.append(option); province.value = company.province;
+  }
+  address.value = company ? [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ") : "";
+  name.readOnly = Boolean(company);
+  province.disabled = Boolean(company);
+  address.readOnly = Boolean(company);
+  if (coopCompanySearchResults) coopCompanySearchResults.replaceChildren();
+  if (coopCompanyDuplicateMessage) coopCompanyDuplicateMessage.textContent = "";
+}
+
 function openCoopRequestModal() {
-  if (coopRequestSubmitting || currentCoopRequest) return;
+  if (currentCoopRequest) {
+    showDuplicateCoopRequestAlert();
+    return false;
+  }
+  if (coopRequestSubmitting) return false;
   coopRequestModalReturnFocus = document.activeElement;
   renderReadonlyStudentData();
   coopRequestForm?.reset();
+  selectedCoopCompanyId = null;
+  selectedCoopJobPostingId = null;
+  if (coopCompanySearch) coopCompanySearch.value = "";
+  if (coopSelectedJobPosting) { coopSelectedJobPosting.hidden = true; coopSelectedJobPosting.textContent = ""; }
+  applyCoopCompany(null);
   clearMessage(coopRequestFormMessage);
   setCoopRequestFormSubmitting(false);
   coopRequestModal?.classList.add("open");
   coopRequestModal?.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
   window.requestAnimationFrame(() => document.getElementById("coopCompanyName")?.focus());
+  return true;
 }
 
 function closeCoopRequestModal() {
@@ -2492,6 +2538,8 @@ function closeCoopRequestModal() {
 
 function getCoopRequestFormData() {
   return {
+    company_id: selectedCoopCompanyId,
+    job_posting_id: selectedCoopJobPostingId,
     company_name: document.getElementById("coopCompanyName").value.trim(),
     company_province: document.getElementById("coopCompanyProvince").value.trim(),
     letter_recipient_name: document.getElementById("coopLetterRecipientName").value.trim(),
@@ -2527,12 +2575,25 @@ async function submitCoopRequestForm(event) {
     await createCoopRequest(data);
     coopRequestSubmitting = false;
     closeCoopRequestModal();
-    const loaded = await loadCoopRequests();
+    resetCoopRequestCreateForm();
+    const loaded = await activateDashboardPanel("panel-request");
+    showToast("ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
     if (loaded) {
       showMessage(coopRequestMessage, "ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
-      showToast("ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว", "success");
+      const currentCard = document.getElementById("coopRequestCurrent");
+      currentCard?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      currentCard?.focus?.({ preventScroll: true });
     }
   } catch (error) {
+    if (error?.status === 409) {
+      coopRequestSubmitting = false;
+      setCoopRequestFormSubmitting(false);
+      closeCoopRequestModal();
+      resetCoopRequestCreateForm();
+      await loadCoopRequests();
+      showDuplicateCoopRequestAlert();
+      return;
+    }
     showMessage(coopRequestFormMessage, getCoopRequestErrorMessage(error, "ยื่น"), "error");
   } finally {
     coopRequestSubmitting = false;
@@ -2660,6 +2721,61 @@ function confirmCancelCoopRequest() {
 }
 
 createRequestBtn?.addEventListener("click", openCoopRequestModal);
+createAnotherCoopRequestBtn?.addEventListener("click", openCoopRequestModal);
+coopCompanySearch?.addEventListener("input", () => {
+  window.clearTimeout(companySearchTimer);
+  const query = coopCompanySearch.value.trim();
+  companySearchTimer = window.setTimeout(async () => {
+    if (query.length < 2) { coopCompanySearchResults.replaceChildren(); return; }
+    try {
+      const result = await searchCompanies(query);
+      const rows = (result?.data || []).map((company) => {
+        const row = document.createElement("div"); row.className = "coop-company-result";
+        const details = document.createElement("span"); details.textContent = `${company.name} — ${company.province}`;
+        const select = document.createElement("button"); select.type = "button"; select.className = "btn-secondary"; select.textContent = "เลือก";
+        select.addEventListener("click", () => applyCoopCompany(company)); row.append(details, select); return row;
+      });
+      if (!rows.length) { const empty = document.createElement("p"); empty.textContent = "ไม่พบข้อมูลบริษัท คุณสามารถกรอกข้อมูลเองได้"; rows.push(empty); }
+      coopCompanySearchResults.replaceChildren(...rows);
+    } catch (error) { showToast(error.message || "ค้นหาบริษัทไม่สำเร็จ", "error"); }
+  }, 250);
+});
+coopManualCompanyBtn?.addEventListener("click", () => { selectedCoopCompanyId = null; applyCoopCompany(null); document.getElementById("coopCompanyName")?.focus(); });
+document.getElementById("coopCompanyName")?.addEventListener("blur", async (event) => {
+  if (selectedCoopCompanyId || !event.target.value.trim()) return;
+  try {
+    const result = await checkCompanyDuplicate(event.target.value.trim());
+    const duplicates = result?.data || [];
+    if (!duplicates.length) { coopCompanyDuplicateMessage.textContent = "ไม่พบชื่อบริษัทซ้ำ สามารถดำเนินการต่อได้"; return; }
+    coopCompanyDuplicateMessage.replaceChildren(document.createTextNode("พบชื่อบริษัทที่อาจซ้ำ: "));
+    duplicates.forEach((company) => {
+      const button = document.createElement("button"); button.type = "button"; button.className = "btn-secondary";
+      button.textContent = `ใช้ ${company.name} (${company.province})`;
+      button.addEventListener("click", () => applyCoopCompany(company));
+      coopCompanyDuplicateMessage.append(button);
+    });
+  } catch (error) { showToast(error.message || "ตรวจสอบชื่อบริษัทไม่สำเร็จ", "error"); }
+});
+jobMatchingResults?.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-job-posting-id]");
+  if (!button || button.disabled) return;
+  if (currentCoopRequest) {
+    showDuplicateCoopRequestAlert();
+    return;
+  }
+  setButtonLoading(button, true, "กำลังโหลดตำแหน่งงาน...", "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้");
+  try {
+    const result = await getPublishedJobPostingForCoopRequest(button.dataset.jobPostingId);
+    const job = result?.data;
+    if (!job?.company) throw new Error("ไม่พบตำแหน่งงานที่เปิดรับ");
+    selectedCoopJobPostingId = job.id;
+    openCoopRequestModal();
+    selectedCoopJobPostingId = job.id;
+    applyCoopCompany(job.company);
+    if (coopSelectedJobPosting) { coopSelectedJobPosting.textContent = `ตำแหน่งงาน: ${job.title}`; coopSelectedJobPosting.hidden = false; }
+  } catch (error) { showToast(error.message || "โหลดตำแหน่งงานไม่สำเร็จ", "error"); }
+  finally { setButtonLoading(button, false, "กำลังโหลดตำแหน่งงาน...", "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้"); }
+});
 coopRequestForm?.addEventListener("submit", submitCoopRequestForm);
 closeCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);
 cancelCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);

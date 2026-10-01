@@ -2746,6 +2746,15 @@ textarea::placeholder {
   background: var(--white);
 }
 
+.coop-company-picker { display: grid; gap: 9px; margin-bottom: 14px; }
+.coop-company-search-results { display: grid; gap: 8px; }
+.coop-company-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.coop-company-result span { font-size: 0.86rem; }
+.coop-company-picker .message { margin: 0; }
+.coop-company-picker .message button { margin: 4px; }
+.coop-selected-job { padding: 10px 12px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.job-matching-coop-request { margin-top: 14px; }
+
 #panel-mentor .mentor-message {
   margin: 0 0 16px;
 }

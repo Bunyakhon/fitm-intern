@@ -1,5 +1,19 @@
 # fitm-intern — HANDOFF (Updated)
 
+## Student CoopRequest UX stabilization and VMware readiness - 2026-10-02
+
+- Duplicate active-request UX now checks frontend state from both the Student CoopRequest panel and Job Matching. It uses an animated in-system action dialog with a link to the current request; reduced-motion behavior is inherited from the shared stylesheet. Backend HTTP 409 uses the same dialog and reloads the authoritative request list. Native alert/confirm dialogs were not added.
+- The current request remains in the all-requests history table. History sorts by `submitted_at DESC`, then `created_at DESC`, replaces table rows on render, and shows cancelled/rejected requests. Successful create returns to the CoopRequest panel, resets temporary form selections, refreshes from `/api/coop-requests/me`, and shows a success toast. Successful cancellation also reloads that endpoint.
+- Automated verification: backend suite **51 passed, 0 failed, 1 opt-in integration test skipped**; changed frontend JS syntax checks **PASS**; Vite production build **PASS**, all 7 active HTML entries emitted; `git diff --check` **PASS**; Docker Compose config **PASS**. Migration 009 is applied, **0 pending**; no migration created. Browser acceptance **SKIPPED BY REQUEST**.
+- VMware Ubuntu note: before starting Compose, set frontend `VITE_API_URL` to `http://<VMWARE-UBUNTU-IP>:5000` (reachable from each user's browser), not `localhost`; frontend API calls run in the browser. Configure `JWT_SECRET` and a non-default database password. Email verification also requires `FRONTEND_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`; recruitment CAPTCHA requires `TURNSTILE_SECRET_KEY`. Apply/check schema with `docker compose exec backend npm run db:migrate` and `docker compose exec backend npm run db:migrate:status`. NLP Docker image installs Tesseract plus Thai and English language data. Compose syntax validated; the current services use development servers and bind mounts.
+
+## Vite multi-page build - 2026-10-01
+
+- Student Dashboard included: **YES**
+- Mentor Verification included: **YES**
+- Production build: **PASS**
+- Active application HTML entries: Index, Login, Register, Student Dashboard, Mentor Verification, Recruit Student, and Recruit Verify Email.
+
 ## Current workspace audit and Job Matching source modes - 2026-10-01
 
 - Axios audit: **PASS**. `frontend/package.json` and lockfile include Axios 1.19.0. The only Axios import and `axios.create()` are in `frontend/src/api/client.js`; its request interceptor attaches the stored Bearer token unless Authorization is explicit or the public API opts out. Error normalization preserves `status`, `data`, and safe `message` fields. The shared `apiRequest()` supports JSON objects, FormData without a manually supplied multipart header, Blob responses, AbortSignal, and optional upload progress.
@@ -658,3 +672,22 @@ Complete authenticated Skills/Resume Job Matching browser acceptance, Resume tex
 - Verification: changed API modules `node --check`: **PASS**; `git diff --check`: **PASS**; `docker exec intern_frontend npm run build`: **PASS**. Backend Job Matching and resume text targeted tests: **16 passed**. NLP matching/resume/OCR targeted tests: **14 passed**.
 - Regression against live authenticated Auth/Profile/Profile Image/Resume/Job Matching/Mentor APIs and browser Network inspection: **PENDING**; no authenticated student session was available. No live FormData upload, profile-image request, or matching request was sent in this phase.
 - OCR persistence closeout remains **PENDING** for both normal text PDF (`pdf_text`) and scanned PDF (`ocr`), because neither authenticated upload nor a current student's safe `StudentFile` metadata query was available. Existing implementation reads cached ready `extracted_text` for matching and does not invoke OCR during matching; repeated live authenticated matching acceptance remains **PENDING**.
+
+## Cooperative Education Request and Job Matching integration — 2026-10-01
+
+- Existing schema audit: `coop_requests` already stored `company_name`, `company_province`, and `company_address` snapshots, but had no Company or JobPosting relationship. Company address source fields are `address_no`, `moo`, `subdistrict`, `district`, and `province`.
+- Added migration **009** with nullable `company_id` and `job_posting_id`, foreign keys to `companies` and `job_postings`, and indexes. Migration **applied**; pending migrations: **0**.
+- Student-only Company search uses backend Company data, partial name matching, and a response limited to UI fields. Exact duplicate checking uses the existing `normalized_name` convention (collapsed whitespace, Thai locale lowercase) and does not create a Company master record.
+- Direct CoopRequest supports selecting an existing Company or entering a manual company snapshot. The backend resolves selected Company data and overwrites client snapshots with database values. Manual snapshots remain supported; no Company is inserted.
+- Job Matching cards now offer a CoopRequest action. It loads a published JobPosting from the backend by ID, resolves its Company there, then opens the existing CoopRequest modal with Company and JobPosting preselected. The create endpoint rechecks publication and the Company relationship.
+- Existing snapshot fields, authenticated student identity from `req.user.id`, and owner-scoped request detail/cancel behavior are preserved. CoopRequest routes now require a student-shaped JWT.
+- Added CoopRequest company-flow tests for auth, partial search/safe fields, normalized duplicates, server-resolved snapshots, manual no-insert behavior, and published/nonexistent/unpublished/mismatched JobPosting validation.
+- Backend tests: **51 passed, 1 skipped** (existing opt-in PostgreSQL recruitment integration test). Frontend build: **PASS**. Frontend page/API syntax checks: **PASS**. `git diff --check`: **PASS**.
+- Axios source scan: direct `axios` import remains only in `frontend/src/api/client.js`; Fetch and XMLHttpRequest scans returned no matches.
+- Browser acceptance: **PENDING** (no authenticated browser session used). Existing Vite build input configuration does not include `student_coop.html`; that pre-existing build omission was not changed in this focused task.
+
+### Current database relationships
+
+- `CoopRequest.belongsTo(Student)` remains required.
+- `CoopRequest.belongsTo(Company)` and `CoopRequest.belongsTo(JobPosting)` are nullable links; document snapshots remain independent and preserved.
+- `Company.hasMany(CoopRequest)` and `JobPosting.hasMany(CoopRequest)` provide the reverse relationships.

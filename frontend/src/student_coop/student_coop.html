@@ -750,7 +750,7 @@
 
           <p class="message" id="coopRequestMessage" role="status" aria-live="polite"></p>
 
-          <div class="section-card coop-request-current" id="coopRequestCurrent" hidden>
+          <div class="section-card coop-request-current" id="coopRequestCurrent" tabindex="-1" hidden>
             <div class="request-card-head coop-current-card-head">
               <div>
                 <p class="coop-current-eyebrow"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> คำร้องสหกิจศึกษาปัจจุบัน</p>
@@ -773,6 +773,9 @@
               <button type="button" class="btn-secondary" id="viewCurrentCoopRequestBtn">
                 <i class="fa-solid fa-eye" aria-hidden="true"></i> ดูรายละเอียดคำร้อง
               </button>
+              <button type="button" class="btn-secondary" id="createAnotherCoopRequestBtn">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> เขียนคำร้องสหกิจ
+              </button>
               <button type="button" class="btn-danger-outline" id="cancelCoopRequestBtn">
                 <i class="fa-solid fa-ban" aria-hidden="true"></i> ยกเลิกคำร้อง
               </button>
@@ -794,11 +797,11 @@
             </div>
           </div>
 
-          <div class="section-card coop-request-history" id="coopRequestHistory" hidden>
+          <div class="section-card coop-request-history" id="coopRequestHistory" tabindex="-1" hidden>
             <div class="request-card-head">
               <div>
                 <h4><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ประวัติคำร้องสหกิจศึกษาทั้งหมด</h4>
-                <p>คำร้องที่สิ้นสุดการดำเนินการแล้ว</p>
+                <p>แสดงคำร้องทั้งหมดของคุณ เรียงตามวันที่ยื่นล่าสุด</p>
               </div>
             </div>
             <div class="table-wrapper coop-history-table-wrapper">
@@ -1682,6 +1685,14 @@
             </section>
             <section class="coop-form-section coop-company-section">
               <h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4>
+              <div class="coop-company-picker coop-form-full">
+                <label for="coopCompanySearch">ค้นหาสถานประกอบการที่มีอยู่</label>
+                <input id="coopCompanySearch" type="search" autocomplete="off" placeholder="พิมพ์ชื่อบริษัทอย่างน้อย 2 ตัวอักษร">
+                <div id="coopCompanySearchResults" class="coop-company-search-results" role="status" aria-live="polite"></div>
+                <button type="button" class="btn-secondary" id="coopManualCompanyBtn">ไม่พบสถานประกอบการที่ต้องการ — กรอกข้อมูลเอง</button>
+                <p class="message" id="coopCompanyDuplicateMessage" role="status" aria-live="polite"></p>
+                <div id="coopSelectedJobPosting" class="coop-selected-job" hidden></div>
+              </div>
               <div class="coop-form-grid">
                 <div class="form-group coop-form-full"><label for="coopCompanyName">ชื่อบริษัท / หน่วยงาน <span aria-hidden="true">*</span></label><input id="coopCompanyName" name="company_name" maxlength="255" required></div>
                 <div class="form-group"><label for="coopCompanyProvince">จังหวัด <span aria-hidden="true">*</span></label><select id="coopCompanyProvince" name="company_province" required><option value="">เลือกจังหวัด</option><option>กรุงเทพมหานคร</option><option>กระบี่</option><option>กาญจนบุรี</option><option>กาฬสินธุ์</option><option>กำแพงเพชร</option><option>ขอนแก่น</option><option>จันทบุรี</option><option>ฉะเชิงเทรา</option><option>ชลบุรี</option><option>ชัยนาท</option><option>ชัยภูมิ</option><option>ชุมพร</option><option>เชียงราย</option><option>เชียงใหม่</option><option>ตรัง</option><option>ตราด</option><option>ตาก</option><option>นครนายก</option><option>นครปฐม</option><option>นครพนม</option><option>นครราชสีมา</option><option>นครศรีธรรมราช</option><option>นครสวรรค์</option><option>นนทบุรี</option><option>นราธิวาส</option><option>น่าน</option><option>บึงกาฬ</option><option>บุรีรัมย์</option><option>ปทุมธานี</option><option>ประจวบคีรีขันธ์</option><option>ปราจีนบุรี</option><option>ปัตตานี</option><option>พระนครศรีอยุธยา</option><option>พะเยา</option><option>พังงา</option><option>พัทลุง</option><option>พิจิตร</option><option>พิษณุโลก</option><option>เพชรบุรี</option><option>เพชรบูรณ์</option><option>แพร่</option><option>ภูเก็ต</option><option>มหาสารคาม</option><option>มุกดาหาร</option><option>แม่ฮ่องสอน</option><option>ยโสธร</option><option>ยะลา</option><option>ร้อยเอ็ด</option><option>ระนอง</option><option>ระยอง</option><option>ราชบุรี</option><option>ลพบุรี</option><option>ลำปาง</option><option>ลำพูน</option><option>เลย</option><option>ศรีสะเกษ</option><option>สกลนคร</option><option>สงขลา</option><option>สตูล</option><option>สมุทรปราการ</option><option>สมุทรสงคราม</option><option>สมุทรสาคร</option><option>สระแก้ว</option><option>สระบุรี</option><option>สิงห์บุรี</option><option>สุโขทัย</option><option>สุพรรณบุรี</option><option>สุราษฎร์ธานี</option><option>สุรินทร์</option><option>หนองคาย</option><option>หนองบัวลำภู</option><option>อ่างทอง</option><option>อำนาจเจริญ</option><option>อุดรธานี</option><option>อุตรดิตถ์</option><option>อุทัยธานี</option><option>อุบลราชธานี</option></select></div>

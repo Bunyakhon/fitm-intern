@@ -9,6 +9,8 @@ module.exports = (sequelize) => {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       });
+      CoopRequest.belongsTo(models.Company, { foreignKey: "company_id", as: "company", onDelete: "SET NULL", onUpdate: "CASCADE" });
+      CoopRequest.belongsTo(models.JobPosting, { foreignKey: "job_posting_id", as: "jobPosting", onDelete: "SET NULL", onUpdate: "CASCADE" });
 
       CoopRequest.hasMany(models.CoopRequestDeliveryMethod, {
         foreignKey: "coop_request_id",
@@ -34,6 +36,8 @@ module.exports = (sequelize) => {
           key: "id",
         },
       },
+      company_id: { type: DataTypes.UUID, allowNull: true },
+      job_posting_id: { type: DataTypes.UUID, allowNull: true },
       company_name: {
         type: DataTypes.STRING(255),
         allowNull: false,
