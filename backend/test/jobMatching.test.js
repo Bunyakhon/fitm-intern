@@ -14,6 +14,7 @@ const { requireStudentActor } = require("../src/routes/jobMatching.routes");
 
 const JOB_ID_A = "11111111-1111-4111-8111-111111111111";
 const JOB_ID_B = "22222222-2222-4222-8222-222222222222";
+const USABLE_RESUME_TEXT = "Experienced software engineer with Python, SQL, Node.js, React, and database development skills for production web services and reliable cloud applications.";
 
 function responseCollector() {
   return {
@@ -177,33 +178,127 @@ test("normalizes candidate text and rejects an empty usable candidate", async ()
   assert.equal(res.body.code, "MATCH_CANDIDATE_TEXT_REQUIRED");
 });
 
-test("sends profile and ready cached resume as separate weighted sources", async () => {
+test("omitted source keeps the default profile and ready cached Resume weighted sources", async () => {
   let payload;
   const handler = createJobMatchingHandler({
     StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "IT", profile: { related_skills: "Python SQL" } }; } },
-    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: "Node.js React", get() { return { extraction_status: "ready", extracted_text: "Node.js React" }; } }; } },
+    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: USABLE_RESUME_TEXT, get() { return { extraction_status: "ready", extracted_text: USABLE_RESUME_TEXT }; } }; } },
     JobPostingModel: { async findAll() { return [job()]; } },
     callNlp: async (value) => { payload = value; return { schema_version: "job-matching.v1", matches: [] }; },
   });
   const res = responseCollector();
   await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
   assert.equal(payload.candidate.text, "IT Python SQL");
-  assert.equal(payload.candidate.resume_text, "Node.js React");
-  assert.equal(JSON.stringify(res.body).includes("Node.js React"), false);
+  assert.equal(payload.candidate.resume_text, USABLE_RESUME_TEXT);
+  assert.equal(JSON.stringify(res.body).includes(USABLE_RESUME_TEXT), false);
   assert.equal(res.statusCode, 200);
+});
+
+test("skills mode sends only profile text and never queries Resume", async () => {
+  let payload;
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk(_id, query) {
+      assert.deepEqual(query.attributes, ["id", "major"]);
+      assert.equal(query.include.length, 1);
+      return { id: "student-1", major: "IT", profile: { related_skills: "Python SQL" } };
+    } },
+    StudentFileModel: { async findOne() { assert.fail("skills mode must not query Resume"); } },
+    JobPostingModel: { async findAll() { return [job()]; } },
+    callNlp: async (value) => { payload = value; return { schema_version: "job-matching.v1", matches: [] }; },
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "student-1" }, query: { source: "skills" } }, res);
+  assert.deepEqual(payload.candidate, { text: "IT Python SQL" });
+  assert.equal(res.statusCode, 200);
+});
+
+test("resume mode sends only persisted Resume text and excludes profile fields", async () => {
+  let payload;
+  let fileQuery;
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk(_id, query) {
+      assert.deepEqual(query.attributes, ["id"]);
+      assert.deepEqual(query.include, []);
+      return { id: "student-1", major: "must not use", profile: { related_skills: "must not use" } };
+    } },
+    StudentFileModel: { async findOne(query) {
+      fileQuery = query;
+      return {
+        extraction_status: "ready",
+        extracted_text: USABLE_RESUME_TEXT,
+        storage_path: "private/internal/resume.pdf",
+        get() { return this; },
+      };
+    } },
+    JobPostingModel: { async findAll() { return [job()]; } },
+    callNlp: async (value) => { payload = value; return { schema_version: "job-matching.v1", matches: [] }; },
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "student-1" }, query: { source: "resume" } }, res);
+  assert.deepEqual(fileQuery.where, { student_id: "student-1", file_type: "resume" });
+  assert.deepEqual(payload.candidate, { text: USABLE_RESUME_TEXT });
+  assert.equal("resume_text" in payload.candidate, false);
+  assert.equal(res.statusCode, 200);
+  assert.equal(JSON.stringify(res.body).includes(USABLE_RESUME_TEXT), false);
+  assert.equal(JSON.stringify(res.body).includes("private/internal/resume.pdf"), false);
+  assert.equal(JSON.stringify(res.body).includes("extracted_text"), false);
+  assert.equal(JSON.stringify(res.body).includes("JWT"), false);
+});
+
+test("skills mode with empty profile returns its specific 422 without Resume fallback", async () => {
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk() { return { id: "student-1", major: "", profile: { related_skills: "" } }; } },
+    StudentFileModel: { async findOne() { assert.fail("skills mode must not query Resume"); } },
+    callNlp: async () => assert.fail("NLP must not be called"),
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "student-1" }, query: { source: "skills" } }, res);
+  assert.equal(res.statusCode, 422);
+  assert.equal(res.body.code, "MATCH_PROFILE_TEXT_REQUIRED");
+});
+
+test("resume mode requires a ready usable persisted Resume", async () => {
+  for (const file of [
+    null,
+    { extraction_status: "failed", extracted_text: "old text" },
+    { extraction_status: "pending", extracted_text: "text not ready" },
+    { extraction_status: "ready", extracted_text: "   " },
+    { extraction_status: "ready", extracted_text: "Node.js React" },
+  ]) {
+    const handler = createJobMatchingHandler({
+      StudentModel: { async findByPk() { return { id: "student-1" }; } },
+      StudentFileModel: { async findOne() { return file && { ...file, get() { return this; } }; } },
+      callNlp: async () => assert.fail("NLP must not be called"),
+    });
+    const res = responseCollector();
+    await handler({ user: { id: "student-1" }, query: { source: "resume" } }, res);
+    assert.equal(res.statusCode, 422);
+    assert.equal(res.body.code, "MATCH_RESUME_TEXT_REQUIRED");
+  }
+});
+
+test("rejects an invalid source without querying student or NLP", async () => {
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk() { assert.fail("invalid source must be rejected first"); } },
+    callNlp: async () => assert.fail("NLP must not be called"),
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "student-1" }, query: { source: "invalid" } }, res);
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.code, "MATCH_SOURCE_INVALID");
 });
 
 test("uses resume text when profile fields are empty", async () => {
   let candidate;
   const handler = createJobMatchingHandler({
     StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "", profile: { related_skills: "" } }; } },
-    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: "Go Kubernetes", get() { return { extraction_status: "ready", extracted_text: "Go Kubernetes" }; } }; } },
+    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: USABLE_RESUME_TEXT, get() { return { extraction_status: "ready", extracted_text: USABLE_RESUME_TEXT }; } }; } },
     JobPostingModel: { async findAll() { return [job()]; } },
     callNlp: async (value) => { candidate = value.candidate; return { schema_version: "job-matching.v1", matches: [] }; },
   });
   const res = responseCollector();
   await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
-  assert.deepEqual(candidate, { text: "Go Kubernetes" });
+  assert.deepEqual(candidate, { text: USABLE_RESUME_TEXT });
   assert.equal(res.statusCode, 200);
 });
 

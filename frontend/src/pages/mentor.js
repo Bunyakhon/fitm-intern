@@ -105,7 +105,7 @@ function getErrorMessage(error) {
   }
 
   if (error.status === 410) {
-    if (error.data?.message?.includes("หมดอายุ")) {
+    if (/expired|หมดอายุ/i.test(error.data?.message || "")) {
       return "ลิงก์ยืนยันข้อมูลหมดอายุแล้ว";
     }
 
@@ -116,7 +116,15 @@ function getErrorMessage(error) {
     return "ลิงก์ยืนยันข้อมูลไม่ถูกต้อง";
   }
 
-  return "ไม่สามารถดำเนินการได้ กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง";
+  if (error.status === 400) {
+    return error.data?.message || "คำขอไม่ถูกต้อง กรุณาตรวจสอบข้อมูลแล้วลองใหม่อีกครั้ง";
+  }
+
+  if (error.status === 401 || error.status === 403) {
+    return error.data?.message || "ไม่มีสิทธิ์ดำเนินการด้วยลิงก์นี้";
+  }
+
+  return error.data?.message || "ไม่สามารถดำเนินการได้ กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง";
 }
 
 function handleTerminalTokenError(error) {

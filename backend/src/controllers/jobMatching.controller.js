@@ -9,6 +9,7 @@ const {
   NlpMatchingResponseError,
   requestJobMatches,
 } = require("../services/nlpMatching.client");
+const { isUsableResumeText } = require("../services/resumeText.service");
 
 const SCHEMA_VERSION = "job-matching.v1";
 const TOP_K = 5;
@@ -50,7 +51,8 @@ async function readStudentResume(studentId, StudentFileModel) {
   try {
     const resume = typeof file.get === "function" ? file.get({ plain: true }) : file;
     if (resume.extraction_status !== "ready" || typeof resume.extracted_text !== "string") return "";
-    return cleanCandidatePart(resume.extracted_text);
+    const extractedText = cleanCandidatePart(resume.extracted_text);
+    return isUsableResumeText(extractedText) ? extractedText : "";
   } catch {
     console.warn("Resume text extraction failed; falling back to profile text");
     return "";
@@ -156,9 +158,17 @@ function createJobMatchingHandler(dependencies = {}) {
 
   return async function getMyJobMatches(req, res) {
     try {
+      const source = req.query?.source;
+      if (source !== undefined && source !== "skills" && source !== "resume") {
+        return res.status(400).json({
+          message: "Matching source must be skills or resume",
+          code: "MATCH_SOURCE_INVALID",
+        });
+      }
+
       const student = await StudentModel.findByPk(req.user.id, {
-        attributes: ["id", "major"],
-        include: [
+        attributes: source === "resume" ? ["id"] : ["id", "major"],
+        include: source === "resume" ? [] : [
           {
             model: dependencies.StudentProfileModel || StudentProfile,
             as: "profile",
@@ -175,14 +185,39 @@ function createJobMatchingHandler(dependencies = {}) {
         });
       }
 
-      const resumeText = await readStudentResume(req.user.id, StudentFileModel);
+      const resumeText = source === "skills"
+        ? ""
+        : await readStudentResume(req.user.id, StudentFileModel);
       const { profile: profileText, resume } = createCandidateSources(student, resumeText);
-      const candidateText = profileText || resume;
-      if (!candidateText) {
-        return res.status(422).json({
-          message: "Student major or related skills are required for matching",
-          code: "MATCH_CANDIDATE_TEXT_REQUIRED",
-        });
+      let candidate;
+
+      if (source === "skills") {
+        if (!profileText) {
+          return res.status(422).json({
+            message: "Please add your major or related skills before matching by skills",
+            code: "MATCH_PROFILE_TEXT_REQUIRED",
+          });
+        }
+        candidate = { text: profileText };
+      } else if (source === "resume") {
+        if (!resume) {
+          return res.status(422).json({
+            message: "Please upload a readable Resume before matching by Resume",
+            code: "MATCH_RESUME_TEXT_REQUIRED",
+          });
+        }
+        candidate = { text: resume };
+      } else {
+        const candidateText = profileText || resume;
+        if (!candidateText) {
+          return res.status(422).json({
+            message: "Student major or related skills are required for matching",
+            code: "MATCH_CANDIDATE_TEXT_REQUIRED",
+          });
+        }
+        candidate = profileText && resume
+          ? { text: profileText, resume_text: resume }
+          : { text: candidateText };
       }
 
       const jobPostings = await JobPostingModel.findAll({
@@ -218,7 +253,7 @@ function createJobMatchingHandler(dependencies = {}) {
 
       const response = await callNlp({
         schema_version: SCHEMA_VERSION,
-        candidate: profileText && resume ? { text: profileText, resume_text: resume } : { text: candidateText },
+        candidate,
         jobs: normalizeJobs(jobPostings),
         options: { top_k: TOP_K, min_score: MIN_SCORE },
       });

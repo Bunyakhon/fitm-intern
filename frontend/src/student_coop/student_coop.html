@@ -680,12 +680,15 @@
           <div class="section-card">
             <div class="section-card-header">
               <h3 id="jobMatchingResultsTitle">ตำแหน่งงานที่แนะนำ</h3>
-              <button type="button" class="btn-primary" id="jobMatchingBtn">ค้นหาตำแหน่งที่เหมาะกับฉัน</button>
+              <div class="job-matching-actions">
+                <button type="button" class="btn-primary" id="jobMatchingSkillsBtn">วิเคราะห์จากทักษะ</button>
+                <button type="button" class="btn-secondary" id="jobMatchingResumeBtn">วิเคราะห์จาก Resume</button>
+              </div>
             </div>
             <p class="message" id="jobMatchingMessage" role="status" aria-live="polite" aria-atomic="true">กดค้นหาเพื่อดูตำแหน่งงานที่เหมาะกับคุณ</p>
             <div class="job-matching-loading" id="jobMatchingLoading" aria-hidden="true" hidden>
-              <h4 class="job-matching-loading-title">กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ</h4>
-              <p class="job-matching-loading-caption">ระบบกำลังเปรียบเทียบทักษะของคุณกับตำแหน่งงานที่เปิดรับ</p>
+              <h4 class="job-matching-loading-title" id="jobMatchingLoadingTitle">กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ</h4>
+              <p class="job-matching-loading-caption" id="jobMatchingLoadingCaption">ระบบกำลังเปรียบเทียบทักษะของคุณกับตำแหน่งงานที่เปิดรับ</p>
               <div class="job-matching-progress">
                 <strong class="job-matching-progress-value" id="jobMatchingProgressValue">0%</strong>
                 <div class="job-matching-progress-track" id="jobMatchingProgressTrack" role="progressbar" aria-label="ความคืบหน้าการรอผลวิเคราะห์" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -699,6 +702,7 @@
                 <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
               </div>
             </div>
+            <p id="jobMatchingResultSource" class="job-matching-result-source" hidden></p>
             <div id="jobMatchingResults" class="job-matching-results" aria-labelledby="jobMatchingResultsTitle" aria-busy="false"></div>
             <div id="jobMatchingEmpty" class="empty-state" hidden>
               <h4>ยังไม่พบตำแหน่งงานที่ผ่านเกณฑ์ความเหมาะสม</h4>

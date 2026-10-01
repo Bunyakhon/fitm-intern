@@ -1,68 +1,80 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import axios from "axios";
 
-function getAuthToken() {
-  return localStorage.getItem("token");
-}
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-async function parseResponse(response, responseType) {
-  if (responseType === "blob") {
-    return response.blob();
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
+  const shouldAttachAuth = config.auth !== false;
+  delete config.auth;
+  if (!shouldAttachAuth) {
+    return config;
   }
 
-  const contentType = response.headers.get("content-type") || "";
+  const token = localStorage.getItem("token");
+  const headers = config.headers;
 
-  if (contentType.includes("application/json")) {
-    return response.json();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const text = await response.text();
-  return text || null;
+  return config;
+});
+
+function normalizeError(error) {
+  const response = error?.response;
+  const status = response?.status;
+  let message = response?.data?.message;
+
+  if (typeof message !== "string" || !message.trim()) {
+    message = error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT"
+      ? "The request timed out. Please try again."
+      : status
+        ? `Request failed with status ${status}.`
+        : "Unable to connect to the server. Please try again.";
+  }
+
+  const normalized = new Error(message);
+  normalized.status = status;
+  normalized.data = response?.data ?? null;
+  const retryAfter = response?.headers?.["retry-after"];
+  if (retryAfter != null) normalized.retryAfter = retryAfter;
+  return normalized;
 }
 
 export async function apiRequest(path, options = {}) {
   const {
+    method = "GET",
     body,
-    headers = {},
+    headers,
     responseType = "json",
-    ...requestOptions
+    signal,
+    onUploadProgress,
+    returnResponse = false,
+    auth = true,
+    ...config
   } = options;
-  const requestHeaders = new Headers(headers);
-  const token = getAuthToken();
 
-  if (token && !requestHeaders.has("Authorization")) {
-    requestHeaders.set("Authorization", `Bearer ${token}`);
+  try {
+    const response = await api.request({
+      ...config,
+      url: path,
+      method,
+      data: body,
+      headers,
+      responseType,
+      signal,
+      onUploadProgress,
+      auth,
+    });
+
+    return returnResponse
+      ? { status: response.status, data: response.data, headers: response.headers }
+      : response.data;
+  } catch (error) {
+    throw normalizeError(error);
   }
-
-  let requestBody = body;
-
-  if (
-    body != null &&
-    !(body instanceof FormData) &&
-    typeof body === "object" &&
-    !requestHeaders.has("Content-Type")
-  ) {
-    requestHeaders.set("Content-Type", "application/json");
-    requestBody = JSON.stringify(body);
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestOptions,
-    headers: requestHeaders,
-    body: requestBody,
-  });
-  const data = await parseResponse(response, responseType);
-
-  if (!response.ok) {
-    const error = new Error(
-    data?.message || ""
-    );
-
-    error.status = response.status;
-    error.data = data;
-    throw error;
-  }
-
-  return data;
 }
-
-export { API_BASE_URL };

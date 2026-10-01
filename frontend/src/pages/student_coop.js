@@ -1740,16 +1740,21 @@ sidebarItems.forEach(
 // Job Matching
 // ==============================
 
-const jobMatchingBtn = document.getElementById("jobMatchingBtn");
+const jobMatchingSkillsBtn = document.getElementById("jobMatchingSkillsBtn");
+const jobMatchingResumeBtn = document.getElementById("jobMatchingResumeBtn");
 const jobMatchingMessage = document.getElementById("jobMatchingMessage");
 const jobMatchingLoading = document.getElementById("jobMatchingLoading");
+const jobMatchingLoadingTitle = document.getElementById("jobMatchingLoadingTitle");
+const jobMatchingLoadingCaption = document.getElementById("jobMatchingLoadingCaption");
 const jobMatchingProgressValue = document.getElementById("jobMatchingProgressValue");
 const jobMatchingProgressTrack = document.getElementById("jobMatchingProgressTrack");
 const jobMatchingProgressFill = document.getElementById("jobMatchingProgressFill");
 const jobMatchingProgressNote = document.getElementById("jobMatchingProgressNote");
 const jobMatchingResults = document.getElementById("jobMatchingResults");
 const jobMatchingEmpty = document.getElementById("jobMatchingEmpty");
+const jobMatchingResultSource = document.getElementById("jobMatchingResultSource");
 let isJobMatchingLoading = false;
+let lastMatchingSource = null;
 let jobMatchingProgressTimer = null;
 let jobMatchingProgressTimeout = null;
 let jobMatchingProgress = 0;
@@ -1803,7 +1808,7 @@ function waitForJobMatchingProgressMinimum() {
   });
 }
 
-function completeJobMatchingProgress() {
+function completeJobMatchingProgress(sourceLabel) {
   stopJobMatchingProgress();
   return new Promise((resolve) => {
     const start = Date.now();
@@ -1812,7 +1817,7 @@ function completeJobMatchingProgress() {
       updateJobMatchingProgress(Math.min(100, Math.round(95 + 5 * ratio)));
       if (ratio >= 1) {
         stopJobMatchingProgress();
-        jobMatchingProgressNote.textContent = "วิเคราะห์เสร็จแล้ว";
+        jobMatchingProgressNote.textContent = `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว`;
         jobMatchingProgressTimeout = window.setTimeout(() => {
           jobMatchingProgressTimeout = null;
           resolve();
@@ -1911,6 +1916,7 @@ function renderJobMatches(matches) {
 }
 
 const JOB_MATCHING_ERRORS = {
+  400: "เลือกแหล่งข้อมูลสำหรับวิเคราะห์ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง",
   403: "บัญชีนี้ไม่มีสิทธิ์ใช้งานการแนะนำตำแหน่งงาน",
   404: "ไม่พบข้อมูลนักศึกษา",
   422: "ยังไม่มีข้อมูลเพียงพอสำหรับการจับคู่ กรุณาระบุสาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา",
@@ -1919,29 +1925,55 @@ const JOB_MATCHING_ERRORS = {
   504: "การวิเคราะห์ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง",
 };
 
-async function loadJobMatches() {
+const JOB_MATCHING_SOURCE_LABELS = {
+  skills: "ทักษะและสาขา",
+  resume: "Resume",
+};
+
+const JOB_MATCHING_CODE_ERRORS = {
+  MATCH_PROFILE_TEXT_REQUIRED: "กรุณาระบุสาขาหรือทักษะที่เกี่ยวข้องก่อนวิเคราะห์จากทักษะ",
+  MATCH_RESUME_TEXT_REQUIRED: "กรุณาอัปโหลด Resume ที่ระบบสามารถอ่านข้อความได้ก่อนวิเคราะห์จาก Resume",
+  MATCH_SOURCE_INVALID: "เลือกแหล่งข้อมูลสำหรับวิเคราะห์ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง",
+};
+
+async function loadJobMatches(source) {
   if (isJobMatchingLoading) {
     return;
   }
   isJobMatchingLoading = true;
+  lastMatchingSource = null;
   jobMatchingResults.replaceChildren();
+  jobMatchingResultSource.hidden = true;
+  jobMatchingResultSource.textContent = "";
   jobMatchingResults.classList.remove("job-matching-content-in");
   jobMatchingEmpty.classList.remove("job-matching-content-in");
   jobMatchingMessage.classList.remove("job-matching-content-in");
   jobMatchingLoading.hidden = false;
   startJobMatchingProgress();
+  const sourceLabel = JOB_MATCHING_SOURCE_LABELS[source];
+  const loadingText = source === "resume"
+    ? "กำลังวิเคราะห์จาก Resume..."
+    : "กำลังวิเคราะห์จากทักษะ...";
+  jobMatchingLoadingTitle.textContent = loadingText;
+  jobMatchingLoadingCaption.textContent = source === "resume"
+    ? "กำลังใช้ข้อความที่อ่านได้จาก Resume เพื่อจับคู่ตำแหน่งงาน"
+    : "กำลังใช้สาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา";
   jobMatchingEmpty.hidden = true;
   jobMatchingResults.setAttribute("aria-busy", "true");
-  setButtonLoading(jobMatchingBtn, true, "กำลังวิเคราะห์...");
-  showMessage(jobMatchingMessage, "กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ...", "loading");
+  setButtonLoading(jobMatchingSkillsBtn, true, source === "skills" ? "กำลังวิเคราะห์ทักษะ..." : "วิเคราะห์จากทักษะ");
+  setButtonLoading(jobMatchingResumeBtn, true, source === "resume" ? "กำลังวิเคราะห์ Resume..." : "วิเคราะห์จาก Resume");
+  showMessage(jobMatchingMessage, loadingText, "loading");
 
   try {
-    const result = await getMyJobMatches();
+    const result = await getMyJobMatches({ source });
     if (!Array.isArray(result?.matches)) {
       throw new Error("Invalid matching response");
     }
     await waitForJobMatchingProgressMinimum();
-    await completeJobMatchingProgress();
+    await completeJobMatchingProgress(sourceLabel);
+    lastMatchingSource = source;
+    jobMatchingResultSource.textContent = `วิเคราะห์จาก: ${sourceLabel}`;
+    jobMatchingResultSource.hidden = false;
     renderJobMatches(result.matches);
     jobMatchingLoading.hidden = true;
     jobMatchingResults.classList.add("job-matching-content-in");
@@ -1951,31 +1983,39 @@ async function loadJobMatches() {
     }
     clearMessage(jobMatchingMessage);
     if (result.matches.length) {
-      showMessage(jobMatchingMessage, `พบตำแหน่งงานที่เหมาะสม ${result.matches.length} ตำแหน่ง`, "success");
+      showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว พบตำแหน่งงานที่เหมาะสม ${result.matches.length} ตำแหน่ง`, "success");
+    } else {
+      showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว`, "success");
     }
     jobMatchingMessage.classList.add("job-matching-content-in");
-    jobMatchingBtn.dataset.defaultLabel = "วิเคราะห์ใหม่";
   } catch (error) {
     stopJobMatchingProgress();
     jobMatchingLoading.hidden = true;
     jobMatchingResults.replaceChildren();
+    jobMatchingResultSource.hidden = true;
     if (error.status === 401) {
       clearAuthentication();
       redirectToLogin();
       return;
     }
-    showMessage(jobMatchingMessage, JOB_MATCHING_ERRORS[error.status] || "ไม่สามารถค้นหาตำแหน่งงานที่เหมาะสมได้ กรุณาลองใหม่อีกครั้ง", "error");
+    showMessage(
+      jobMatchingMessage,
+      JOB_MATCHING_CODE_ERRORS[error.data?.code] || JOB_MATCHING_ERRORS[error.status] || "ไม่สามารถค้นหาตำแหน่งงานที่เหมาะสมได้ กรุณาลองใหม่อีกครั้ง",
+      "error",
+    );
     jobMatchingMessage.classList.add("job-matching-content-in");
   } finally {
     stopJobMatchingProgress();
     jobMatchingLoading.hidden = true;
     isJobMatchingLoading = false;
     jobMatchingResults.setAttribute("aria-busy", "false");
-    setButtonLoading(jobMatchingBtn, false, "กำลังวิเคราะห์...");
+    setButtonLoading(jobMatchingSkillsBtn, false, "กำลังวิเคราะห์ทักษะ...");
+    setButtonLoading(jobMatchingResumeBtn, false, "กำลังวิเคราะห์ Resume...");
   }
 }
 
-jobMatchingBtn?.addEventListener("click", loadJobMatches);
+jobMatchingSkillsBtn?.addEventListener("click", () => loadJobMatches("skills"));
+jobMatchingResumeBtn?.addEventListener("click", () => loadJobMatches("resume"));
 document.getElementById("editJobMatchingProfileBtn")?.addEventListener("click", () => {
   document.querySelector('.sidebar-item[data-target="panel-profile"]')?.click();
 });
