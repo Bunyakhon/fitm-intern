@@ -142,3 +142,47 @@ def test_job_matches_returns_contiguous_ranks_and_four_decimal_scores():
     assert [match["rank"] for match in matches] == list(range(1, len(matches) + 1))
     assert all(0 <= match["score"] <= 1 for match in matches)
     assert all(match["score"] == round(match["score"], 4) for match in matches)
+from app.schemas.job_matching import JobMatchRequest
+from app.services import job_matching_service
+
+
+def test_weighted_profile_and_resume_scores(monkeypatch):
+    values = {"profile": [0.8], "resume": [0.2]}
+    monkeypatch.setattr(job_matching_service, "rank_jobs", lambda candidate, jobs: values[candidate])
+    request = JobMatchRequest.model_validate({
+        "schema_version": "job-matching.v1",
+        "candidate": {"text": "profile", "resume_text": "resume"},
+        "jobs": [{"job_posting_id": "11111111-1111-4111-8111-111111111111", "text": "job"}],
+        "options": {"top_k": 5, "min_score": 0.05},
+    })
+    matches = job_matching_service.match_jobs(request)
+    assert matches[0].score == 0.59
+
+
+def test_minimum_score_is_applied_after_weighted_score(monkeypatch):
+    values = {"profile": [0.1], "resume": [0.0]}
+    monkeypatch.setattr(job_matching_service, "rank_jobs", lambda candidate, jobs: values[candidate])
+    request = JobMatchRequest.model_validate({
+        "schema_version": "job-matching.v1",
+        "candidate": {"text": "profile", "resume_text": "resume"},
+        "jobs": [{"job_posting_id": "11111111-1111-4111-8111-111111111111", "text": "job"}],
+        "options": {"top_k": 5, "min_score": 0.07},
+    })
+    assert job_matching_service.match_jobs(request) == []
+
+
+def test_empty_resume_vocabulary_does_not_erase_profile_similarity(monkeypatch):
+    def rank(candidate, jobs):
+        if candidate == "resume":
+            raise ValueError("empty vocabulary; perhaps the documents only contain stop words")
+        return [0.8]
+
+    monkeypatch.setattr(job_matching_service, "rank_jobs", rank)
+    request = JobMatchRequest.model_validate({
+        "schema_version": "job-matching.v1",
+        "candidate": {"text": "profile", "resume_text": "resume"},
+        "jobs": [{"job_posting_id": "11111111-1111-4111-8111-111111111111", "text": "job"}],
+        "options": {"top_k": 5, "min_score": 0.05},
+    })
+    matches = job_matching_service.match_jobs(request)
+    assert matches[0].score == 0.52

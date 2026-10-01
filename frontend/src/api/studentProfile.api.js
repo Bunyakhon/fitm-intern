@@ -27,6 +27,16 @@ export function uploadStudentProfileImage(data) {
   });
 }
 
+export function uploadStudentResume(file) {
+  const formData = new FormData();
+  formData.append("resume", file);
+
+  return apiRequest("/api/student-profile/resume", {
+    method: "POST",
+    body: formData,
+  });
+}
+
 export function updateStudentInfo(data) {
   return apiRequest("/api/student-profile/student-info", {
     method: "PUT",

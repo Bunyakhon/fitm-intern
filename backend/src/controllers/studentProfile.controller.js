@@ -11,6 +11,8 @@ const {
   resolveStoragePath,
   toStorageRelativePath,
 } = require("../config/storage");
+const { extractResumeText, normalizeExtractedText, isUsableResumeText } = require("../services/resumeText.service");
+const { extractResumeWithOcr } = require("../services/resumeOcr.client");
 
 const PROFILE_FIELDS = [
   "prefix", "birth_date", "height_cm", "weight_kg", "nationality",
@@ -604,6 +606,10 @@ const uploadResume = async (req, res) => {
           storage_path: newStoragePath,
           mime_type: uploadedFile.mimetype,
           file_size: uploadedFile.size,
+          extracted_text: null,
+          extraction_method: null,
+          extraction_status: "pending",
+          extracted_at: null,
         };
 
         if (existingResume) {
@@ -640,9 +646,42 @@ const uploadResume = async (req, res) => {
       }
     }
 
+    let extracted = "";
+    let extractionMethod = null;
+    try {
+      const pdfBytes = await fs.readFile(resolveStoragePath(newStoragePath));
+      const nativeText = normalizeExtractedText(await extractResumeText(pdfBytes));
+      if (isUsableResumeText(nativeText)) {
+        extracted = nativeText;
+        extractionMethod = "pdf_text";
+      } else {
+        const ocrText = normalizeExtractedText(await extractResumeWithOcr(pdfBytes));
+        if (isUsableResumeText(ocrText)) {
+          extracted = ocrText.slice(0, 20_000);
+          extractionMethod = "ocr";
+        }
+      }
+    } catch {
+      // Extraction is supplemental; a safely stored resume remains usable as an upload.
+    }
+
+    const extractionStatus = extractionMethod ? "ready" : "failed";
+    await resume.update({
+      extracted_text: extractionMethod ? extracted.slice(0, 20_000) : null,
+      extraction_method: extractionMethod,
+      extraction_status: extractionStatus,
+      extracted_at: extractionMethod ? new Date() : null,
+    });
+
     return res.status(200).json({
       message: "อัปโหลด Resume สำเร็จ",
-      resume,
+      resume: {
+        original_name: resume.original_name,
+        mime_type: resume.mime_type,
+        file_size: Number(resume.file_size),
+        extraction_status: extractionStatus,
+        extraction_method: extractionMethod,
+      },
     });
   } catch (error) {
     if (uploadedFile) {

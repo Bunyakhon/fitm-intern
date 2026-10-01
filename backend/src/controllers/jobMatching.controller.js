@@ -21,8 +21,40 @@ function normalizedText(...values) {
     .join(" ");
 }
 
-function createCandidateText(student) {
-  return normalizedText(student?.major, student?.profile?.related_skills);
+function cleanCandidatePart(value) {
+  return typeof value === "string"
+    ? value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim()
+    : "";
+}
+
+function createCandidateSources(student, resumeText = "") {
+  return {
+    profile: normalizedText(cleanCandidatePart(student?.major), cleanCandidatePart(student?.profile?.related_skills)).slice(0, 20_000),
+    resume: cleanCandidatePart(resumeText).slice(0, 20_000),
+  };
+}
+
+function createCandidateText(student, resumeText = "") {
+  const { profile, resume } = createCandidateSources(student, resumeText);
+  return [profile, resume].filter(Boolean).join(" ");
+}
+
+async function readStudentResume(studentId, StudentFileModel) {
+  if (!StudentFileModel) return "";
+  const file = await StudentFileModel.findOne({
+    where: { student_id: studentId, file_type: "resume" },
+    attributes: ["extracted_text", "extraction_status"],
+  });
+  if (!file) return "";
+
+  try {
+    const resume = typeof file.get === "function" ? file.get({ plain: true }) : file;
+    if (resume.extraction_status !== "ready" || typeof resume.extracted_text !== "string") return "";
+    return cleanCandidatePart(resume.extracted_text);
+  } catch {
+    console.warn("Resume text extraction failed; falling back to profile text");
+    return "";
+  }
 }
 
 function toPlainJob(job) {
@@ -120,6 +152,7 @@ function createJobMatchingHandler(dependencies = {}) {
   const StudentModel = dependencies.StudentModel || Student;
   const JobPostingModel = dependencies.JobPostingModel || JobPosting;
   const callNlp = dependencies.callNlp || requestJobMatches;
+  const StudentFileModel = dependencies.StudentFileModel || require("../models").StudentFile;
 
   return async function getMyJobMatches(req, res) {
     try {
@@ -142,7 +175,9 @@ function createJobMatchingHandler(dependencies = {}) {
         });
       }
 
-      const candidateText = createCandidateText(student);
+      const resumeText = await readStudentResume(req.user.id, StudentFileModel);
+      const { profile: profileText, resume } = createCandidateSources(student, resumeText);
+      const candidateText = profileText || resume;
       if (!candidateText) {
         return res.status(422).json({
           message: "Student major or related skills are required for matching",
@@ -183,7 +218,7 @@ function createJobMatchingHandler(dependencies = {}) {
 
       const response = await callNlp({
         schema_version: SCHEMA_VERSION,
-        candidate: { text: candidateText },
+        candidate: profileText && resume ? { text: profileText, resume_text: resume } : { text: candidateText },
         jobs: normalizeJobs(jobPostings),
         options: { top_k: TOP_K, min_score: MIN_SCORE },
       });
@@ -216,10 +251,12 @@ module.exports = {
   MIN_SCORE,
   SCHEMA_VERSION,
   TOP_K,
+  createCandidateSources,
   createCandidateText,
   createJobMatchingHandler,
   enrichMatches,
   getMyJobMatches,
   normalizeJobs,
+  readStudentResume,
   validateNlpResponse,
 };

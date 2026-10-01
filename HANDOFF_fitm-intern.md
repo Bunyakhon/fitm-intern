@@ -1,11 +1,135 @@
 # fitm-intern — HANDOFF (Updated)
 
+### Resume PDF extraction, OCR, and weighted matching — 2026-10-01
+
+- Resume upload remains `POST /api/student-profile/resume` (`resume`, PDF only, 10 MB). On replacement, extraction columns reset before processing. Native `pdf-parse` text is normalized and accepted only when it meets the reusable length/character usability check. OCR runs only when native text is insufficient.
+- Backend sends stored PDF bytes to the internal NLP `POST /api/v1/resume-ocr` endpoint with a 20 second abort timeout. The NLP service accepts PDF bytes only, caps size at 10 MB, renders no more than 5 pages at 150 DPI, normalizes/caps text at 20,000 characters, and uses Tesseract `tha+eng`. OCR response contains only text, method, and processed page count; failures are safe HTTP errors and do not log OCR text.
+- Added migration `008_add_resume_extraction.js`: nullable `extracted_text`, `extraction_method`, `extraction_status`, `extracted_at`. It was applied to the development PostgreSQL database. StudentFile model has matching attributes and validated method/status strings.
+- Upload response returns only original filename, MIME type, file size, extraction status, and method. No extracted text or storage path reaches the frontend. Extraction/OCR failure leaves the uploaded PDF in place and matching falls back to profile signals.
+- Matching no longer opens or OCRs the PDF on requests. It reads only the authenticated student's cached `StudentFile.extracted_text` when status is `ready`. NLP v1 keeps `candidate.text`; optional `candidate.resume_text` enables `(profile * 0.65) + (resume * 0.35)` scoring. Profile-only and resume-only inputs retain 100% weight when used alone. `TOP_K=5`, `MIN_SCORE=0.05`, four-decimal rounding, and deterministic tie ordering remain.
+- Frontend preserves existing Job Matching cards/progress/skeleton behavior, updates its description, and reports native extraction, OCR, or fallback status without displaying extracted text.
+- Changed/added: Backend controller/model/client/migration/matching tests; NLP OCR endpoint, weighted schema/service, dependencies, Dockerfile and matching tests; frontend upload feedback/description; Compose timeout; this handoff. The pre-existing uncommitted UI/API styling, backend package change, and Compose edits were preserved.
+- Verification: Backend syntax checks and `backend/test/jobMatching.test.js backend/test/resumeText.test.js`: **16 passed**. Frontend JS syntax and `docker exec intern_frontend npm run build`: **PASS**. `python -m compileall`: **PASS**. Development migration `008`: **APPLIED**. `git diff --check`: **PASS**.
+- NLP image rebuild: **PASS**. `tesseract --list-langs` inside `intern_nlp_service`: **eng, tha, osd**. Final targeted container tests (`test_job_matching.py`, `test_resume_matching.py`, `test_resume_ocr.py`): **14 passed**. OCR tests cover invalid PDF safety, the five-page cap, and extracting “PYTHON” from a generated scanned PDF fixture. Weighted tests cover profile/resume combination, min-score-after-weighting, and profile retention when resume tokenization is empty.
+- Acceptance closeout (2026-10-01): a one-page image-only Thai/English Resume-like PDF sent through the running NLP endpoint returned `method=ocr`, `page_count=1`, normalized text with Thai characters, and `Windows`, `Network`, `DNS`, and `Hardware`. Native PDF text was empty. `tesseract --list-langs` returned `eng`, `tha`, `osd`; the OCR route invokes `tha+eng`. Runtime Thai and English OCR: **PASS**. OCR request handler emits no OCR content logs.
+- Backend targeted tests: **16 passed**. Relevant NLP tests (`test_job_matching.py`, `test_resume_matching.py`, `test_resume_ocr.py`): **14 passed**. Frontend build: **PASS**. Migration `008` appears in `sequelize_meta`; no pending migration. `git diff --check`: **PASS**.
+- Authenticated text-PDF upload/persistence and scanned-PDF upload/persistence plus rendered matching remain **PENDING** because no authenticated student session was available. Matching reads ready cached `extracted_text` and has no OCR call; tests cover profile-only, resume-only, missing/failed resume fallback, and 422 when neither source is usable. Repeated live authenticated match requests were not run.
+- Thai OCR runtime: **PASS**; English OCR runtime: **PASS**; text PDF native extraction: **PASS** (existing acceptance baseline; authenticated persisted upload still pending); scanned PDF OCR: **PASS** through NLP OCR endpoint; Tesseract languages: **tha + eng**; OCR runtime language: **tha+eng**.
+- OCR on every Job Matching request: **NO**; extraction persistence via authenticated upload: **PENDING**; weighted matching: **PASS** (65/35 and single-source cases covered by tests); migration: **008 applied / no pending**.
+- Authenticated text-PDF acceptance: **PENDING**; authenticated scanned-PDF acceptance: **PENDING**.
+- AI methods: no embeddings, vector DB, or LLM.
+
+### Resume PDF text matching — 2026-10-01
+
+- Resume upload endpoint already existed and the current Student Dashboard upload now confirms that extracted text will be included in matching. Success copy: “อัปโหลดเรซูเม่เรียบร้อยแล้ว เรซูเม่จะถูกนำมาร่วมวิเคราะห์ตำแหน่งงาน”. The panel explains fallback to profile fields when no PDF is present. Text-based PDFs only; scanned/image PDFs and OCR are not supported.
+- Backend Job Matching candidate is built in this order: `Student.major` + `StudentProfile.related_skills` + extracted Resume PDF text when available. Candidate text is normalized and capped at 20,000 characters while preserving profile text first.
+- Backend reads only the authenticated student’s `StudentFile` resume, requires `mime_type === "application/pdf"`, resolves with `resolveStoragePath()`, and checks the resolved file remains in that student’s resume directory. Only plain candidate text is sent to existing NLP; no binary, filename, or storage metadata is sent.
+- Missing PDF, unsafe/unreadable PDF, extraction error, or empty extracted text falls back to major + related skills. The safe warning is `Resume text extraction failed; falling back to profile text`. With no usable text anywhere, API retains `422 MATCH_CANDIDATE_TEXT_REQUIRED`.
+- Dependency added: `pdf-parse@^2.4.5` (CommonJS API, supports the Node 20 Docker base when Node is >=20.16). Service: `backend/src/services/resumeText.service.js`; text-based PDF extraction only, no OCR.
+- Files modified for this work: `backend/package.json`, `backend/package-lock.json`, `backend/src/controllers/jobMatching.controller.js`, `backend/test/jobMatching.test.js`, `frontend/src/student_coop/student_coop.html`, `frontend/src/pages/student_coop.js`, `HANDOFF_fitm-intern.md`. The frontend upload wiring/API file and unrelated UI/dock-compose changes were already uncommitted before this task and were preserved.
+- Matching tests: **PASS**, 14 passed, 0 failed using `node --test --test-isolation=none backend/test/jobMatching.test.js` (covers profile-only, extracted resume, resume-only, absent/failed/empty extraction, 422, public response privacy, and published-only filtering).
+- Syntax checks for the specified Backend and Frontend files: **PASS**. `git diff --check`: **PASS**.
+- `docker exec intern_frontend npm run build`: **PASS** (Vite v8.2.2; existing production inputs still omit the Student Dashboard page, as previously documented).
+- Backend image rebuild and `docker compose up -d backend`: **PASS**. The running Backend uses a mounted `node_modules` volume, so `docker exec intern_backend npm install --omit=dev` was also required to expose the lockfile-pinned dependency. Backend syntax checks and `docker exec intern_backend node --test test/jobMatching.test.js`: **PASS**, 14 passed, 0 failed.
+- Real authenticated upload → match → rendered results and Resume/profile comparison: **PENDING**; no authorized student session available.
+- Backend changed: **YES**. NLP changed: **NO**. Migration added: **NO**. Resume PDF upload endpoint: **EXISTING / CONNECTED**. PDF text extraction: **IMPLEMENTED**. Embeddings, vector DB: **NOT IMPLEMENTED**. OCR: **NOT IMPLEMENTED**.
+
 > ใช้ไฟล์นี้สำหรับเปิด ChatGPT/Codex แชทใหม่และทำงานต่อจากสถานะล่าสุดโดยไม่ย้อนทำงานเดิมซ้ำ
 
 ## PROJECT ROOT
 C:\Users\suran\Documents\มอส\term31\pre-project\fitm-intern
 
 ## CURRENT STATUS
+
+### Resume PDF Upload Frontend → Backend — 2026-10-01
+
+- Resume PDF upload is connected to the existing authenticated `POST /api/student-profile/resume` endpoint using multipart field `resume` and the shared `apiRequest()` client.
+- Frontend validation requires PDF MIME type and `.pdf` extension, with a 10 MB maximum. Duplicate clicks are guarded; the button shows a loading state. Success displays the returned original filename and file size when present, plus the existing toast.
+- `400` responses map to safe PDF/size messages; `404` displays the missing-student message; `401` clears existing authentication and redirects to login. Other failures use a generic safe message.
+- The panel now describes the upload as connected and states that Job Matching still uses student major and related skills; PDF text extraction is **NOT IMPLEMENTED** and resume content is not used for matching.
+- Backend changes: **NONE**. Existing endpoint and file validation are reused.
+- Real authenticated PDF upload acceptance: **PENDING**; no authorized student session was available during implementation.
+- Files changed for this task: `frontend/src/api/studentProfile.api.js`, `frontend/src/pages/student_coop.js`, `frontend/src/student_coop/student_coop.html`, `HANDOFF_fitm-intern.md`.
+- `node --check frontend/src/api/studentProfile.api.js`: **PASS**.
+- `node --check frontend/src/pages/student_coop.js`: **PASS**.
+- `git diff --check`: **PASS**.
+- `docker exec intern_frontend npm run build`: **PASS** (Vite v8.2.2; the existing production inputs still omit the Student Dashboard page, as previously documented).
+
+### Job Matching loading UX — 2026-10-01
+
+- Added a visible 0–100% frontend request-wait indicator with a large percentage and filling bar. It advances to at most 95% while the existing `POST /api/job-matches/me` is pending; only a real successful response starts the final animation to 100% and the “วิเคราะห์เสร็จแล้ว” state. The percentage is explicitly described as waiting feedback, not actual NLP progress.
+- Error stops timers below 100%; each new request resets to 0%. Existing request guard, `setButtonLoading()`, supporting Thai text, three skeleton cards, and result/empty/error transitions remain. Timers are cleared on completion/error; reduced-motion shortens the bar transition.
+- No additional request, backend/API/ranking/score/PDF logic, or fake delay before response was added. The 300 ms visibility hold starts only after the successful response reaches 100%.
+- Changed: `frontend/src/student_coop/student_coop.html`, `frontend/src/pages/student_coop.js`, `frontend/src/styles/student_coop.css`, `HANDOFF_fitm-intern.md`.
+- Verification: `node --check frontend/src/pages/student_coop.js`, `git diff --check`, and `docker exec intern_frontend npm run build` all **PASS**.
+
+### CURRENT AUTHORITATIVE STATUS — 2026-10-01
+
+- Job Matching Backend ↔ NLP v1: **PASS**; existing real backend acceptance: **PASS** (unchanged).
+- Frontend Job Matching Integration: **IMPLEMENTED**.
+- Frontend implementation: **PASS**.
+- Static/integration verification against the running local stack: **PASS**; see the follow-up verification below. This does not mark authenticated matching or real browser rendering as verified.
+- Static/build verification and mocked DOM/API behavior verification: **PASS**.
+- Frontend real authenticated browser/API acceptance: **PENDING**. No authorized Student session or browser tooling was available in this pass; no JWT was accessed or recorded.
+- Student Dashboard combines “อัปโหลดเรซูเม่” + “ค้นหาสถานประกอบการ” into one sidebar button “ค้นหาสถานประกอบการ”, targeting `panel-job-matching` through the existing `.sidebar-item[data-target]` pattern. The old search placeholder handler and `panel-resume` target are removed.
+- Explicit first search action: “ค้นหาตำแหน่งที่เหมาะกับฉัน”; after a successful response the action becomes “วิเคราะห์ใหม่”. A request guard and the existing shared `setButtonLoading()` prevent concurrent requests.
+- `frontend/src/api/jobMatching.api.js` calls `POST /api/job-matches/me` with request body **NONE**. Existing `api/client.js` supplies the Bearer JWT. No manual Authorization header, candidate fields, student ID, NLP options, job list, or direct NLP request was added.
+- Matching input remains backend-owned: `Student.major + StudentProfile.related_skills`; `top_k = 5` and `min_score = 0.05` remain unchanged.
+- The source summary reuses `currentStudent` / `currentStudentProfile`, refreshes with profile rendering or panel entry, and links to the existing profile panel for edits. Missing values display “ยังไม่ได้ระบุ”.
+- Results use only real API responses, preserve backend ordering/rank, display scores as percentages to two decimals, show company/province and every work mode, and render optional fields only when present. Backend strings use `createElement()` / `textContent`.
+- Distinct inline loading, result, empty-success, and error states are implemented. `401` uses existing authentication cleanup/redirect; `403`, `404`, `422`, `502`, `503`, `504`, and default errors receive safe Thai messages without internal error details. Failed refreshes clear stale results and unlock retry.
+- Resume UI is in the same panel; `resumeFile`, `uploadResumeBtn`, `resumeMessage`, and existing PDF validation/placeholder behavior are preserved. The UI states that resume upload is not backend-connected and Resume PDF is **NOT** used by Job Matching yet.
+- Removed the existing successful profile-load console log that printed sensitive Student/Profile data.
+
+Files created: `frontend/src/api/jobMatching.api.js`.
+
+Files modified: `frontend/src/student_coop/student_coop.html`, `frontend/src/pages/student_coop.js`, `frontend/src/styles/student_coop.css`, `HANDOFF_fitm-intern.md`.
+
+Verification commands and results:
+
+- `node --check frontend/src/api/jobMatching.api.js`: **PASS**.
+- `node --check frontend/src/pages/student_coop.js`: **PASS**.
+- `rg -n '\b(alert|confirm)\s*\(' frontend`: no native dialog calls found.
+- `git diff --check`: **PASS**.
+- `docker exec intern_frontend npm run build`: **PASS**, Vite v8.2.2.
+- Audit found the existing `vite.config.js` production inputs exclude Student Dashboard. Additional build, without writing output or changing configuration: `docker exec intern_frontend node --input-type=module -e "import { build } from 'vite'; import config from './vite.config.js'; config.build.rollupOptions.input = { studentCoop: '/app/src/student_coop/student_coop.html' }; config.build.write = false; await build({ ...config, configFile: false });"`: **PASS**, 14 modules transformed.
+- Temporary in-memory `node --input-type=module` VM harness using the current matching source and mocked DOM/API: **PASS** for source summary, loading/busy, concurrent-request guard, safe text/XSS rendering, backend order, score formatting, multiple work modes, empty success, all error statuses/default, malformed success envelope, retry unlock, 401 cleanup/redirect, profile navigation, single sidebar target, and bodyless API call. Fixtures were test-only; no mock jobs were added to the application. Initial harness run hit a Windows stdin Thai-encoding assertion issue; the ASCII-only rerun passed.
+- Final `git status --short` / `git diff` review: only the five intended files changed. Backend, NLP, migrations, shared client/feedback/main.css, landing mock data, and Vite config unchanged.
+
+Blockers / next safe task:
+
+- Implementation blocker: **NONE**. Real acceptance awaits an authorized Student browser session. Verify the actual bodyless POST, existing Bearer authentication without exposing the JWT, real results, responsive layout, retries, and profile changes followed by re-analysis.
+- Before a production deployment, resolve the pre-existing Vite input omission for Student Dashboard in a separate packaging task; the standard production build does not emit this page. The additional no-write build verifies compilation only.
+
+Deferred issues (unchanged):
+
+- PDF text extraction: **NOT IMPLEMENTED**.
+- Skill extraction/taxonomy: **NOT IMPLEMENTED**.
+- Embeddings: **NOT IMPLEMENTED**.
+- Persisted vectors: **NOT IMPLEMENTED**.
+- Vector DB: **NOT IMPLEMENTED**.
+- Staff Review, Reviewer FK, Staff Review UI: **DEFERRED**.
+- Email transactional outbox: **DEFERRED**.
+- Existing unrelated chatbot test failures: **PRE-EXISTING**, **UNRELATED TO JOB MATCHING**, **DEFERRED**. Not rerun or fixed in this frontend task.
+
+### Job Matching Frontend → Express — local stack follow-up (2026-10-01)
+
+- Read the requested matching source/HANDOFF and reviewed `git status` / `git diff` before work. Existing wiring was correct; no source rewrite or integration bug fix was needed.
+- Express mounts `/api/job-matches`; the router defines authenticated `POST /me`, producing `POST /api/job-matches/me`. The controller queries published jobs only, builds the candidate server-side, calls NLP, validates ranking, and enriches the expected display fields.
+- Frontend `.env`, Compose frontend environment, and the Vite-served client resolve Express at `http://localhost:5000`; Dashboard dev URL is `http://localhost:5173/src/student_coop/student_coop.html`. `jobMatching.api.js` delegates to `apiRequest()` with POST only. Existing `client.js` owns the stored student JWT/Bearer header; no frontend NLP call or payload fields were added.
+- Existing `intern_frontend`, `intern_backend`, `intern_postgres`, and `intern_nlp_service` were running; PostgreSQL reported healthy. No restart, new container, credential, token, account, seed, or migration was created.
+- Read-only live HTTP checks using `node --input-type=module`: Dashboard HTML, page module, API module, and client module all **200**; Express root **200**; Express `/health/db` **200** with status `ok`; NLP `/health` **200**. The served Dashboard includes the matching panel and page entry, and its page module calls the API and result renderer.
+- Live CORS check: `OPTIONS http://localhost:5000/api/job-matches/me` with Origin `http://localhost:5173`, requested method POST and header authorization returned **204**; allow-origin, POST, and authorization header checks passed. A bodyless unauthenticated POST returned **401** with the expected CORS allow-origin header.
+- Actual current frontend API/client code was evaluated in an in-memory Node VM against live Express, with no stored token and the existing fallback API URL. `getMyJobMatches()` issued POST to the exact Express endpoint; assertions confirmed body `undefined` and no request Content-Type. `apiRequest()` propagated status **401**. Only the Vite-specific `import.meta.env` expression was substituted for this Node check; application source was unchanged. This verifies the live unauthenticated boundary, not an authenticated success response or browser execution.
+- `docker exec intern_backend node -e` with a read-only fetch to `http://nlp-service:8000/health`: **200**, verifying Backend → NLP connectivity on the existing Docker network. No matching payload was sent directly to NLP.
+- `docker exec intern_backend node --test test/jobMatching.test.js`: **PASS**, 10 tests passed, 0 failed/skipped. Tests cover published filtering, normalized candidate/minimal payload, enrichment, empty results, student authorization, missing student/candidate, invalid NLP results/order, dependency timeout/unavailability, and safe internal failures. They use test dependencies and do not establish a real authenticated PostgreSQL → NLP matching success in this pass.
+- `node --check frontend/src/api/jobMatching.api.js`: **PASS**.
+- `node --check frontend/src/pages/student_coop.js`: **PASS**.
+- `docker exec intern_frontend npm run build`: **PASS**, Vite v8.2.2. The previously recorded Dashboard production-input omission remains unchanged; dev serving was verified above.
+- `git diff --check`: **PASS**. Existing uncommitted frontend work is preserved. The pre-existing `docker-compose.yml` diff removes `DB_USER`; this follow-up did not edit or revert that change, and the current running Backend database health check passed.
+- Files changed in this follow-up: **`HANDOFF_fitm-intern.md` only**. Backend changed: **NO**. NLP changed: **NO**. Migrations changed: **NO**.
+- Frontend implementation: **PASS**. Static/integration verification: **PASS**. Real authenticated browser/API acceptance: **PENDING**. No authorized student session or browser tool was available; no credentials were invented and no JWT was read, printed, or recorded. Real ranked-response rendering in a browser was **NOT VERIFIED** in this follow-up.
+- Next safe task: use an authorized Student session to open the Dashboard matching panel and verify the bodyless Bearer POST, actual ranked response/cards, scores/company/province/work modes, and refresh behavior. Preserve the existing deferred issues and the separate production packaging task.
 
 ### ทำเสร็จแล้ว
 - Student Authentication
@@ -456,7 +580,7 @@ Success response (nullable database-backed display fields remain safely nullable
 - Configuration: backend uses `NLP_SERVICE_BASE_URL` (Compose: `http://nlp-service:8000`) and `NLP_SERVICE_TIMEOUT_MS` (Compose/default: `5000`). The client has an explicit abort timeout and no automatic retry.
 - PDF extraction: **NOT IMPLEMENTED**.
 - Embeddings/vector DB: **NOT IMPLEMENTED**.
-- Frontend integration: **NOT IMPLEMENTED**.
+- Frontend integration: **IMPLEMENTED**; see CURRENT AUTHORITATIVE STATUS above. Frontend real acceptance remains **PENDING**.
 - Migrations added: **NONE**.
 - Real acceptance: **PASS**. Authenticated Student → Express → PostgreSQL published jobs → NLP v1 → deterministic ranking → Express enrichment returned `200`; NLP `/health` returned `200`; 20 usable published fixtures were present; 3 matches were returned; every returned ID belonged to the published query; result count was at most 5; ranks were contiguous; and no internal fields leaked.
 - Backend tests: **34 passed, 1 skipped** (the existing opt-in PostgreSQL transaction integration test).
@@ -466,4 +590,10 @@ Success response (nullable database-backed display fields remain safely nullable
 
 ## NEXT ACTIVE TASK
 
-Job Matching Frontend Integration
+Real authenticated Student Dashboard Job Matching acceptance; separately resolve the existing production Vite input omission before deployment.
+
+### Job Matching progress timing refinement — 2026-10-01
+
+- Request-wait progress now eases from 0% toward a 95% ceiling over about five seconds. If the API succeeds sooner, the UI waits out the remaining visual duration before animating to 100%; a slow request holds at 95%.
+- Success shows “วิเคราะห์เสร็จแล้ว” at 100% for 400 ms before transitioning to results or the empty state. Errors stop the progress timers and retain the existing error state without reaching 100%.
+- Each guarded request resets to 0%. This remains frontend-only feedback; the API call and matching behavior are unchanged.

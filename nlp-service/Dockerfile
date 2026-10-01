@@ -2,6 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-tha tesseract-ocr-eng && rm -rf /var/lib/apt/lists/*
+
 # ติดตั้ง dependency ก่อน copy โค้ด เพื่อให้ docker cache layer นี้ไว้ (build เร็วขึ้นเวลาแก้แค่โค้ด)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

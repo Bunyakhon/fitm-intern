@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.v1 import chatbot, job_matching, resume_matching
+from app.api.v1 import chatbot, job_matching, resume_matching, resume_ocr
 from app.core.config import settings
 from app.core.logging import get_logger, setup_logging
 from app.nlp.chatbot.intent_classifier import intent_classifier
@@ -28,6 +28,7 @@ app = FastAPI(
 )
 
 app.include_router(resume_matching.router, prefix="/api/v1")
+app.include_router(resume_ocr.router, prefix="/api/v1")
 app.include_router(job_matching.router, prefix="/api/v1")
 app.include_router(chatbot.router, prefix="/api/v1")
 

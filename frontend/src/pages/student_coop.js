@@ -1,7 +1,9 @@
 import { getCurrentStudent } from "../api/auth.api.js";
+import { getMyJobMatches } from "../api/jobMatching.api.js";
 import {
   getMyStudentProfile,
   getStudentProfileImage,
+  uploadStudentResume,
   updateMyStudentProfile,
   updateStudentInfo,
   uploadStudentProfileImage,
@@ -296,11 +298,6 @@ async function loadStudentProfile() {
         "ไม่พบข้อมูลประวัตินักศึกษา"
       );
     }
-
-    console.log(
-      "Student profile loaded:",
-      result.student
-    );
 
     // แสดงข้อมูลพื้นฐานจาก students อีกครั้ง
     renderStudent(result.student);
@@ -721,6 +718,8 @@ studentInfoForm?.addEventListener("submit", saveStudentInfo);
 window.addEventListener("beforeunload", clearProfileImageObjectUrl);
 
 function renderStudent(student) {
+  currentStudent = student;
+  renderJobMatchingSource();
   const firstName =
     student.first_name || "";
 
@@ -827,6 +826,7 @@ function renderStudent(student) {
 // ==============================
 
 function renderStudentProfile(profile) {
+  renderJobMatchingSource();
   if (!profile) {
     console.log(
       "Student profile is empty."
@@ -1723,6 +1723,10 @@ sidebarItems.forEach(
           loadCoopRequests();
         }
 
+        if (targetId === "panel-job-matching") {
+          renderJobMatchingSource();
+        }
+
         window.scrollTo({
           top: 0,
           behavior: "smooth",
@@ -1733,22 +1737,248 @@ sidebarItems.forEach(
 );
 
 // ==============================
-// Search Company
+// Job Matching
 // ==============================
 
-const searchCompanyLink =
-  document.getElementById(
-    "searchCompanyLink"
-  );
+const jobMatchingBtn = document.getElementById("jobMatchingBtn");
+const jobMatchingMessage = document.getElementById("jobMatchingMessage");
+const jobMatchingLoading = document.getElementById("jobMatchingLoading");
+const jobMatchingProgressValue = document.getElementById("jobMatchingProgressValue");
+const jobMatchingProgressTrack = document.getElementById("jobMatchingProgressTrack");
+const jobMatchingProgressFill = document.getElementById("jobMatchingProgressFill");
+const jobMatchingProgressNote = document.getElementById("jobMatchingProgressNote");
+const jobMatchingResults = document.getElementById("jobMatchingResults");
+const jobMatchingEmpty = document.getElementById("jobMatchingEmpty");
+let isJobMatchingLoading = false;
+let jobMatchingProgressTimer = null;
+let jobMatchingProgressTimeout = null;
+let jobMatchingProgress = 0;
+let jobMatchingProgressStartedAt = 0;
 
-searchCompanyLink?.addEventListener(
-  "click",
-  (event) => {
-    event.preventDefault();
+function updateJobMatchingProgress(value) {
+  jobMatchingProgress = value;
+  jobMatchingProgressValue.textContent = `${value}%`;
+  jobMatchingProgressTrack.setAttribute("aria-valuenow", String(value));
+  jobMatchingProgressFill.style.width = `${value}%`;
+}
 
-    showToast("หน้าค้นหาสถานประกอบการจะพัฒนาในขั้นตอนถัดไป", "info");
+function stopJobMatchingProgress() {
+  if (jobMatchingProgressTimer !== null) {
+    window.clearInterval(jobMatchingProgressTimer);
+    jobMatchingProgressTimer = null;
   }
-);
+  if (jobMatchingProgressTimeout !== null) {
+    window.clearTimeout(jobMatchingProgressTimeout);
+    jobMatchingProgressTimeout = null;
+  }
+}
+
+function startJobMatchingProgress() {
+  stopJobMatchingProgress();
+  jobMatchingProgressNote.textContent = "เปอร์เซ็นต์แสดงการรอการตอบกลับ ไม่ใช่ความคืบหน้าการวิเคราะห์จริง";
+  updateJobMatchingProgress(0);
+  jobMatchingProgressStartedAt = Date.now();
+  jobMatchingProgressTimer = window.setInterval(() => {
+    const elapsed = Math.min(Date.now() - jobMatchingProgressStartedAt, 5000);
+    const ratio = elapsed / 5000;
+    // Ease out: move quickly at first, then slow toward the 95% ceiling.
+    updateJobMatchingProgress(Math.min(95, Math.round(95 * (1 - (1 - ratio) ** 2))));
+    if (elapsed >= 5000) {
+      window.clearInterval(jobMatchingProgressTimer);
+      jobMatchingProgressTimer = null;
+    }
+  }, 50);
+}
+
+function waitForJobMatchingProgressMinimum() {
+  const remaining = Math.max(0, 5000 - (Date.now() - jobMatchingProgressStartedAt));
+  if (remaining === 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    jobMatchingProgressTimeout = window.setTimeout(() => {
+      jobMatchingProgressTimeout = null;
+      resolve();
+    }, remaining);
+  });
+}
+
+function completeJobMatchingProgress() {
+  stopJobMatchingProgress();
+  return new Promise((resolve) => {
+    const start = Date.now();
+    jobMatchingProgressTimer = window.setInterval(() => {
+      const ratio = Math.min(1, (Date.now() - start) / 250);
+      updateJobMatchingProgress(Math.min(100, Math.round(95 + 5 * ratio)));
+      if (ratio >= 1) {
+        stopJobMatchingProgress();
+        jobMatchingProgressNote.textContent = "วิเคราะห์เสร็จแล้ว";
+        jobMatchingProgressTimeout = window.setTimeout(() => {
+          jobMatchingProgressTimeout = null;
+          resolve();
+        }, 400);
+      }
+    }, 16);
+  });
+}
+
+function renderJobMatchingSource() {
+  setText(document.getElementById("jobMatchingMajor"), currentStudent?.major?.trim() || "ยังไม่ได้ระบุ");
+  setText(document.getElementById("jobMatchingSkills"), currentStudentProfile?.related_skills?.trim() || "ยังไม่ได้ระบุ");
+}
+
+function createJobMatchingElement(tag, value, className = "") {
+  const element = document.createElement(tag);
+  element.textContent = value;
+  element.className = className;
+  return element;
+}
+
+function renderJobMatches(matches) {
+  const cards = matches.map((match) => {
+    const card = document.createElement("article");
+    card.className = "job-matching-card";
+    if (match.rank === 1) {
+      card.classList.add("is-top-ranked");
+    }
+
+    const header = document.createElement("div");
+    header.className = "job-matching-card-header";
+    const identity = document.createElement("div");
+    identity.className = "job-matching-identity";
+    const rank = createJobMatchingElement("span", `#${match.rank}`, "job-matching-rank");
+    rank.setAttribute("aria-label", `อันดับ ${match.rank}`);
+    identity.append(rank);
+
+    const titleGroup = document.createElement("div");
+    titleGroup.className = "job-matching-title-group";
+    titleGroup.append(
+      createJobMatchingElement("h4", match.title || "ไม่ระบุชื่อตำแหน่ง", "job-matching-title"),
+      createJobMatchingElement("p", match.company?.name || "ไม่ระบุชื่อสถานประกอบการ", "job-matching-company"),
+    );
+    identity.append(titleGroup);
+    if (match.rank === 1) {
+      identity.append(createJobMatchingElement("span", "แนะนำสูงสุด", "job-matching-top-label"));
+    }
+
+    const score = document.createElement("div");
+    score.className = "job-matching-score";
+    score.setAttribute("aria-label", `ความเหมาะสม ${(match.score * 100).toFixed(2)}%`);
+    score.append(
+      createJobMatchingElement("span", "ความเหมาะสม", "job-matching-score-label"),
+      createJobMatchingElement("strong", `${(match.score * 100).toFixed(2)}%`, "job-matching-score-value"),
+    );
+    header.append(identity, score);
+    card.append(header);
+
+    const metadata = document.createElement("div");
+    metadata.className = "job-matching-metadata";
+    const appendMetadata = (iconName, value, className = "") => {
+      if (value == null || value === "") return;
+      const item = document.createElement("span");
+      item.className = `job-matching-meta-item ${className}`.trim();
+      const icon = document.createElement("i");
+      icon.className = `fa-solid ${iconName}`;
+      icon.setAttribute("aria-hidden", "true");
+      item.append(icon, createJobMatchingElement("span", value));
+      metadata.append(item);
+    };
+    appendMetadata("fa-location-dot", match.company?.province || "ยังไม่ได้ระบุ");
+    const labels = { onsite: "On-site", hybrid: "Hybrid", remote: "Remote" };
+    (match.workModes || []).forEach(({ mode }) => {
+      if (mode) {
+        appendMetadata("fa-building", labels[mode] || mode);
+      }
+    });
+    appendMetadata("fa-users", match.quota == null || match.quota === "" ? "" : `รับ ${match.quota} คน`);
+    appendMetadata("fa-baht-sign", match.compensation_text);
+    appendMetadata("fa-calendar-days", match.work_days_per_week == null || match.work_days_per_week === "" ? "" : `${match.work_days_per_week} วัน/สัปดาห์`);
+    if (metadata.childElementCount) card.append(metadata);
+
+    if (match.description) {
+      card.append(createJobMatchingElement("p", match.description, "job-matching-description"));
+    }
+    if (match.category) {
+      const categoryLabels = {
+        information_technology: "Information Technology",
+      };
+      const category = createJobMatchingElement("span", categoryLabels[match.category] || match.category, "job-matching-category");
+      card.append(category);
+    }
+    return card;
+  });
+  jobMatchingResults.replaceChildren(...cards);
+}
+
+const JOB_MATCHING_ERRORS = {
+  403: "บัญชีนี้ไม่มีสิทธิ์ใช้งานการแนะนำตำแหน่งงาน",
+  404: "ไม่พบข้อมูลนักศึกษา",
+  422: "ยังไม่มีข้อมูลเพียงพอสำหรับการจับคู่ กรุณาระบุสาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา",
+  502: "ระบบได้รับผลการวิเคราะห์ที่ไม่สมบูรณ์ กรุณาลองใหม่อีกครั้ง",
+  503: "ระบบวิเคราะห์ตำแหน่งงานไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้ง",
+  504: "การวิเคราะห์ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง",
+};
+
+async function loadJobMatches() {
+  if (isJobMatchingLoading) {
+    return;
+  }
+  isJobMatchingLoading = true;
+  jobMatchingResults.replaceChildren();
+  jobMatchingResults.classList.remove("job-matching-content-in");
+  jobMatchingEmpty.classList.remove("job-matching-content-in");
+  jobMatchingMessage.classList.remove("job-matching-content-in");
+  jobMatchingLoading.hidden = false;
+  startJobMatchingProgress();
+  jobMatchingEmpty.hidden = true;
+  jobMatchingResults.setAttribute("aria-busy", "true");
+  setButtonLoading(jobMatchingBtn, true, "กำลังวิเคราะห์...");
+  showMessage(jobMatchingMessage, "กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ...", "loading");
+
+  try {
+    const result = await getMyJobMatches();
+    if (!Array.isArray(result?.matches)) {
+      throw new Error("Invalid matching response");
+    }
+    await waitForJobMatchingProgressMinimum();
+    await completeJobMatchingProgress();
+    renderJobMatches(result.matches);
+    jobMatchingLoading.hidden = true;
+    jobMatchingResults.classList.add("job-matching-content-in");
+    jobMatchingEmpty.hidden = result.matches.length !== 0;
+    if (!result.matches.length) {
+      jobMatchingEmpty.classList.add("job-matching-content-in");
+    }
+    clearMessage(jobMatchingMessage);
+    if (result.matches.length) {
+      showMessage(jobMatchingMessage, `พบตำแหน่งงานที่เหมาะสม ${result.matches.length} ตำแหน่ง`, "success");
+    }
+    jobMatchingMessage.classList.add("job-matching-content-in");
+    jobMatchingBtn.dataset.defaultLabel = "วิเคราะห์ใหม่";
+  } catch (error) {
+    stopJobMatchingProgress();
+    jobMatchingLoading.hidden = true;
+    jobMatchingResults.replaceChildren();
+    if (error.status === 401) {
+      clearAuthentication();
+      redirectToLogin();
+      return;
+    }
+    showMessage(jobMatchingMessage, JOB_MATCHING_ERRORS[error.status] || "ไม่สามารถค้นหาตำแหน่งงานที่เหมาะสมได้ กรุณาลองใหม่อีกครั้ง", "error");
+    jobMatchingMessage.classList.add("job-matching-content-in");
+  } finally {
+    stopJobMatchingProgress();
+    jobMatchingLoading.hidden = true;
+    isJobMatchingLoading = false;
+    jobMatchingResults.setAttribute("aria-busy", "false");
+    setButtonLoading(jobMatchingBtn, false, "กำลังวิเคราะห์...");
+  }
+}
+
+jobMatchingBtn?.addEventListener("click", loadJobMatches);
+document.getElementById("editJobMatchingProfileBtn")?.addEventListener("click", () => {
+  document.querySelector('.sidebar-item[data-target="panel-profile"]')?.click();
+});
 
 // ==============================
 // Resume
@@ -1769,9 +1999,15 @@ const resumeMessage =
     "resumeMessage"
   );
 
+let isResumeUploading = false;
+
 uploadResumeBtn?.addEventListener(
   "click",
-  () => {
+  async () => {
+    if (isResumeUploading) {
+      return;
+    }
+
     clearMessage(
       resumeMessage
     );
@@ -1789,24 +2025,69 @@ uploadResumeBtn?.addEventListener(
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      showMessage(resumeMessage, "ไฟล์ Resume ต้องไม่เกิน 10MB", "error");
+      return;
+    }
+
     if (
-      file.type !==
-      "application/pdf"
+      file.type !== "application/pdf" ||
+      !file.name.toLowerCase().endsWith(".pdf")
     ) {
       showMessage(
         resumeMessage,
-        "กรุณาเลือกไฟล์ PDF เท่านั้น",
+        "รองรับเฉพาะไฟล์ PDF",
         "error"
       );
 
       return;
     }
 
-    showMessage(
-      resumeMessage,
-      "ส่วนอัปโหลดเรซูเม่ยังไม่ได้เชื่อมต่อ Backend",
-      "success"
-    );
+    isResumeUploading = true;
+    resumeFile.disabled = true;
+    setButtonLoading(uploadResumeBtn, true, "กำลังอัปโหลด...", "อัปโหลดเรซูเม่");
+
+    try {
+      const result = await uploadStudentResume(file);
+      const resume = result?.resume || result?.data || result || {};
+      const details = [];
+      if (resume.original_name) details.push(resume.original_name);
+      if (Number.isFinite(Number(resume.file_size))) {
+        details.push(`${(Number(resume.file_size) / (1024 * 1024)).toFixed(2)} MB`);
+      }
+      const message = "อัปโหลดเรซูเม่เรียบร้อยแล้ว";
+      const extractionMessage = resume.extraction_status === "ready"
+        ? resume.extraction_method === "ocr"
+          ? "อ่านข้อความด้วย OCR สำเร็จ"
+          : "อ่านข้อความจาก PDF สำเร็จ"
+        : "ไม่สามารถอ่านข้อความจากไฟล์ได้ ระบบจะวิเคราะห์จากสาขาและทักษะที่เกี่ยวข้อง";
+      showMessage(resumeMessage, [message, extractionMessage, ...details].join(" · "), "success");
+      showToast(message, "success");
+    } catch (error) {
+      if (error?.status === 401) {
+        clearAuthentication();
+        redirectToLogin();
+        return;
+      }
+
+      const safeMessages = {
+        400: error.data?.message === "รองรับเฉพาะไฟล์ PDF (application/pdf)"
+          ? "รองรับเฉพาะไฟล์ PDF"
+          : error.data?.message === "ไฟล์ Resume ต้องไม่เกิน 10MB"
+            ? "ไฟล์ Resume ต้องไม่เกิน 10MB"
+            : "ไม่สามารถอัปโหลดเรซูเม่ได้ กรุณาตรวจสอบไฟล์แล้วลองใหม่",
+        404: "ไม่พบข้อมูลนักศึกษา",
+      };
+      showMessage(
+        resumeMessage,
+        safeMessages[error?.status] || "ไม่สามารถอัปโหลดเรซูเม่ได้ กรุณาลองใหม่อีกครั้ง",
+        "error"
+      );
+    } finally {
+      isResumeUploading = false;
+      resumeFile.disabled = false;
+      setButtonLoading(uploadResumeBtn, false, "กำลังอัปโหลด...", "อัปโหลดเรซูเม่");
+    }
   }
 );
 

@@ -60,6 +60,7 @@ function createHandler({ student, jobs = [job()], callNlp, captureQuery } = {}) 
         return jobs;
       },
     },
+    StudentFileModel: { async findOne() { return null; } },
     callNlp,
   });
 }
@@ -172,6 +173,68 @@ test("normalizes candidate text and rejects an empty usable candidate", async ()
 
   await handler({ user: { id: "student-1" } }, res);
 
+  assert.equal(res.statusCode, 422);
+  assert.equal(res.body.code, "MATCH_CANDIDATE_TEXT_REQUIRED");
+});
+
+test("sends profile and ready cached resume as separate weighted sources", async () => {
+  let payload;
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "IT", profile: { related_skills: "Python SQL" } }; } },
+    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: "Node.js React", get() { return { extraction_status: "ready", extracted_text: "Node.js React" }; } }; } },
+    JobPostingModel: { async findAll() { return [job()]; } },
+    callNlp: async (value) => { payload = value; return { schema_version: "job-matching.v1", matches: [] }; },
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
+  assert.equal(payload.candidate.text, "IT Python SQL");
+  assert.equal(payload.candidate.resume_text, "Node.js React");
+  assert.equal(JSON.stringify(res.body).includes("Node.js React"), false);
+  assert.equal(res.statusCode, 200);
+});
+
+test("uses resume text when profile fields are empty", async () => {
+  let candidate;
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "", profile: { related_skills: "" } }; } },
+    StudentFileModel: { async findOne() { return { extraction_status: "ready", extracted_text: "Go Kubernetes", get() { return { extraction_status: "ready", extracted_text: "Go Kubernetes" }; } }; } },
+    JobPostingModel: { async findAll() { return [job()]; } },
+    callNlp: async (value) => { candidate = value.candidate; return { schema_version: "job-matching.v1", matches: [] }; },
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
+  assert.deepEqual(candidate, { text: "Go Kubernetes" });
+  assert.equal(res.statusCode, 200);
+});
+
+test("falls back safely for missing, failed, and empty resume extraction", async () => {
+  for (const extractor of [async () => { throw new Error("private path and text"); }, async () => "   "]) {
+    const handler = createJobMatchingHandler({
+      StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "IT", profile: { related_skills: "SQL" } }; } },
+      StudentFileModel: { async findOne() { return { storage_path: "students/11111111-1111-4111-8111-111111111111/resume/r.pdf", mime_type: "application/pdf" }; } },
+      extractResumeText: extractor,
+      JobPostingModel: { async findAll() { return [job()]; } },
+      callNlp: async (value) => { assert.equal(value.candidate.text, "IT SQL"); return { schema_version: "job-matching.v1", matches: [] }; },
+    });
+    const res = responseCollector();
+    await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
+    assert.equal(res.statusCode, 200);
+  }
+  const handler = createHandler({ callNlp: async () => ({ schema_version: "job-matching.v1", matches: [] }) });
+  const res = responseCollector();
+  await handler({ user: { id: "student-1" } }, res);
+  assert.equal(res.statusCode, 200);
+});
+
+test("requires some candidate text when profile and resume are unusable", async () => {
+  const handler = createJobMatchingHandler({
+    StudentModel: { async findByPk() { return { id: "11111111-1111-4111-8111-111111111111", major: "", profile: { related_skills: "" } }; } },
+    StudentFileModel: { async findOne() { return { storage_path: "students/11111111-1111-4111-8111-111111111111/resume/r.pdf", mime_type: "application/pdf" }; } },
+    extractResumeText: async () => "",
+    callNlp: async () => assert.fail("NLP must not be called"),
+  });
+  const res = responseCollector();
+  await handler({ user: { id: "11111111-1111-4111-8111-111111111111" } }, res);
   assert.equal(res.statusCode, 422);
   assert.equal(res.body.code, "MATCH_CANDIDATE_TEXT_REQUIRED");
 });

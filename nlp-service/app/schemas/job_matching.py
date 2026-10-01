@@ -7,6 +7,7 @@ class Candidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     text: str = Field(..., max_length=20_000)
+    resume_text: str | None = Field(default=None, max_length=20_000)
 
     @field_validator("text")
     @classmethod
@@ -14,6 +15,16 @@ class Candidate(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError("must not be empty")
+        return value
+
+    @field_validator("resume_text")
+    @classmethod
+    def resume_text_must_not_be_empty(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be empty when provided")
         return value
 
 

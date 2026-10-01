@@ -2,18 +2,27 @@ from app.nlp.matching.similarity import rank_jobs
 from app.schemas.job_matching import JobMatchRequest, JobMatchResult
 
 
+def _rank_or_zero(candidate_text: str, job_texts: list[str]) -> list[float]:
+    try:
+        return rank_jobs(candidate_text, job_texts)
+    except ValueError as error:
+        # TfidfVectorizer raises this when preprocessing removes every token.
+        if "empty vocabulary" not in str(error).lower():
+            raise
+        return [0.0] * len(job_texts)
+
+
 def match_jobs(request: JobMatchRequest) -> list[JobMatchResult]:
     if not request.jobs:
         return []
 
     job_texts = [job.text for job in request.jobs]
-    try:
-        scores = rank_jobs(request.candidate.text, job_texts)
-    except ValueError as error:
-        # TfidfVectorizer raises this when preprocessing removes every token.
-        if "empty vocabulary" not in str(error).lower():
-            raise
-        scores = [0.0] * len(request.jobs)
+    profile_scores = _rank_or_zero(request.candidate.text, job_texts)
+    if request.candidate.resume_text is None:
+        scores = profile_scores
+    else:
+        resume_scores = _rank_or_zero(request.candidate.resume_text, job_texts)
+        scores = [0.65 * profile + 0.35 * resume for profile, resume in zip(profile_scores, resume_scores)]
 
     matches = [
         (str(job.job_posting_id), round(float(score), 4))

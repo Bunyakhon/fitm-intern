@@ -50,6 +50,10 @@ module.exports = (sequelize) => {
         allowNull: false,
         validate: { min: 0 },
       },
+      extracted_text: { type: DataTypes.TEXT, allowNull: true },
+      extraction_method: { type: DataTypes.STRING(20), allowNull: true, validate: { isIn: [["pdf_text", "ocr"]] } },
+      extraction_status: { type: DataTypes.STRING(20), allowNull: true, validate: { isIn: [["pending", "ready", "failed"]] } },
+      extracted_at: { type: DataTypes.DATE, allowNull: true },
     },
     {
       sequelize,

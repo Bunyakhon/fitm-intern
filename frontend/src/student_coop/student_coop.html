@@ -100,21 +100,13 @@
             <span class="sidebar-text"> ประวัตินักศึกษา </span>
           </button>
 
-          <button type="button" class="sidebar-item" data-target="panel-resume">
-            <span class="sidebar-icon">
-              <i class="fa-solid fa-file-arrow-up"></i>
-            </span>
-
-            <span class="sidebar-text"> อัปโหลดเรซูเม่ </span>
-          </button>
-
-          <a class="sidebar-item" href="#" id="searchCompanyLink">
+          <button type="button" class="sidebar-item" data-target="panel-job-matching">
             <span class="sidebar-icon">
               <i class="fa-solid fa-building"></i>
             </span>
 
             <span class="sidebar-text"> ค้นหาสถานประกอบการ </span>
-          </a>
+          </button>
 
           <div class="sidebar-divider">
             <span>การดำเนินงาน</span>
@@ -667,25 +659,68 @@
            Resume
            ============================== -->
 
-        <section class="content-panel" id="panel-resume">
+        <section class="content-panel" id="panel-job-matching">
           <div class="panel-header">
-            <h2>อัปโหลดเรซูเม่</h2>
+            <h2>ค้นหาสถานประกอบการ</h2>
 
-            <p>อัปโหลดเรซูเม่สำหรับใช้ค้นหาสถานประกอบการ</p>
+            <p>ระบบวิเคราะห์จากสาขา ทักษะที่เกี่ยวข้อง และข้อมูลจากเรซูเม่เมื่อสามารถอ่านข้อความได้</p>
           </div>
 
           <div class="section-card">
+            <div class="section-card-header">
+              <h3>ข้อมูลที่ใช้จับคู่ตำแหน่งงาน</h3>
+              <button type="button" class="btn-secondary" id="editJobMatchingProfileBtn">แก้ไขข้อมูลทักษะ</button>
+            </div>
+            <dl class="job-matching-source">
+              <div><dt>สาขา</dt><dd id="jobMatchingMajor">ยังไม่ได้ระบุ</dd></div>
+              <div><dt>ทักษะที่เกี่ยวข้อง</dt><dd id="jobMatchingSkills">ยังไม่ได้ระบุ</dd></div>
+            </dl>
+          </div>
+
+          <div class="section-card">
+            <div class="section-card-header">
+              <h3 id="jobMatchingResultsTitle">ตำแหน่งงานที่แนะนำ</h3>
+              <button type="button" class="btn-primary" id="jobMatchingBtn">ค้นหาตำแหน่งที่เหมาะกับฉัน</button>
+            </div>
+            <p class="message" id="jobMatchingMessage" role="status" aria-live="polite" aria-atomic="true">กดค้นหาเพื่อดูตำแหน่งงานที่เหมาะกับคุณ</p>
+            <div class="job-matching-loading" id="jobMatchingLoading" aria-hidden="true" hidden>
+              <h4 class="job-matching-loading-title">กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ</h4>
+              <p class="job-matching-loading-caption">ระบบกำลังเปรียบเทียบทักษะของคุณกับตำแหน่งงานที่เปิดรับ</p>
+              <div class="job-matching-progress">
+                <strong class="job-matching-progress-value" id="jobMatchingProgressValue">0%</strong>
+                <div class="job-matching-progress-track" id="jobMatchingProgressTrack" role="progressbar" aria-label="ความคืบหน้าการรอผลวิเคราะห์" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span class="job-matching-progress-fill" id="jobMatchingProgressFill"></span>
+                </div>
+                <p class="job-matching-progress-note" id="jobMatchingProgressNote">เปอร์เซ็นต์แสดงการรอการตอบกลับ ไม่ใช่ความคืบหน้าการวิเคราะห์จริง</p>
+              </div>
+              <div class="job-matching-skeletons">
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+              </div>
+            </div>
+            <div id="jobMatchingResults" class="job-matching-results" aria-labelledby="jobMatchingResultsTitle" aria-busy="false"></div>
+            <div id="jobMatchingEmpty" class="empty-state" hidden>
+              <h4>ยังไม่พบตำแหน่งงานที่ผ่านเกณฑ์ความเหมาะสม</h4>
+              <p>ลองตรวจสอบข้อมูลสาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา แล้วค้นหาใหม่</p>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <p class="job-matching-note" id="resumeMatchingNotice">ระบบจะวิเคราะห์จากสาขา ทักษะที่เกี่ยวข้อง และข้อมูลจากเรซูเม่เมื่อสามารถอ่านข้อความได้</p>
             <div class="upload-box">
               <i class="fa-solid fa-cloud-arrow-up"></i>
 
               <h3>อัปโหลดเรซูเม่</h3>
 
-              <p>รองรับไฟล์ PDF</p>
+              <p>รองรับไฟล์ PDF ขนาดไม่เกิน 10 MB ระบบจะบันทึกไฟล์เรซูเม่ของคุณ</p>
 
               <input
                 type="file"
                 id="resumeFile"
                 accept=".pdf,application/pdf"
+                aria-describedby="resumeMessage resumeMatchingNotice"
+                aria-label="เลือกไฟล์เรซูเม่ PDF"
               />
 
               <button type="button" class="btn-primary" id="uploadResumeBtn">
