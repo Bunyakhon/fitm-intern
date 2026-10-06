@@ -228,6 +228,8 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
 
+      is_department_head: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+
       // ==============================
       // สถานะ
       // ==============================
@@ -258,13 +260,17 @@ module.exports = (sequelize) => {
         // ==============================
 
         beforeValidate: async (teacher) => {
-          if (teacher.password) {
+          if (teacher.password && teacher.changed("password")) {
             teacher.password_hash = await bcrypt.hash(
               teacher.password,
 
               SALT_ROUNDS,
             );
           }
+        },
+        afterSave: (teacher) => {
+          teacher.setDataValue("password", undefined);
+          teacher.changed("password", false);
         },
       },
     },

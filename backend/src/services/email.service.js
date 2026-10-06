@@ -122,7 +122,13 @@ function buildCompanyVerificationUrl(token) {
       "FRONTEND_URL is required to send a company verification email.",
     );
   }
-  return `${frontendUrl.replace(/\/$/, "")}${COMPANY_VERIFICATION_PAGE_PATH}?token=${encodeURIComponent(token)}`;
+  const base = new URL(frontendUrl);
+  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password || base.search || base.hash) {
+    throw new Error("FRONTEND_URL must be an HTTP(S) URL without credentials or query parameters");
+  }
+  const url = new URL(COMPANY_VERIFICATION_PAGE_PATH, base);
+  url.searchParams.set("token", token);
+  return url.toString();
 }
 
 async function sendCompanyVerificationEmail({ to, companyName, token }) {
@@ -158,6 +164,7 @@ FITM Internship System`;
 }
 
 module.exports = {
+  buildCompanyVerificationUrl,
   verifyEmailConnection,
   sendCompanyVerificationEmail,
   sendMentorVerificationEmail,

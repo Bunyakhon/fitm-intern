@@ -153,6 +153,8 @@ exports.loginStudent = async (req, res) => {
         student_id: student.student_id,
         email: student.email,
         track: student.track,
+        actor_type: "student",
+        role: "student",
       },
       process.env.JWT_SECRET,
       {

@@ -6,7 +6,12 @@ const {
   CompanyVerificationError,
   getResendableCompanyVerification,
   verifyCompanyEmail,
+  recoverCompanyVerification,
 } = require("../services/companyVerification.service");
+const {
+  readRecoveryCapability,
+  setRecoveryCookie,
+} = require("../services/recruitmentRecovery.service");
 const { sendCompanyVerificationEmail } = require("../services/email.service");
 const {
   createPublicJobSubmission,
@@ -30,6 +35,8 @@ function createJobSubmissionHandler(dependencies = {}) {
       const payload = validateJobSubmissionPayload(req.body);
       await verifyCaptcha(payload.captchaToken, { ip: req.ip });
       const result = await createSubmission(payload);
+      if (result.recoveryCapability)
+        setRecoveryCookie(res, result.recoveryCapability);
 
       let emailSent = true;
       try {
@@ -80,27 +87,41 @@ function createJobSubmissionHandler(dependencies = {}) {
   };
 }
 
-async function verifyJobSubmissionEmail(req, res) {
-  try {
-    const { submission, jobCount } = await verifyCompanyEmail(req.query.token);
-    return res.status(200).json({
-      message:
-        "Company email verified. Job postings are awaiting staff review.",
-      submission: {
-        id: submission.id,
-        status: submission.verification_status,
-        jobCount,
-      },
-    });
-  } catch (error) {
-    if (error instanceof CompanyVerificationError) {
-      return res.status(error.status).json({ message: error.message });
+function createVerifyEmailHandler(dependencies = {}) {
+  const verifyEmail = dependencies.verifyEmail || verifyCompanyEmail;
+  return async function verifyJobSubmissionEmail(req, res) {
+    try {
+      if (
+        req.method === "POST" &&
+        (!req.body ||
+          typeof req.body !== "object" ||
+          Array.isArray(req.body) ||
+          Object.keys(req.body).some((key) => key !== "token"))
+      ) {
+        throw new CompanyVerificationError("Invalid verification payload", 400);
+      }
+      const { submission, jobCount } = await verifyEmail(
+        req.method === "POST" ? req.body?.token : req.query.token,
+      );
+      return res.status(200).json({
+        message:
+          "Company email verified. Job postings are awaiting staff review.",
+        submission: {
+          id: submission.id,
+          status: submission.verification_status,
+          jobCount,
+        },
+      });
+    } catch (error) {
+      if (error instanceof CompanyVerificationError) {
+        return res.status(error.status).json({ message: error.message });
+      }
+      console.error("Unable to verify recruitment email");
+      return res
+        .status(500)
+        .json({ message: "Unable to verify email at this time" });
     }
-    console.error("Unable to verify recruitment email");
-    return res
-      .status(500)
-      .json({ message: "Unable to verify email at this time" });
-  }
+  };
 }
 
 function createResendVerificationHandler(dependencies = {}) {
@@ -108,15 +129,27 @@ function createResendVerificationHandler(dependencies = {}) {
     dependencies.getResendableVerification || getResendableCompanyVerification;
   const sendVerificationEmail =
     dependencies.sendVerificationEmail || sendCompanyVerificationEmail;
+  const recoverVerification =
+    dependencies.recoverVerification || recoverCompanyVerification;
 
   return async function resendJobSubmissionVerification(req, res) {
     try {
       const { token } = req.body || {};
+      if (
+        !req.body ||
+        typeof req.body !== "object" ||
+        Array.isArray(req.body) ||
+        Object.keys(req.body).some((key) => key !== "token")
+      ) {
+        throw new CompanyVerificationError("Invalid resend payload", 400);
+      }
       const {
         company,
         submission,
         token: resendToken,
-      } = await getResendableVerification(token);
+      } = token !== undefined
+        ? await getResendableVerification(token)
+        : await recoverVerification(readRecoveryCapability(req));
       await sendVerificationEmail({
         to: submission.submitted_email,
         companyName: company.name,
@@ -142,11 +175,13 @@ function createResendVerificationHandler(dependencies = {}) {
 }
 
 const createJobSubmission = createJobSubmissionHandler();
+const verifyJobSubmissionEmail = createVerifyEmailHandler();
 const resendJobSubmissionVerification = createResendVerificationHandler();
 
 module.exports = {
   createJobSubmission,
   createJobSubmissionHandler,
+  createVerifyEmailHandler,
   createResendVerificationHandler,
   resendJobSubmissionVerification,
   verifyJobSubmissionEmail,

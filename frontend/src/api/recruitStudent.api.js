@@ -5,6 +5,7 @@ export async function submitRecruitment(payload) {
     method: "POST",
     body: payload,
     auth: false,
+    withCredentials: true,
     returnResponse: true,
   });
 
@@ -13,9 +14,15 @@ export async function submitRecruitment(payload) {
 
 export async function verifyRecruitmentEmail(token) {
   const response = await apiRequest(
-    `/api/job-submissions/verify-email?token=${encodeURIComponent(token)}`,
-    { method: "GET", auth: false, returnResponse: true },
+    "/api/job-submissions/verify-email",
+    { method: "POST", body: { token }, auth: false, returnResponse: true },
   );
 
   return { status: response.status, data: response.data };
+}
+
+export function resendRecruitmentVerification() {
+  return apiRequest("/api/job-submissions/resend-verification", {
+    method: "POST", body: {}, auth: false, withCredentials: true,
+  });
 }

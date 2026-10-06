@@ -12,7 +12,7 @@ const {
 } = require("../controllers/studentProfile.controller");
 
 const {
-  authenticateToken,
+  authenticateStudentToken: authenticateToken,
 } = require("../middlewares/auth.middleware");
 const {
   profileImageUpload,

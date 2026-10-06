@@ -29,14 +29,14 @@ const authenticateToken = (req, res, next) => {
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      { algorithms: ["HS256"] }
     );
 
     req.user = decoded;
 
     next();
   } catch (error) {
-    console.error("AUTH MIDDLEWARE ERROR:", error);
 
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -67,6 +67,7 @@ function createRequireDepartmentStaff({ StaffModel = DepartmentStaff } = {}) {
       req.user?.role !== DEPARTMENT_STAFF_ROLE ||
       req.user?.staff_id !== staffId ||
       typeof staffId !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(staffId)
     ) {
       return res.status(403).json({
         success: false,
@@ -88,7 +89,6 @@ function createRequireDepartmentStaff({ StaffModel = DepartmentStaff } = {}) {
       req.departmentStaff = staff;
       return next();
     } catch (error) {
-      console.error("DEPARTMENT STAFF AUTHORIZATION ERROR:", error);
       return res.status(500).json({
         success: false,
         message: "Unable to verify department staff authorization",
@@ -99,8 +99,21 @@ function createRequireDepartmentStaff({ StaffModel = DepartmentStaff } = {}) {
 
 const requireDepartmentStaff = createRequireDepartmentStaff();
 
+function requireStudentActor(req, res, next) {
+  const claims = req.user;
+  if (typeof claims?.id !== "string" || typeof claims.student_id !== "string" || ![undefined, "student"].includes(claims.actor_type) || (claims.role !== undefined && claims.role !== "student")) {
+    return res.status(403).json({ message: "Student authorization is required" });
+  }
+  return next();
+}
+function authenticateStudentToken(req, res, next) {
+  return authenticateToken(req, res, () => requireStudentActor(req, res, next));
+}
+
 module.exports = {
   authenticateToken,
   createRequireDepartmentStaff,
   requireDepartmentStaff,
+  requireStudentActor,
+  authenticateStudentToken,
 };

@@ -8,7 +8,7 @@ const {
 } = require("../controllers/auth.controller");
 
 const {
-  authenticateToken,
+  authenticateStudentToken: authenticateToken,
 } = require("../middlewares/auth.middleware");
 
 router.post("/register", registerStudent);

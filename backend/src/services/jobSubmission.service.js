@@ -2,6 +2,7 @@ const models = require("../models");
 const {
   issueEmailVerificationToken,
 } = require("./companyVerification.service");
+const { issueRecoveryCapability } = require("./recruitmentRecovery.service");
 
 async function createPublicJobSubmission(
   validatedPayload,
@@ -73,6 +74,7 @@ async function createPublicJobSubmission(
       jobPostings,
       verificationToken,
       verificationTokenRecord,
+      recoveryCapability: issueRecoveryCapability(submission.id),
     };
   };
 

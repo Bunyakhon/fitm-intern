@@ -8,7 +8,7 @@ const {
 } = require("../controllers/mentor.controller");
 
 const {
-  authenticateToken,
+  authenticateStudentToken: authenticateToken,
 } = require("../middlewares/auth.middleware");
 
 const router = express.Router();

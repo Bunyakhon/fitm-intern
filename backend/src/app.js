@@ -18,6 +18,7 @@ const coopRequestRoutes = require("./routes/coopRequest.routes");
 const jobSubmissionRoutes = require("./routes/jobSubmission.routes");
 const staffAuthRoutes = require("./routes/staffAuth.routes");
 const jobMatchingRoutes = require("./routes/jobMatching.routes");
+const { createRoleWorkflowRouter } = require("./routes/roleWorkflow.routes");
 // โหลด models ทั้งหมด
 // Student, StudentProfile และ associate()
 require("./models");
@@ -27,7 +28,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL ? new URL(process.env.FRONTEND_URL).origin : false, credentials: true }));
 
 app.use(express.json());
 
@@ -74,7 +75,16 @@ app.use("/api/mentor-verification", mentorVerificationRoutes);
 app.use("/api/coop-requests", coopRequestRoutes);
 app.use("/api/job-submissions", jobSubmissionRoutes);
 app.use("/api/staff/auth", staffAuthRoutes);
+app.use("/api/staff", createRoleWorkflowRouter("department_staff"));
+app.use("/api/teachers", createRoleWorkflowRouter("teacher"));
+app.use("/api/department-head", createRoleWorkflowRouter("department_head"));
 app.use("/api/job-matches", jobMatchingRoutes);
+
+// Do not return Express parser stacks, SQL details or provider diagnostics.
+app.use((error, req, res, next) => {
+  res.status(error.type === "entity.parse.failed" ? 400 : error.type === "entity.too.large" ? 413 : 500)
+    .json({ message: "Unable to process request" });
+});
 
 // ==============================
 // Database + Server

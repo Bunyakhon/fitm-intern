@@ -77,8 +77,42 @@ test("missing CAPTCHA is rejected before CAPTCHA service or database creation", 
   );
 });
 
+test("strict submission validation rejects excessive jobs and nested mass assignment", () => {
+  for (const mutate of [
+    (p) => {
+      p.jobPostings = Array.from({ length: 11 }, () => p.jobPostings[0]);
+    },
+    (p) => {
+      p.company.email_verified_at = new Date().toISOString();
+    },
+    (p) => {
+      p.jobPostings[0].company_id = "unexpected";
+    },
+    (p) => {
+      p.jobPostings[0].quota = 1.5;
+    },
+    (p) => {
+      p.jobPostings[0].workDaysPerWeek = "5";
+    },
+    (p) => {
+      p.jobPostings[0].workModes = [];
+    },
+  ]) {
+    const input = validPayload();
+    mutate(input);
+    assert.throws(
+      () => validateJobSubmissionPayload(input),
+      JobSubmissionValidationError,
+    );
+  }
+});
+
 test("Turnstile service accepts success and safely classifies invalid/provider responses", async () => {
   const originalSecret = process.env.TURNSTILE_SECRET_KEY;
+  const originalHostname = process.env.TURNSTILE_EXPECTED_HOSTNAME;
+  const originalAction = process.env.TURNSTILE_EXPECTED_ACTION;
+  delete process.env.TURNSTILE_EXPECTED_HOSTNAME;
+  delete process.env.TURNSTILE_EXPECTED_ACTION;
   process.env.TURNSTILE_SECRET_KEY = "test-secret";
   let posted;
   await verifyTurnstileToken(
@@ -131,6 +165,61 @@ test("Turnstile service accepts success and safely classifies invalid/provider r
   );
   if (originalSecret === undefined) delete process.env.TURNSTILE_SECRET_KEY;
   else process.env.TURNSTILE_SECRET_KEY = originalSecret;
+  if (originalHostname === undefined)
+    delete process.env.TURNSTILE_EXPECTED_HOSTNAME;
+  else process.env.TURNSTILE_EXPECTED_HOSTNAME = originalHostname;
+  if (originalAction === undefined)
+    delete process.env.TURNSTILE_EXPECTED_ACTION;
+  else process.env.TURNSTILE_EXPECTED_ACTION = originalAction;
+});
+
+test("Turnstile hostname is enforced while an unconfigured action stays optional", async () => {
+  const original = {
+    secret: process.env.TURNSTILE_SECRET_KEY,
+    hostname: process.env.TURNSTILE_EXPECTED_HOSTNAME,
+    action: process.env.TURNSTILE_EXPECTED_ACTION,
+  };
+  process.env.TURNSTILE_SECRET_KEY = "mock-provider-only";
+  process.env.TURNSTILE_EXPECTED_HOSTNAME = "localhost";
+  delete process.env.TURNSTILE_EXPECTED_ACTION;
+  try {
+    const options = (hostname) => ({
+      fetch: async () =>
+        new Response(JSON.stringify({ success: true, hostname })),
+    });
+    await verifyTurnstileToken("fixture", {}, options("localhost"));
+    await assert.rejects(
+      () => verifyTurnstileToken("fixture", {}, options("wrong.example")),
+      (e) => e.status === 403,
+    );
+    await assert.rejects(
+      () =>
+        verifyTurnstileToken(
+          "fixture",
+          {},
+          { fetch: async () => new Response("unavailable", { status: 503 }) },
+        ),
+      (e) => e.status === 503,
+    );
+    await assert.rejects(
+      () =>
+        verifyTurnstileToken(
+          "fixture",
+          {},
+          { fetch: async () => new Response("not JSON") },
+        ),
+      (e) => e.status === 503,
+    );
+  } finally {
+    for (const [key, value] of [
+      ["TURNSTILE_SECRET_KEY", original.secret],
+      ["TURNSTILE_EXPECTED_HOSTNAME", original.hostname],
+      ["TURNSTILE_EXPECTED_ACTION", original.action],
+    ]) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });
 
 test("valid CAPTCHA persists first, sends one email after it, and never returns a raw token", async () => {

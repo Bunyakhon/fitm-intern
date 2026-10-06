@@ -303,6 +303,8 @@
 }
 
 .recruit-verification-home:hover { background: var(--primary-soft); }
+.recruit-verification-home[hidden] { display: none; }
+.recruit-verification-home:disabled { opacity: 0.6; cursor: wait; }
 
 @media (max-width: 520px) {
   .recruit-verification-main { padding: 28px 0; }

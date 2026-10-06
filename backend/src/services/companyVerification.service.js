@@ -108,18 +108,20 @@ async function verifyCompanyEmail(
 ) {
   const { Company, JobPosting, JobSubmission, sequelize } = modelRegistry;
   const verify = async (transaction) => {
-    const { verification } = await findUsableVerificationToken(rawToken, {
+    const initial = await findUsableVerificationToken(rawToken, {
       modelRegistry,
       transaction,
-      lock: transaction.LOCK.UPDATE,
     });
     const submission = await JobSubmission.findByPk(
-      verification.job_submission_id,
+      initial.verification.job_submission_id,
       {
         transaction,
         lock: transaction.LOCK.UPDATE,
       },
     );
+    const { verification } = await findUsableVerificationToken(rawToken, {
+      modelRegistry, transaction, lock: transaction.LOCK.UPDATE,
+    });
     if (!submission)
       throw new CompanyVerificationError("Verification token is invalid", 404);
     if (submission.verification_status !== "pending_email_verification") {
@@ -132,7 +134,7 @@ async function verifyCompanyEmail(
       transaction,
       lock: transaction.LOCK.UPDATE,
     });
-    if (!company)
+    if (!company || company.id !== submission.company_id)
       throw new CompanyVerificationError("Verification token is invalid", 404);
 
     const now = new Date();
@@ -185,6 +187,22 @@ async function getResendableCompanyVerification(
   return { token, company, submission };
 }
 
+// The browser holds an HttpOnly capability, never the email verification token.
+// Lock the submission so resends cannot race each other or verification.
+async function recoverCompanyVerification(submissionId, modelRegistry = models) {
+  const { sequelize, Company, JobSubmission } = modelRegistry;
+  return sequelize.transaction(async (transaction) => {
+    const submission = await JobSubmission.findByPk(submissionId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!submission || submission.verification_status !== "pending_email_verification") {
+      throw new CompanyVerificationError("Submission is no longer awaiting verification", 410);
+    }
+    const company = await Company.findByPk(submission.company_id, { transaction });
+    if (!company) throw new CompanyVerificationError("Submission is unavailable", 404);
+    const { token } = await issueEmailVerificationToken({ companyId: company.id, submissionId: submission.id }, { transaction, modelRegistry });
+    return { company, submission, token };
+  });
+}
+
 module.exports = {
   CompanyVerificationError,
   EMAIL_VERIFICATION_PURPOSE,
@@ -192,5 +210,6 @@ module.exports = {
   getResendableCompanyVerification,
   hashVerificationToken,
   issueEmailVerificationToken,
+  recoverCompanyVerification,
   verifyCompanyEmail,
 };

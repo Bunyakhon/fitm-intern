@@ -4,6 +4,14 @@ const result = document.getElementById("verificationResult");
 const icon = document.getElementById("verificationIcon");
 const title = document.getElementById("verificationTitle");
 const message = document.getElementById("verificationMessage");
+const retryButton = document.createElement("button");
+retryButton.type = "button";
+retryButton.className = "recruit-verification-home";
+retryButton.textContent = "ลองยืนยันอีกครั้ง";
+retryButton.hidden = true;
+result.after(retryButton);
+const verificationToken = captureTokenFromUrl();
+retryButton.addEventListener("click", verifyEmail);
 
 const states = {
   loading: { icon: "fa-solid fa-spinner fa-spin", title: "กำลังตรวจสอบลิงก์ยืนยันอีเมล", message: "กรุณารอสักครู่ ระบบกำลังยืนยันอีเมลของสถานประกอบการ" },
@@ -22,6 +30,7 @@ function showState(name) {
   message.textContent = state.message;
   result.setAttribute("aria-busy", String(name === "loading"));
   result.setAttribute("role", name === "loading" ? "status" : "alert");
+  retryButton.hidden = name !== "error";
 }
 
 function captureTokenFromUrl() {
@@ -45,7 +54,7 @@ function getFailureState(error) {
 
 async function verifyEmail() {
   showState("loading");
-  const token = captureTokenFromUrl();
+  const token = verificationToken;
 
   if (!token) {
     showState("invalid");

@@ -1,5 +1,5 @@
 import { setButtonLoading, showToast } from "../ui/feedback.js";
-import { submitRecruitment } from "../api/recruitStudent.api.js";
+import { submitRecruitment, resendRecruitmentVerification } from "../api/recruitStudent.api.js";
 
 const recruitForm = document.getElementById("recruitForm");
 const jobCards = document.getElementById("jobCards");
@@ -16,6 +16,27 @@ let captchaToken = "";
 let turnstileWidgetId = null;
 let isSubmitting = false;
 let submissionRecorded = false;
+const resendButton = document.createElement("button");
+resendButton.type = "button";
+resendButton.className = "recruit-verification-home";
+resendButton.textContent = "ส่งอีเมลยืนยันอีกครั้ง";
+resendButton.hidden = true;
+submissionStatus.after(resendButton);
+resendButton.addEventListener("click", async () => {
+  resendButton.disabled = true;
+  try {
+    await resendRecruitmentVerification();
+    showSubmissionStatus("ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบกล่องจดหมายและใช้ลิงก์จากอีเมลฉบับล่าสุด");
+  } catch (error) {
+    showSubmissionStatus(error.status === 429
+      ? "ส่งอีเมลซ้ำบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่"
+      : error.status === 401 || error.status === 410
+        ? "ไม่สามารถส่งซ้ำได้ กรุณาตรวจสอบอีเมลฉบับล่าสุดหรือติดต่อผู้ดูแลระบบ"
+        : "ยังส่งอีเมลไม่ได้ กรุณาลองอีกครั้งภายหลัง โดยไม่ต้องส่งแบบฟอร์มซ้ำ", "warning");
+  } finally {
+    resendButton.disabled = false;
+  }
+});
 
 function setTurnstileStatus(message = "") {
   turnstileStatus.textContent = message;
@@ -424,6 +445,7 @@ recruitForm.addEventListener("submit", async (event) => {
   try {
     const result = await submitRecruitment(buildRecruitPayload());
     submissionRecorded = true;
+    resendButton.hidden = false;
 
     if (result.status === 201) {
       showSubmissionStatus(
