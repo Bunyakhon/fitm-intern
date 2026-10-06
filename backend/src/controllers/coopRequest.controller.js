@@ -1,6 +1,8 @@
 const {
   CoopRequest,
   CoopRequestDeliveryMethod,
+  CoopRequestPrerequisiteCourse,
+  CoopRequestReview,
   Student,
   StudentProfile,
   Teacher,
@@ -8,6 +10,9 @@ const {
   JobPosting,
   sequelize,
 } = require("../models");
+const {normalizePrerequisites, prerequisiteInclude} = require('../services/coopPrerequisites');
+const PREREQUISITE_INCLUDE = prerequisiteInclude(require('../models'));
+const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'], separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
 
 const ACTIVE_STATUSES = new Set([
@@ -40,6 +45,7 @@ const INPUT_FIELDS = new Set([
   "delivery_methods",
   "company_id",
   "job_posting_id",
+  "prerequisite_courses",
 ]);
 
 const DELIVERY_METHOD_INCLUDE = {
@@ -235,7 +241,7 @@ exports.getMyCoopRequests = async (req, res) => {
 exports.getCoopRequestById = async (req, res) => {
   try {
     const request = await findOwnedRequest(req.params.id, req.user.id, {
-      include: [DELIVERY_METHOD_INCLUDE, STUDENT_INCLUDE],
+      include: [DELIVERY_METHOD_INCLUDE, STUDENT_INCLUDE, PREREQUISITE_INCLUDE, REVIEW_INCLUDE],
     });
 
     if (!request) {
@@ -292,6 +298,7 @@ exports.createCoopRequest = async (req, res) => {
       transaction = null;
       return res.status(404).json({ success: false, message: "ไม่พบข้อมูลนักศึกษา" });
     }
+    const prerequisiteRows = normalizePrerequisites(student.major, req.body.prerequisite_courses);
 
     const activeRequest = await CoopRequest.findOne({
       where: {
@@ -314,11 +321,15 @@ exports.createCoopRequest = async (req, res) => {
       {
         ...payload,
         student_id: req.user.id,
-        status: "submitted",
+        status: "advisor_review",
         submitted_at: new Date(),
       },
       { transaction },
     );
+
+    await CoopRequestPrerequisiteCourse.bulkCreate(prerequisiteRows.map(row => ({...row, coop_request_id: request.id})), {transaction, validate: true});
+    await CoopRequestReview.create({coop_request_id: request.id, actor_role: 'student', student_id: req.user.id,
+      teacher_id: null, department_staff_id: null, from_status: 'new', to_status: 'advisor_review', decision: 'submit', reason: null}, {transaction});
 
     await CoopRequestDeliveryMethod.bulkCreate(
       payload.delivery_methods.map((method) => ({
@@ -332,7 +343,7 @@ exports.createCoopRequest = async (req, res) => {
     transaction = null;
 
     const createdRequest = await findOwnedRequest(request.id, req.user.id, {
-      include: [DELIVERY_METHOD_INCLUDE],
+      include: [DELIVERY_METHOD_INCLUDE, PREREQUISITE_INCLUDE],
     });
     return res.status(201).json({
       success: true,
@@ -406,9 +417,12 @@ exports.cancelCoopRequest = async (req, res) => {
       });
     }
 
+    const fromStatus = request.status;
     request.status = "cancelled";
     request.cancelled_at = new Date();
     await request.save({ transaction });
+    await CoopRequestReview.create({coop_request_id: request.id, actor_role: 'student', student_id: req.user.id,
+      teacher_id: null, department_staff_id: null, from_status: fromStatus, to_status: 'cancelled', decision: 'cancel', reason: 'Cancelled by student'}, {transaction});
     await transaction.commit();
     transaction = null;
 

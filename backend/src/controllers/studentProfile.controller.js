@@ -569,6 +569,7 @@ const getProfileImage = async (req, res) => {
 
 const uploadResume = async (req, res) => {
   const uploadedFile = req.file;
+  let metadataCommitted = false;
 
   try {
     if (!uploadedFile) {
@@ -637,6 +638,8 @@ const uploadResume = async (req, res) => {
         return { resume: createdResume, previousStoragePath: null };
       },
     );
+    // The managed transaction has committed; the DB now owns the uploaded file.
+    metadataCommitted = true;
 
     if (
       previousStoragePath &&
@@ -688,7 +691,7 @@ const uploadResume = async (req, res) => {
       },
     });
   } catch (error) {
-    if (uploadedFile) {
+    if (uploadedFile && !metadataCommitted) {
       await fs.unlink(uploadedFile.path).catch(() => {});
     }
 

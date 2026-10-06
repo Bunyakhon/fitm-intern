@@ -30,6 +30,7 @@ const JOB_ID = "22222222-2222-4222-8222-222222222222";
 const REQUEST_ID = "33333333-3333-4333-8333-333333333333";
 const company = { id: COMPANY_ID, name: "Database Company", province: "Bangkok", address_no: "99", moo: null, subdistrict: "Subdistrict", district: "District" };
 const requestBody = {
+  prerequisite_courses: require('../src/services/coopPrerequisites').CATALOG.IT.map(([course_code]) => ({course_code, status: 'unselected', grade: null})),
   company_name: "Untrusted browser name", company_province: "Wrong Province", company_address: "Wrong address",
   letter_recipient_name: "Recipient", letter_recipient_position_department: "HR",
   work_start_date: "2026-11-01", work_end_date: "2027-01-31", delivery_methods: ["email"],
@@ -44,13 +45,17 @@ async function callCreate(body, { companyRecord = company, jobRecord = null } = 
     findOne: models.CoopRequest.findOne,
     create: models.CoopRequest.create,
     delivery: models.CoopRequestDeliveryMethod.bulkCreate,
+    prerequisites: models.CoopRequestPrerequisiteCourse.bulkCreate,
+    review: models.CoopRequestReview.create,
   };
   const transaction = { LOCK: { UPDATE: "UPDATE" }, finished: null, async commit() { this.finished = "commit"; }, async rollback() { this.finished = "rollback"; } };
   let createValues;
   let findCount = 0;
   try {
     models.sequelize.transaction = async () => transaction;
-    models.Student.findByPk = async () => ({ id: "student-from-jwt" });
+    models.Student.findByPk = async () => ({ id: "student-from-jwt", major: 'IT' });
+    models.CoopRequestPrerequisiteCourse.bulkCreate = async () => [];
+    models.CoopRequestReview.create = async () => ({});
     Company.findByPk = async () => companyRecord;
     models.JobPosting.findByPk = async () => jobRecord;
     models.CoopRequest.findOne = async () => (++findCount === 1 ? null : { id: REQUEST_ID, ...createValues, deliveryMethods: [] });
@@ -67,6 +72,8 @@ async function callCreate(body, { companyRecord = company, jobRecord = null } = 
     models.CoopRequest.findOne = saved.findOne;
     models.CoopRequest.create = saved.create;
     models.CoopRequestDeliveryMethod.bulkCreate = saved.delivery;
+    models.CoopRequestPrerequisiteCourse.bulkCreate = saved.prerequisites;
+    models.CoopRequestReview.create = saved.review;
   }
 }
 

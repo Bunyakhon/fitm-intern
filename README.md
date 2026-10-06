@@ -1,124 +1,96 @@
 # FITM-INTERN
 
-ระบบสนับสนุนงานสหกิจศึกษาของ FITM สำหรับข้อมูลนักศึกษา ผู้แนะนำในสถานประกอบการ คำร้องสหกิจ และการจับคู่งานจากทักษะหรือ Resume โดยยังอยู่ระหว่างพัฒนา workflow ของแต่ละบทบาท
+FITM-INTERN supports student co-op administration: profiles, company/job discovery, requests, project advisors, topics, private project files and student workplace feedback. Several departmental, Mentor and academic-assessment workflows remain unfinished.
 
-## Project Status
-
-**STAGING / TEST READY**
-
-**PRODUCTION READY: NO**
-
-Staging setup เคยผ่านการตรวจบน private LAN ตามประวัติที่ยืนยันแล้ว ณ 2026-10-06 แต่ **VM ปัจจุบัน powered OFF และเข้าใช้งานไม่ได้ในรอบนี้** สถานะ readiness ไม่ใช่การยืนยัน availability ปัจจุบันหรือความครบถ้วนของทุก workflow
-
-## Main Features
-
-**Implemented** — มีเส้นทางทำงานจริงใน source สำหรับขอบเขตต่อไปนี้:
-
-- สมัครและเข้าสู่ระบบนักศึกษาสหกิจด้วย JWT; อ่าน/แก้ไข profile และรูปประจำตัว
-- ค้นหาบริษัท ตรวจชื่อบริษัทซ้ำ และอ่านรายชื่ออาจารย์
-- สร้าง อ่านรายละเอียด/ประวัติ และยกเลิกคำร้องสหกิจของตนเอง
-- Recruitment สาธารณะ: form หลายตำแหน่งงาน → Turnstile → transaction → อีเมล Brevo → ยืนยันอีเมล → `pending_review`; มีปุ่มส่งอีเมลซ้ำเมื่อการส่งขัดข้อง
-- Staff backend: login/profile, ตรวจประกาศและ publish/reject พร้อมประวัติผู้ตัดสินใจ, ตรวจและส่งต่อ/ปฏิเสธคำร้องสหกิจ
-- Teacher backend: login/profile และตรวจคำร้องเฉพาะนักศึกษาที่เลือกตนเป็น `advisor_teacher_id`
-- Department Head backend: Teacher identity พร้อมสิทธิ์ชัดเจน, profile, ค้นหา/แก้ไขอาจารย์ในภาค, ตั้ง project advisor และตัดสินใจคำร้องขั้นสุดท้าย
-
-**Partial / In Progress:**
-
-- Resume PDF: upload, text extraction และ OCR มี implementation; ยังต้องทดสอบ persistence/OCR ผ่านบัญชีนักศึกษาและ browser
-- Job matching: เชื่อม Backend → NLP แล้วและเลือกเฉพาะงาน `published`; Staff publish API มีแล้ว ส่วน landing search/filter และ dashboards ยังต้องเชื่อม frontend
-- Mentor CRUD และ token confirmation: มี API/หน้าเว็บ; ต้องทดสอบอีเมลและ valid-token browser flow
-- Local Recruitment: Turnstile configured (ผู้ใช้ยืนยัน widget สีเขียว), Brevo connectivity ผ่าน; การ submit และคลิกลิงก์จาก inbox จริงยังต้อง manual acceptance ส่วน VM provider configuration ยังไม่ยืนยันเพราะ offline
-- Staff/Teacher/Head dashboards, เอกสาร/PDF และ evaluation ยังต้องพัฒนา; role schema ใหม่ผ่าน isolated tests แต่ยังไม่ได้ apply กับ Local/VM
-- Daily log, หัวข้อโครงงาน, book/poster upload และย้ายบริษัทเป็น UI ที่ยังไม่มี persistence; landing job search/chatbot เป็นข้อมูลหรือคำตอบสาธิต
-- NLP chatbot/standalone resume matching มี endpoint แต่ยังไม่เชื่อม frontend; Google login เป็น placeholder
+**Local development is running. Production ready: NO.** The latest full audit is dated **2026-10-07 Asia/Bangkok**. Read the authoritative top section of [HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md) for evidence, limitations and the one recommended next task.
 
 ## Architecture
 
 ```text
-Browser
-  └─ Nginx (Ubuntu host :80)
-       ├─ /              → Frontend (Vite :5173)
-       ├─ /api/*         → Backend (Express :5000)
-       └─ /health/db     → Backend /health/db
-                              ├─ Sequelize → PostgreSQL :5432
-                              ├─ HTTP → NLP Service :8000
-                              └─ Files → intern_storage volume
+Browser: Vite multipage HTML/CSS/JavaScript + Axios
+  -> Express REST API + JWT / scoped email-verification tokens
+     -> Sequelize + Umzug -> PostgreSQL 16
+     -> private backend storage / intern_storage volume
+     -> FastAPI NLP: PyThaiNLP, TF-IDF/cosine matching, Tesseract OCR
 ```
 
-Backend → NLP ใช้ internal Docker network ผ่าน service `nlp-service` สำหรับ job ranking และ Resume OCR; PostgreSQL ไม่ได้เรียก NLP โดยตรง ส่วน local development เปิด Frontend/Backend ผ่าน port ของแต่ละบริการได้
+Docker Compose provides frontend, backend, PostgreSQL, NLP and pgAdmin. Job ranking and Resume OCR have Express-to-NLP clients. The FastAPI FAQ chatbot is a separate endpoint; the website chatbot currently displays a placeholder response. NLP uses classical models, not an LLM.
 
-## Technology Stack
+| Component | Source | Technology |
+| --- | --- | --- |
+| Frontend | `frontend/src/pages`, `src/api`, `src/styles` | Vite 8, JavaScript, Tailwind CSS 4, Axios |
+| Backend | `backend/src/routes`, `controllers`, `services`, `models` | Node.js, Express 5, Sequelize 6, JWT, Multer, Nodemailer |
+| Migrations | `backend/src/db/migrations` | Umzug 3, ledger `sequelize_meta` |
+| NLP | `nlp-service/app`, `data/processed/chatbot/faq_seed.json` | FastAPI, PyThaiNLP, scikit-learn, Tesseract |
+| Development/runtime | `docker-compose.yml`, component Dockerfiles | Docker / Docker Compose |
+| Staging helper | `deploy.sh` | Pull, build, migration and health steps; not run by this audit |
 
-| ส่วน | เทคโนโลยี |
+## Roles and canonical workflows
+
+| Role | Current responsibilities and limits |
 | --- | --- |
-| Frontend | Vite 8, multipage HTML/CSS/JavaScript, Tailwind CSS 4, Axios |
-| Backend | Node.js, Express 5, Sequelize 6, Umzug 3, JWT, Multer, Nodemailer |
-| Database | PostgreSQL 16 |
-| NLP | Python, FastAPI, PyThaiNLP, scikit-learn TF-IDF/cosine, Tesseract OCR; ไม่ใช้ LLM |
-| Runtime | Docker, Docker Compose; local pgAdmin สำหรับดูแล DB |
-| Staging entry | Nginx บน Ubuntu host |
-| Version control | Git / GitHub |
+| Student | Password registration/login, own profile, company discovery/matching, requests, prerequisites, Mentor records, project-advisor requests, topic/files and workplace evaluation |
+| Teacher | Backend login/profile, own class-advisee request decisions, requested project-advisor accept/reject; no Teacher dashboard yet |
+| Department Head | Teacher identity with explicit `is_department_head`, live DB authorization and department scope; final request decisions and permitted Teacher administration; no Head dashboard yet |
+| Department Staff | Backend login/profile, request list/detail/history and pending cancellation; recruitment publish/reject; no Staff dashboard yet |
+| Mentor | Token-linked profile verification/confirmation page; daily-log review and academic evaluations are not implemented |
+| Company/Public | Public recruitment form and email verification; no Company management portal |
 
-## Repository Structure
+**Co-op Request:** Student submission -> Class Advisor -> Department Head -> Approved / Rejected. Department Staff may view/history/cancel eligible pending requests and is **not an approval stage**. Legacy `staff_review` is retained for historical compatibility.
 
-```text
-backend/
-  src/config/         Configuration
-  src/controllers/    API handlers
-  src/routes/         API routes
-  src/models/         Sequelize models
-  src/db/migrations/  Umzug migrations
-  src/services/       NLP, email, verification services
-  src/middlewares/    Auth, upload, rate limiting
-  src/seeders/        Teacher/staff setup scripts
-  test/               Backend tests
-frontend/
-  src/api/            Shared Axios client and API modules
-  src/pages/          Page logic
-  src/styles/         Stylesheets
-  src/ui/             Shared feedback UI
-nlp-service/
-  app/                FastAPI and NLP implementation
-  data/               NLP data; sensitive/large files are ignored
-  tests/              NLP tests
-docker-compose.yml
-README.md
-HANDOFF_fitm-intern.md
-```
+**Project Advisor:** Student selects an active Teacher -> pending request -> that Teacher explicitly accepts/rejects. Only acceptance sets `students.coop_advisor_teacher_id`. Pending replacement preserves request history; stale decisions cannot confirm an old selection. Confirmed replacement is a separate unimplemented workflow. The old Head direct-assignment endpoint returns 409.
 
-Checkout มี `frontend/.env.example` สำหรับชื่อ configuration ของ Vite/Turnstile; ยังไม่มี root/backend examples, `deploy.sh` หรือ Nginx config ข้อมูล deployment ด้านล่างอ้างอิงประวัติ VM ต้องตรวจ revision/ไฟล์จริงก่อนใช้
+`advisor_teacher_id` is the separate **class advisor** selected by the Student. Teacher-directory loading failure must preserve it. Project-topic saving works with no advisor, pending, rejected or confirmed advisor.
 
-## Recruitment and Role APIs
+**Recruitment:** Public form -> Turnstile Siteverify -> transactional Company/submission/jobs/work modes -> verification email -> `pending_review` -> Staff backend publish/reject. Unverified/pending jobs do not appear in Student matching. SMTP failure preserves the submission and supports limited resend recovery; real browser/inbox acceptance remains pending.
 
-Recruitment ไม่ต้อง login: `POST /api/job-submissions` รับ company, 1–10 jobs, work modes และ CAPTCHA. Backend ตรวจ feature gate, rate limit, whitelist และ Cloudflare Siteverify (`success`, configured hostname; action optional และ Local ไม่ได้ตั้งค่า) ก่อนเขียน transaction. Token อีเมลเป็น random 256-bit, เก็บเฉพาะ SHA-256 พร้อม expiry/use-once. Email ใช้ Brevo transport เดียวกับ Mentor และ link ไป `recruit_verify_email.html`; frontend ส่ง `POST /api/job-submissions/verify-email` แล้วงานเข้าสู่ `pending_review` เพื่อรอ Staff.
+## Feature status summary
 
-SMTP failure ตอบ 202 และเก็บ submission; browser ส่งซ้ำผ่าน `POST /api/job-submissions/resend-verification` ด้วย HttpOnly/SameSite cookie ที่ใช้ได้เฉพาะ resend. ตรวจ frontend origin และ rate limit, rotate token ใน transaction; ไม่ส่ง verification token ใน response. Recovery ใช้ same-site hosting เช่น localhost คนละ port; cookie หมดอายุตาม verification TTL หรือ browser session ที่ล้าง cookie ต้องใช้ลิงก์ล่าสุด/ติดต่อผู้ดูแล. GET verification และ resend ด้วย existing valid email token ยังรองรับ compatibility.
+WORKING means the required application layers are connected and relevant automated/read-only evidence exists. It does not mean every real-browser interaction has been accepted. PARTIAL identifies incomplete scope or missing acceptance evidence; backend completion does not imply role UI completion.
 
-| Actor / namespace | APIs available |
+| Area | Status | Notes |
+| --- | --- | --- |
+| Student password registration/login | PARTIAL | Real bcrypt/JWT APIs and pages; successful existing-user browser acceptance pending |
+| Student authenticated reads / Teacher directory / company search | WORKING | Owner/actor guards, real models and safe directory/search projections |
+| Profile, profile image, class-advisor selection | PARTIAL | Real API/storage flows; advisor-preservation regressions pass; complete persistence/browser acceptance still needed |
+| Resume | PARTIAL | PDF upload, metadata, replacement, native text and OCR implemented; post-commit retention tests pass; complete browser/SQL/provider acceptance remains |
+| Skills/Resume job matching | PARTIAL | Connected to real NLP, published jobs only; expiry filtering omitted |
+| Student request create/list/detail/cancel/history | WORKING | Request/delivery/audit persistence and ownership tested |
+| IT/INE prerequisite snapshots | WORKING | Five canonical courses, program switching, grades and saved history |
+| Complete request approval UI workflow | PARTIAL | Student UI connected; Teacher/Head decision UI missing |
+| Project-advisor request workflow | PARTIAL | Student UI connected; Teacher decisions are BACKEND ONLY |
+| Project topic | WORKING | Owner-scoped create/edit/read-back, independent of advisor confirmation |
+| Project Book / Poster | WORKING | Private storage, replacement and authenticated Blob preview; real browser/native preview pending |
+| Student Company Evaluation | WORKING | Dedicated table, five 1–10 scores, comment, total/average and all eight real context sources; migration 015 applied on Local |
+| Student Mentor management / verification | PARTIAL | CRUD, email/resend and token-confirmation page implemented; fresh live acceptance pending |
+| Staff / Teacher / Head backends | BACKEND ONLY | Authorization and SQL decisions tested; role dashboards absent |
+| Staff / Teacher / Head frontends | NOT STARTED | No usable login/dashboard/core-action pages |
+| Public recruitment through publication | PARTIAL | Submission/verification implemented; inbox acceptance and Staff UI missing |
+| Daily Log / company transfer / landing jobs and chatbot | MOCK / UI ONLY | DOM/demo behavior; no corresponding persistent end-to-end flow |
+| FastAPI FAQ chatbot | BACKEND ONLY | Endpoint runs, but two existing tests fail and document-intent quality needs review; no Express/website bridge |
+| Google login button | MOCK / UI ONLY | Placeholder; OAuth callback/account/JWT flow NOT STARTED |
+| Supervision, academic scores, official documents, Internship Report | NOT STARTED | Project Book and Poster are separate existing features; workplace feedback is not academic grading |
+| Production deployment | PARTIAL | Development Compose and staging helper exist; current VM/schema/HTTPS readiness unverified |
+
+Company Evaluation context comes from authenticated Student name/code/major, current owner Mentor name/position, exactly one owner request in `approved/document_issued/in_progress` (company snapshot first, linked Company fallback), that request's work dates, and the evaluation's last saved timestamp. Zero/multiple accepted requests and missing real values display `-`.
+
+Project Book accepts PDF up to 10 MB; Poster accepts PDF/PNG/JPEG up to 10 MB. Server validates extension, MIME, signatures, size, ownership and storage paths. Resume is a separate PDF flow. Files are not served through public storage URLs.
+
+## Local development setup
+
+Use Windows with Git and Docker Desktop/Linux containers, or an equivalent Docker environment. Environment templates now exist at `.env.example`, `backend/.env.example` and `frontend/.env.example`. For a new checkout, copy each template to its corresponding `.env` **only if the destination does not already exist**, then configure private values.
+
+| Environment | Important variable names |
 | --- | --- |
-| Staff | `POST /api/staff/auth/login`, `GET /api/staff/auth/me` (alias `/api/staff/me`); `GET /api/staff/job-postings` and `/:id`, `POST /:id/publish` or `/:id/reject` |
-| Teacher | `POST /api/teachers/auth/login`, `GET /api/teachers/me`; directory เดิม `GET /api/teachers` ยังอยู่ |
-| Department Head | `POST /api/department-head/auth/login`, `GET/PATCH /api/department-head/me`; `GET /teachers`, `PATCH /teachers/:id`, `PATCH /students/:id/coop-advisor` ภายใต้ namespace นี้ |
-| All three role namespaces | `GET /coop-requests`, `GET /coop-requests/:id`, `POST /coop-requests/:id/approve` or `/reject` |
+| Root / PostgreSQL | `POSTGRES_PASSWORD` |
+| Backend / database | `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` |
+| Auth / origin / storage | `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL`, `STORAGE_ROOT` |
+| Backend -> NLP | `NLP_SERVICE_BASE_URL`, `NLP_SERVICE_TIMEOUT_MS`, `NLP_OCR_TIMEOUT_MS` |
+| Email / recruitment | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `RECRUITMENT_SUBMISSION_ENABLED` |
+| Turnstile | `TURNSTILE_SECRET_KEY`, `TURNSTILE_EXPECTED_HOSTNAME`, optional `TURNSTILE_EXPECTED_ACTION`, `TURNSTILE_TIMEOUT_MS` |
+| Browser | `VITE_API_URL`, `VITE_TURNSTILE_SITE_KEY` |
 
-Lists รองรับ `status`, `limit` (1–100), `offset`; Head teacher search รองรับ `q`, exact `department`/`major`, `status` ตามค่าใน DB ไม่บังคับ IT/INE. Mutation body whitelist: approve `{}` หรือ `{reason}`, reject ต้องมี non-empty reason; teacher update รับ first/last name, email, major, department ในภาคเดียวกัน, password ผ่าน bcrypt (8+ characters, ≤72 UTF-8 bytes). Head own profile รับ name/email/password; assignment body `{coop_advisor_teacher_id: "<teacher UUID>"}`.
-
-`Student MAY select advisor_teacher_id` ของอาจารย์ที่มีอยู่และ active. Teacher review ตรวจ relationship นี้จาก DB ณ เวลาตัดสินใจ; การเปลี่ยน class advisor โอนสิทธิ์ตรวจคำร้องที่ยังรอ advisor โดยประวัติเดิมคง actor เดิม. `coop_advisor_teacher_id` แยกต่างหากและ Head ตั้งให้ Co-op student เท่านั้น. Head scope ใช้ภาคของ class advisor เพราะ Student ไม่มี department column; นักศึกษาที่ยังไม่มี class advisor ต้องเลือกก่อนใช้งาน Head workflow.
-
-```text
-Teacher: submitted | advisor_review → staff_review (approve) / rejected (reject)
-Staff:   staff_review → department_head_review (approve) / rejected (reject)
-Head:    department_head_review → approved (approve) / rejected (reject)
-Staff job review: pending_review → published / rejected
-```
-
-JWT แยก actor/role; Student JWT เดิมยังใช้ได้และ JWT ใหม่ระบุ Student ชัดเจน. Teacher/Head ใช้ Teacher identity เดียวกัน โดย role เป็น `teacher` หรือ `department_head`; Head สามารถทำหน้าที่ class advisor ผ่าน Teacher APIs ได้เฉพาะนักศึกษาที่เลือกตน. Guards ตรวจบัญชี/active และสิทธิ์ Head ใน DB ทุกครั้ง. Free-text `position` ไม่ให้สิทธิ์; migration เริ่ม `is_department_head=false` ทุกบัญชี และไม่มี API ที่ promote role. หลัง migration และเตรียมบัญชีแล้ว ผู้ดูแลกำหนดสิทธิ์ที่ตั้งใจด้วย `node src/seeders/setDepartmentHead.js grant|revoke <teacher UUID>` ใน backend; ไม่ได้ provision/change บัญชีจริงในรอบนี้.
-
-**Activation:** source/API และ isolated acceptance complete; Local ยังมี pending `007a`, `010`, `011`. ต้องใช้ procedure backup/schema review ใน handoff ก่อน normal Umzug rollout และ bootstrap Head ด้วยบัญชีที่ผู้ดูแลเลือก จึงจะใช้ role APIs กับ Local DB ได้. ไม่มี dashboard ในรอบนี้.
-
-## Local Development
-
-พัฒนาหลักบน Windows โดยติดตั้ง Git และ Docker ที่ใช้ Linux containers; Node.js/Python รันใน Docker ได้ ก่อนเริ่มให้ตั้งค่า environment และตรวจ Compose ซึ่งเป็น configuration สำหรับ development
+All `VITE_*` values are public browser configuration. Never put private keys or credentials there. Backend DB settings must match Compose PostgreSQL; `DB_HOST=postgres` is the internal service name. The configured frontend origin must match the browser URL. The latest audit found an unset root `POSTGRES_PASSWORD` interpolation warning in its shell; existing PostgreSQL remained healthy. Configure it before a fresh start/recreation.
 
 ```powershell
 docker compose config --quiet
@@ -127,158 +99,74 @@ docker compose ps
 docker compose exec -T backend npm run db:migrate:status
 ```
 
-Frontend local: `http://localhost:5173` ตรวจ backend/database ที่ `http://localhost:5000/health/db` และ NLP ที่ `http://localhost:8000/health`
+These are development setup instructions, not actions performed by the audit. Startup authenticates the DB and does not call Sequelize sync. For a fresh database, review/configure the intended target before applying migrations. For an existing database, inspect its ledger/schema and take a fresh backup before any separately authorized rollout; never reset it or assume another environment has Local's state.
 
-คำสั่ง start ไม่ได้สร้าง schema อัตโนมัติ: backend startup ใช้ `authenticate()` ไม่ใช้ `sync()`. สำหรับ DB ใหม่ต้องตรวจ/วางแผน migration ก่อนใช้งาน ส่วน DB เดิมต้องตรวจ ledger และ schema ก่อนดำเนินการ; โดยเฉพาะ local ที่ 007a pending ทั้งที่มี base tables แล้ว ให้ดู [Development Handoff](./HANDOFF_fitm-intern.md) ก่อน
-
-## Environment Configuration
-
-ใช้ root `.env`, `backend/.env`, `frontend/.env`; ไฟล์จริงถูก gitignore เก็บค่าเฉพาะใน environment ของผู้ดูแล ไม่ใส่ secret ในเอกสารหรือ Git
-
-| กลุ่ม | Variable names |
-| --- | --- |
-| Root / PostgreSQL | `POSTGRES_PASSWORD` |
-| Backend runtime / DB | `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` |
-| Auth / frontend origin / storage | `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL`, `STORAGE_ROOT` |
-| Backend → NLP | `NLP_SERVICE_BASE_URL`, `NLP_SERVICE_TIMEOUT_MS`, `NLP_OCR_TIMEOUT_MS` |
-| Recruitment / Email | `RECRUITMENT_SUBMISSION_ENABLED`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
-| Turnstile backend | `TURNSTILE_SECRET_KEY`, `TURNSTILE_EXPECTED_HOSTNAME`, `TURNSTILE_EXPECTED_ACTION`, `TURNSTILE_TIMEOUT_MS` |
-| Frontend | `VITE_API_URL`, `VITE_TURNSTILE_SITE_KEY` |
-
-VM รายงานใช้ examples ทั้งสามระดับ; checkout นี้มี frontend example เท่านั้น. Compose local ปัจจุบันมีค่าคงที่ของ DB และ `VITE_API_URL` ใน `environment`; การสร้าง `.env` อย่างเดียวไม่แทนค่าคงที่ใน Compose ต้องตรวจ config ที่ใช้จริงก่อนเริ่มบริการ
-
-`VITE_API_URL` ต้องเป็น base origin ที่ browser เข้าถึงได้ โดย API modules เติม `/api/...` เอง; สำหรับ staging ผ่าน Nginx อย่าเติม `/api` ซ้ำใน base URL หรือใช้ localhost ของเครื่องผู้เปิดเว็บ ตัวแปร `VITE_*` เปิดเผยต่อ browser จึงห้ามเก็บ secret และยังไม่มี Google OAuth environment contract ใน implementation ปัจจุบัน
-
-## Docker Services
-
-| Service / Container | Purpose | Port |
+| Service | Container | Main local URL/port |
 | --- | --- | --- |
-| `postgres` / `intern_postgres` | PostgreSQL 16, DB `intern_system` | 5432 |
-| `backend` / `intern_backend` | Express API | 5000 |
-| `frontend` / `intern_frontend` | Vite development server | 5173 |
-| `nlp-service` / `intern_nlp_service` | FastAPI / PyThaiNLP / OCR | 8000 |
-| `pgadmin` / `intern_pgadmin` | DB administration ใน local Compose; VM status ไม่ได้ยืนยันบริการนี้ | 5050 → 80 |
+| Frontend | `intern_frontend` | [localhost:5173](http://localhost:5173) |
+| Backend | `intern_backend` | [localhost:5000](http://localhost:5000), [DB health](http://localhost:5000/health/db) |
+| PostgreSQL | `intern_postgres` | localhost:5432, database `intern_system` |
+| NLP | `intern_nlp_service` | [health](http://localhost:8000/health), [API docs](http://localhost:8000/docs) |
+| pgAdmin | `intern_pgadmin` | [localhost:5050](http://localhost:5050) |
 
-Nginx ใช้ host port 80 บน VM และไม่ได้อยู่ใน Compose checkout นี้
+Main pages: `/login.html`, `/register.html`, `/src/student_coop/student_coop.html`, `/src/mentor_coop/mentor_verify_user.html`, `/src/recruit_student/recruit_student.html`, `/src/recruit_student/recruit_verify_email.html`. Email-verification links require a current authorized token; do not record/reuse tokens.
 
-## Database Migrations
+## Database migrations
 
-Umzug อ่านไฟล์ `backend/src/db/migrations/*.js` ตามลำดับชื่อ และ SequelizeStorage บันทึก filename ที่ executed ใน `sequelize_meta`. สถานะ ledger ไม่ได้ยืนยันความตรงกันของ schema
+**Verified persistent Local: 16 executed / 0 pending, through 015**, on 2026-10-07. This includes 001–009, 007a, 010, 011, 012, 013, 014 and 015. No migration was applied or rolled back during the full audit.
 
-```text
-001_create_companies.js
-002_create_job_submissions.js
-003_create_job_postings.js
-004_create_job_posting_work_modes.js
-005_create_company_access_tokens.js
-006_add_company_job_indexes_and_checks.js
-007_create_department_staffs.js
-007a_create_missing_base_tables.js
-008_add_resume_extraction.js
-009_add_coop_request_company_job_links.js
-010_cleanup_student_file_schema_drift.js
-011_add_role_workflow_reviews.js
-```
-
-007a เป็น compatibility/backfill migration สำหรับเติม base-table migration history/schema creation support: สร้างแปด base tables ที่ยังไม่มี แต่ข้ามทั้งตารางหากชื่อนั้นมีอยู่แล้ว จึงไม่ได้ซ่อม schema drift ของตารางเดิม และ `down()` ไม่ลบ base tables
-
-010 ตรวจ actual columns/index signatures และ dependencies ของ `student_files.storage_path`, เก็บ UNIQUE ที่ valid หนึ่งชุด และลบเฉพาะ constraints ที่ซ้ำกันภายใน transaction. Clean DB ที่มีหนึ่งชุดเป็น no-op; ไม่แก้ข้อมูลหรือ `submitted_at` และ `down()` รักษา uniqueness โดยไม่สร้าง duplicates กลับ
-
-011 เพิ่ม `teachers.is_department_head` (false), `coop_request_reviews`, `job_posting_reviews` และ queue/advisor indexes ใน transaction. Audit ใช้ Teacher/Staff FKs แยกพร้อม CHECK ให้ตรง role/transition/reason; reviewer และ review evidence ไม่ถูกลบผ่าน cascade. DOWN ย้อน schema ได้เฉพาะเมื่อไม่มี review history หรือ Head privilege; หากมีจะ refuse และ rollback โดยไม่ลบหลักฐาน.
-
-| Environment | สถานะล่าสุด |
+| Migration | Purpose |
 | --- | --- |
-| Staging VM (historical evidence only) | เคยยืนยัน **10 executed / 0 pending** และ apply 007a สำเร็จ; **VM schema verification = NOT VERIFIED — VM OFFLINE**; 010 ยังไม่ deploy/apply |
-| Local Windows DB (latest read-only check) | **9 executed / 3 pending (007a, 010, 011)**; ยังไม่ได้ apply remediation/role schema |
-| Disposable clean DB verification | **12 executed / 0 pending**; 001–011, empty 011 DOWN/UP และ transactional DDL failure ผ่านแล้ว; historical 001–010 rehearsal ยังคง 11/0 |
+| 007a | Conditional missing-base-table creation; does not repair arbitrary existing schema drift |
+| 008–009 | Resume extraction metadata; request Company/Job links |
+| 010 | Preserve one canonical StudentFile storage-path UNIQUE, remove redundant equivalent constraints |
+| 011 | Explicit Head privilege and role review/audit tables |
+| 012 | Persist prerequisite snapshots and direct Advisor -> Head request workflow |
+| 013 | CoopProject topic and one current Book/Poster per Student/category |
+| 014 | Immutable project-advisor request/history and Teacher confirmation |
+| 015 | Dedicated CompanyEvaluation, one editable row per Student |
 
-ตรวจ migration status และ environment schema ก่อน migration operation ห้าม apply 007a โดยตรงตามจำนวน pending อย่างเดียว หลัง backup/schema validation ให้ reconcile 007a ผ่าน Umzug ปกติก่อน 010 ตามลำดับชื่อ; 007a ไม่ซ่อม drift เอง รายละเอียดขั้นตอนอยู่ใน handoff การเพิ่ม 010 ใน source ไม่ได้เปลี่ยน DB จริง และเมื่อ VM รับ revision นี้ pending status จะต้องตรวจใหม่
+Important FK/unique constraints were checked on Local. StudentFile storage has exactly one canonical storage-path UNIQUE; required Resume/project-category uniqueness remains present. A previous StudentFile fingerprint anomaly is unresolved and outside current scope. The full audit's read-only baseline/final comparison matched all 20 application tables, including three StudentFiles and their current aggregate fingerprint; no rows or files were changed.
 
-## Staging Deployment
+Local currently has zero Staff accounts and zero Head flags. Do not create accounts or grant privileges without separate authorization. Current VM migration/schema/availability was not inspected; historical VM counts must not be treated as current.
 
-```text
-Windows edit → git push → GitHub → Ubuntu VM → ./deploy.sh → staging test
-```
+## Testing and acceptance
 
-Repository: `git@github.com:Bunyakhon/fitm-intern.git`, branch `main`. VM ตามข้อมูลผู้ดูแล: Ubuntu 26.04.1 LTS, static private LAN IP `192.168.10.137`; ติดตั้ง Git, Docker, Docker Compose, Codex CLI และ Nginx แล้ว ไม่ติดตั้ง Node.js บน host เพราะรันใน Docker
+Latest full audit: backend **210 passed / 0 failed / 0 skipped**; frontend **96 passed / 0 failed / 1 existing browser skip**; NLP **14 passed / 2 failed**. Build: seven entries passed. Syntax: 114 source JS files passed. See HANDOFF for the exact disposable target configuration, logs and preservation evidence.
 
-Browser entry ตาม deployment history: **http://192.168.10.137** เป็น private LAN staging address ไม่ใช่ production public endpoint ผลผ่าน API/DB/NLP/Frontend/Nginx/reverse proxy และ browser access จาก Windows เป็น historical evidence เท่านั้น **VM ปัจจุบัน powered OFF** จึงไม่ได้เชื่อมต่อ ตรวจ schema หรือ deploy ในรอบนี้
-
-## deploy.sh
-
-Workflow ตามรายงาน VM: ตรวจ `.env` และ Git working tree → `git pull --ff-only origin main` → `docker compose config --quiet` → build → start PostgreSQL และรอ healthy → `npm run db:migrate` → start containers → `npm run db:migrate:status` → health checks Backend/Database/NLP/Frontend
-
-ใช้ `./deploy.sh` บน VM ที่มี script และตรวจ environment/schema แล้วเท่านั้น Script มีขั้นตอนเขียน schema; ไม่ใช้เป็นคำสั่งเริ่ม local ที่ยังมี migration mismatch. เนื่องจาก script ไม่อยู่ใน checkout นี้ จึงยังไม่ได้ตรวจ source ของ script เทียบกับ workflow ที่รายงาน
-
-## Nginx
-
-| Route | Upstream บน VM |
-| --- | --- |
-| `/` | Frontend :5173 |
-| `/api/*` | Backend :5000 โดยคง `/api` prefix |
-| `/health/db` | Backend :5000 `/health/db` |
-
-Nginx รันบน host และเป็น browser entry point; Backend → NLP ใช้ Docker network โดยตรง
-
-## Testing / Verification
-
-ผลล่าสุดวันที่ 2026-10-06: Backend/migration acceptance รันใน isolated Docker/PostgreSQL, frontend build ใหม่; NLP ไม่ได้แก้และไม่ได้รันซ้ำ
-
-| Check | Result |
-| --- | --- |
-| Backend tests | Full isolated suite **104 passed, 0 failed/skipped**, เปิด integration ทั้งหมด; default Compose suite ข้าม DB opt-ins เพื่อรักษา Local data |
-| Recruitment tests | **27 passed**: validation/provider/rate limit, real HTTP/DB verification, safe SMTP recovery, expired/used tokens และ rollback |
-| Role tests | **39 passed**: auth/actor separation, application route loading, advisor/department scope, state machine, concurrent actions, audit constraints, safe password reset |
-| Migration-specific tests | 010 suite **11 passed**; 011 UP/DOWN/UP, injected DDL rollback, refusal to erase history/privileges และ constraints รวมอยู่ใน role suite |
-| Frontend build | **PASS**; seven HTML outputs |
-| NLP tests | **14 passed, 2 failed** |
-
-NLP failures เป็น chatbot test setup/lifespan issue: `TestClient` ไม่เริ่ม lifespan training จึงใช้ classifier ที่ยังไม่ train. Running chat endpoint ตอบ HTTP 200 ได้ แต่ test suite ยังไม่ green และยังไม่ได้ยืนยัน intent quality
-
-คำสั่ง verification ที่มีจริง (migration integration จะ skip ตามปกติจนเปิด opt-in บน disposable environment ที่มี safety marker; วิธีทดสอบอยู่ใน handoff):
+The two NLP chatbot tests use `TestClient(app)` without entering FastAPI lifespan, leaving the classifier untrained. They remain failing; no source/test fix was made. A running document question also returned a different low-confidence intent and fallback, so endpoint HTTP 200 is not an intent-quality PASS.
 
 ```powershell
-docker compose exec -T backend npm test
-docker compose exec -T frontend npm run build
-# Full isolated acceptance, requires local backend and postgres:16-alpine images:
-powershell -NoProfile -ExecutionPolicy Bypass -File backend/test/runIsolatedWorkflow.ps1
+# Existing isolated backend runner; never point integration tests at persistent Local:
+powershell -NoProfile -File backend/test/runIsolatedWorkflow.ps1
+
+# Frontend: provide a guarded disposable COOP_UI_DISPOSABLE_DATABASE_URL
+# to include SQL acceptance; otherwise those optional tests skip:
+node --test --test-isolation=none frontend/test/*.test.js
+
+npm.cmd --prefix frontend run build -- --configLoader native
+git diff --check
 ```
 
-NLP ใช้ `pytest -q` ใน environment ที่ติดตั้ง dependencies และมี `nlp-service/tests` อยู่ด้วย; standard running container ล่าสุดไม่มี `/app/tests`. Authenticated browser flows, company inbox link click และ resume/OCR persistence ยังต้องมีบัญชีและข้อมูลทดสอบที่เหมาะสม. Isolated runner สร้าง private network/tmpfs DB เฉพาะรอบ, mount source/tests read-only, ไม่ mount .env/storage/Local volumes และลบเฉพาะ resources ที่มี ownership label ของรอบนั้น
+The existing backend runner does not configure every newer evaluation/advisor/project opt-in. Full current acceptance needs their dedicated disposable URLs and 013/014/015 safety markers; the audit used those additional settings. Never enable `RECRUITMENT_INTEGRATION_TEST` against a persistent DB: the legacy test relies on the configured target rather than a strong disposable-name guard.
 
-## Security Notes
+NLP tests require installed dependencies and the test directory: `python -m pytest -q -p no:cacheprovider`. The standard NLP image does not include tests; the audit mounted source/tests/FAQ read-only into a disposable, network-disabled container.
 
-- เก็บ secrets ใน `.env`; ห้าม commit password, JWT secret, SMTP credentials, Turnstile secret หรือ verification/private tokens
-- Compose checkout มี development credential defaults ที่ต้องเปลี่ยนก่อนใช้งานจริง; การใส่ `.env` อย่างเดียวไม่ override ค่าคงที่เหล่านี้
-- Staging Docker ports อาจยังเปิด `0.0.0.0:5000/5173/8000/5432`; target คือ bind แต่ละ port ที่ `127.0.0.1` ให้ Nginx เป็น entry point และตรวจ pgAdmin ด้วยหากเปิดใช้งาน
-- Port lockdown, UFW และ HTTPS/domain ยัง pending; development servers ของ Vite/nodemon/Uvicorn reload ยังไม่ใช่ production deployment
-- CORS จำกัด configured FRONTEND_URL origin และอนุญาต credentials สำหรับ resend; parser/workflow errors ไม่เปิด stack/SQL/provider diagnostics. Student เลือก `advisor_teacher_id` ที่ active ได้ และ Teacher approval ตรวจ relationship นี้จริง; JWT ผิดบทบาทไม่ผ่าน privileged guards
+**Real browser acceptance remains required** for authentication, responsive/native controls, project previews and evaluation save/edit/reload. The audit ran no browser and changed no security/configuration to work around prior Chrome/Node EPERM failures. Live company/Mentor inbox acceptance was not performed.
 
-## Current Staging Status
+## Known limitations and deployment boundary
 
-Availability ล่าสุด: **VM powered OFF / inaccessible**; `VM schema verification = NOT VERIFIED — VM OFFLINE`. รายการที่ผ่านด้านล่างเป็นประวัติ setup/deployment ที่ยืนยันแล้ว ไม่ใช่ live health checks
+- Matching and published-job prefill/create check published status but omit expiry eligibility. Current Local has 20 published jobs and none expired, which does not remove the source defect.
+- A request can be submitted without a class advisor; an incomplete/unknown major is rejected by prerequisite normalization. Missing class-advisor linkage can strand review authority. No change was made.
+- Resume storage/extraction is implemented, but final extraction-status persistence can still return 500 after upload metadata commit; the fixed invariant retains the committed physical file.
+- FAQ answers describe document issuance and persistent/Mentor-reviewed Daily Logs that the application does not implement.
+- Authentication/project/evaluation projections avoid password hashes, verification secrets and absolute storage paths. Profile/image responses still return an owner-relative `profile_image` storage reference; `/health/db` can expose a raw DB error message on failure. These need review before production.
+- Student login/register and Mentor resend lack the dedicated route rate limits found on role login/recruitment. Student JWTs are stored in localStorage. No observed compromise is claimed.
+- Compose/Dockerfiles use Vite, nodemon and Uvicorn reload for development, publish DB/pgAdmin/API/NLP ports, and retain pgAdmin development credential defaults. Only PostgreSQL has a Compose healthcheck.
+- `deploy.sh` exists and automatically applies pending migrations. It is not a read-only start/status command and was not executed. No Nginx configuration or current HTTPS/domain setup is supplied in this checkout; previous Nginx/VM success is historical evidence.
 
-| รายการ | สถานะ |
-| --- | --- |
-| VM availability ในรอบนี้ | OFFLINE — powered OFF |
-| Static IP; Git/GitHub SSH | ✅ |
-| Docker; Docker Compose | ✅ |
-| PostgreSQL healthy; VM migrations (10/0) | ✅ |
-| Backend; Frontend; NLP | ✅ |
-| deploy.sh; Nginx; Reverse Proxy; browser access จาก Windows | ✅ |
-| Test Data / Accounts | Pending |
-| Docker Port Lockdown; UFW | Pending |
-| SMTP; Cloudflare Turnstile | Pending |
-| Google OAuth VM configuration (implementation ยังไม่มี) | Pending |
-| HTTPS / Domain | Pending |
+Production needs separately planned role UI/workflow completion, provider/browser acceptance, runtime/security configuration, HTTPS, backups/restore verification and deployment validation. No deployment is authorized by this README or the completed audit.
 
-## Production Readiness
+## Documentation
 
-**PRODUCTION READY: NO** ต้องเตรียม test accounts และยืนยัน browser workflows, reconcile migration/schema ของแต่ละ environment, แก้ NLP test setup, ปิด workflow gaps ที่ต้องใช้จริงและทบทวน role authorization ก่อน production
-
-งาน deployment ที่ยังต้องทำ: port lockdown/UFW, secrets และ CORS/error handling, SMTP/Turnstile, OAuth หากอยู่ใน scope, HTTPS/domain, production frontend serving และ runtime configuration, database/file backup พร้อมทดสอบ restore, monitoring และ production hardening
-
-## Project Documentation
-
-- `README.md`: stable project/deployment overview สำหรับผู้เปิด repository ครั้งแรก
-- [Development Handoff](./HANDOFF_fitm-intern.md): current implementation state, audit evidence, backlog และ next task; อ่าน current authoritative section ด้านบนก่อน historical notes
+[HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md) is the authoritative audit/resume point. Its top section supersedes historical migration counts, Staff-approval rules, Head direct project-advisor assignment and old topic/file/evaluation placeholder descriptions. This README remains a stable overview rather than a daily work log.

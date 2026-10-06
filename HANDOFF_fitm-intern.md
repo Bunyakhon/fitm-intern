@@ -1,5 +1,1230 @@
 # FITM-INTERN PROJECT HANDOFF
 
+## Full project state audit - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. FULL READ/TEST AUDIT COMPLETE; DOCUMENTATION ONLY. LOCAL: 16 EXECUTED / 0 PENDING THROUGH 015. PRODUCTION READY: NO.** This supersedes old migration counts, Staff approval stages, Head direct project-advisor assignment and topic/file/evaluation placeholder descriptions. Historical handoff content is preserved below.
+
+Classification: **WORKING** means the necessary application layers are connected and supported by source plus relevant automated/runtime evidence; it does not certify browser acceptance. **PARTIAL** means incomplete scope/acceptance, **BACKEND ONLY** means APIs without required UI, **MOCK / UI ONLY** means demo/placeholder without persistence, **NOT STARTED** means no connected implementation, **BROKEN** means reproduced failure. **BLOCKED BY MANUAL/BROWSER ACCEPTANCE** identifies outstanding acceptance. Every feature has one classification; the browser result for every audited feature is **NOT RUN**.
+
+### 1. CURRENT PRIORITY
+
+Complete this audit/documentation and **STOP**. Allowed edits: **HANDOFF_fitm-intern.md and README.md only**. No application/test/config/migration changes or bug fixes. Preserve all tracked/untracked WIP and existing Local data/files. Repository-wide read/test permission does not resume paused role frontends, account setup or deployment. Section 27 contains one recommendation, not a task started.
+
+### 2. DEVELOPMENT ENVIRONMENT
+
+- Windows PowerShell, fitm-intern workspace, branch **main**, HEAD **e3c683b**. Host Node 24 used for frontend in-process tests; existing Node 20 Docker image for backend tests.
+- Vite multipage JavaScript/Axios -> Express/JWT -> Sequelize/PostgreSQL 16, private backend storage and FastAPI ranking/OCR clients. Compose services intern_frontend, intern_backend, intern_postgres, intern_nlp_service and intern_pgadmin running.
+- Backend root/DB health, NLP health and pgAdmin ping **200**; all **seven localhost frontend entry URLs 200**. Protected anonymous Student/Staff/Teacher/Head reads **401**, expected CORS localhost preflight **204**.
+- Vite's internal service hostname returned **403**; supported localhost URLs passed without changing allowed-host/security configuration. No persistent service restart/recreation.
+- Compose configuration **PASS with warning**: root POSTGRES_PASSWORD unset in audit shell, interpolated blank. Existing PostgreSQL stayed healthy. Configure intended root environment before fresh startup/recreation; no .env values were printed/edited.
+
+### 3. LOCAL MIGRATION STATUS
+
+**Fresh existing CLI: 16 executed / 0 pending. 015 already applied to persistent Local intern_system.** Verified before and after audit, not inferred from older notes.
+
+Executed: 001–009 plus **007a**, **010_cleanup_student_file_schema_drift.js**, **011_add_role_workflow_reviews.js**, **012_coop_prerequisites_and_direct_review.js**, **013_add_coop_projects_and_current_files.js**, **014_add_coop_project_advisor_requests.js**, **015_add_company_evaluations.js**. The runner uses Umzug/QueryInterface, ordered filenames and SequelizeStorage **sequelize_meta**. Startup authenticates without sync/alter.
+
+**Audit Local migration/rollback/ledger/schema/sync/seed/reset operations: NONE.** Real migration UP/DOWN/failure tests targeted disposable databases only. No old migration was modified.
+
+### 4. CURRENT DATABASE IMPORTANT TABLES
+
+Fresh read-only aggregate counts:
+
+| Tables | Rows |
+| --- | --- |
+| students / student_profiles / teachers / department_staffs | 4 / 2 / 23 / 0 |
+| mentors / mentor_tokens / student_files | 2 / 16 / 3 |
+| companies / company_access_tokens | 10 / 0 |
+| job_submissions / job_postings / job_posting_work_modes | 10 / 20 / 28 |
+| coop_requests / coop_request_delivery_methods | 1 / 3 |
+| coop_request_prerequisite_courses / coop_request_reviews / job_posting_reviews | 0 / 0 / 0 |
+| coop_projects / coop_project_advisor_requests / company_evaluations | 1 / 2 / 1 |
+
+Baseline **2026-10-07 02:16:58 Asia/Bangkok** (2026-10-06T19:16:58.517Z), final **02:26:47** (2026-10-06T19:26:47.977Z). Every probe connection enforced **default_transaction_read_only=on**, explicit UTC, and verified target intern_system. Evidence in intern_backend: **/tmp/fitm_full_audit_before_20261007.json** and **/tmp/fitm_full_audit_final_20261007.json**, mode 0600; aggregate counts/hashes/catalog only, no raw private rows printed.
+
+**20/20 application tables unchanged; 0 changed tables. StudentFiles before/final: 3 rows, MD5 7d0bf012a44869f32fd415f75b08471c.** Exact full-row fingerprint: md5(COALESCE(string_agg(md5(to_jsonb(t)::text), '' ORDER BY to_jsonb(t)::text), '')), UTC SQL timezone. Ledger separately checked. **3/3 physical file references exist** through the actual storage resolver; existing bytes were not read. Initial relative-path probe was corrected before relying on it; no missing file is claimed.
+
+Critical catalog/model checks:
+- student_files.storage_path: exactly **one canonical validated UNIQUE/backing index**, student_files_storage_path_key. Resume per-Student and current Book/Poster per-Student/category partial uniqueness present; Student FK CASCADE.
+- teachers.is_department_head: BOOLEAN NOT NULL DEFAULT false, **0 Head flags**. Student class/project advisor FKs separate, SET NULL.
+- Prerequisites: request FK CASCADE, unique(request,code), exact program/code and status/grade CHECKs.
+- CoopProject: Student CASCADE, unique Student, trimmed 1–500 topic CHECK.
+- 014: Student CASCADE / Teacher RESTRICT, state/time CHECKs, one-current partial unique and Teacher-pending index, all valid.
+- CompanyEvaluation: 11 expected columns, Student CASCADE / Mentor SET NULL, five-score/comment CHECKs, unique Student; no derived-total columns or StudentFile reuse.
+- Review FKs RESTRICT. Migration 012 transition/reason CHECKs remain deliberately **NOT VALID**, preserving historical rows while enforcing new writes, not an unexplained migration failure.
+- Current jobs: **20 published / 0 expired**. One cancelled CoopRequest. One pending project-advisor request plus one historical row; one saved evaluation. These records existed at audit baseline; audit did not create them or infer an author.
+- Prior StudentFile fingerprint anomaly remains **unconfirmed/unresolved**, with no investigation/repair/restore. This comparison certifies only the audit interval.
+
+### 5. AUTH STATUS
+
+| Feature | Classification | Actual chain and evidence |
+| --- | --- | --- |
+| Student password register/login | PARTIAL | register.js/login.js form -> POST /api/auth/register or /login -> auth.controller/bcrypt Student hooks -> students; source connected, successful existing-user password/browser acceptance not run |
+| Student auth/me / actor authorization | WORKING | student_coop.js auth startup -> GET /api/auth/me -> authenticateStudentToken/getCurrentStudent -> Student; roleAuth and authenticated feature HTTP/SQL suites pass, anonymous Local 401 |
+| Teacher login/auth | BACKEND ONLY | No login page -> POST /api/teachers/auth/login, GET /api/teachers/me -> teacherAuth controller/service/live Teacher guard -> teachers; role/auth/SQL tests pass |
+| Staff login/auth | BACKEND ONLY | No login page -> POST /api/staff/auth/login, GET /api/staff/me (auth/me alias) -> staffAuth/live active guard -> department_staffs; tests pass; Local no Staff accounts |
+| Head login/auth | BACKEND ONLY | No login page -> POST /api/department-head/auth/login, GET /me -> Teacher identity/distinct claim/live explicit Head+department guard -> teachers; tests pass; Local no Head flags |
+
+JWT: HS256, actor/role separation, legacy Student claims supported. Teacher active / Staff is_active / Head privilege checked in DB. Student.status is lifecycle data, not a suspension/active-account guard. Project/evaluation additionally require existing DB Student with co_op track. Head privilege never comes from position text. Safe serialization/projections omit passwords/hashes. OAuth is section 21.
+
+### 6. STUDENT STATUS
+
+Main page: frontend/src/student_coop/student_coop.html; controller frontend/src/pages/student_coop.js; existing src/api adapters/client.
+
+| Feature | Classification | Frontend action -> API/backend -> persistence; tests/runtime |
+| --- | --- | --- |
+| Overview | PARTIAL | Startup auth/profile/request reads supply identity/counts; placement overview placeholder, daily count from DOM; no complete aggregate API |
+| Profile/student-info | PARTIAL | Edit/save -> GET/PUT /api/student-profile/me, PUT /student-info -> studentProfile.controller -> students/student_profiles; **4/4 Local read-only controller reads pass**; full save/read-back/browser acceptance missing |
+| Profile image | PARTIAL | Upload/read -> POST/GET /api/student-profile/profile-image -> upload middleware/controller -> students.profile_image/private directory; fresh SQL/native acceptance not run |
+| Teacher directory | WORKING | loadTeachers -> GET /api/teachers -> teacher.controller explicit safe attributes -> teachers; **23 active Local rows**, directory/HTTP regressions |
+| Class-advisor selection/preservation | PARTIAL | student-info save -> active Teacher validation/Student FK; failed/unchanged directory omits advisor, explicit loaded change/clear sends ID/null; frontend studentAdvisor 8/backend controller 3 regressions pass; full SQL/browser selection acceptance distinct |
+| Company search/duplicates | WORKING | Modal search/manual selection -> GET /api/coop-requests/companies/search and /companies/duplicate-check -> coopRequest.controller -> companies; escaped/bounded search/normalized duplicates, coopRequestCompany coverage |
+| Skills/Resume matching | PARTIAL | Matching action -> POST /api/job-matches/me?source=skills or resume -> jobMatching.controller -> Student/Profile or ready cached Resume + published JobPosting/Company/WorkMode -> nlpMatching.client -> FastAPI; tests/live synthetic client bridge pass, expiry gap retained |
+| Resume | PARTIAL | uploadStudentResume -> POST /api/student-profile/resume -> multer/studentProfile.controller -> StudentFile/private PDF -> native pdf-parse/OCR client; resumeUpload 8 actual-temp-file/transaction-mock tests + resumeText and NLP-generated OCR tests pass; full HTTP/SQL/browser acceptance not established |
+
+**Resume retention invariant PASS:** managed transaction resolves -> metadataCommitted=true. Post-commit extraction/status-save failure cannot unlink committed new bytes; pre-commit failures clean staged bytes and preserve old replacement. Post-commit status-update failure may still return 500 with committed file retained; no new API success behavior was invented. Matching reads ready cached extraction, not existing file bytes.
+
+**Matching eligibility gap:** source filters status=published, omits expires_at; job prefill/create do likewise. Current Local zero expired jobs does not validate future eligibility. Ranking/minimal result contract/errors work; computation has no persisted match entity by design. Public landing cards/search remain mocks.
+
+### 7. COOP REQUEST WORKFLOW
+
+**Full cross-role UI lifecycle: PARTIAL. Student create/list/detail/cancel/history/delivery/prefill: WORKING. IT/INE prerequisite snapshot flow: WORKING.**
+
+Actual student_coop.js submit/list/detail/history/cancel -> coopRequest.api.js -> /api/coop-requests routes -> coopRequest.controller + coopPrerequisites -> CoopRequest/delivery/prerequisite/review tables. RoleWorkflow handles reviewer decisions. Real HTTP/SQL role/direct workflow, coopRequestCompany and frontend saved-controller/SQL acceptance pass.
+
+Canonical: submit **advisor_review** -> current class Teacher approves **department_head_review** -> scoped Head approves **approved**, or eligible reviewer rejects. Student/Staff pending cancellation is transactional/audited. **Staff is NOT an approval stage.** UI steps: submission, Class Advisor, Head, Approved; staff_review explicitly historical only. Terminal rejected/cancelled history remains visible.
+
+Owner from JWT; request/Student locks, one active request and atomic child/audit rollback tested. Request snapshots persist independently of profile changes; Request A survives major change/Request B. Class-advisor changes transfer pending authority but do not rewrite audit actors.
+
+Exact five codes:
+- **IT:** 060243102, 060243104, 060243108, 060243112, 060243122.
+- **INE:** 060233107, 060233112, 060233113, 060233202, 060233204.
+
+Student.major selects program; five exact unique active codes, canonical server names, no foreign/duplicate/spoofed data. Passed requires bounded nonblank grade; studying/unselected null grade. Switching resets/replaces rows; history reads request-owned saved program/grades. Local legacy cancelled request has no snapshot and displays unavailable, not fabricated courses.
+
+Known boundary: backend create does not independently require co_op track or non-null class advisor; frontend gates track, prerequisite normalization rejects unsupported/missing major. Otherwise valid request without class advisor may lack reviewer. Teacher/Head pages absent; full lifecycle not WORKING.
+
+### 8. PROJECT ADVISOR WORKFLOW
+
+**Full workflow: PARTIAL. Student selection/request actions: WORKING. Teacher queue/decisions: BACKEND ONLY. Confirmed replacement: NOT STARTED.**
+
+Project dropdown change -> GET/POST /api/student-coop/project-advisor-request -> coopProjectAdvisor controller/service -> dedicated CoopProjectAdvisorRequest + canonical Student advisor. Directory supplies active Teachers; none/pending/rejected selectable, confirmed locks. Independent load failures disable unsafe selector while topic remains editable.
+
+GET /api/teachers/project-advisor-requests, POST /:id/accept or /reject -> real Teacher guard/owned current request -> request+Student atomic confirmation. **Only acceptance sets coop_advisor_teacher_id; class advisor unchanged.** Pending replacement supersedes immutable history; A->B->A fresh ID, stale decisions refuse. Confirmed replacement refused, no invented history for pre-existing canonical assignment.
+
+coopProjectAdvisor.database/Migration and frontend project suites pass real Teacher bcrypt/JWT/HTTP/SQL, pending/reject/history/stale/concurrent/rollback/confirmed guards. **No usable Teacher page or accept/reject UI exists.** Old Head assignment returns 409. Local service **4 reads: 1 pending / 3 none**; two history rows predate audit.
+
+### 9. PROJECT TOPIC
+
+**WORKING.** Actual saveProjectBtn/read/edit -> GET/PUT /api/student-coop/project -> studentCoopProject.service -> unique Student CoopProject. Owner/track, trimmed 1–500 topic, whitelist, Student lock, same-row update/read-back. HTTP/SQL/frontend bridge tests prove operation in **none/pending/rejected/confirmed** advisor states, including pending-014 topic independence. Local read-only **4 reads / 1 saved topic**. Browser editing not executed.
+
+### 10. PROJECT FILES
+
+**Book/Poster upload/replacement/current metadata/authenticated preview: WORKING. Native/browser preview acceptance: BLOCKED BY MANUAL/BROWSER ACCEPTANCE.**
+
+Actual upload/preview actions -> GET /api/student-coop/project-files, POST /project-book or /poster, GET /project-files/:id/preview -> authenticated studentCoop routes/upload middleware/studentCoopProject.service -> StudentFile categories/private owner storage.
+
+Book **PDF <=10 MB**; Poster **PDF/PNG/JPEG <=10 MB**. MIME/extension/header signature/nonempty physical size/filename validation, owner UUID and lexical+realpath confinement. Student lock + partial unique serialize replacement; pre-commit failure only cleans staged bytes, post-commit cleanup failure keeps committed bytes. Metadata excludes storage_path; preview owner auth/404, inline correct MIME, private/no-store/nosniff.
+
+Browser handler reserves tab, clears opener, retrieves authenticated Blob, navigates/revokes object URL. Real disposable HTTP/SQL/physical fixtures cover spoofed MIME/signatures, ownership/traversal/symlinks, concurrency/rollback/post-commit cleanup and Thai filenames. Actual frontend bridge/DOM tests cover filenames/date fallbacks/long names/Blob lifetimes. **Not Chrome PDF/image acceptance.** Existing Local files only existence-checked, never read/uploaded/replaced/deleted.
+
+### 11. COMPANY EVALUATION
+
+**WORKING, including all eight real context sources. Local schema/read availability verified; authenticated Local browser save/edit remains unaccepted by this audit.**
+
+Evaluation menu/save -> studentCompanyEvaluation.js + studentCoop.api.js -> GET/PUT /api/student-coop/company-evaluation -> companyEvaluation controller/service -> dedicated CompanyEvaluation/company_evaluations, **never StudentFile**. Five q1_score–q5_score integers 1–10, optional trimmed <=2,000 Unicode-character comment, derived total /50 and average /10. UNIQUE(Student), owner lock/same-row edit, strict payload/role/track/ownership. Initial read failure blocks overwrite; failed save preserves input; duplicate-submit and committed-save/refresh-failure feedback retained.
+
+| Eight context fields | Exact source/fallback |
+| --- | --- |
+| Student name | JWT owner Student.first_name + last_name |
+| Student code | Student.student_id STRING, not owner UUID |
+| Major | Student.major |
+| Company | Exactly one owner CoopRequest in approved/document_issued/in_progress; company_name snapshot first, linked Company.name only if blank |
+| Mentor name | Current owner Mentor.first_name + last_name; pending/verified allowed |
+| Mentor position | Same current Mentor.position |
+| Work period | Same selected request work_start_date/work_end_date; complete valid non-reversed pair |
+| Evaluation date | CompanyEvaluation.updatedAt mapped to updated_at, last saved timestamp |
+
+Zero/multiple qualifying requests deliberately unavailable, rejected/cancelled excluded, no arbitrary latest fallback. Missing/blank/invalid context **-**, no fabricated date. Owner/name/Mentor/Company/derived-score spoofing rejected; safe explicit attributes. GET repeatable-read/read-only, bounded placement limit 2.
+
+Fresh Local service: **4 names, 4 official codes, 3 majors, 2 Mentor names/positions, 0 accepted companies/periods, 1 saved evaluation/date**. Current saved row existed before audit; author/browser acceptance not inferred. These aggregates supersede older empty-table/all-major notes.
+
+companyEvaluation.database/Migration/Context and frontend studentCompanyEvaluation tests pass real HTTP/SQL persistence/concurrency/fault rollback/ownership, all context sources/snapshot/master/manual-company fallback, zero/multiple/rejected requests, saved timestamp/invalid dates/current Mentor, actual frontend read-back. **SQL guard passes: evaluation never queries student_files; frontend endpoint-only assertion passes.** 015 UP/DOWN/rollback/constraints/populated refusal only disposable. Student workplace feedback is not academic grading.
+
+### 12. MENTOR STATUS
+
+**Student CRUD/status/resend and Mentor token verification/confirmation: PARTIAL. Mentor log review/attendance/behavior/Student/Book/Poster academic evaluations: NOT STARTED.**
+
+student_coop.js add/edit/delete/resend -> mentor.api.js -> GET/PUT/DELETE /api/mentors/me, POST /api/mentors -> mentor.controller -> mentors/mentor_tokens. Owner from JWT, transactional record/token rotation, post-commit email and truthful SMTP-failure response. Pending-only resend reuses update then GET; no dedicated resend throttle found.
+
+mentor_verify_user.html/mentor.js/mentorVerification.api.js -> GET /api/mentor-verification/verify?token, PUT /profile, POST /confirm -> mentorVerification.controller -> hashed token/expiry/used-at lock and Mentor confirmation. Selected Mentor/Student-name fields only; page removes URL token, holds it in memory, never returns token/hash. **This is a verification/profile page, not a Mentor dashboard or password portal.**
+
+Historical Brevo success retained, not freshly rerun. No emails/inbox/real token used; no dedicated current end-to-end Mentor CRUD/verification SQL/browser suite. Local 2 Mentors/16 token-history rows preserved. Source/page/route/model inventory confirms academic/review functions absent.
+
+### 13. STAFF STATUS
+
+**Core backend: BACKEND ONLY. Staff frontend/login/profile/dashboard/core actions: NOT STARTED.**
+
+staffAuth/roleWorkflow -> DepartmentStaff/requests/job postings/review tables. /api/staff login/me, request list/detail/history, POST /coop-requests/:id/cancel with reason/pending-state/audit/locks. Recruitment GET /job-postings[/:id], POST /:id/publish or /reject moves pending_review -> published/rejected atomically. Auth/role/SQL/concurrency tests pass.
+
+No Staff request approval/reject/forward stage; tests deny it. No Staff page/API-client/action binding. **Local Staff accounts 0**, no setup. Staff document management NOT STARTED.
+
+### 14. TEACHER STATUS
+
+**Class-advisor/project-advisor backend: BACKEND ONLY. Teacher frontend: NOT STARTED. Supervision: NOT STARTED.**
+
+Teacher auth/me, scoped request list/detail/approve/reject and advisor queue/accept/reject -> teacherAuth/roleWorkflow/coopProjectAdvisor -> Teacher/Student/request/review/advisor tables. Live active claims/relationship/decision scope and atomic races tested.
+
+No Teacher login/profile/student-list/dashboard/core action UI. No supervision Student selection, appointment #1/#2, Mentor confirmation/substitute, result #1/#2, two-image storage, PDF or history page/API/model/table. Teacher academic evaluations absent. Existing directory/profile relations are not supervision implementation.
+
+### 15. DEPARTMENT HEAD STATUS
+
+**Backend: BACKEND ONLY. Frontend: NOT STARTED.**
+
+/api/department-head/auth/login, GET/PATCH /me, GET /teachers, PATCH /teachers/:id and request list/detail/approve/reject -> Teacher auth/roleWorkflow -> teachers/students/requests/reviews. Scope from class advisor's department; explicit is_department_head plus role/active guard, never position. Safe Teacher/profile/password whitelist/bcrypt/reset tested; no public privilege promotion.
+
+Old PATCH /students/:id/coop-advisor is **409 refusal**, not assignment. Local **0 Head flags**. No grant/reset/account/seed performed; no Head page/login/dashboard/client.
+
+### 16. RECRUITMENT STATUS
+
+**Full Public->verified->Staff-published UI: PARTIAL. Staff publication APIs: BACKEND ONLY. Public landing catalog/search: MOCK / UI ONLY.**
+
+recruit_student.html/recruitStudent.js form/submit/resend -> recruitStudent.api.js -> POST /api/job-submissions, /verify-email, /resend-verification -> jobSubmission/Turnstile/companyVerification/email services -> Company/JobSubmission/JobPosting/WorkMode/CompanyAccessToken. Verification page uses emailed token, removes URL/referrer exposure.
+
+Feature gate, route limits, validation/hostname Siteverify, atomic children, hashed expiring/use-once token, pending_email_verification -> pending_review. SMTP failure keeps committed submission/202. Purpose-scoped HttpOnly/SameSite cookie, origin/rate limit and token rotation provide recovery without email-token API exposure. Expected action optional; do not claim enforced action merely from widget success.
+
+Fresh recruitmentSecurity/jobSubmission/recruitmentLifecycle/database + role suites pass real HTTP/SQL lifecycle/recovery/rollback/spoofing/publication, **mocked provider boundaries**. No real CAPTCHA/Brevo/inbox acceptance. Prior user green widget/SMTP checks historical.
+
+Usable UI stops at **pending_review** after verification; Staff publish/reject has no page. Published visibility exists in Student matching, landing cards/filters remain hardcoded. Company management login/edit/withdraw NOT STARTED.
+
+### 17. DAILY LOG STATUS
+
+**Student Daily Log: MOCK / UI ONLY. Persistence/save/edit/history/daily-weekly rules/Mentor review/Teacher view/compiled report: NOT STARTED.**
+
+student_coop.js saveDailyLogBtn date/text validation appends/deletes DOM rows, no API/route/model/table; refresh loses data. Input rendered with textContent. StudentFile coop_practice_log_book enum/directory is preparation, not a connected report flow. Company transfer is also an unconnected-backend message.
+
+### 18. EVALUATION/SCORE STATUS
+
+| Feature | Classification | Evidence |
+| --- | --- | --- |
+| Student company/workplace feedback | WORKING | Section 11 own table/API/five-question Student UI |
+| Mentor Student/behavior/attendance scores | NOT STARTED | No Mentor assessment UI/route/model/table |
+| Teacher Student scores | NOT STARTED | No assessment flow; request decisions are not grades |
+| Book / Poster evaluation | NOT STARTED | Existing uploads/preview only, no rubrics/score storage |
+| Final project / exam score | NOT STARTED | No grading UI/event/API/model |
+| Overall Company/Mentor 50% + Department/Teacher 50% | NOT STARTED | No component score storage or aggregation |
+
+Workplace feedback /50 is not a 50%-weight academic component. No new scoring formula inferred.
+
+### 19. DOCUMENT STATUS
+
+**Student request-status visibility: PARTIAL. Official documents/หนังสือขอความอนุเคราะห์/หนังสือส่งตัว generation/issuance/download/print/Staff management: NOT STARTED. Internship Report upload: NOT STARTED.**
+
+Student detail/progress -> /api/coop-requests -> actual statuses/enums including document_issued, but no issuance transition/service/template/PDF artifact/download/print route found. Issued-status wording does not prove a document exists.
+
+**Project Book / Poster WORKING** as section 10, distinct from Internship Report. practice-log-book enum/folder does not implement report upload.
+
+### 20. CHATBOT STATUS
+
+**FastAPI FAQ: BACKEND ONLY. Website chat: MOCK / UI ONLY. Express bridge/authenticated live-status lookup: NOT STARTED. Existing chatbot tests: BROKEN.**
+
+index.js sendMessage appends delayed development placeholder, no API call/client/Express chat route. FastAPI /api/v1/chat -> chatbot service -> TF-IDF/LogisticRegression classifier/response selector, FAQ trained in main.py lifespan. No separate entity extractor or authenticated Student request/document DB lookup; status reply is static guidance.
+
+Unmodified NLP suite **14 PASS / 2 FAIL**: test_chatbot.py global TestClient(app) misses lifespan, untrained-classifier RuntimeError. No test/application fix. Actual running document question “ต้องเตรียมเอกสารอะไรบ้าง” returned **200, check_request_status, confidence 0.167** (below configured 0.35 fallback threshold), **not document-intent recognition PASS**. Lifespan correction alone is not proven to fix quality.
+
+FAQ promises document issuance and persistent/Mentor-signed logs the website lacks. Express matching/OCR bridges separately implemented/tested; standalone NLP resume matching has no website consumer.
+
+### 21. GOOGLE OAUTH STATUS
+
+**Google button: MOCK / UI ONLY. Actual OAuth: NOT STARTED.**
+
+login.js googleLoginBtn displays “connect later”; backend/src/config/oauth.js empty. No provider config/callback/routes/domain-restricted Google account creation/login/JWT handoff. Password-registration university-domain rule is not OAuth. No Google setup attempted.
+
+### 22. DEPLOYMENT STATUS
+
+**Local running development services/build: WORKING. Production deployment readiness: PARTIAL; production ready NO.**
+
+Compose/Dockerfiles/packages reviewed only: Vite/nodemon/Uvicorn reload, source mounts, published DB/pgAdmin/API/NLP ports, development pgAdmin defaults; only PostgreSQL has Compose healthcheck. Passing frontend build does not provide production serving/HTTPS.
+
+**deploy.sh exists** and was read: requires env/clean Git, pulls/builds/starts DB, **applies db:migrate**, starts services/checks health. Not executed. Root/backend/frontend env examples exist, correcting old README absent-file claims.
+
+No Nginx config supplied in checkout. Historical host Nginx/reverse proxy/VM successes preserved only as history. **Current VM availability/schema/HTTPS/domain NOT VERIFIED**, no SSH/VMware/staging/production connection. Historical powered-off/count notes are not fresh observations.
+
+### 23. KNOWN RISKS / BLOCKERS
+
+1. NLP tests fail; lifespan setup plus low-confidence document-intent quality and FAQ promises need separate future review, no fixes made.
+2. Expired published jobs remain eligible by source filters; current zero expired Local rows is not proof of correctness.
+3. Role UIs absent, full advisor/approval/recruitment UI incomplete. Local zero Staff/Head readiness; setup remains paused.
+4. Request create lacks independent co_op/non-null class-advisor enforcement; missing major fails normalization. No invented fixtures/advisors/placement.
+5. Password/Profile/image/Resume/Mentor/provider/browser acceptance incomplete. Resume file/mock tests are not HTTP+SQL acceptance.
+6. Development ports/default credentials/commands, unset root Compose password in shell, raw health diagnostics, owner-relative profile storage references, Student/Mentor throttle gaps and localStorage JWT require production review; no exploit/compromise claimed.
+7. Existing runIsolatedWorkflow.ps1 omits newer evaluation/advisor/project opt-in configuration. Legacy jobSubmission.database relies on configured DB plus opt-in, not a strong disposable-name guard: never enable on Local. Audit isolated every writing test.
+8. 012 NOT VALID checks deliberate; validation is separate, no schema change now. Scope depends on class advisor; confirmed advisor replacement/documents/grading/supervision/log persistence absent.
+9. StudentFile anomaly untouched; audit interval all-table preservation PASS is not a cause/resolution claim.
+
+### 24. REAL BROWSER ACCEPTANCE STATUS
+
+**BLOCKED BY MANUAL/BROWSER ACCEPTANCE. Browser executed: NO.** No tooling available; prior Chrome/Node EPERM retained without retries/security/config changes. DOM/HTTP/SQL/storage fixtures are automated evidence, not Chrome/native focus/CSS/PDF acceptance.
+
+Pending boundaries: existing-user password/Profile, project/advisor native UI/preview/long names, Company Evaluation save/edit/reload/context/responsive feedback, legitimate Mentor/Company inbox links and real provider submission. No attribution of current Local saved evaluation to this audit or a particular browser.
+
+### 25. TEST RESULTS
+
+| Fresh audit check | Result |
+| --- | --- |
+| Full backend integration opt-ins on disposable PostgreSQL | **210 PASS / 0 FAIL / 0 SKIP** |
+| Full frontend, including disposable saved-prerequisite SQL | **96 PASS / 0 FAIL / 1 existing browser SKIP** |
+| NLP unmodified suite | **14 PASS / 2 FAIL**, chatbot lifespan setup |
+| Frontend build | **PASS**, seven entries |
+| Source JS syntax | **114 PASS** |
+| Compose config | **PASS**, password interpolation warning |
+| Local migration/health/HTTP | **16/0**, DB ready, service 200, seven frontend 200, protected 401/CORS 204 |
+| Local model/service probes | Four profiles/evaluations/projects/advisor reads pass |
+| Data preservation | **20/20 unchanged**, StudentFiles 3/same hash, physical 3/3 present |
+| Source/config/test preservation | **205 baseline hashes unchanged**, no audit source edits |
+| git diff --check | **PASS after final docs**, line-ending notices only |
+
+Effective commands:
+- **node --test** across backend/test/*.test.js inside dedicated existing-image Docker runner; full configured opt-ins. Covers recruitment HTTP/SQL/provider boundaries; role/auth/concurrent/audit workflow; prerequisite history; project files/ownership/storage; Resume cleanup; advisor/evaluation/context; migration UP/DOWN/rollback/refusals and StudentFile isolation.
+- **node --test --test-isolation=none frontend/test/*.test.js**, Host Node 24 with guarded COOP_UI_DISPOSABLE_DATABASE_URL, all six suites.
+- **python -m pytest -q -p no:cacheprovider**, temporary NLP image, read-only source/tests/FAQ mounts, PYTHONDONTWRITEBYTECODE=1, network none, generated OCR fixtures only.
+- **npm.cmd --prefix frontend run build -- --configLoader native**.
+- **node --check** for every one of 114 backend/src/frontend/src JS files.
+- **docker compose config --quiet**; **docker exec intern_postgres pg_isready -U postgres -d intern_system**; **docker exec intern_backend npm run db:migrate:status**; **git diff --check**.
+- Read-only guarded Node catalog/count/fingerprint/controller/service probes and HTTP/synthetic NLP rank/chat. Actual Local controller/service reads bypass auth, not successful password login or authenticated browser writes.
+
+Test infrastructure: PostgreSQL 16 **fitm_full_audit_tests_20261007**, localhost-only **49984**, guards **fitm.a013_disposable/a014_disposable/a015_disposable=on**, network **fitm_full_audit_network_20261007**, label fitm.audit=20261007, alias a013-postgres. DBs fitm_migration_test, fitm_recruitment_test, fitm_legacy_recruitment_test, fitm_role_test, fitm_evaluation_test, fitm_advisor_test, fitm_project_test. ROLE_BACKEND_INTEGRATION_TEST, RECRUITMENT_INTEGRATION_TEST, STUDENT_FILE_MIGRATION_TEST enabled only isolated; dedicated ROLE_DISPOSABLE_DATABASE_URL, COMPANY_EVALUATION_DISPOSABLE_DATABASE_URL, COOP_ADVISOR_DISPOSABLE_DATABASE_URL, COOP_PROJECT_DISPOSABLE_DATABASE_URL, COOP_DISPOSABLE_DATABASE_URL and frontend COOP_UI_DISPOSABLE_DATABASE_URL pointed only to these targets. Legacy DB initialized through 015 only disposable; migrations also use owned schemas.
+
+No existing Local volume/.env/storage mounted into test runners. PostgreSQL image created a **new temporary anonymous volume**; --rm removed it, verified. Runner containers auto-removed; audit DB stopped/auto-removed, dedicated network and anonymous volume absence verified. No dependency installation.
+
+Logs/hashes outside Git: **C:\Users\suran\AppData\Local\Temp\fitm-full-audit-20261007-2afa5af899ae405ab0f3ea10902ac9f3**, backend-tests.log/frontend-tests.log/frontend-build.log/nlp-tests.log/source-baseline.json. Ignored frontend/dist regenerated. No real secrets/tokens/private rows printed or external emails/messages sent.
+
+### 26. SECURITY RESULT
+
+**No real secrets/password hashes/verification tokens exposed by this audit. No .env/config/security edits.** Source projection/flow review covered JWT_SECRET, SMTP_PASS, TURNSTILE_SECRET_KEY, passwords/hash, token_hash and storage references. Real env files ignored/untracked; backend/frontend Docker ignores exclude .env. No dedicated repo scanner mechanism found, so this is **scoped review, not comprehensive secret-scan certification**.
+
+Auth intentionally returns JWT, safe models omit password/hash. Recruitment token/hash not API fields, resend capability purpose-limited HttpOnly. Mentor validation returns selected Mentor/Student names, no token row/hash. Verification URLs removed in page code; no real token opened/reused here. Project metadata/evaluation exclude raw storage paths/sensitive Mentor/Head fields.
+
+Exceptions retained: profile/image returns authenticated owner's relative profile_image storage reference (not absolute); /health/db error exposes raw diagnostic; some older controller error logs serialize errors. localStorage JWT, Student auth/Mentor resend rate gaps, development credential defaults need future review. No actual compromise claimed; no security weakened.
+
+**Audit changed only README.md and HANDOFF_fitm-intern.md. All existing WIP retained. No commit/push/deploy/SSH/VMware/staging/production, Local migration/sync/seed/reset, account/privilege mutation or real external message.**
+
+### 27. EXACT NEXT TASK
+
+**Exactly one recommendation: manual Chrome Company Evaluation acceptance with the existing authenticated Student session.** Check actual eight-field context/fallbacks, five scores/summary, save/edit/reload/feedback and desktop/mobile native interaction. **NOT STARTED**; requires separately resumed acceptance instruction. Preserve StudentFiles and leave old anomaly out of scope. No role frontend/new feature/migration/deployment task begins.
+
+**STOP - full audit and both documentation updates complete.**
+
+---
+
+## Historical handoff (preserved below)
+
+
+## Company Evaluation information card - real context data - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. EIGHT-FIELD CONTEXT IMPLEMENTATION / FOCUSED AUTOMATED ACCEPTANCE PASS. LOCAL MIGRATION STATUS UNCHANGED: 16 EXECUTED / 0 PENDING.** This supersedes the preceding six deliberately unavailable display placeholders: existing reliable data now supplies them. The user authorized only the Company Evaluation information card. Evaluation scores, validation, comment, total/average, persistence/ownership and duplicate-submit behavior retained; no other feature started. Previous rollout/history preserved below.
+
+### Exact sources for all eight fields
+
+| Card field | Backend source | Availability/fallback |
+| --- | --- | --- |
+| ชื่อนักศึกษา | Authenticated Student `first_name` + `last_name`, trimmed | Real stored name; missing/blank parts handled safely, no name becomes `-` in UI |
+| รหัสนักศึกษา | `Student.student_id` (official student-code STRING) | Actual stored code, never `Student.id` UUID; blank/missing returns null |
+| สาขาวิชา | `Student.major` | Actual stored IT/INE value; StudentProfile has no canonical major field; blank/missing returns null |
+| ชื่อสถานประกอบการ | Unique accepted owner CoopRequest `company_name` snapshot; linked Company `name` only if that snapshot is blank | Manual-company snapshots supported; zero/multiple qualifying requests return null |
+| ชื่อพี่เลี้ยง | Current owner-scoped Mentor `first_name` + `last_name` | Existing pending/verified Mentor behavior retained; no Mentor displays `-` |
+| ตำแหน่งพี่เลี้ยง | Same current Mentor `position` | Real position, no JobPosting/title inference; blank/missing returns null |
+| ช่วงเวลาปฏิบัติงาน | Same selected CoopRequest `work_start_date` / `work_end_date` (DATEONLY) | Only genuine valid calendar dates; UI renders complete non-reversed period, otherwise `-` |
+| วันที่ประเมิน | CompanyEvaluation Sequelize `updatedAt`, mapped to DB `updated_at` | Last saved timestamp as ISO; absent evaluation/invalid timestamp returns null, never today's date before save |
+
+### Company selection, API and security
+
+- Existing workflow treats `approved`, `document_issued`, `in_progress` as accepted active stages. Select **exactly one** request belonging to authenticated Student whose status is in those three states. All review/pending, rejected and cancelled rows excluded. **No latest-created/updated ordering, historical fallback, status ranking or arbitrary company selection.** Zero qualifying rows yields null; two or more yield null for company and both work dates. Without a canonical placement pointer this is the conservative unambiguous rule. No date-expiry policy or new placement relation invented.
+- Request's accepted `company_name` snapshot takes precedence over mutable Company master name, matching existing request/UI conventions and preserving manual companies. Company joined with explicit `name` only as a blank-snapshot fallback. Company/work dates always come from the same selected request; multiple accepted requests are deliberately unresolved and documented rather than guessed.
+- Existing GET/PUT `/api/student-coop/company-evaluation` response conventions retained: `student.name`, nullable `mentor.name`, `evaluation`, and `display`. `display.student_id` now means official Student code, not owner UUID; `major`, `company_name`, `mentor_position`, raw `work_start_date`, `work_end_date`, ISO `evaluation_date` are projected explicitly. Old display `work_period` placeholder replaced by raw period dates; frontend only formats backend context. Save response receives the same context and still refreshes through GET.
+- Owner always `req.user.id`, DB Student must exist and be co_op. Query/body Student/Mentor/Company identities cannot select another owner; existing strict score/comment whitelist unchanged. GET uses repeatable-read/read-only transaction, four fixed model reads (Student, Mentor, evaluation, owner requests), bounded request query `limit:2` and Company join; no per-request queries/N+1. Explicit necessary attributes exclude password/hash/email/verification/token/storage/Head fields. Only needed context/evaluation fields returned, no whole Sequelize models.
+- Current Mentor remains owner-scoped rather than trusting evaluation's old Mentor FK. SQL-access guard confirms evaluation GET/PUT never accesses student_files; frontend requests remain restricted to its evaluation endpoint. Scores 1-10, five-question sum/average, single-row updates, concurrency locks and failure rollback unchanged and passing.
+
+### Frontend and date behavior
+
+- Existing eight labels/HTML/cards/CSS preserved. Controller consumes backend values with trimmed nonempty-text fallback; only missing/null/blank values show `-`, rendered via textContent. Student/major/company/Mentor context is never reconstructed from other dashboard DOM fields.
+- Reuses existing safe shared `formatDate` through the controller's injected formatter; parent-page change is only passing that function. Evaluation's scoped date guard rejects missing/non-ISO/nonfinite/impossible calendar dates, including rollover such as February 31, before formatting. Complete valid date pair renders e.g. **1 มิ.ย. 2569 - 30 ก.ย. 2569**; missing/invalid/reversed period displays `-`. Saved timestamp e.g. **7 ต.ค. 2569** updates after save/read-back; no fabricated evaluation date before first save. Shared formatter and unrelated date consumers were not changed.
+- Initial-load protection, save/edit/reload, preserved input on failure, distinct committed-save/refresh-failure feedback, loading and duplicate-submit behavior pass unchanged. No UI/sidebar or other Student panel redesign.
+
+### Fresh Local read-only evidence and limitations
+
+- Confirmed existing runner Local migration status before and after: **16 executed / 0 pending**, 015 already applied by the preceding authorized rollout. Backend `/health/db` **200 / ok**. **No new migration created, no migration source modified, no Local UP/DOWN/ledger/sync/seed/reset or persistence write.**
+- Actual revised service queried existing Local using database-enforced `default_transaction_read_only=on`, UTC timezone, verified target intern_system, and a SQL guard that stops on any student_files reference. **4/4 real names, 4/4 official codes, majors IT/INE, 2 real Mentor names and positions.** **0 available current accepted companies/complete periods/saved evaluation dates** for these four current Local contexts, so those fields correctly render `-`; absent Mentor/position also falls back. Only aggregate availability printed, not personal row contents. Guard recorded **zero student_files queries**.
+- **StudentFiles touched: NO.** No StudentFile query/fingerprint recheck permitted in this task; previous stable baseline remains retained evidence only (**3 rows / `7d0bf012a44869f32fd415f75b08471c`**). Do not claim a freshly compared fingerprint. No real file inspection/upload/replacement/deletion, persistent StudentFile row/metadata mutation or anomaly investigation/repair.
+- Real Chrome visual/native interaction and authenticated Local save/edit/read-back remain pending from preceding checkpoint; no browser PASS claimed. Current automated real authenticated HTTP/SQL acceptance uses disposable accounts only. No Local token minted, password reset, user/company/request fixture, fake context or write smoke performed.
+
+### Focused verification and files
+
+- **Backend 23 PASS / 0 FAIL / 0 SKIP:** `node --test --test-isolation=none backend/test/companyEvaluation.database.test.js backend/test/companyEvaluationMigration.test.js backend/test/companyEvaluationContext.test.js backend/test/roleAuth.test.js`. Includes actual HTTP/SQL all-field context, pending/no/deleted/replaced Mentor, saved timestamp mapping, official code/major, accepted company snapshot/master fallback/manual company, rejected/cancelled history, zero and multiple accepted requests, all three accepted statuses, cross-owner query/company spoofing, safe response projection, missing/invalid values, persistence/concurrency/fault rollback, StudentFile SQL isolation and real frontend API/page saved read-back. Existing real migration UP/DOWN/DDL-rollback/constraint suite rerun only on disposable PostgreSQL; migration 015 source unchanged.
+- **Frontend 36 PASS / 0 FAIL / 0 SKIP:** `node --test --test-isolation=none frontend/test/studentCompanyEvaluation.test.js frontend/test/studentCoopProject.test.js frontend/test/studentAdvisor.test.js`. Evaluation **11 PASS**, including new eight-label/value test, null/blank/impossible/invalid/reversed date cases, last-saved date reload and existing score/save/feedback/duplicate coverage. Project/advisor tests are shared-page regressions only; upload/preview use simulated controls/Blobs, not physical files. One initial new test assumed a different label ordering; corrected the assertion to verify all eight labels while preserving existing layout. No application defect from that fixture assumption.
+- **Build PASS:** `npm.cmd --prefix frontend run build -- --configLoader native`, seven entries. **Seven changed JS files `node --check` PASS. `git diff --check` PASS**, including final documentation; existing line-ending notices only. No full repository audit or unrelated suites.
+- Test server **fitm_eval_context_tests_20261007**, PostgreSQL 16, no persistent volume, localhost-only port **61087**, guarded fitm_evaluation_test with `fitm.a013_disposable`, `fitm.a014_disposable`, `fitm.a015_disposable=on`. Existing migrations initialized only disposable schema; no existing Local StudentFiles accessed by those fixtures. Suites clean owned fixtures/schemas; dedicated container stopped/auto-removed and absence verified. No secrets or real external messages/emails printed/sent.
+- **Changed this task:** `backend/src/services/companyEvaluation.service.js`; `backend/test/companyEvaluation.database.test.js`; new `backend/test/companyEvaluationContext.test.js`; `frontend/src/pages/studentCompanyEvaluation.js`; formatter injection only in `frontend/src/pages/student_coop.js`; `frontend/test/studentCompanyEvaluation.test.js`; `frontend/test/helpers/studentCompanyEvaluationFixture.js`; this HANDOFF. All unrelated WIP retained. Models/controllers/routes/migrations/API adapter/HTML/CSS unchanged this task.
+- No Project Advisor/Topic/Book/Poster/prerequisite/request workflow/Mentor verification/Daily Log/role frontend feature work, config/security edit, commit, push, deployment, SSH, VMware or staging/production access.
+
+### NEXT STUDENT_COOP TASK - exactly one, not started
+
+**Manual Chrome Company Evaluation acceptance with the existing authenticated Student session: verify the real information card, legitimate missing-data fallbacks and save/edit/reload at desktop/mobile widths.** Recommendation only / **NOT STARTED**; preserve StudentFiles and leave the prior anomaly outside this scope.
+
+**STOP - Company Evaluation context-only task complete; Local migration status unchanged at 16 executed / 0 pending.**
+
+## Local Company Evaluation migration 015 rollout and acceptance - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. LOCAL MIGRATION 015 APPLIED / SCHEMA, PRESERVATION AND AUTOMATED ACCEPTANCE PASS. LOCAL AUTHENTICATED SAVE/EDIT AND REAL CHROME ACCEPTANCE PENDING.** The user explicitly authorized the attached Local rollout request, superseding the preceding prohibition on applying 015 for this rollout only. Implementation retained; no feature development or application/test source changes. All previous history remains below.
+
+### Local preflight, backup and migration
+
+- Verified Compose **intern_postgres**, database **intern_system**, backend **intern_backend**; PostgreSQL accepting connections and `/health/db` **200 / ok**. Existing runner reported **15 executed through 014 / exactly one pending: `015_add_company_evaluations.js`**; new table absent. No unexpected migration/schema target found.
+- Fresh read-only baseline before any persistent DB write: every probe connection enforced `default_transaction_read_only=on` and UTC SQL timezone. Used the same full-row JSONB/ordered aggregate MD5 method as the latest safety checkpoint. Snapshot at **2026-10-07 01:28:27 Asia/Bangkok** (`2026-10-06T18:28:27.134Z`), `/tmp/fitm_local_before015_20261007.json` in intern_backend, mode 0600. All **19 pre-existing public tables** except the migration ledger captured; only aggregate evidence printed.
+- Fresh **after-014 / before-015 custom-format backup**, outside Git: `C:\Users\suran\AppData\Local\Temp\fitm-intern-local-backup-20261007-before015-ad98f2aacd564412952407113ac6fac2\intern_system_after014_before015.dump`. **77,458 bytes**; pg_dump exit 0, nonempty host copy, `pg_restore --list` archive validation exit 0. SHA256 **`E4441B01BB1F4398B9092E2486AFF856BAF5B54FB0AD6B121E7968EE53A23EDC`**. Duplicate archive retained in intern_postgres at `/tmp/fitm_before015_20261007.dump`. Final host size/hash recheck passed; no archive contents printed or restore performed.
+- Ran the unchanged existing **`docker exec intern_backend npm run db:migrate`** only after confirming 015 was the sole pending migration. Exit **0**, runner applied **only 015**. No old migration rerun/edit, manual ledger marking, Local DOWN, random ALTER, Sequelize sync, seed/reset or fixture creation.
+- Final existing status command: **16 executed / 0 pending**, including 015 exactly once. Migration 007a/010/011/012/013/014 remain executed. New Company Evaluation schema is now available on persistent Local; the earlier missing-015 restriction is superseded.
+
+### Schema and StudentFiles preservation
+
+- **company_evaluations PASS:** 11 expected columns: UUID PK, required Student UUID FK, nullable Mentor UUID FK, five required SMALLINT scores, required optional-content comment with empty default, two required timestamp columns with CURRENT_TIMESTAMP defaults. **Five validated constraints:** PK, Student FK with DELETE/UPDATE CASCADE, Mentor FK with DELETE SET NULL / UPDATE CASCADE, five-score 1-10 CHECK, trimmed/max-2,000-character comment CHECK. **Two valid unique indexes:** PK and `company_evaluations_student_unique`. One evaluation per Student is enforced; totals/average remain computed rather than stored.
+- **Immediately after migration:** all 19 pre-existing tables matched baseline counts and full-row fingerprints, including Student, Mentor and StudentFiles. New evaluation table empty. Existing Student/Mentor records and relations preserved.
+- **Final read-only preservation PASS**, after all acceptance/regression checks, **2026-10-07 01:34:03 Asia/Bangkok** (`2026-10-06T18:34:03.159Z`): all 19 old tables still match. **student_files before: 3 / after: 3; fingerprint before and after: `7d0bf012a44869f32fd415f75b08471c`; unchanged YES.** Final aggregate evidence at `/tmp/fitm_local_final015_20261007.json` in intern_backend, mode 0600. Evaluation row count remains **0**.
+- No StudentFile row or metadata was modified. No Project Book, Poster, Resume or physical upload was read/uploaded/replaced/deleted by this task. Read-only safety hashing was the only persistent `student_files` inspection. Evaluation uses its dedicated table; its real authenticated GET/PUT SQL-access isolation regression passed. Prior StudentFiles fingerprint anomaly remains unconfirmed and unresolved; no investigation/repair or automatic restore was attempted.
+
+### Local backend and frontend acceptance boundaries
+
+- Real **CompanyEvaluation** model query with explicit safe **Student / Mentor associations** executes on Local without schema errors. Read-only actual evaluation service checked **all four existing Co-op Students**; names match stored Student fields, **two current Mentor names** match owner-scoped stored names and the other two render `-`. All six deliberately unavailable display fields remain `-`. Backend health **200 / ok**; real unauthenticated evaluation HTTP GET **401**, as expected.
+- Actual Local read-only service responses were fed privately into the existing HTML-derived DOM fixture and actual production evaluation controller/menu activation. **PASS:** menu opens, information names/placeholders render, five score controls, scores **8, 9, 8, 9, 8** produce live **42/50** and **8.40/10**. Personal response content was not printed. Temporary helper is outside source at `/tmp/fitm_evaluation_local_readonly_dom_20261007.mjs` in intern_frontend. **No save adapter invoked / no Local evaluation writes.** These service/model-to-DOM checks bypass HTTP authentication and simulate the DOM; they do not establish native browser/visual acceptance.
+- **LOCAL AUTHENTICATED CREATE / UPDATE / SAVED READ-BACK: PENDING / BLOCKED.** No existing safe authenticated Student session/test mechanism was available through the tools. No Local credentials/context were invented, JWT minted, password reset, account created or authenticated write attempted. Duplicate-row protection is verified by the Local unique index and disposable HTTP/SQL tests; it is not a Local write acceptance result. Local table still has zero evaluations. Migration readiness and read acceptance pass; existing-user save/edit/reload remains to be checked in Chrome.
+- **REAL BROWSER EXECUTED: NO / BLOCKED.** No browser tool available; prior Chrome/Node EPERM limitation retained without repeated launch or security/configuration changes. CSS/native selectors, focus, responsive layout and actual user feedback have not received browser PASS. Save/read-back/duplicate submission and feedback pass automated fixtures and disposable SQL separately.
+
+### Fresh focused regressions and cleanup
+
+- **Backend 57 PASS / 0 FAIL / 0 SKIP:** `node --test --test-isolation=none backend/test/companyEvaluation.database.test.js backend/test/companyEvaluationMigration.test.js backend/test/studentAdvisor.test.js backend/test/roleAuth.test.js backend/test/coopPrerequisites.test.js backend/test/coopDirectWorkflow.test.js`. Evaluation/migration suites contribute **17 PASS**: authenticated persistence, five scores/comment, exact 42/8.4 total, same-row edits, ownership/spoofing/role denial, current/absent/deleted/replaced Mentor, concurrency, transaction rollback, actual frontend API/form -> HTTP -> SQL, and no evaluation access to student_files. Migration real UP/DOWN/UP, injected UP/DOWN failure rollback, checks/FKs/uniqueness, parent preservation and populated DOWN refusal pass only in disposable PostgreSQL. Expected parser error logging from the invalid-JSON negative case is not a failing test.
+- **Frontend 93 PASS / 0 FAIL / 1 existing browser SKIP:** `node --test --test-isolation=none frontend/test/studentCompanyEvaluation.test.js frontend/test/studentCoopProject.test.js frontend/test/studentCoopPrerequisites.test.js frontend/test/studentCoopAcceptance.test.js frontend/test/studentCoopSavedAcceptance.test.js frontend/test/studentAdvisor.test.js`. Evaluation **8 PASS** including information card/questions, live summary, save/edit/reload, required validation, initial failure protection, duplicate-submit handling, shared feedback and committed-save/refresh-failure distinction. Existing Project upload/preview frontend regressions use simulated controls/Blobs; no actual StudentFiles/storage integration suite rerun.
+- **Frontend build PASS:** `npm.cmd --prefix frontend run build -- --configLoader native`, seven entries. **`node --check`: 47 existing modified/untracked JS files PASS**; no JS changed this rollout. **`git diff --check`: PASS**, including the final HANDOFF check; line-ending notices only.
+- Database-writing tests targeted only dedicated **`fitm_evaluation_local_rollout_tests_20261007`**, PostgreSQL 16, no persistent volume, localhost-only port **62957**, guards `fitm.a013_disposable`, `fitm.a014_disposable`, `fitm.a015_disposable=on`. DBs **fitm_evaluation_test / fitm_role_test**; guards verified by suites before DDL. Test schemas/fixtures cleaned by suites; container stopped/auto-removed and absence verified. No test write targeted intern_system. No secrets, real tokens/passwords, external emails/messages or private row contents printed.
+
+### Manual Chrome checklist - pending, not executed
+
+1. Open `student_coop.html` using the existing authenticated Student session.
+2. Open **ประเมินสถานประกอบการ**.
+3. Check Student name.
+4. Check current Mentor name, or `-` if absent.
+5. Check unavailable fields show `-`.
+6. Score all five questions (8, 9, 8, 9, 8).
+7. Check total **42/50**.
+8. Check average **8.40/10**.
+9. Enter a comment.
+10. Save and check shared success feedback.
+11. Refresh the page.
+12. Reopen Evaluation.
+13. Check scores/comment remain, then edit/save/reload to verify updating the same evaluation without duplicates. Check desktop/mobile layout and keyboard/native selectors during this same acceptance task. Preserve all existing StudentFiles; do not upload/replace/delete files.
+
+### Files, scope and next task
+
+- **This rollout changed only HANDOFF_fitm-intern.md in source.** Existing production implementation/tests and unrelated modified/untracked WIP retained. Build output and temporary probes/backup are outside tracked source. No .env/config/security edit, commit, push, deployment, SSH, VMware, staging/production access or new feature.
+- **NEXT STUDENT_COOP TASK - exactly one:** perform manual Chrome Company Evaluation acceptance with the existing authenticated Student session, covering save/edit/reload and desktop/mobile/native-control behavior. **Recommendation only / NOT STARTED.** Preserve StudentFiles and do not investigate/repair the earlier anomaly in that acceptance task.
+
+**STOP - authorized Local migration 015 rollout, focused automated/read-only acceptance and report complete. Local status 16 executed / 0 pending; real existing-user write/browser acceptance remains pending.**
+
+## Company Evaluation final automated acceptance and StudentFile isolation - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. COMPANY EVALUATION IMPLEMENTATION / FINAL AUTOMATED ACCEPTANCE PASS; MIGRATION 015 PENDING ON PERSISTENT LOCAL.** User explicitly resumed only tests, regressions, build, syntax/diff checks, HANDOFF and final report. Implementation was not redone. This supersedes the preceding STOP checkpoint's unfinished automated/final-report status; earlier history remains below. Real Chrome and persistent Local evaluation acceptance are not claimed.
+
+### Implemented behavior retained
+
+- Authenticated Student GET/PUT `/api/student-coop/company-evaluation` uses the dedicated **CompanyEvaluation / company_evaluations** model/table. Five integer scores 1–10, optional trimmed comment (max 2,000 Unicode characters), one current editable evaluation via UNIQUE(Student). Student owner and current Mentor are derived server-side; submitted owner/Mentor IDs, names, totals and averages are rejected. Totals/average are recalculated from the five stored scores.
+- Actual `Student.first_name` / `last_name` supply Student name using JWT identity. Current owner-scoped `Mentor.first_name` / `last_name` supply Mentor name for pending or verified Mentor; absent/deleted Mentor renders `-`. Mentor sensitive fields are omitted. Student ID, major, company, Mentor position, work period and evaluation date deliberately remain `-`.
+- Existing completed UI: information card, two categories/five specified Thai questions, labelled native score selectors, optional comments, live `/50` total and two-decimal `/10` average, single save action, loading/duplicate-submit protection and shared toast/inline feedback. Save refreshes via GET; initial read failure prevents overwrites, failed saves preserve input, and committed-save/refresh-failure feedback remains distinct. Scoped academic/admin card styling and <=600px stacking retained. No sidebar/unrelated feature redesign.
+- Migration **`015_add_company_evaluations.js`** retains transactional UP/DOWN, score/comment CHECKs, Student CASCADE / Mentor SET NULL FKs, unique Student index and refusal to roll back populated evaluations. No applied migration was edited and no unnecessary derived-total columns were added.
+
+### StudentFiles safety baseline and isolation
+
+- Safety instructions remain active: do not alter StudentFile rows or upload/replace/delete Book, Poster, Resume or other existing files; do not investigate/repair the previous fingerprint anomaly within Company Evaluation. Evaluation must use its own table. This completion turn made **no persistent Local DB writes or existing-file mutations**, no Local migration/rollback/sync/seed/reset, and no anomaly investigation or repair.
+- Recorded a **fresh read-only current baseline** before verification, from `intern_backend` -> database `intern_system`, with `default_transaction_read_only=on` on every connection and explicit UTC SQL timezone. Baseline recorded **2026-10-07 00:49:55 Asia/Bangkok** (`2026-10-06T17:49:55.871Z`): **3 StudentFile rows**, aggregate full-row MD5 **`7d0bf012a44869f32fd415f75b08471c`**. Snapshot is outside source at `/tmp/fitm_company_evaluation_student_files_baseline_1791308995872.json` in `intern_backend`, mode 0600; only counts/hash/target/time were printed, no raw row data. This is a new current baseline, not a claim about the cause or resolution of the older anomaly.
+- **Final read-only comparison PASS:** same three rows and same aggregate fingerprint. Local evaluation table remains absent and 015 ledger entry count is zero. Existing files were not read/uploaded/replaced/deleted by this turn.
+- Targeted source review found **no StudentFile, student_files or storage/upload access** in evaluation service/controller/model/migration/frontend controller. Added a real disposable HTTP/SQL regression that intercepts database queries and fails if evaluation GET/PUT issues SQL against `student_files`; it passed. The actual frontend API/page bridge also now asserts every evaluation request uses only its own endpoint. These are the only test-code additions this completion turn; production implementation unchanged.
+
+### Final verification results
+
+- **Backend: 72 PASS / 0 FAIL / 0 SKIP.** Command: `node --test --test-isolation=none backend/test/companyEvaluation.database.test.js backend/test/companyEvaluationMigration.test.js backend/test/coopProjectAdvisor.database.test.js backend/test/coopProjectAdvisorMigration.test.js backend/test/studentAdvisor.test.js backend/test/roleAuth.test.js backend/test/coopPrerequisites.test.js backend/test/coopDirectWorkflow.test.js`. Evaluation/migration tests now account for **17 PASS**; remaining **55** are relevant advisor/auth/class-advisor/prerequisite/direct-workflow regressions.
+- Persistence/security: real authenticated HTTP create/read/update same row, all five SQL scores, trimmed/optional/bounded comment, accurate total/average, concurrent first saves and fault rollback, fresh frontend API/form -> HTTP -> SQL read-back. Invalid scores/missing scores/text/decimals/comments and spoofed owner/Mentor/name/derived totals rejected. Cross-owner query/path/body attacks cannot read/update another Student. Wrong-role/missing/non-Coop/unauthenticated actors denied. Current pending/verified/absent/deleted/replaced Mentor behavior and FK clearing/rederivation pass.
+- Migration 015: real isolated-schema empty UP/DOWN/UP, injected UP-index and DOWN-DDL failure rollback, parent preservation, required/bounded scores/comments, FKs/uniqueness, SET NULL/CASCADE and populated DOWN refusal all pass. **No StudentFile upload/storage integration suite was rerun after the safety update.** Previously recorded project upload regression evidence remains historical; current frontend Project upload/preview tests use simulated controls/Blobs and do not modify actual StudentFiles.
+- **Frontend: 93 PASS / 0 FAIL / 1 existing real-browser SKIP.** Combined `studentCompanyEvaluation`, `studentCoopProject`, `studentCoopPrerequisites`, `studentCoopAcceptance`, `studentCoopSavedAcceptance`, `studentAdvisor`; new evaluation tests **8 PASS**. Real disposable SQL is used for saved prerequisite regression; DOM/layout/native behavior remains simulated/reviewed.
+- **Frontend build PASS:** `npm.cmd --prefix frontend run build -- --configLoader native`, all seven entries. **`node --check`: 47 modified/untracked JS files PASS. `git diff --check`: PASS**, including final documentation check; line-ending notices only.
+- Database-writing checks used only guarded **`fitm_eval_safety_20261007`**, PostgreSQL 16, no persistent volume, localhost-only random port **60128**, `fitm.a013_disposable`, `fitm.a014_disposable`, `fitm.a015_disposable=on`. DBs: `fitm_evaluation_test`, `fitm_advisor_test`, `fitm_role_test`. Test schemas/Students are cleaned by suites; dedicated container stopped/auto-removed and absence verified. No secrets/external messages/emails printed or sent.
+
+### Local state, files and limits
+
+- Actual inspected status is **15 executed through 014 / 1 pending: `015_add_company_evaluations.js`**. The safety message's earlier 0-pending state predates the new migration file. **015 HAS NOT BEEN APPLIED TO PERSISTENT LOCAL**, as explicitly instructed; dedicated Local table absent. Implementation works against disposable SQL, but persistent Local evaluation GET reports migration 015 required and saving stays disabled until a separately authorized rollout. No Local smoke write was attempted.
+- This completion turn changed only **`backend/test/companyEvaluation.database.test.js`** (SQL-access isolation and frontend endpoint assertions) and **this HANDOFF**. Existing implementation files remain as enumerated in the prior checkpoint: backend migration/model/service/controller/routes/tests; frontend API/controller/menu hook/evaluation HTML/CSS/tests/helper. All unrelated modified/untracked WIP preserved.
+- **REAL BROWSER ACCEPTANCE BLOCKED:** no browser tooling available / prior EPERM limitation retained; no security weakening, no Chrome/native focus/visual PASS claimed. Automated acceptance and requested final report complete the current authorized scope; real Chrome and persistent Local acceptance remain separate limitations.
+- No commit, push, deploy, SSH, staging/production access or new feature started. No config/.env/security change. Prior StudentFile anomaly remains unconfirmed and unresolved, without further investigation in this scope.
+
+### NEXT STUDENT_COOP TASK - exactly one, not started
+
+**Perform separately authorized Local Company Evaluation acceptance: fresh read-only StudentFiles baseline and backup, migration 015-only rollout, then existing-user Chrome save/edit/read-back and responsive checks.** Recommendation only; **NOT STARTED**. Do not investigate or repair the earlier StudentFiles anomaly as part of that feature acceptance.
+
+**STOP - requested Company Evaluation verification, HANDOFF and final report complete; 015 remains pending on Local.**
+
+## Company Evaluation implementation checkpoint - user-requested STOP - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. FEATURE DEVELOPMENT STOPPED AT USER REQUEST DUE TO USAGE LIMIT. IMPLEMENTATION AND AUTOMATED CHECKS PASS; FINAL ACCEPTANCE/FEATURE REPORT UNFINISHED. MIGRATION 015 NOT APPLIED TO PERSISTENT LOCAL.** Preserve all previous history below. Do not resume development, apply migrations or start another feature without a new user instruction.
+
+### Already implemented
+
+- Only Student **ประเมินสถานประกอบการ**: real frontend -> authenticated API -> backend -> PostgreSQL -> read-back implementation, verified against disposable PostgreSQL. Existing `panel-evaluate` placeholder replaced with the requested Thai heading/subtitle, eight-field information card, two question categories and the five specified questions. Native labelled score dropdowns contain blank selection plus 1–10, `/10` indicators; optional comment textarea; live total `/50` and average with two decimals; one primary **บันทึกแบบประเมิน** action.
+- Student name derives from authenticated `req.user.id` -> actual `Student.first_name` / `last_name`. Mentor name derives from owner-scoped `Mentor.student_id` -> current `first_name` / `last_name`, for pending or verified Mentor as allowed by existing Mentor reads. No Mentor renders `-`. Only names are returned; no Mentor email/token/password/internal identity fields are exposed in the context response.
+- Six conservative display placeholders remain `-`: Student ID, major, company, Mentor position, work period, evaluation date. No fake values or new company/placement linkage was introduced.
+- New **CompanyEvaluation / company_evaluations**: UUID ID, Student FK, nullable server-derived Mentor FK, five required scores, trimmed optional comment, timestamps. UNIQUE(Student) gives one editable current row; totals/average are calculated server-side from scores, not duplicated in storage. Student-row locking serializes saves; create/edit persists and read-back reloads the same row.
+- GET/PUT **`/api/student-coop/company-evaluation`**, using existing Student JWT/actor middleware and checking the DB Student exists with `track=co_op`. Body accepts only q1–q5 numeric integer scores 1–10 and optional string comment, trimmed/max 2,000 Unicode characters with NUL rejected. Owner/Mentor IDs, names and client totals/averages are rejected. Owner always comes from JWT, never query/body/path. Missing 015 returns explicit **503** explanation.
+- New frontend controller initializes once and loads when the evaluation menu opens. Failed/malformed initial reads disable saving; required score validation, loading/disabled controls, duplicate-submit guard, shared inline/toast feedback, save plus fresh GET read-back, preserved input on errors, and distinct committed-save/failed-refresh feedback implemented. CSS is scoped to `#panel-evaluate`: existing white/blue card theme, two-column information layout, question/score alignment, <=600px stacking, wrapping Thai text and keyboard focus styling. Sidebar and unrelated menus were not redesigned.
+- New migration **`015_add_company_evaluations.js`** is separate from all applied migrations. Transactional UP/DOWN, bounded score/comment CHECKs, Student CASCADE and Mentor SET NULL FKs, unique Student index. DOWN refuses populated evaluations to preserve evidence. No old migration was edited; no sync/alter/seed/reset on Local.
+
+### Exact verification state at STOP
+
+The user listed these checks as potentially unfinished; **they had already completed before the STOP message**:
+
+- **Persistence tests: COMPLETE / PASS.** Authenticated HTTP create, all five SQL score values, comment trimming/bounds, same-row updates, optional-comment clearing, GET read-back, concurrent first saves and injected update failure rollback. Actual frontend API/controller -> HTTP -> PostgreSQL -> fresh DOM fixture read-back also passed.
+- **Ownership/security tests: COMPLETE / PASS.** Student B cannot read/update A via body/query/path overrides; cross-owner/Mentor/name/derived-total spoofing rejected; unauthenticated/wrong-role/missing/non-Coop actors denied. Pending/verified, absent/deleted/replaced Mentor behavior verified, including SET NULL and deriving the replacement on next save.
+- **Migration 015 tests: COMPLETE / PASS.** Empty UP/DOWN/UP, injected UP-index and DOWN-DDL rollback, required/bounded scores, comment bounds, FKs, uniqueness, Mentor deletion SET NULL, Student deletion CASCADE, populated DOWN refusal, parent-table preservation. Combined new backend evaluation/migration suites: **16 PASS / 0 FAIL / 0 SKIP**.
+- **Frontend regression tests: COMPLETE / PASS.** New evaluation suite **8 PASS**; combined evaluation + existing Project/Prerequisite/Acceptance/SavedAcceptance/StudentAdvisor suites **93 PASS / 0 FAIL / 1 existing browser-only SKIP**. New tests cover names/placeholders, five labelled 1–10 selectors, totals/averages, required validation, trimmed comment/save/edit/read-back, load/schema failures, duplicate submit, shared feedback and failed refresh after committed save. DOM simulation does not prove visual/native browser behavior.
+- **Shared backend regressions: COMPLETE / PASS.** Advisor/migration/project/auth/class-advisor/prerequisite/direct workflow **73 PASS**; Role PostgreSQL/auth/workflow **32 PASS**. The only related old-test adjustment adds 015 to expected pending migration names after 011. Total backend checks this turn: **121 PASS** across these three runs.
+- **Frontend build: COMPLETE / PASS.** `npm.cmd --prefix frontend run build -- --configLoader native`, seven entries. **JS syntax: 47 modified/untracked JS files PASS.** **`git diff --check`: COMPLETE / PASS** before this documentation-only checkpoint; line-ending notices only.
+- **Final acceptance/report: UNFINISHED.** No comprehensive final feature report was delivered before the user requested STOP. No real-browser Company Evaluation acceptance; browser tooling unavailable/prior EPERM limitation retained, security unchanged. Persistent Local evaluation save/read acceptance is not possible until separately authorized migration 015 rollout. Final review/acceptance closure is not claimed. No additional tests/build/development were started after STOP.
+
+### Local, resources and files
+
+- Ran `git status --short` at STOP; existing modified/untracked WIP preserved. Reconfirmed via `docker exec intern_backend npm run db:migrate:status`: **15 executed through 014 / exactly 1 pending: `015_add_company_evaluations.js`**. **015 HAS NOT BEEN APPLIED TO PERSISTENT LOCAL.** Prior authorization was specific to 014, so the current conditional migration rule did not permit evaluation rollout. No new Local backup/rollout/rollback, fixture or evaluation write was performed. The preceding StudentFiles fingerprint discrepancy remains uninvestigated/unresolved; it was not part of this feature.
+- All database-writing tests used dedicated auto-remove PostgreSQL 16 container **`fitm_evaluation_tests_20261007`**, no persistent volume, localhost-only port **49682**, guards `fitm.a013_disposable`, `fitm.a014_disposable`, `fitm.a015_disposable=on`; DBs `fitm_evaluation_test`, `fitm_advisor_test`, `fitm_project_test`, `fitm_role_test`. Stopped/auto-removed as cleanup at STOP; absence verified. No secrets printed or external emails/messages sent.
+- New backend files: `src/db/migrations/015_add_company_evaluations.js`, `src/models/companyEvaluation.model.js`, `src/services/companyEvaluation.service.js`, `src/controllers/companyEvaluation.controller.js`, `test/companyEvaluation.database.test.js`, `test/companyEvaluationMigration.test.js`.
+- Modified existing backend: `src/routes/studentCoop.routes.js` (two evaluation routes); `test/roleWorkflow.database.test.js` (015 pending-name assertion only this turn).
+- New frontend files: `src/pages/studentCompanyEvaluation.js`, `test/studentCompanyEvaluation.test.js`, `test/helpers/studentCompanyEvaluationFixture.js`.
+- Modified existing frontend: `src/api/studentCoop.api.js` (GET/PUT adapters), `src/pages/student_coop.js` (controller initialization/menu hook), `src/student_coop/student_coop.html` (evaluation panel), `src/styles/student_coop.css` (scoped evaluation styles). This HANDOFF updated at STOP. No commit/push/deploy/SSH/staging/production operation or config/security change.
+
+### NEXT STUDENT_COOP TASK - exactly one, not started
+
+**Resume Company Evaluation final acceptance and final feature report only when the user explicitly resumes work.** Local migration 015 remains pending and requires separate explicit authorization with fresh backup before any persistent Local rollout. **NOT STARTED.**
+
+**STOP - user-requested checkpoint recorded; no further feature work.**
+
+## Local migration 014 and Student project/upload UI fix - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. LOCAL MIGRATION 014 APPLIED / AUTOMATED ACCEPTANCE PASS / FINAL DATA AUDIT DISCREPANCY REPORTED.** This checkpoint supersedes earlier statements that 014 is pending or Local advisor requests are unavailable. Earlier work and validation history remain below. Only the current task's two Student panels were styled; real Chrome visual/native-control acceptance is pending. Final Local StudentFiles fingerprint changed after successful immediate post-migration preservation verification; further application/database mutations stopped and no restoration was attempted.
+
+### Local migration, backup and preservation
+
+- Explicit user authorization: apply only **`014_add_coop_project_advisor_requests.js`** to persistent **Local development** PostgreSQL. Target verified as Compose `intern_postgres`, database `intern_system`, backend `intern_backend`; PostgreSQL ready and `/health/db` 200/ok. Preflight ledger had **14 executed / only 014 pending**. Existing `coop_projects`, Student canonical advisor FK column, Teacher head flag and migration 013 schema were compatible. Isolated migration 014 suite ran **before application: 5 PASS / 0 FAIL / 0 SKIP**, including transactional UP/DOWN rollback and populated DOWN refusal.
+- Fresh custom-format backup **after 013 / before 014**, outside Git: `C:\Users\suran\AppData\Local\Temp\fitm-intern-local-backup-20261007-before014-21c0933de72f426cbf8a6090e487ed82\intern_system_after013_before014.dump`. **72,360 bytes**; pg_dump/copy exit 0, file nonempty, `pg_restore --list` archive validation exit 0. SHA256 **`FB783F0636DC8F4D7953806FFEAB3E570F63653D20154A46E0C5DDA66C231660`**. Container archive: `/tmp/fitm_before014_20261007.dump` in `intern_postgres`. This backup is retained; no restore or Local DOWN was run.
+- First attempted Umzug invocation through stdin failed **before migration execution** (`up is not a function`). Diagnosis: Umzug selects dynamic import when `require.main` is absent; CommonJS object method exports are not named ES-module exports. Confirmed valid `require(...).up`, absent request table/014 ledger, and all 18 old-table counts/fingerprints unchanged. Used the unchanged repository **`npm run db:migrate`** script after rechecking 014 was the sole pending migration. It applied **only 014**, exit 0; no runner or migration source was edited and no ledger was manually written.
+- Verified request table's **11 columns**, PK, **2 validated FKs** (Student CASCADE / Teacher RESTRICT on delete, both CASCADE on update), **2 validated state/time CHECKs**, **3 valid indexes** including unique current-per-Student partial index and Teacher/pending partial index. New table initially empty. Final ledger: **15 executed / 0 pending**, through 014; 007a/010/011/012/013 remain applied.
+- **Immediately after migration**, before UI work/smoke, aggregate row counts and full-row fingerprints matched for **all 18 pre-existing public tables** (excluding the intentionally updated migration ledger), including **4 Students, 23 Teachers, 1 existing CoopProject and 3 StudentFiles**. The project existed at this task's start; it was preserved. Snapshot contains only counts/hashes, stored at `/tmp/fitm_local_before_014_20261007.json` in `intern_backend`. No fake Local account, topic, request, assignment or upload was created by this task.
+- **Final preservation audit discrepancy / STOP:** 17 of 18 old tables still match, including Students, Teachers and CoopProjects. `student_files` remains **3 rows** but fingerprint changed from `d67d3e581114f26f00836d43bb30acca` to `472806d09e4f72201189dadcff4736f0`. Latest file `updated_at` is `2026-10-06T17:32:49.266Z`; request table remains empty. Change occurred after the successful immediate preservation check; its field/source/cause is **unconfirmed**. Local smoke connections enforced read-only mode and test writes targeted disposable databases. Do **not** claim final full-table preservation or assume a particular author/background process caused it. In accordance with the user's stop/report rule, no further application/DB mutations or restore/rollback were attempted; backup remains intact. A final read-only confirmation returned the same discrepancy. Overall end-of-task preservation check is **FAIL / requires explanation**, distinct from migration/schema and automated suite PASS.
+
+### Student project and upload UI
+
+- Layout/CSS additions are scoped to **`#panel-coop` and `#panel-report-upload`**. Reused existing theme variables, header/card styles and status palette. Added project card heading, consistent labels/44px controls, help text, separated advisor/topic fields, save/upload action rows and keyboard focus outlines. Existing sidebar/theme and other panel implementation were preserved.
+- Advisor status now uses a compact badge plus separate teacher name/rejection reason rendered as text: **none gray / pending yellow / confirmed green / rejected red**. Existing live Teacher directory/selection APIs remain: 23 active Teachers, no Staff options or hardcoded UUIDs; pending can change, confirmed locks, rejected can reselect. Canonical `coop_advisor_teacher_id` is still set **only by Teacher acceptance**; class `advisor_teacher_id` remains separate. Topic save/edit/read-back remains independent in all four advisor states.
+- Book and Poster have distinct cards, format/10MB help associated with accessible **native** file inputs, styled `::file-selector-button`, full wrapping current filenames, separate updated-date metadata and compact accessible preview buttons. Desktop has two columns and metadata/button rows; at <=900px cards stack, at <=600px metadata/actions stack. `min-width:0`, `minmax(0,1fr)` and `overflow-wrap:anywhere` prevent content-driven expansion without hiding filenames. Responsive verification is CSS/structure review, **not browser-measured acceptance**.
+- Secure authenticated Blob preview, reserved tab, URL lifetime/revocation, upload validation/replacement and partial-failure semantics remain unchanged. Preview button accessible name includes the full filename. DOM text rendering preserves long/untrusted filenames and avoids HTML interpretation.
+- File date rendering uses the existing guarded formatter, accepts ISO/date-only timestamps, and explicitly displays **`ไม่ระบุวันที่`** for null, undefined, empty or invalid timestamps. Regression tests assert both valid date output and fallback; no `Invalid time value` / `Invalid Date` rendering. Added both-card long-filename/accessibility/Blob-preview coverage.
+
+### Tests, read-only Local smoke and limits
+
+- Backend combined advisor/migration/project/auth/class-advisor/prerequisite/direct-workflow suites: **73 PASS / 0 FAIL / 0 SKIP**, including **15 advisor/migration tests** and **58 shared regressions**. Command: `node --test --test-isolation=none backend/test/coopProjectAdvisor.database.test.js backend/test/coopProjectAdvisorMigration.test.js backend/test/studentCoopProject.database.test.js backend/test/coopProjectMigration.test.js backend/test/studentAdvisor.test.js backend/test/roleAuth.test.js backend/test/coopPrerequisites.test.js backend/test/coopDirectWorkflow.test.js`.
+- Required frontend suites (`studentCoopProject`, `studentCoopPrerequisites`, `studentCoopAcceptance`, `studentCoopSavedAcceptance`, `studentAdvisor`): **85 PASS / 0 FAIL / 1 existing real-browser SKIP**. Project-only suite **17 PASS**. Initial test command without `--test-isolation=none` hit Node child-process `spawn EPERM` before tests; reran with the existing no-child-process option, without changing security or configuration.
+- All database-writing tests targeted only guarded databases `fitm_advisor_test`, `fitm_project_test`, `fitm_role_test` inside disposable PostgreSQL 16 container **`fitm_ui_rollout_tests_20261007`**, no persistent volume, localhost-only random port **62186**, guards `fitm.a013_disposable=on` and `fitm.a014_disposable=on`. Credentials/JWTs belong only to disposable fixtures and were not printed. Container stopped/auto-removed after verification.
+- Frontend build `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, seven entries. `node --check` for all **38 modified/untracked JS files**: **PASS**. `git diff --check`: **PASS**, line-ending notices only.
+- Local smoke used application Teacher/advisor controllers and project service with **database-enforced `default_transaction_read_only=on` on every connection**, existing Students only: directory **200 / 23 active Teachers**, advisor reads **200** for all **4 Co-op Students**, **1 topic** read, **2 project file metadata records / 2 owner-checked file paths present**. No schema error, Local writes or raw Student/teacher/file data printed. Local `/health/db` **200**; unauthenticated real HTTP directory/advisor/topic/files all **401**, as expected. **Authenticated Local HTTP/browser acceptance was not performed**; controller/service checks and disposable authenticated HTTP acceptance are distinct evidence.
+- No browser tool available; prior Chrome EPERM limitation retained. No browser visual/focus/native-picker PASS is claimed and no security setting was weakened. All user WIP retained; no commit/push/deploy/SSH/VMware/staging/production operation, `.env` or `.codex/config.toml` edit.
+
+### Files changed in this task
+
+- `frontend/src/student_coop/student_coop.html` - only project/upload panel card structure and accessible help/action markup.
+- `frontend/src/styles/student_coop.css` - appended scoped project/upload styles and responsive rules.
+- `frontend/src/pages/student_coop.js` - project advisor status/file metadata rendering only; workflow and preview implementation retained.
+- `frontend/test/studentCoopProject.test.js` - stronger date regression plus both-card long-name/accessibility/preview test.
+- This HANDOFF. **No backend/migration source was changed in this task.** Existing modified/untracked backend and frontend work comes from earlier checkpoints and remains intact.
+
+### NEXT STUDENT_COOP TASK - exactly one
+
+**Perform manual Chrome visual/native-interaction acceptance of the updated Project and Project Upload panels at desktop and mobile widths.** Check status readability, teacher selection, topic editing, long filenames, native file picker and secure preview using the existing Local user session. Recommendation only; **NOT STARTED**. Do not start another Student feature.
+
+**STOP - authorized Local 014 rollout and requested UI fixes applied; automated/read-only acceptance passed, final StudentFiles preservation discrepancy reported.**
+
+## Student project advisor request and topic independence - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. IMPLEMENTATION / ISOLATED AUTOMATED ACCEPTANCE PASS. NEW MIGRATION 014 PENDING ON LOCAL.** This checkpoint supersedes the old business rule that Students could only view a Head-assigned project advisor. The prior Local rollout through 013 remains applied, and all earlier implementation/test history is preserved below. Real-browser acceptance is not claimed.
+
+### Authoritative business rule and field semantics
+
+- **Student chooses an active project Teacher -> pending request -> that Teacher explicitly accepts or rejects. `students.coop_advisor_teacher_id` becomes confirmed only after Teacher acceptance.** Selection, pending replacement and rejection never set this field. **`advisor_teacher_id` remains the separate class-advisor workflow and was not changed.**
+- **Project Topic does not depend on advisor confirmation.** Students can save/edit/reload topics with no advisor, pending, rejected or confirmed status. Existing topic validation and failed-initial-read protection remain. The prior source already separated topic persistence from advisor assignment; the new request workflow preserves and tests that independence.
+- A confirmed advisor cannot be replaced through Student selection. Pre-existing canonical confirmed assignments are displayed/locked without inventing request history. Changing confirmed advisors remains a separate, unimplemented business workflow.
+- The old Head direct-assignment service now returns **409** with an explanation instead of writing the canonical field; keeping that write would bypass the new Teacher-confirmation requirement. The existing authenticated route remains to give old clients a clear response. No Head/Staff frontend was changed.
+
+### Request persistence, history and concurrency
+
+- New model/table **`CoopProjectAdvisorRequest` / `coop_project_advisor_requests`**, related to Student and requested Teacher. A request does not require a `coop_projects` row or a topic. This avoids requiring a topic submission just to select an advisor.
+- Stores immutable request UUID, Student FK, `requested_advisor_teacher_id`, constrained `pending/confirmed/rejected/superseded` status, requested/confirmed/rejected/superseded timestamps, rejection reason and standard timestamps. API `none` means no request exists; it is not an unconstrained persisted status.
+- Replacing pending/rejected selection supersedes the old row and creates a **new request ID**, preserving selection/rejection history. Selecting the same pending Teacher again is idempotent. A -> B -> A creates a fresh A request; the first A request can never be accepted again.
+- Student selection, Teacher decision and existing topic writes lock the **Student row first**. Selection/decision then lock relevant request rows and recheck current DB state. Teacher activity and request ownership are checked from DB, not client IDs. Acceptance updates request state and canonical Student advisor in the same transaction; fault injection proves both roll back together.
+- Only the requested Teacher can decide; another Teacher receives **404**, superseded/terminal requests **409**, inactive Teacher **403**. Double accept, accept/reject and Student-change/Teacher-accept races commit exactly one compatible result. Class advisor remains unchanged in these cases.
+- Rejection requires the existing convention's nonempty reason (maximum 2,000 characters), retained/displayed on Student reads and preserved when the rejected row is superseded. Separate request rows hold this history; Coop Request approval audits were not reused or rewritten.
+
+### APIs and authentication
+
+- Student JWT/actor middleware reused unchanged. **GET `/api/student-coop/project-advisor-request`** returns `{advisor_request, confirmed_advisor}` with safe Teacher `{id,name}`, status, request ID, dates and rejection reason. **POST** at that path accepts only `{teacher_id}`; owner comes from authenticated Student, never a payload Student ID.
+- Existing **GET/PUT `/api/student-coop/project`** remain the independent topic APIs; topic response retains `coop_advisor_teacher` for compatibility and also names it `confirmed_advisor`. Topic PUT still accepts only `{topic}` and rejects advisor/owner fields. Keeping advisor state at its own endpoint allows topics to work while new schema is pending or advisor reads fail.
+- Existing Teacher login/JWT and `createRequireTeacher` middleware reused. New authenticated Teacher routes: **GET `/api/teachers/project-advisor-requests`** (own pending requests, bounded existing pagination); **POST `/api/teachers/project-advisor-requests/:id/accept`**; **POST `.../:id/reject`** with `{reason}`. Decisions use authenticated Teacher ID and immutable request ID. Teacher/Student roles cannot impersonate each other.
+- Explicit safe Teacher attributes used for Student/request reads. No Teacher UUIDs are hardcoded, Staff are not directory choices, and no password/hash/privilege field is exposed in directory or request responses.
+- Missing new schema returns a clear **503** on advisor operations. Actual HTTP tests with only migrations through 013 prove topic read/save/edit still succeed while advisor GET/POST return 503. No fake advisor status or hidden topic/database failure was introduced.
+
+### Student UI and date correction
+
+- Existing project selector now submits a request on a selection change when state is none/pending/rejected; confirmed selection is locked. Active options use unchanged `GET /api/teachers`. Status text shows no selection, requested Teacher/pending, confirmation, or rejection/reason.
+- Independent request/directory loading failures preserve topic editing and current displayed advisor state, while disabling unsafe advisor selection. Request loading blocks duplicate submissions; actual save is followed by read-back. Failure/conflict reloads DB state, including confirmation racing a Student change. Existing shared messages/toast are used; no alert/confirm was added.
+- Topic controls do not depend on request confirmation, directory availability or request-loading state. Thai topic create/edit/reload values from the request were verified through actual frontend API/page handlers, authenticated HTTP and disposable PostgreSQL; frontend-only coverage additionally checks all four advisor states.
+- **`Invalid time value` FIXED:** the exact shared `formatDate` in this page previously appended `T00:00:00` to full ISO timestamps, creating an invalid date. It now appends only for date-only strings, accepts ISO timestamps and returns `-` for null/invalid values. Focused metadata-render regression uses the actual formatter. Book/Poster upload/storage/preview behavior was not refactored and existing regressions pass.
+
+### Migration and persistent Local boundary
+
+- New **`014_add_coop_project_advisor_requests.js`** only. Transactional UP creates request table/FKs, state/time checks, one-current-request-per-Student partial uniqueness and requested-Teacher/pending queue index. Student deletion cascades; Teacher deletion restricts to preserve references. DOWN takes an exclusive lock and refuses when any request/history exists; empty DOWN leaves all older tables/confirmed fields intact.
+- Real PostgreSQL tests cover empty UP/DOWN/UP, injected UP/DOWN DDL rollback, FK/cascade/restrict, uniqueness, status/date/reason constraints and populated DOWN refusal. No old migration source was rewritten.
+- **NEW MIGRATION APPLIED TO PERSISTENT LOCAL: NO.** Final read-only Local status: **14 executed / 1 pending (`014`)**; 007a/010/011/012/013 remain executed. Next rollout order is **013 (already executed) -> 014 (pending)**, subject to separate explicit Local authorization and backup. Source completion does not enable Local advisor requests before 014 is applied.
+- Final Local schema confirms the new request table is absent, as intended. All eight base-table counts/fingerprints still match the preceding rollout baseline. Backend `/health/db` remains **200 / ok**. No persistent Local fixture/account/topic/request/file/privilege was written by tests; no sync, seed/reset or Local migration/rollback was run.
+
+### Tests, build and limitations
+
+- Focused backend: `node --test --test-isolation=none backend/test/coopProjectAdvisor.database.test.js backend/test/coopProjectAdvisorMigration.test.js`, with **`COOP_ADVISOR_DISPOSABLE_DATABASE_URL` only to guarded `fitm_advisor_test`**: **15 PASS / 0 FAIL / 0 SKIP**. Includes real Teacher bcrypt login/JWT authorization, state/history/concurrency/rollback, all topic states, pending-schema compatibility and actual frontend API/page bridge.
+- Shared backend project/prerequisite/class-advisor/auth regression: `studentCoopProject.database`, `coopProjectMigration`, `studentAdvisor`, `roleAuth`, `coopPrerequisites`, `coopDirectWorkflow`, with **`COOP_PROJECT_DISPOSABLE_DATABASE_URL` only to guarded `fitm_project_test`**: **58 PASS / 0 FAIL / 0 SKIP**. Existing Book/Poster persistence/preview and class-advisor semantics pass.
+- Role PostgreSQL regression, with **`ROLE_BACKEND_INTEGRATION_TEST=true` / `ROLE_DISPOSABLE_DATABASE_URL` only to guarded `fitm_role_test`**: **32 PASS / 0 FAIL / 0 SKIP**. The old direct-assignment acceptance assertion now checks 409/no advisor mutation. Obsolete migration-count assertions were changed to expected pending names / unchanged ledger snapshots; one initial run failed only that old hardcoded count, then the corrected suite passed.
+- Required combined frontend `studentCoopProject`, `studentCoopPrerequisites`, `studentCoopAcceptance`, `studentCoopSavedAcceptance`, `studentAdvisor`, with **`COOP_UI_DISPOSABLE_DATABASE_URL` only to guarded `fitm_role_test`**: **83 PASS / 0 FAIL / 1 SKIP** (existing browser-only check). Latest focused project suite after adding duplicate-request/rejected-reselection coverage: **16 PASS / 0 FAIL**.
+- Frontend build `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven entries. `node --check` for all **15 changed JS files**: **PASS**. `git diff --check`: **PASS**, line-ending notices only.
+- Disposable container **`fitm_advisor_acceptance_20261007`**, PostgreSQL 16, no persistent volume, random **localhost-only** port; guards `fitm.a013_disposable=on` and `fitm.a014_disposable=on`. Test credentials/JWTs generated only for disposable fixtures and not printed. Test schemas/accounts/storage fixtures cleaned by suites; remaining disposable resources removed by stopping the auto-remove container. Container removal verified.
+- Container Node 20 rejected the newer `--test-isolation=none` flag before tests began. Used existing host Node 24 / installed dependencies with the same disposable target instead; no dependencies or system/security/config changes. **No real-browser visual/native-interaction PASS is inferred from the HTML-derived DOM fixtures.**
+
+### Files changed in this task
+
+- New backend: migration 014; `src/models/coopProjectAdvisorRequest.model.js`; `src/services/coopProjectAdvisor.service.js`; `src/controllers/coopProjectAdvisor.controller.js`; `test/coopProjectAdvisor.database.test.js`; `test/coopProjectAdvisorMigration.test.js`.
+- Existing backend: `src/routes/studentCoop.routes.js`; `src/routes/roleWorkflow.routes.js`; `src/services/studentCoopProject.service.js`; the direct-assignment method only in `src/services/roleWorkflow.service.js`; related assertions in `test/roleWorkflow.database.test.js`.
+- Frontend: `src/api/studentCoop.api.js`; project section/shared date formatter in `src/pages/student_coop.js`; project section in `src/student_coop/student_coop.html`; `test/studentCoopProject.test.js`; `test/helpers/studentCoopProjectFixture.js`.
+- This HANDOFF. All pre-existing user/Codex WIP retained. No changes to Student/Teacher/CoopProject model fields, class-advisor flow, prerequisites, Resume, file upload backend, Staff/Head frontend or Daily Log implementation. No commit/push/deploy/SSH/VM/staging/production access; no `.env`/`.codex/config.toml` change or external message/email.
+
+### NEXT STUDENT_COOP TASK - exactly one
+
+**Perform a separately authorized, backed-up Local migration 014 rollout with read-only schema/application verification.** Recommendation only; **NOT STARTED**. Do not apply it under this implementation task's authorization.
+
+**STOP - advisor request implementation and isolated acceptance complete; new Local rollout and next task not started.**
+
+## Local PostgreSQL migration rollout - 2026-10-06
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok, verified at approximately 23:50. LOCAL MIGRATION ROLLOUT PASS.** This checkpoint supersedes all earlier statements that persistent Local migrations 007a/010/011/012/013 are pending or not applied. Previous implementation, isolated acceptance and browser-limit history remains below. The user explicitly authorized these migrations on persistent **Local development only**. No VMware/staging/production access or deployment occurred.
+
+### Local target, preflight and backup
+
+- Read `git status --short`, the latest handoff, Compose, package scripts, database configuration and migration sources before rollout. All existing modified/untracked application and test work was preserved. Compose service **`postgres`**, container **`intern_postgres`**, PostgreSQL 16; expected database **`intern_system`**. Backend container **`intern_backend`** connects through Compose host `postgres`, port 5432. PostgreSQL was running/healthy, `pg_isready` passed, backend authentication passed, expected database identity was confirmed and recovery mode was false. Backend `/health/db` returned **200 / ok** before and after rollout.
+- Initial ledger: **9 executed** (`001` through `009`, including `007`, excluding `007a`); **5 pending**, exactly `007a_create_missing_base_tables.js`, `010_cleanup_student_file_schema_drift.js`, `011_add_role_workflow_reviews.js`, `012_coop_prerequisites_and_direct_review.js`, `013_add_coop_projects_and_current_files.js`. No unknown migration or unexpected executed target was found.
+- Read-only preflight confirmed all eight base tables already existed. Baseline counts: teachers **23**, students **4**, student_profiles **2**, student_files **3**, mentors **2**, mentor_tokens **16**, coop_requests **1**, coop_request_delivery_methods **3**. Aggregate fingerprints were recorded without printing row contents, identities, credentials or tokens.
+- `student_files.storage_path`: **75 UNIQUE constraints / 75 backing unique indexes**, all valid/ready/live, **one shared signature**, hence **74 redundant equivalents**. Canonical `student_files_storage_path_key` was valid. Existing Resume partial uniqueness remained present. No duplicate Student/project-file category groups existed.
+- `teachers.is_department_head`, both workflow review tables, `coop_request_prerequisite_courses` and `coop_projects` were absent. Coop Request statuses: **1 cancelled**, **0 staff_review**, **0 department_head_review**.
+- Before the first migration, created a PostgreSQL **custom-format** backup with `pg_dump` inside `intern_postgres`, validated its archive with `pg_restore --list`, and copied it outside the repository. **pg_dump exit 0; archive check PASS; size 84,157 bytes.** Backup contents were never displayed, committed or uploaded.
+- **Preserved Local backup path:** `C:\Users\suran\AppData\Local\Temp\fitm-intern-local-backup-20261006-b1d6f0dceff24a0eb18a08ed64fb97dd\intern_system_before_007a_010_011_012_013.dump`.
+- Backup SHA-256: `C1BC9CBBF87E42E419AEF90A935660B607CB6F4FB64BDD3EC865004C8F356200`. The host copy was checked again after rollout; a second copy remains in `intern_postgres` at `/tmp/fitm_intern_before_rollout_20261006.dump`. These are temporary locations, not durable archival storage. No restore was needed or performed.
+
+### Applied migrations and verification
+
+- The existing CLI supports batch UP only. Used the project's existing **Umzug + SequelizeStorage** configuration (`src/db/migrations/*.js`, QueryInterface context, `sequelize_meta` ledger) with **`umzug.up({ migrations: [name] })`** in an ephemeral helper under backend `/tmp`, outside the source tree. The expected pending suffix and Local target were checked before each step. Every migration command exited **0**; after each step, its ledger entry occurred exactly once, expected schema invariants passed and baseline data fingerprints matched before proceeding. No ledger records were manually manufactured.
+- **007a APPLIED / PASS:** all required base tables exist; all eight baseline counts/fingerprints preserved. Existing tables required no recreation or data removal. Ledger count became **10**.
+- **010 APPLIED / PASS:** UNIQUE constraints and backing unique indexes **75 -> 1**; redundant equivalents **74 -> 0**. Retained valid/ready/live canonical **`student_files_storage_path_key`**. All **3 StudentFile rows** and their metadata fingerprints preserved. Ledger count became **11**.
+- **011 APPLIED / PASS:** `teachers.is_department_head` is **boolean, NOT NULL, DEFAULT false**. All **23 Teacher rows** preserved; **0 Head flags true**, with no manual assignment. Both `coop_request_reviews` and `job_posting_reviews` have expected primary keys, actor/transition/reason checks, validated FKs with RESTRICT deletion / CASCADE updates, review-time indexes, request queue index and Student class-advisor index. Ledger count became **12**.
+- **012 APPLIED / PASS:** prerequisite table exists with validated request FK (**ON DELETE/UPDATE CASCADE**), valid unique `(coop_request_id, course_code)` index, exact IT/INE program/course checks and status/grade checks. Review Student FK and actor checks exist. New transition/reason checks intentionally retain the migration's **NOT VALID** state, preserving historical evidence while enforcing new writes. Schema supports **Student -> Advisor -> Department Head**; Staff has cancellation rather than an approval stage. **staff_review before 0 / after 0; department_head_review before 0 / after 0; requests converted 0.** Existing cancelled request and audit history preserved; no fabricated decisions. Ledger count became **13**.
+- **013 APPLIED / PASS:** `coop_projects` exists with UUID PK, required Student FK (**ON DELETE/UPDATE CASCADE**), valid unique Student index, required `topic varchar(500)` and trimmed 1-500 topic check, required creation/update timestamps with CURRENT_TIMESTAMP defaults. Valid partial unique `student_files_current_coop_project_unique` covers `(student_id, file_type)` for Book/Poster. StudentFile rows preserved. Ledger count became **14**.
+- Final `npm run db:migrate:status`: **14 executed / 0 pending**, including **007a/010/011/012/013**. No migration failed; no DOWN, restore, random ALTER, Sequelize sync, reset or seed was run.
+
+### Read-only application compatibility and Student Coop smoke
+
+- All seven actual Sequelize models queried Local successfully: **Teacher, Student, StudentProfile, StudentFile, CoopRequest, CoopRequestPrerequisiteCourse, CoopProject**. Teacher query explicitly confirmed `is_department_head` was selected and false; no missing-column/table errors. Empty new prerequisite/project tables were queried successfully without inserting fixtures.
+- Application probes used dedicated connections with **`SET SESSION default_transaction_read_only = on`**, verified on the probe connection. Actual read controllers returned **200** for Teacher directory (**23 active**), Student Profile with advisor relations, existing Coop Request list (**1**) and existing request detail with delivery/prerequisite/review associations. Actual prerequisite/review associations loaded successfully (**0 / 0**, as expected for the legacy request).
+- Actual project read service passed with the existing Student and an empty saved topic; current Book/Poster metadata service passed with **2 existing files**, and verified no `storage_path` field in returned public metadata. Response contents, account identifiers and personal data were not printed. These are controller/service probes; they bypass authentication and are **not authenticated HTTP/browser acceptance**.
+- Existing backend root and `/health/db`: **200**. All five probed protected GET paths (Teacher directory, Student Profile, request list, project, project-files) returned expected **401** without a token. **Authenticated HTTP/browser smoke remains PENDING: no existing authenticated session was available.** No passwords were manufactured/reset, JWTs minted, new users created or account privileges changed.
+- Backend remained running and PostgreSQL healthy. Filtered backend log inspection over the final **15 minutes found 0 schema/connectivity/migration error lines**; raw logs were not printed. No restart/rebuild was necessary.
+- After all probes, all eight baseline counts/fingerprints still matched. New project, prerequisite and both audit tables remain empty. **Local data modified by tests: NONE.** No write acceptance tests ran against persistent Local; no real file, topic, request, advisor, cancellation or audit decision was changed by tests.
+
+### Files and operational boundary
+
+- **This task changed only `HANDOFF_fitm-intern.md`. MIGRATIONS MODIFIED: NONE.** Existing source/test WIP retained. Temporary helper and fingerprint evidence remain only in backend `/tmp`; backup remains outside Git.
+- `git diff --check`: **PASS** (existing line-ending notices only). No commit/push/deployment, SSH/VM/staging/production access, external message/email, dependency installation, `.env` or `.codex/config.toml` change occurred.
+- Two initial probe-harness issues (PowerShell native argument quoting and Sequelize special table/SHOW result formatting) were corrected only in temporary probes before relying on their results; they were not migration/application defects and caused no database writes.
+
+### NEXT TASK - exactly one
+
+**Complete authenticated real-browser Student Coop acceptance in isolated disposable infrastructure when a browser runner is available, covering saved prerequisites/history, topic save/reload and Book/Poster new-tab previews.** Recommendation only; **NOT STARTED**. Persistent Local write acceptance remains separately authorized work.
+
+**STOP - authorized Local rollout complete; next task not started.**
+
+## Student Co-op Project + Project Files - 2026-10-06
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. Implementation and AUTOMATED ACCEPTANCE PASS. REAL BROWSER ACCEPTANCE BLOCKED.** The two existing Student sections (โครงการสหกิจศึกษา and อัปโหลดโครงการ) now connect frontend/API/backend to PostgreSQL and private file storage, with read-back. This supersedes their historical UI-only classifications below. **Persistent Local migrations NOT APPLIED**: source completion does not mean the existing Local database has the new schema. All previous prerequisite, request, advisor, Resume and other history is retained.
+
+### Project Advisor and exact Teacher directory result
+
+- Read-only Local inspection through `intern_backend` used an explicit `SET TRANSACTION READ ONLY` transaction and selected only Teacher `academic_title`, `first_name`, `last_name`, `status`. **23 records, all active; exact 23/23 required faculty match; no missing/extra names.** Neither คุณลัดดา ตั้งเกียรติศิริ nor คุณอุไรวรรณ วัตรยิ่ง appears in teachers. No account, UUID, email or password was created/changed in Local.
+- Verified list: ผศ.ดร.ขนิษฐา นามี; ผศ.พีระศักดิ์ เสรีกุล; รศ.ดร.อนิราช มิ่งขวัญ; ผศ.สมชัย เชียงพงศ์พันธุ์; ดร.ประดิษฐ์ พิทักษ์เสถียรกุล; ผศ.ดร.สุปีติ กุลจันทร์; ผศ.ดร.วันทนี ประจวบศุภกิจ; รศ.ดร.ยุพิน สรรพคุณ; ผศ.ดร.พาฝัน ดวงไพศาล; ดร.วัชรชัย คงศิริวัฒนา; ผศ.นิมิต ศรีคำทา; ผศ.นพดล บูรณ์กุศล; ผศ.ดร.อรบุษป์ วุฒิกมลชัย; ผศ.ดร.สิวาลัย จินเจือ; ผศ.ดร.บีสุดา ดาวเรือง; ผศ.ดร.นิติการ นาคเจือทอง; ผศ.ดร.สุพาภรณ์ ซิ้มเจริญ; ผศ.นพเก้า ทองใบ; ผศ.ดร.นัฎฐพันธ์ นาคพงษ์; ผศ.ดร.ศรายุทธ ธเนศสกุลวัฒนา; อ.ดร.ศิรินทรา แว่วศรี; อ.ดร.กาญจน์ ณ ศรีธะ; อ.ดร.พิทย์พิมล ชูรอด.
+- Reused unchanged `GET /api/teachers` and its explicit safe attributes/active filter. No default Teacher SELECT or `is_department_head` column added to Student queries. Automated HTTP directory tests assert count/names, exclude inactive Teacher/Staff and auth fields, and inspect generated SQL for compatibility.
+- **Authorization conflict resolved by preserving the backend rule:** the old Student dropdown suggested self-assignment, but `coop_advisor_teacher_id` belongs to the existing privileged Department Head assignment workflow. The dropdown now loads actual Teacher names and displays the assigned project advisor **disabled/read-only**, with explanatory text. A directory failure preserves the assigned advisor returned by the project API. No Student assignment/request privilege added. Class advisor `advisor_teacher_id` remains separate and untouched; topic payload rejects either advisor field.
+- Project read-back fetches the current Student relation using only Teacher `id`, `academic_title`, `first_name`, `last_name`, returning `{id,name}`. No duplicate advisor column in projects.
+
+### Project Topic persistence and APIs
+
+- New `CoopProject` model/table `coop_projects`: UUID PK, required Student FK with CASCADE, unique Student, `topic varchar(500)`, timestamps. One project per Student. No appropriate existing topic field/API was present in the scoped models/routes.
+- New authenticated routes under `/api/student-coop`: **GET `/project`**, **PUT `/project`**, **GET `/project-files`**, **POST `/project-book`**, **POST `/poster`**, **GET `/project-files/:id/preview`**. Uses existing Student JWT/actor middleware, then checks the authenticated Student exists and is `co_op`. Client Student IDs are never used.
+- Topic PUT accepts only `{topic}`; trims, rejects blank/non-string/over-500/control-character values and extra fields. Student-row transaction lock serializes creation/update; unique Student index is the database backstop. Response returns saved topic and current assigned project advisor. Topic saving works without requiring a directory load or advisor assignment.
+- Frontend loads on authenticated dashboard startup, saves/edits through the new API, reads back afterward and shows persisted values in a fresh page fixture. Initial read failure disables saving to prevent overwriting an unseen topic. Save loading disables duplicate submissions/edits and restores controls. Existing shared feedback is used.
+
+### Project Book and Poster storage, replacement and preview
+
+- Reused `StudentFile` types **`coop_project_book` / `coop_poster`**, UUID storage filenames and existing `projectBooks` / `posters` owner directories. Book: **PDF only**. Poster: **PDF, PNG, JPEG/JPG**. Maximum **10MB per file**. No second storage system or public static file URL.
+- Multipart field `file` only; extra owner/body fields rejected. Extension/MIME allowlist, nonempty size limit, actual PDF/PNG/JPEG header signatures and physical-size check run before metadata commit. Traversal/control-character filenames rejected; original names retained for display. A confirmed multipart Latin-1 parsing issue was reproduced with a Thai filename and fixed by decoding valid UTF-8 filename bytes safely; Thai filename metadata and inline response now pass.
+- Student lock + transactional category-row update/create serialize concurrent first uploads and replacements. New partial unique index ensures one current file per Student/category. A pre-existing duplicate causes migration UP to roll back without deleting files or evidence.
+- Before transaction/commit failure, remove only the authenticated category's staged new file. After commit, preserve the committed file even if old-file cleanup fails; clean old files only after successful commit. Fault tests cover first metadata failure, replacement metadata failure, commit rejection, post-commit cleanup failure and concurrent uploads. A failed old cleanup can leave a superseded file for later cleanup, never a missing committed reference; no unrelated Resume cleanup code changed.
+- File list exposes only ID/type/original name/MIME/size/updated date, never `storage_path` or absolute paths. Preview requires authenticated ownership, allowed project category/MIME and a valid file UUID; other-owner/unknown IDs return 404. Lexical paths and realpaths must remain inside the owner's category and storage root; malformed/tampered paths cannot escape. Preview returns correct MIME, `Content-Disposition: inline` with encoded safe UTF-8 name, `private, no-store` and `nosniff`.
+- Existing upload section shows stored names/dates and empty states after reload, with เปิดดู buttons. Selected categories upload independently; a Book success remains visible if Poster fails. Duplicate submission/loading/success/error/input reset use existing shared feedback. No alert/confirm or dashboard redesign.
+- Preview reserves a blank new tab synchronously in the click event, clears its opener, fetches the authenticated file Blob through the existing Bearer API client, creates an object URL and navigates the tab. URLs are revoked after tab close or parent `pagehide`; failed fetch/type/popup paths show errors and close unused tabs. No permanent unauthenticated URL or frontend filesystem URL construction. Native PDF/image display is implemented but **not real-browser verified**.
+
+### Migration and persistent Local boundary
+
+- Created **`013_add_coop_projects_and_current_files.js`** only. Transactional UP creates project FK/unique/topic constraints and project-file partial uniqueness. DOWN refuses to erase saved topics, removes the added index/table only on an empty project fixture, and preserves StudentFile metadata/bytes. Real PostgreSQL tests verify UP/DOWN/UP, injected DDL rollback, topic/FK/uniqueness checks, populated DOWN refusal, FK cascade and duplicate-file UP refusal.
+- **MIGRATIONS APPLIED TO PERSISTENT LOCAL DB: NONE.** Pending rollout order remains **007a -> 010 -> 011 -> 012 -> 013**. Old migration sources/history unchanged; no ledger marking, Local schema alteration, Sequelize sync, reset or seed. Existing Local data/storage/containers untouched except the authorized read-only faculty inspection. Do not treat these two new sections as live Local persistence acceptance until separately authorized schema rollout.
+
+### Tests and evidence boundary
+
+- Backend with `COOP_PROJECT_DISPOSABLE_DATABASE_URL` pointing only to marked `fitm_project_test`: `node --test --test-isolation=none backend/test/studentCoopProject.database.test.js backend/test/coopProjectMigration.test.js backend/test/resumeUpload.test.js backend/test/studentAdvisor.test.js backend/test/roleAuth.test.js`: **33 PASS / 0 FAIL / 0 SKIP**. Includes 13 project HTTP/storage test entries, 5 real migration entries, 8 existing Resume, 3 advisor and 4 auth/route-loading checks.
+- Project integration rerun after strengthening the frontend bridge to execute the actual new frontend API module (real FormData/Files and Blob), and using valid PDF/PNG/JPEG fixtures: **13 PASS / 0 FAIL**. Real authenticated HTTP, SQL read-back, physical bytes, owner denial, preview headers, Thai names and actual page handlers pass. Fresh HTML-derived DOM fixture reads the saved topic and both files. DOM/new-tab behavior is simulated; native rendering is not inferred.
+- Frontend with `COOP_UI_DISPOSABLE_DATABASE_URL` pointing only to marked disposable `fitm_role_test`: `node --test --test-isolation=none frontend/test/studentCoopProject.test.js frontend/test/studentCoopPrerequisites.test.js frontend/test/studentCoopAcceptance.test.js frontend/test/studentCoopSavedAcceptance.test.js frontend/test/studentAdvisor.test.js`: **76 PASS / 0 FAIL / 1 SKIP** (real-browser test). Includes eight new project/upload/preview cases plus all required existing regressions and six saved-request PostgreSQL entries.
+- Frontend build `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven existing entries. Changed JS/migration/tests `node --check`: **PASS**. `git diff --check`: **PASS** (line-ending notices only).
+- Browser discovery found no browser tool/debugging listener; fresh generic Node spawn probe still returns **EPERM**. **REAL BROWSER ACCEPTANCE BLOCKED BY LOCAL ENVIRONMENT**. No repeated Chrome launch, Full Access, Windows security or `.codex/config.toml` change.
+- Initial fixture failures (DOM appendChild modeling, shared Teacher fixtures in one test DB) were corrected in test setup. The one-time shell encoding issue in new Thai UI messages was corrected through Unicode-safe patches and covered by passing tests. Project and saved-request suites now use separate disposable databases. No dependencies installed.
+- Disposable resource `fitm_project_acceptance_20261006`: PostgreSQL 16, localhost-only random port, no volumes; `fitm_project_test` and `fitm_role_test` guarded by `fitm.a013_disposable=on`. Migrations executed only there; migration tests also use owned random schemas. Temporary storage fixtures and project account fixtures cleaned by tests. Container stopped and automatically removed after checks. No secrets/passwords/tokens printed or stored as real credentials.
+
+### Files changed in this checkpoint
+
+- Backend: `src/app.js`; reusable upload factory export/options in `src/middlewares/upload.middleware.js` (existing Resume/Profile defaults retained); new `src/models/coopProject.model.js`, `src/services/studentCoopProject.service.js`, `src/routes/studentCoop.routes.js`, migration 013.
+- Backend tests: new `test/studentCoopProject.database.test.js`, `test/coopProjectMigration.test.js`, `test/fixtures/coopFaculty.json` (required names only; generated test identities/auth values stay disposable).
+- Frontend: `src/pages/student_coop.js`, `src/student_coop/student_coop.html`; new `src/api/studentCoop.api.js`, `test/studentCoopProject.test.js`, `test/helpers/studentCoopProjectFixture.js`; this HANDOFF.
+- All pre-existing WIP retained. No Staff/Teacher/Head frontend, Daily Log, Mentor, prerequisite/request redesign, Resume source or unrelated Profile work. No commit/push/deployment/SSH/staging or configuration change.
+
+### NEXT STUDENT_COOP TASK - exactly one
+
+**Complete real-browser acceptance of project topic save/reload and Book/Poster new-tab previews when an isolated browser runner is available.** Recommendation only; **NOT STARTED**. Persistent Local migration rollout remains a separate authorization.
+
+**STOP - the two requested sections are implemented and tested in isolated infrastructure; Local rollout and next task not started.**
+
+## Student Co-op saved prerequisite acceptance - 2026-10-06
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. AUTOMATED ACCEPTANCE PASS; REAL BROWSER ACCEPTANCE BLOCKED BY LOCAL ENVIRONMENT.** This checkpoint supersedes the progress-step description below and preserves all previous implementation and verification history. No persistent Local migrations, commit, push or deployment occurred.
+
+### Automated acceptance and confirmed fixes
+
+- Added `frontend/test/studentCoopSavedAcceptance.test.js`: the existing HTML-derived DOM/VM fixture runs actual Student submit, list/detail/history handlers through adapters invoking the actual backend controllers against guarded disposable PostgreSQL. Actual role workflow services perform Advisor/Head decisions and Staff cancellation, followed by frontend refresh/detail checks. This is not a browser or HTTP/auth-boundary test; non-request profile rendering remains mocked.
+- IT renders and persists exactly five codes: `060243102`, `060243104`, `060243108`, `060243112`, `060243122`. INE renders and persists exactly five codes: `060233107`, `060233112`, `060233113`, `060233202`, `060233204`. Real database read-back and request detail assert saved program, canonical names, passed/B+, studying/null and unselected/null.
+- Saved Request A remains unchanged after Student.major changes and Request B is submitted. Reopening A through its actual history action displays A's saved INE snapshot and grade independently of the current IT profile. Advisor approval refreshes to Head review; Head approval completes progress; Advisor/Head rejection and Staff cancellation appear in history with preserved course snapshots. Decision reasons/actors are checked in database audit records; no new review-history UI feature was added.
+- Confirmed frontend bug: the approval bar omitted submission and left approved requests incomplete. Added failing regression first, then corrected it to four stages: submission, Class Advisor, Department Head, approval. `advisor_review` selects stage 2; `department_head_review` selects stage 3; approved/document-issued/in-progress complete all four approval stages. Existing document/work status labels remain. No Staff approval stage exists.
+- Confirmed frontend bug: cancelled requests attributed cancellation to the Student even when Staff cancelled. Changed the label to neutral `ยกเลิกคำร้อง`. Rejected/cancelled requests remain in history rather than the active request panel.
+- Modal reopen, duplicate-row/listener safeguards, both program switches, grades, stale-state protection, source alignment guards and class-advisor regressions pass in the automated fixture. Computed CSS and native browser interactions remain unverified.
+- Test fixture setup corrections (explicit Umzug CommonJS migration resolver and waiting for asynchronous history-detail completion) were test-harness fixes, not backend defects. No backend/schema/HTML/CSS changes were made in this acceptance checkpoint; previous pending work remains intact.
+
+### Real browser acceptance
+
+- **NOT EXECUTED / BLOCKED.** No browser tool or debugging listener was available. A generic Node child-process probe returned `EPERM`; the earlier isolated Chrome launch failed with IPC access denied (0x5). Identical blocked Chrome launches were not repeated. No security setting, `.codex/config.toml` or Full Access change was made. Automated results must not be described as browser PASS.
+
+### Verification and cleanup
+
+- Frontend combined run: `node --test --test-isolation=none frontend/test/studentCoopPrerequisites.test.js frontend/test/studentCoopAcceptance.test.js frontend/test/studentAdvisor.test.js frontend/test/studentCoopSavedAcceptance.test.js`: **68 PASS / 0 FAIL / 1 SKIP** (browser skip). The saved acceptance suite contributes six passing test entries, including its parent, with `COOP_UI_DISPOSABLE_DATABASE_URL` set only to the guarded disposable database.
+- Relevant backend prerequisite/direct-workflow run: `node --test --test-isolation=none backend/test/coopPrerequisites.test.js backend/test/coopDirectWorkflow.test.js`: **33 PASS / 0 FAIL**.
+- `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven existing HTML entries. `node --check` for the changed page and both acceptance test files: **PASS**. `git diff --check`: **PASS**.
+- Disposable PostgreSQL 16 container `fitm_coop_ui_acceptance_20261006` used no persistent volume, localhost-only dynamic port and database `fitm_role_test`, with `fitm.a013_disposable=on` guard. Repository migrations were applied only there. Container stopped and automatically removed after verification; existing Local database/container untouched.
+- **Migrations applied to persistent Local DB: NONE.** Pending order remains **007a -> 010 -> 011 -> 012** for a separately authorized rollout. Existing migration history is unchanged. No Sequelize sync, persistent ledger edit, commit, push, deployment or unrelated task.
+- Files changed in this checkpoint: `frontend/src/pages/student_coop.js`, `frontend/test/studentCoopAcceptance.test.js`, new `frontend/test/studentCoopSavedAcceptance.test.js`, and this HANDOFF.
+- Exactly one next Student Co-op task: complete real-browser visual/native-interaction acceptance of saved detail/history and the four-stage approval progress when a browser runner is available. Not started.
+
+## Co-op Request prerequisite persistence and corrected workflow — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** Backend/database migration source and frontend integration are complete and verified against disposable PostgreSQL. This supersedes the earlier conclusion that prerequisite persistence is absent. **Persistent Local migrations NOT APPLIED**: the new functionality requires schema rollout before use against the existing Local database. Existing implementation/alignment/Advisor/Resume history is preserved below; unrelated work not started.
+
+### Corrected workflow and permissions
+
+**Student → Class Advisor → Department Head → Approved.** Department Staff: **list/detail/history + pending cancellation only; NO request approval/rejection/forward gate.**
+
+- Student create writes `advisor_review`; legacy `submitted` remains accepted by the class-advisor stage.
+- Advisor approve: `advisor_review`/legacy `submitted` → `department_head_review`; reject → `rejected`. Authorization uses only `Student.advisor_teacher_id == authenticated Teacher.id`, not the separate project advisor.
+- Head approve/reject from `department_head_review` → `approved`/`rejected`; explicit DB `is_department_head`, active Teacher and advisor-derived department scope retained. No free-text position authorization.
+- Staff request approve/reject routes removed; forward route unavailable; service denies these Staff decisions with 403. New authenticated `POST /api/staff/coop-requests/:id/cancel` requires a nonblank reason (maximum 2000 characters), uses actor/Student/request locks and transaction, and appends review history. Pending `submitted`, `advisor_review`, legacy `staff_review`, and `department_head_review` can be cancelled. Approved/rejected/cancelled/document-issued/in-progress cannot.
+- Staff default listing covers all canonical statuses for history/view access. Existing Job Posting Staff review and privileged project-advisor functions are unchanged.
+- Existing `coop_request_reviews` mechanism now records Student submission, Student cancellation, Advisor decisions, Staff cancellation and Head decisions, including actor FK/role, decision, previous/next status, reason and timestamp. Student actor FK added; no duplicate audit system.
+- Legacy `staff_review` enum/status references remain only for historical display, active-request detection, filters, safe legacy cancellation and migration/downgrade compatibility. It is never the next approval stage. Migration 012 moves existing pending `staff_review` requests to Head review without fabricating a human decision; original review records stay unchanged. New transition/reason checks use PostgreSQL `NOT VALID` to preserve old evidence while enforcing the corrected rules on every new insert/update.
+
+### Persistence architecture and catalog
+
+- New normalized `coop_request_prerequisite_courses` child table/model: UUID PK, required request FK with CASCADE delete/update, `program`, `course_code`, canonical Thai `course_name`, optional canonical `english_name`, allowed `status`, nullable `grade`, timestamps. Unique `(coop_request_id, course_code)` index also supports request detail retrieval. DB checks enforce program/code membership and status/grade consistency.
+- Backend catalog owned in `backend/src/services/coopPrerequisites.js`; trust authenticated, transaction-locked `Student.major` only (`IT`/`INE`). Require exactly five active-program codes; reject duplicates, unknown/cross-program codes, invalid statuses, unsupported row properties and client name/program spoofing. Resolve canonical names server-side. Passed requires trimmed nonblank grade up to ten characters. Studying/unselected reject nonblank grades; blank non-passed grades normalize to null.
+- Student request, all five prerequisite rows, delivery children and submission audit are created in the existing transaction/Student-lock boundary. Insertion/audit failures roll back. No unrelated Company master insertion or transaction refactor.
+- IT: `060243102` การโปรแกรมคอมพิวเตอร์ / Computer Programming; `060243104` การเขียนโปรแกรมเชิงวัตถุ / Object-oriented Programming; `060243108` ระบบฐานข้อมูล / Database System; `060243112` การวิเคราะห์และออกแบบระบบ / System Analysis and Design; `060243122` เว็บแอปพลิเคชัน / Web Application.
+- INE: `060233107` ระบบฐานข้อมูล; `060233112` วิศวกรรมข้อมูล; `060233113` การเขียนโปรแกรมคอมพิวเตอร์ขั้นสูง; `060233202` ปฏิบัติการวิศวกรรมเครือข่าย 2; `060233204` การออกแบบและการจัดทำเครือข่ายคอมพิวเตอร์.
+
+### Detail/history and frontend
+
+- Owner-scoped `GET /api/coop-requests/:id` returns request-owned `prerequisite_courses` in canonical code order, limited to program/code/names/status/grade, plus ordered audit reviews. Role detail also includes course snapshots. Student history reuses existing list/detail actions, with no second history system.
+- Frontend sends only `{course_code,status,grade}` per course, mapping unselected local null to `unselected`. Removes the no-persistence warning and states that courses are saved with the request. Detail/history render the saved program, names, status and passed grade independently of current Student.major. Studying/unselected show no fabricated grade; old requests without snapshots show an explicit unavailable-history message.
+- Existing dynamic program source/switching, validation, stale-state safeguards, shared feedback, class-advisor preservation and last-row CSS alignment remain intact. Progress steps now show Advisor → Head → Approved → document issued → started, with legacy Staff status labeled as historical.
+
+### Migration safety and ordering
+
+- Created **`012_coop_prerequisites_and_direct_review.js`**. Transactional UP adds the snapshot table, FK/unique/checks, review Student FK and corrected audit constraints, and promotes legacy pending Staff-stage requests to Head review. No request-status enum alteration is needed: `advisor_review`, `department_head_review` and `cancelled` already exist.
+- DOWN restores migration 011 checks and drops added schema only on an empty/safe fixture. It acquires exclusive locks and refuses when snapshots, Student/cancellation/direct-review evidence or pending Head-review requests would be lost or ambiguously downgraded. Injected DDL failure rolls UP back atomically.
+- **Migrations applied to persistent Local DB: NONE.** Known pending ordering for a later separately authorized rollout: **007a → 010 → 011 → 012**, retaining already-applied ledger history. 011 is required for review tables/head privilege before 012. Old migration files 007a/010/011 are unchanged; no persistent Local ledger edit, rollback, manual schema alteration or Sequelize sync.
+- SQL tests used a separately named PostgreSQL 16 container from the already installed image, no volume or connection to `intern_postgres`, bound only to localhost and marked disposable. Test guards verified database names and the disposable setting before any DDL. Migration tests used an isolated random schema; role tests used only `fitm_role_test` in that disposable server. Container removed after completion. Narrow sandbox execution approval was used solely to start/stop that test container; no security/configuration change.
+
+### Final verification
+
+- Backend focused/controller/workflow/company/auth/advisor: `node --test --test-isolation=none backend/test/coopPrerequisites.test.js backend/test/coopDirectWorkflow.test.js backend/test/coopRequestCompany.test.js backend/test/roleAuth.test.js backend/test/staffAuth.test.js backend/test/studentAdvisor.test.js`: **54 PASS**.
+- Real migration suite: with `COOP_DISPOSABLE_DATABASE_URL` set only to the guarded disposable test server, `node --test --test-isolation=none backend/test/coopPrerequisiteMigration.test.js`: **5 PASS**. Includes real PostgreSQL UP/DOWN, injected DDL rollback, uniqueness/program/status/grade checks and destructive rollback refusal, plus isolated QueryInterface regressions.
+- Real shared workflow regression: with `ROLE_BACKEND_INTEGRATION_TEST=true` and `ROLE_DISPOSABLE_DATABASE_URL` pointing only to disposable `fitm_role_test`, `node --test --test-isolation=none backend/test/roleWorkflow.database.test.js`: **32 PASS**. Includes Advisor/Head permissions/transitions, actual concurrent decisions, authenticated Staff cancellation/race/terminal protection, real IT/INE create/read-back/history, foreign-owner denial, Request A stability after major change and Request B, concurrent Student create (one 201/one 409, five rows/one audit), and real transaction rollback on child insertion failure. Existing shared-role regression included because the workflow service/router changed; no unrelated implementation added.
+- Frontend: `node --test --test-isolation=none frontend/test/studentCoopPrerequisites.test.js frontend/test/studentCoopAcceptance.test.js frontend/test/studentAdvisor.test.js`: **56 PASS / 0 FAIL / 1 SKIP**. Payload inclusion and canonical keys, both program switches, grades, historical snapshot through actual history/detail binding, alignment guard and all eight advisor tests pass. Browser test remains skipped under the previously documented environment blocker; no real-browser PASS claimed.
+- `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven entries. All changed JS/migration/test syntax checks: **PASS**. `git diff --check`: **PASS**.
+- Initial SQL test issues were fixture-only: Sequelize schema qualification, missing generated test signing secret, non-JSON 404 handling after removed routes, cancellation HTTP method and Student email-domain fixture validity. Corrected only test setup; final results above pass. Existing Local data/secrets were not inspected or modified.
+
+### Files changed in this task and preserved boundary
+
+- Backend: `src/controllers/coopRequest.controller.js`; `src/models/coopRequest.model.js`, `coopRequestReview.model.js`, new `coopRequestPrerequisiteCourse.model.js`; `src/routes/roleWorkflow.routes.js`; `src/services/roleWorkflow.service.js`, new `coopPrerequisites.js`; new migration 012.
+- Tests: new `backend/test/coopPrerequisites.test.js`, `coopDirectWorkflow.test.js`, `coopPrerequisiteMigration.test.js`; updated `coopRequestCompany.test.js`, `roleWorkflow.database.test.js`; updated `frontend/test/studentCoopPrerequisites.test.js` and `studentCoopAcceptance.test.js`.
+- Frontend: `src/pages/student_coop.js`, `src/student_coop/student_coop.html`; this handoff. Existing last-row CSS fix, Resume controller/test work and advisor tests preserved; no new CSS/config changes.
+- No commit/push/deployment/SSH/staging action, unrelated reset/discard or untracked cleanup. No role frontend redesign or other Student workflow started.
+
+### NEXT STUDENT_COOP TASK — exactly one
+
+**Run isolated browser acceptance of saved prerequisite history and corrected Advisor/Head progress steps using safe test APIs.** Verify Request A versus Request B snapshots, both programs and legacy empty-history display once a browser runner is available. **Recommendation only — NOT STARTED.**
+
+**STOP — persistence/workflow implementation complete and tested on disposable PostgreSQL; persistent Local migration rollout and next task not started.**
+
+---
+
+## Prerequisite last-row alignment fix — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** Shared prerequisite-table alignment bug fixed with a minimal CSS change. All previous implementation/acceptance history remains below. No prerequisite logic, course data, HTML, advisor/Resume logic, backend, migration or Codex configuration change.
+
+- **Root cause:** actual generated IT/INE rows all have the same three-cell structure (`td` name, `td > input` grade, `td > select` status), with no final-row wrapper/class/inline-style difference. `.coop-course-table tbody tr:last-child td` incorrectly applied `text-align: center` and muted color to every final-row cell, overriding the shared `.coop-course-table td { text-align: left; }`. This placeholder styling affected real course rows.
+- **Fix:** keep the existing last-row border removal only. Move centered/muted placeholder styling to `.coop-course-table td[colspan]`. Every ordinary course cell now inherits the shared left alignment; full-width unavailable-data placeholders remain centered. No course-specific or final-course alignment override added.
+- **IT: PASS in DOM/CSS regression checks**, exact codes `060243102`, `060243104`, `060243108`, `060243112`, `060243122`; all five have identical cell structure/no alignment overrides and use the shared left-alignment rule.
+- **INE: PASS in DOM/CSS regression checks**, exact codes `060233107`, `060233112`, `060233113`, `060233202`, `060233204`; same uniform structure and shared alignment for all five.
+- Added two actual-render-function DOM structure checks (one per program) and one focused CSS guard in `frontend/test/studentCoopAcceptance.test.js`. Before the CSS fix, the guard failed on the offending last-child rule; after the fix it passes. It protects shared left alignment and rejects row-position alignment/layout overrides.
+- `node --test --test-isolation=none frontend/test/studentCoopPrerequisites.test.js frontend/test/studentCoopAcceptance.test.js frontend/test/studentAdvisor.test.js`: **55 passed / 0 failed / 1 skipped**. IT/INE switching, status/grade validation/stale-state behavior, surrounding request simulation and all eight advisor tests pass.
+- `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven entries. `node --check frontend/test/studentCoopAcceptance.test.js`: **PASS**. `git diff --check`: **PASS**.
+- **Visual/browser verification remains BLOCKED BY LOCAL ENVIRONMENT**, as documented in the preceding acceptance checkpoint (Node spawn EPERM and Chrome IPC access denied). No repeat blocked launch, security/permission weakening, Full Access or configuration edit. DOM/CSS checks are not claimed as browser-computed layout acceptance.
+- Task changes only `frontend/src/styles/student_coop.css`, `frontend/test/studentCoopAcceptance.test.js` and this checkpoint. Pre-existing work preserved. **007a/010/011 unchanged; no schema/persistence/migration action, commit, push or deployment.**
+
+**STOP — alignment fix complete; no further Student Co-op feature started.**
+
+---
+
+## Student Co-op prerequisite acceptance — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok. BROWSER ACCEPTANCE: BLOCKED BY LOCAL ENVIRONMENT.** The strongest available local acceptance simulation passes; this is **not a real-browser PASS**. No confirmed application regression was found and no production HTML/JS, prerequisite implementation or advisor logic was changed. Previous implementation/history remain intact. Persistence/migration work was not started.
+
+### Browser environment investigation
+
+- Chrome and Edge are installed and running, but there is no exposed browser tool/connector or listener on common debugging ports 9222/9223. Normal browser profiles/sessions were not inspected or attached to.
+- A minimal Node child-process probe (`spawnSync(process.execPath, ['--version'])`) returned **EPERM**, demonstrating a process-spawn restriction broader than Chrome. Did not repeatedly retry the previous Node browser-launch method.
+- Tried one different safe launch via PowerShell `Start-Process -WindowStyle Hidden` with headless Chrome, an isolated newly created temporary profile and a local minimal DOM probe. Chrome produced no DOM output and terminated before rendering: `FATAL: mojo/public/cpp/platform/platform_channel.cc:112 ... Access is denied. (0x5)`; crashpad also reported `CreateFile: Access is denied. (0x5)` and self-termination. This establishes an additional IPC/process startup blocker; it does not identify which host security mechanism enforces it.
+- **BROWSER ACCEPTANCE BLOCKED BY ENVIRONMENT.** No sandbox/config/security change, Full Access, software installation, escalation, browser security disabling or normal-session mutation was used. CSS/layout/native browser validation/focus accessibility remain unverified.
+
+### Stronger safe local simulation
+
+- Added only `frontend/test/studentCoopAcceptance.test.js`. Parses the actual `student_coop.html` into an HTML-derived DOM model with a hierarchy, selectors, real option text/value fallbacks, form resets, class/ARIA state, disabled controls, and multiple event callbacks. Executes the entire existing Co-op Request section including its real event bindings, actual Profile reload function and actual shared `ui/feedback.js` code. APIs/timers and non-request Profile rendering remain controlled mocks.
+- This is explicitly a **simulation**, not a browser or live API/database acceptance. It improves on the prior flat DOM fixture by exercising surrounding modal/request/feedback functions instead of stubbing them. Production implementation and existing focused prerequisite/advisor tests were not modified.
+- New coverage: **17 acceptance scenarios / 20 passing Node test entries including three parents**. Initial harness runs exposed source-line-ending and dynamically assigned option-value modeling gaps; these were corrected in the new test fixture only, not in application code.
+
+### Acceptance results — simulation only
+
+- **IT PAGE: PASS.** Exactly `060243102`, `060243104`, `060243108`, `060243112`, `060243122`; no INE row.
+- **INE PAGE: PASS.** Exactly `060233107`, `060233112`, `060233113`, `060233202`, `060233204`; no IT row.
+- **IT → INE: PASS.** Actual mocked Profile reload replaces all rows, exactly five INE codes, no duplicates, no stale status/grade.
+- **INE → IT: PASS.** Same reload mechanism restores exactly five IT codes, no INE row, no stale status/grade or previous IT values.
+- **IT and INE interactions: PASS.** For a course in each program: passed + grade submits; passed without grade prevents the mock API call and displays actual in-page feedback; studying clears/disables grade and submits; a single selected status ensures mutual exclusivity; unselected submits as allowed.
+- **Submission safety: PASS.** Local normalized data contains only each program's exact five codes. Both programs' passed submissions omit `prerequisite_courses` from the existing API payload; company and delivery fields remain intact. Actual form notice still explains that prerequisites are not saved/attached.
+- **Surrounding request regression: PASS in simulation.** Modal opens via its actual button binding; readonly Student/class-advisor data display; mocked company search renders and selecting the result applies company name/province/address/ID; manual-company mode remains usable. Required fields, delivery selection and work dates reject invalid requests. Actual form submit event reaches existing create-request path and displays shared toast/in-page feedback. Header close, footer cancel, backdrop and Escape close without submission. Five reopen cycles per program retain exactly five rows, one create-button listener and one form-submit listener, with exactly one API call per submit.
+- Browser-default submit-button behavior, visual layouts and real user interactions remain **PENDING**, even though their application event path passes simulation.
+- **Advisor regression: PASS, eight existing tests**, including directory failure preservation, explicit change and explicit clear. Advisor logic unchanged.
+
+### Tests/build
+
+- `node --test --test-isolation=none frontend/test/studentCoopPrerequisites.test.js frontend/test/studentAdvisor.test.js frontend/test/studentCoopAcceptance.test.js`: **52 passed / 0 failed / 1 skipped**. The skipped opt-in Chromium test remains unavailable; no browser PASS inferred from simulation.
+- `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven existing entries, including Student Co-op. Uses the previously verified native loader without modifying build configuration.
+- `node --check frontend/test/studentCoopAcceptance.test.js`: **PASS**. `git diff --check`: **PASS**. No backend changes or backend test run required.
+
+### Persistence, migration and Git boundary
+
+- Prerequisite persistence remains **NOT IMPLEMENTED — schema/API support absent; a migration is still required**. No fake storage, unrelated-column reuse, backend contract/model change or persistence test was added.
+- **007a unchanged; 010 unchanged; 011 unchanged.** No migration execution, rollback, schema alteration, ledger change or Sequelize sync. No production/staging data write or real API/email action; secrets/config/security settings untouched.
+- Task files changed: the new acceptance test and this handoff checkpoint only. Initial pre-existing modified handoff, Resume controller, Student page/HTML and untracked Resume/advisor/prerequisite tests are preserved. No commit, push, deployment, SSH/staging operation, unrelated reset/discard or untracked cleanup.
+
+### NEXT STUDENT_COOP TASK — exactly one
+
+**Complete real-browser acceptance of the Student Co-op prerequisite form and surrounding request modal once an isolated browser runner is available.** Use safe mocked APIs to verify visual/native interactions, both Profile program transitions and repeated reopen behavior. **Recommendation only — NOT STARTED.**
+
+**STOP — local acceptance simulation complete; browser acceptance remains blocked; next task not begun.**
+
+---
+
+## Student Co-op prerequisite courses — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** Frontend prerequisite-course behavior is implemented in the existing Co-op Request create modal. Persistence remains **NOT IMPLEMENTED: schema/API support absent**. This checkpoint supersedes the preceding NEXT TASK for current priority only; Class Advisor Preservation and Resume fixes are complete and preserved. Student Profile persistence acceptance was **NOT STARTED**. All previous history remains below.
+
+### Implementation and program source
+
+- Modified `frontend/src/student_coop/student_coop.html` and `frontend/src/pages/student_coop.js`; added `frontend/test/studentCoopPrerequisites.test.js`. Existing table/modal styles and unrelated sections are retained. No new program selector, dependency, package script or config change.
+- The source is **Student.major**, returned as `result.student.major` by the existing Profile API and held in `currentStudent.major`. Existing Profile selector values are exactly `IT` and `INE`. Detect only those exact values; unknown/missing values show an unavailable message, never default to IT. Unsaved Profile selector edits do not change the request's program.
+- Actual `loadStudentProfile()` refresh calls the prerequisite synchronization after assigning the returned Student. Successful Profile major saves already use this reload. Modal open/reset also synchronize/reset state; serialization rechecks the current program immediately before validation/submission.
+- Render course rows keyed by `course_code`, with Thai course names and the supplied IT English names. One status selector per course offers unselected, `passed` (ผ่านแล้ว), or `studying` (กำลังศึกษา / currently registered this term). A single selected value provides mutual exclusivity. Passed requires a nonblank grade; studying/unselected clear and disable grade and do not require it. Unselected remains allowed because the original form had no course-status requirement.
+- Normalize form data as `{ course_code, course_name, status, grade }`; only active-program codes are serialized. Any program change clears the map and replaces all rows, including previously entered values when switching back. Same-program Profile refresh preserves edits. Detached-row events cannot modify replacement state. Submission loading restores grade disabled/required behavior when controls rerender. Errors use existing in-page `showMessage`, with no native alert/confirm.
+
+### Exact IT course list — PASS in controlled DOM
+
+1. `060243102` — การโปรแกรมคอมพิวเตอร์ / Computer Programming
+2. `060243104` — การเขียนโปรแกรมเชิงวัตถุ / Object-oriented Programming
+3. `060243108` — ระบบฐานข้อมูล / Database System
+4. `060243112` — การวิเคราะห์และออกแบบระบบ / System Analysis and Design
+5. `060243122` — เว็บแอปพลิเคชัน / Web Application
+
+### Exact INE course list — PASS in controlled DOM
+
+1. `060233107` — ระบบฐานข้อมูล
+2. `060233112` — วิศวกรรมข้อมูล
+3. `060233113` — การเขียนโปรแกรมคอมพิวเตอร์ขั้นสูง
+4. `060233202` — ปฏิบัติการวิศวกรรมเครือข่าย 2
+5. `060233204` — การออกแบบและการจัดทำเครือข่ายคอมพิวเตอร์
+
+### Switching, validation and focused coverage
+
+- **IT → INE: PASS.** Execute actual Profile reload with mocked IT/INE API responses; all five IT rows disappear, exactly five INE rows appear, and status/grade state is empty.
+- **INE → IT: PASS.** All INE rows disappear, exactly five IT rows appear; no INE state or previous IT values reappear. These are controlled-DOM runtime results, not a claim of real-browser acceptance.
+- Passed + grade: **PASS / accepted**. Passed without grade or with whitespace: **PASS / rejected** with course code in existing in-page feedback. Studying: **PASS / grade cleared, disabled, optional**. Mutual exclusivity: **PASS**. Unselected optional behavior: **PASS**.
+- IT/INE normalized form payloads: **PASS**, only active codes. Foreign map entries are excluded; studying grades are normalized to null. Serialization catches a changed program even before a render refresh. Unknown programs produce no invented courses. Same-program reload and unsaved Profile selector behavior are covered.
+- Existing company/date/delivery/signer/advisor/detail/history/Mentor section IDs remain present in the actual HTML. Existing eight Class Advisor Preservation tests also pass. No live company/mentor/request/auth mutation or full visual/browser regression is claimed.
+
+### Persistence gap and boundary
+
+- Inspected existing frontend API payload, backend `coopRequest.routes.js`, normalization/create/read controller, `CoopRequest` model and relevant schema migrations. There is no prerequisite/course-grade field, child relation or JSON storage in the current request schema/API. Existing review/delivery data are not appropriate storage for course results.
+- **A new schema migration and corresponding API/model work would be required** to save/read back prerequisites. No migration/schema/backend change was made. No fake persistence tests or localStorage substitute was added.
+- `getCoopRequestFormData()` includes normalized prerequisites for local validation, but the existing API request explicitly omits this unsupported field. The form visibly states that these results are checked locally only and are not saved or attached to the request. Existing successful request submission behavior remains available; request detail continues its truthful unavailable-grade message.
+
+### Tests/build and runtime limits
+
+- `node --test --test-isolation=none frontend/test/studentCoopPrerequisites.test.js frontend/test/studentAdvisor.test.js`: **32 passed / 0 failed / 1 skipped**, comprising 23 prerequisite scenarios, their parent test and eight advisor tests; opt-in real-browser runtime skipped by default. Uses actual page functions, actual Profile reload, normalized form serialization and submit handler with controlled DOM/API mocks; no database/persistence claims.
+- Opt-in browser command with `COOP_TEST_BROWSER` pointing to installed Chrome: **BLOCKED**, `spawnSync ... EPERM`. Browser fixture uses original HTML and the same actual page functions, stripped of external resources/application startup; no real API/data writes. Real-browser layout/interaction acceptance remains pending. Docker commands also denied access to the Docker pipe.
+- Default `node --test` isolation: blocked by child-process `spawn EPERM`; in-process isolation flag resolves the focused test runner restriction.
+- `npm.cmd --prefix frontend run build`: default config-loader build **BLOCKED/FAIL** by spawn restrictions and native dependency bundling. `npm.cmd --prefix frontend run build -- --configLoader native`: **PASS**, all seven existing HTML entries including Student Co-op. No build configuration edits needed. PowerShell `npm` wrapper execution was restricted, so used `npm.cmd`.
+- `node --check frontend/src/pages/student_coop.js` and `node --check frontend/test/studentCoopPrerequisites.test.js`: **PASS**. `git diff --check`: **PASS**. Backend unchanged in this task, so no new backend tests required or run.
+
+### Migrations, preserved work and Git
+
+- **007a/010/011 unchanged; no migration applied/rolled back, ledger change, schema alteration or sequelize.sync call.** No production/staging data modified, secrets exposed or environment files read/edited.
+- Initial Git state: modified handoff, Resume controller and Student page; untracked Resume test, advisor backend test and frontend test directory. All previous Resume/advisor changes preserved. This task adds only the prerequisite HTML/page/test changes and this checkpoint.
+- **No commit, push, deployment, SSH/VM or staging action.** No reset/discard or cleanup of unrelated/untracked work.
+
+### NEXT STUDENT_COOP TASK — exactly one
+
+**Run isolated browser acceptance of the Student Co-op prerequisite form and surrounding request sections when browser execution is available.** Exercise IT/INE Profile reloads, both switches, grade controls, missing-grade feedback and company/delivery/signer/advisor/detail/history layout using mocked APIs and safe fixtures. **Recommendation only — NOT STARTED.**
+
+**STOP — prerequisite frontend task complete within the schema boundary; next task not begun.**
+
+---
+
+## Student class-advisor preservation fix — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** The confirmed unintended class-advisor clearing bug is **FIXED**, with focused frontend/backend regression tests. This section supersedes the prior recommended class-advisor task and the audit's open clearing blocker; previous Resume fix, audit and history remain intact below. No repeat Student audit or unrelated implementation. Privileged `coop_advisor_teacher_id`, projects, documents, Daily Log, review lifecycle, stopped role work and deployment remain outside this task.
+
+### ROOT CAUSE
+
+`loadTeachers` cleared the selector before requesting `GET /api/teachers`, leaving only an empty loading option on failure. Its finally block enabled that selector anyway. `saveStudentInfo` always included `advisor_teacher_id: studentAdvisorInput.value || null`, so an unrelated save turned an unavailable directory into a null assignment. Backend `updateStudentInfo` correctly accepts explicit null and therefore would clear the existing class-advisor FK.
+
+### FIX / advisor preservation rule
+
+- In `frontend/src/pages/student_coop.js`, track directory availability (`isTeacherDirectoryLoaded`) separately from explicit user selection (`hasAdvisorSelectionChanged`). Profile reload resets selection-change state to the persisted Student value.
+- Preserve the known Profile advisor ID in the selector while loading, after load failure, and when the advisor is absent from the active directory. Its label uses the existing `advisorTeacher` when available, otherwise a current-advisor label; no fabricated Teacher ID or first-Teacher default. A fallback option is display-only/disabled until a real directory option exists.
+- Failed/malformed directory loads keep the selector disabled. Unrelated major/year/GPA edits remain saveable. Successful directory loads enable selection as before, including the existing empty option for explicit clearing.
+- Send `advisor_teacher_id` **only when a loaded directory has an explicit changed user selection**. Otherwise omit it. Existing backend semantics were inspected and verified by controller tests: only provided fields are copied into `updateData`, so omission preserves the DB value and bypasses unnecessary Teacher validation. No backend/API semantics changed.
+- **Invariant:** directory options are not the source of truth for the persisted advisor; failed loading must never cause an unintended null. Explicit Student class-advisor change/clear remains allowed. This does not change the separate privileged Co-op project advisor.
+
+### BEHAVIOR / focused regression results
+
+New `frontend/test/studentAdvisor.test.js` uses node:test and executes the actual page profile/Teacher/save functions in a controlled VM/DOM, including select/change behavior and string-valued inputs. API/persistence effects are controlled mocks, with no browser or network dependency.
+
+1. Existing advisor + successful directory + unchanged selection: omit advisor, preserve original — **PASS**.
+2. Existing advisor + directory failure + unrelated major edit: retain advisor ID/name in disabled UI, omit advisor, save other field without clearing — **PASS**.
+3. Successful directory + explicit new selection: send/persist selected ID and reload selection — **PASS**.
+4. Explicit clear: send/persist null only following the user's empty-option selection — **PASS**.
+5. No existing advisor: remain unassigned without automatic first-Teacher selection; explicit selection still works — **PASS**.
+6. Persisted advisor absent from active directory: retain current display/value and omit unchanged field — **PASS**.
+7. Malformed directory response: remain disabled, retain existing advisor, omit field — **PASS**.
+8. No advisor + directory failure: unrelated save remains valid and no advisor key sent — **PASS**.
+
+New `backend/test/studentAdvisor.test.js` verifies the unchanged actual `updateStudentInfo` controller with model mocks: omitted advisor preserves it while saving other fields; explicit change persists the new ID through `Teacher.findOne({ attributes: ["id"], where: { id, status: "active" } })`; explicit null remains allowed. **3 PASS**. Persistence assertions use controlled model state, not a claim of Local database/browser acceptance.
+
+### TEACHER / migration compatibility
+
+No Teacher endpoint/model query was changed or broadened. Directory attributes remain explicit and exclude `is_department_head`; advisor validation still selects only Teacher `id`, covered by the new backend test. **No migration/schema/ledger change; no migrations applied or rolled back.** Pending 007a/010/011 remain unchanged. No Local data write, sync, seed/reset, .env changes or credential output.
+
+### TESTS RUN
+
+- Before fix, `docker exec intern_frontend node --test --test-name-pattern 'directory failure preserves' test/studentAdvisor.test.js`: **1 expected failure**, reproduced loss of the current selector ID.
+- After fix, `docker exec intern_frontend node --test test/studentAdvisor.test.js`: **8 passed / 0 failed / 0 skipped**. An initial full run exposed a test-fixture issue on repeated save (plain input mock retained numeric GPA); corrected the fixture to coerce values to strings as real DOM inputs do. Final run passes without changing unrelated production input handling.
+- `docker exec intern_backend node --test test/studentAdvisor.test.js`: **3 passed / 0 failed / 0 skipped**.
+- `docker exec intern_frontend npm run build`: **PASS**, all seven existing HTML entries. No dependencies/package scripts/config changed.
+- `git diff --check`: **PASS**. Scope review: this pass changes only the Student page, the two new advisor test files and this handoff; pre-existing Resume controller/test work retained. No broader backend/NLP/Resume suite or full audit run.
+
+### FILES CHANGED / Git boundary
+
+- `frontend/src/pages/student_coop.js`: class-advisor display, directory/change state and safe payload handling.
+- `frontend/test/studentAdvisor.test.js`: 8 controlled frontend scenarios.
+- `backend/test/studentAdvisor.test.js`: 3 omission/change/clear controller regressions.
+- `HANDOFF_fitm-intern.md`: this authoritative checkpoint; all prior history preserved.
+- Initial Git state included the modified handoff, modified Resume controller and untracked `backend/test/resumeUpload.test.js`. Those existing changes are preserved; Resume source/tests were not edited in this pass. **No commit, push, deployment, SSH/VM or staging action.**
+
+### NEXT RECOMMENDED TASK — exactly one
+
+**Verify Student Profile detail save/read-back with focused persistence acceptance.** Cover existing validated Profile fields through save and reload using controlled test data, without role setup, migration rollout or unrelated Student features. **Recommendation only — NOT STARTED.**
+
+**STOP — class-advisor preservation task complete; next task not begun.**
+
+---
+
+## Student Resume cleanup fix — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** The confirmed Resume post-commit cleanup bug is **FIXED**, with focused regression coverage. This section supersedes the previous audit's open Resume-cleanup blocker and recommended NEXT TASK; that audit and all earlier history are retained below. This is a bounded controller fix, not a new Student audit or a claim that the entire Resume workflow has completed browser/Local write acceptance. Teacher selector/class-advisor clearing remains unfixed. Staff/Teacher/Head work, account setup, migration rollout and deployment remain **STOPPED**.
+
+### ROOT CAUSE / ownership boundary
+
+- `POST /api/student-profile/resume`: authenticated multer writes the uploaded file before `uploadResume` runs. The controller validates the Student/storage path, then creates/replaces StudentFile metadata inside a Sequelize managed transaction.
+- **Ownership transfers when the awaited managed transaction resolves successfully, after commit.** Native PDF/OCR extraction and the final `resume.update` of extraction metadata run afterward, outside that transaction.
+- Previously, the outer catch unconditionally unlinked `uploadedFile.path`. A final extraction-status save failure therefore returned 500 and deleted the already committed file, leaving `StudentFile.storage_path` referencing a missing file. During replacement, the old file could already have been removed.
+
+### FIX / confirmed invariant
+
+- Added local `metadataCommitted = false` in `uploadResume`; set it to true immediately after the managed metadata transaction succeeds. Outer error cleanup now unlinks the new upload only when `!metadataCommitted`.
+- **Before commit:** failed metadata insertion/update or rejected transaction commit still cleans the new file; transactional rollback leaves no new committed row and preserves a previous Resume reference/file on replacement failure. Existing missing-Student/invalid-path cleanup remains unchanged.
+- **After commit:** extraction or extraction-status persistence errors cannot trigger cleanup of the committed new file. Existing cleanup of a superseded old file remains unchanged.
+- **Confirmed invariant:** a committed StudentFile reference retains its physical file through post-commit error cleanup. Regression tests assert both the committed `storage_path` and actual temporary-file existence, for a new upload and replacement.
+- API contract unchanged: extraction-status persistence failure still returns **500** with the existing message; metadata retains `extraction_status: pending` if that update fails. No fabricated ready/failed save, automatic recovery or new API behavior. An extraction exception with a successful status save still returns **200** with `failed` extraction status. Normal native/OCR success still returns **200 / ready**.
+
+### REGRESSION TESTS ADDED
+
+New `backend/test/resumeUpload.test.js` follows the existing node:test/model-mocking style, using a managed-transaction fake that separates staged and committed state. Student/StudentFile/transactions and native/OCR extraction are mocked; files are real fixtures under dedicated OS temporary directories, with bounded teardown. No Local DB/storage writes or external OCR/network calls.
+
+1. Successful new upload: committed metadata, real file retained, native extraction **ready/pdf_text** — **PASS**.
+2. Successful replacement: new file retained, old file removed, OCR fallback **ready/ocr** — **PASS**.
+3. Metadata insert failure: rollback, no committed Resume row, new file removed — **PASS**.
+4. Commit rejection after staged insert: no committed row, new file removed — **PASS**.
+5. Replacement metadata failure: previous row/file retained, new upload removed — **PASS**.
+6. Post-commit extraction-status save failure: unchanged **500**, committed row/new file retained — **PASS**.
+7. Replacement post-commit extraction-status save failure: unchanged **500**, committed new file retained after old-file cleanup — **PASS**.
+8. Extraction exception: stored upload still **200**, failed extraction status saved, file retained — **PASS**.
+
+### TESTS RUN / results
+
+- Before fix, `docker exec intern_backend node --test test/resumeUpload.test.js`: **6 passed / 2 failed**. Exactly the new-upload and replacement post-commit cleanup regressions failed, proving the suite catches the original defect.
+- After fix, `docker exec intern_backend node --test test/resumeUpload.test.js test/resumeText.test.js`: **10 passed / 0 failed / 0 skipped** (8 new upload regressions + 2 existing text tests).
+- `docker exec intern_backend node --check src/controllers/studentProfile.controller.js`: **PASS**.
+- `docker exec intern_backend node --check test/resumeUpload.test.js`: **PASS**.
+- `git diff --check`: **PASS**. Final diff/file-scope review covers only the controller, new regression suite and this handoff. No frontend build, broader backend/NLP suite or repeat Student audit required.
+
+### FILES CHANGED / preserved work
+
+- `backend/src/controllers/studentProfile.controller.js`: explicit committed metadata flag and guarded Resume catch cleanup only.
+- `backend/test/resumeUpload.test.js`: focused failure/success regressions.
+- `HANDOFF_fitm-intern.md`: this checkpoint prepended; previous audit/history and pre-existing handoff edits retained. Initial `git status --short` showed only the existing modified handoff.
+
+### MIGRATIONS / operational boundary
+
+**No migrations applied/rolled back; no schema, migration source or ledger changes.** Pending 007a/010/011 remain unchanged; no sequelize.sync, Local data write, seed/reset or real upload/email acceptance. No .env edits/contents or credentials exposed. No deployment, VM/SSH/staging action, commit or push.
+
+### NEXT RECOMMENDED TASK — exactly one
+
+**Fix Student class-advisor preservation when Teacher directory loading fails.** Prevent student-info save from unintentionally submitting `advisor_teacher_id: null` after a failed directory load, with a focused frontend regression. Preserve allowed Student class-advisor self-selection and the separate privileged `coop_advisor_teacher_id`. **Recommendation only — NOT STARTED.**
+
+**STOP — Resume cleanup task complete; next task not begun.**
+
+---
+
+## Student regression + implementation audit — 2026-10-06
+
+**CURRENT AUTHORITATIVE — Asia/Bangkok.** This section supersedes the prior checkpoint's statement that the Student audit has not begun and its NEXT TASK. Previous implementation history is retained below. Student-only audit completed; **no application source changed and no next implementation task started**. Staff/Teacher/Head frontends, account setup, recruitment review UI, migration rollout and VM/production deployment remain **STOPPED**.
+
+### Scope and evidence boundary
+
+- Initial `git status --short`: clean. Read the preceding authoritative checkpoint before any edit. Only files directly involved in Student flows, the Teacher directory/associations, Student tests and required runtime configuration/migration definitions were inspected; no full repository audit.
+- Local schema/ledger inspected using an explicit PostgreSQL **READ ONLY** transaction. Existing Student identities were used for authenticated read probes, with short-lived JWTs generated and retained only in process memory. **These probes do not prove successful password login.** Response output contained only status/count/shape information, not Student/Teacher personal data or credentials.
+- No Local data/schema/history writes, migrations (including isolated migration runs), rollback, sync, seed/reset, real email, .env edits, container restart/rebuild, deployment, VM access, commit or push. Fault reproductions mocked all persistence/filesystem/network effects.
+- **DONE** below means the implemented Student read/computation flow is connected through frontend code, API, backend and existing database, with a fresh successful Local runtime probe. No browser interaction was performed. Mutation workflows without fresh persistence/acceptance evidence remain **PARTIAL**, even where the source implements writes. Missing runtime evidence is distinguished from a reproduced defect.
+
+### Compatibility gate — PASS for inspected Student paths
+
+Local ledger: **9 executed / 3 pending**: `007a_create_missing_base_tables.js`, `010_cleanup_student_file_schema_drift.js`, `011_add_role_workflow_reviews.js`. `teachers.is_department_head` is **absent**, confirmed in `information_schema.columns`; source `Teacher` declares it and migration **011** adds it.
+
+| Student endpoint/query | Exact Teacher model query | Evidence |
+| --- | --- | --- |
+| `GET /api/teachers` | `teacher.controller.getTeachers`: `Teacher.findAll`, explicit `id, academic_title, first_name, last_name, email, department, major, position, status` | Generated SQL excludes `is_department_head`; actual HTTP **200**, 23 active Teachers |
+| `GET /api/student-profile` and `/api/student-profile/me` | `getStudentProfile`/`getMyProfile`: `Student.findByPk` includes `Teacher` as `advisorTeacher` and `coopAdvisorTeacher`, both with explicit directory attributes | Actual HTTP **200** for both aliases; neither Teacher join selects the new column |
+| `PUT /api/student-profile/student-info` | `updateStudentInfo`: active `Teacher.findOne({ attributes: ["id"], where: { id, status: "active" } })` | Matching active-Teacher existence query executes successfully on Local; mutation itself not performed |
+| `GET /api/coop-requests/:id` | `getCoopRequestById` -> `findOwnedRequest` -> `STUDENT_INCLUDE`: nested `advisorTeacher` attributes `id, academic_title, first_name, last_name` | Actual nonexistent valid UUID returns **404**, with the include query executing safely; source confirms restricted attributes |
+
+**No confirmed Student `is_department_head` SELECT mismatch.** Model loading/association setup alone does not select every Teacher column. Default/full `Teacher.findByPk/findOne/findAll` queries would select the absent column; that remains a **potential risk for any newly added Student query**, and a schema prerequisite for the stopped role APIs. Do not hide database errors in frontend or apply 011 in this task. Safest compatibility option for Student reads is preserving explicit necessary attribute lists (and adding focused compatibility coverage in a future authorized change); keep Head privilege reads behind their separately authorized schema rollout. Do not remove the model field or invent a privilege value.
+
+### STUDENT AUDIT RESULT
+
+1. Login — **PARTIAL**
+   - Frontend: `pages/login.js` -> `auth.api.loginStudent`; stores returned JWT/Student, redirects to Student dashboard.
+   - API: `POST /api/auth/login`.
+   - Backend: `auth.routes` -> `auth.controller.loginStudent` -> Student lookup, bcrypt comparison, Student actor JWT, safe `toJSON`.
+   - Database: `students` exists; real lookups work. Login does not itself write data.
+   - Evidence / Issue: missing credentials return **400**. Successful password login/browser redirect not exercised; no credentials obtained or printed. Google button explicitly remains an OAuth placeholder; core password-login source is implemented, not proven broken.
+
+2. auth/me — **DONE**
+   - Frontend: `checkAuthentication` -> `getCurrentStudent`, refreshes cached Student and checks `co_op` track.
+   - API: `GET /api/auth/me`.
+   - Backend: `authenticateStudentToken` -> `getCurrentStudent` -> `Student.findByPk`; HS256 and Student actor checks.
+   - Database: real `students` row loaded; no Teacher query.
+   - Evidence / Issue: authenticated **200**; no-token **401**; focused legacy/explicit Student actor and wrong-role tests pass. Authenticated probe used an in-memory JWT, not password login.
+
+3. Dashboard / Overview — **PARTIAL**
+   - Frontend: greeting/status from Student; request count from real request list; daily count from current DOM rows.
+   - API: auth/me, student-profile/me, coop-requests/me.
+   - Backend: real Student/Profile/CoopRequest reads; no complete Overview aggregation.
+   - Database: related rows available; no persisted Daily Log/placement overview connection.
+   - Evidence / Issue: those reads return **200**. `coopOverviewEmpty` is a permanent placeholder with no rendering code; daily count resets with page state. Cannot claim complete Overview.
+
+4. Student Profile — **PARTIAL**
+   - Frontend: profile rendering/edit modal, student-info form and image upload use real API wrappers.
+   - API: GET/PUT `/api/student-profile/me`; PUT `/student-info`; GET/POST `/profile-image`.
+   - Backend: self-scoped Student reads, whitelisted/validated Profile create/update, bounded image upload and owner storage path checks.
+   - Database: `students`, `student_profiles`, both Teacher FKs and profile-image reference exist.
+   - Evidence / Issue: both profile GET aliases **200**, Teacher joins compatible. Fresh profile/image mutation and reload acceptance not performed; class-advisor failure below affects student-info save.
+
+5. Teacher selector — **PARTIAL**
+   - Frontend: `loadTeachers` populates the class-advisor select from real Teacher IDs/names.
+   - API: `GET /api/teachers`.
+   - Backend: authenticated active-Teacher directory with explicit safe columns.
+   - Database: `teachers`; 23 active rows retrieved successfully.
+   - Evidence / Issue: API **200**, no 011 mismatch. **Failure recovery defect reproduced:** failed load leaves the cleared selector enabled; existing selection is lost. Selector is not DONE despite a working happy-path directory.
+
+6. advisor_teacher_id — **PARTIAL**
+   - Frontend: `saveStudentInfo` submits class-advisor UUID or null.
+   - API: `PUT /api/student-profile/student-info`.
+   - Backend: UUID/active-Teacher validation, Student field whitelist and `student.update`.
+   - Database: `students.advisor_teacher_id` FK exists; active existence query selects only Teacher `id`.
+   - Evidence / Issue: Student self-selection **ALLOWED**, separate from privileged `coop_advisor_teacher_id`. Actual frontend functions in a mocked DOM reproduce Teacher fetch failure followed by save emitting `advisor_teacher_id: null`, which the backend permits and would persist. No real advisor cleared. Write/read-back not performed.
+
+7. Resume — **PARTIAL**
+   - Frontend: `uploadStudentResume`, PDF/10 MB validation, extraction feedback.
+   - API: `POST /api/student-profile/resume`.
+   - Backend: authenticated multer upload, owner storage path, transactional StudentFile replacement, native PDF extraction then OCR fallback, stored extraction metadata.
+   - Database: `student_files` plus extraction columns and one-Resume-per-Student partial UNIQUE index present; existing ready Resume file exists on disk.
+   - Evidence / Issue: extraction unit tests pass and live Resume matching consumes persisted text. **Controller fault reproduced:** metadata transaction commits, final extraction-metadata update throws, outer catch unlinks the newly committed file while DB still references it. Reproduction uses mocks; no actual Local file removed. Fresh upload/replacement acceptance not performed.
+
+8. Company search — **DONE**
+   - Frontend: debounced Company search, selection and duplicate-check UI in Coop Request modal.
+   - API: GET `/api/coop-requests/companies/search?q=...` and `/companies/duplicate-check?name=...`.
+   - Backend: Student auth guard, escaped `iLike`, normalized exact duplicate lookup, safe fields/limit.
+   - Database: real `companies` queries, no mock dataset in runtime handler.
+   - Evidence / Issue: both authenticated Local endpoints **200**; focused auth/search/normalization tests pass. Manual Company snapshot request does not create a Company row, by current design.
+
+9. Job Matching — **DONE**
+   - Frontend: Skills/Resume actions -> `getMyJobMatches`, real results and error handling, selected job can prefill Coop Request.
+   - API: `POST /api/job-matches/me?source=skills|resume` (computation only).
+   - Backend: Student guard, profile or cached ready Resume text -> published JobPosting/Company/WorkMode query -> NLP service -> validated/enriched results.
+   - Database: `students`, `student_profiles`, `student_files`, `job_postings`, `companies`, `job_posting_work_modes`; ranking has no persisted result entity by design.
+   - Evidence / Issue: Local Skills **200 / 3 matches**; Resume **200 / 5 matches**, with 20 published postings. Existing contract/error/source tests pass. Source uses only published status, without an `expires_at` eligibility filter; future expiry handling needs a bounded review, not a stopped Staff UI change.
+
+10. Coop Request — **PARTIAL**
+    - Frontend: real list/detail/create/cancel, Company/manual snapshots, selected-job prefill and workflow statuses.
+    - API: GET `/api/coop-requests/me`, GET `/:id`, POST `/`, PATCH `/:id/cancel`, GET `/job-postings/:id`.
+    - Backend: Student owner/actor checks, strict payload validation, Student/request locks, request + delivery-method transaction, cancellable-stage checks.
+    - Database: `coop_requests`, `coop_request_delivery_methods`, Company/JobPosting links present.
+    - Evidence / Issue: list **200**, nonexistent valid detail **404**; mocked Company/request tests pass. No fresh create/cancel persistence acceptance. Complete review progression depends on absent 011 review tables; stopped role/schema work prevents claiming the full lifecycle DONE. Source does not require a class advisor or `co_op` track on create (frontend gates track); null advisor leaves no Teacher owner for review. Job availability also checks status without expiry.
+
+11. Mentor — **PARTIAL**
+    - Frontend: real owner CRUD, status and resend (resend reuses `updateMyMentor`); mentor verification page uses token-bound APIs.
+    - API: GET/PUT/DELETE `/api/mentors/me`, POST `/api/mentors`; public mentor-verification verify/profile/confirm endpoints.
+    - Backend: Student owner guard, Mentor + hashed-token transaction, post-commit SMTP with recovery feedback, transactional confirm/token consumption.
+    - Database: `mentors`, `mentor_tokens` relationships and status persistence implemented.
+    - Evidence / Issue: owner GET **200**. No CRUD write or actual inbox/confirmation in this pass; prior email acceptance remains historical. Resend uses full update/token rotation; no dedicated resend limit observed in Student Mentor route. No emails sent.
+
+12. Co-op specific functions — **MOCK/UI ONLY**
+    - Frontend: Daily Log creates/deletes DOM rows; transfer shows unconnected-backend message; evaluation/placement sections are placeholders.
+    - API: none for these Daily Log/transfer/evaluation actions.
+    - Backend: no corresponding handlers in inspected Student route chain.
+    - Database: no connected persistence for those actions.
+    - Evidence / Issue: refresh loses Daily Logs. Existing Coop Request and Mentor integration are classified separately above; they do not make these functions complete.
+
+13. Project advisor — **PARTIAL**
+    - Frontend: profile displays `coopAdvisorTeacher` as read-only; project panel's `projectAdvisor` select remains empty and is never populated from that relationship.
+    - API: Student Profile GET can return the existing relationship; no Student project-assignment mutation.
+    - Backend: explicit `coopAdvisorTeacher` include; Student student-info whitelist correctly rejects `coop_advisor_teacher_id`. Privileged assignment is retained historical backend work, not exercised/resumed here.
+    - Database: `students.coop_advisor_teacher_id` FK exists separately from class advisor.
+    - Evidence / Issue: compatible profile query **200**; project-panel display is disconnected. Assignment remains privileged and role/schema setup stopped. Do not repurpose the Student class-advisor selector.
+
+14. Project topic — **MOCK/UI ONLY**
+    - Frontend: `projectTitle` input and `saveProjectBtn` validate input and show unconnected-backend message; empty advisor selector blocks normal submission first.
+    - API: none called by save handler.
+    - Backend: no topic handler in inspected Student route chain.
+    - Database: no topic field/entity in connected Student/Profile models.
+    - Evidence / Issue: no persistence/read-back; button existence is not implementation.
+
+15. Report / Project Book / Poster Upload — **MOCK/UI ONLY**
+    - Frontend: file inputs and `uploadProjectBtn` only show unconnected-backend message.
+    - API: none for this handler; resume/image upload routes cannot upload these documents.
+    - Backend: no connected document upload/list/download handlers.
+    - Database: StudentFile enum supports `coop_project_book`, `coop_poster`, `coop_practice_log_book`; storage directories exist in code, but no Student document write flow.
+    - Evidence / Issue: no bytes uploaded and no metadata persisted. Existing enum/storage preparation is not DONE.
+
+### CRITICAL BLOCKERS
+
+- **Confirmed in frontend fault injection:** Teacher directory failure followed by student-info save submits null class advisor, risking an unintended clear and transfer/loss of pending review authority. The database was not mutated during reproduction.
+- **Confirmed in mocked controller fault injection:** Resume extraction-metadata save failure after the upload metadata commit deletes the committed file; replacement may already have removed the old file. This is an actual error-path defect, not a claim that the current existing Resume is missing (it exists).
+- Complete Coop Request review progression remains blocked by pending 011 and absent review tables, with role rollout intentionally stopped. Project/Daily Log/document actions lack backend persistence.
+- Fresh successful password login and Student mutation acceptance were not performed; do not substitute GETs/mocks/historical role tests for this evidence.
+
+### SCHEMA / MIGRATION RISKS
+
+- **007a/010/011 remain pending**; do not apply/rollback/mark them. Source is newer than Local schema.
+- **011:** absent `teachers.is_department_head`, `coop_request_reviews`, `job_posting_reviews` confirmed. Inspected Student Teacher queries are compatible because they explicitly select existing columns. Default Teacher queries are a potential compatibility regression if introduced later.
+- **010:** catalog confirms **75 UNIQUE constraints on student_files.storage_path**. Existing one-Resume partial UNIQUE index is present, and required resume extraction columns exist. Pending cleanup is real schema drift, not evidence that today's Resume SELECTs fail.
+- **007a:** base Student tables exist despite the missing ledger entry; this observation is not authorization to mark migration history or recreate tables. VM schema not checked; VM remains offline/out of scope.
+
+### SAFE NEXT IMPLEMENTATION TASK — exactly one
+
+**Fix Student Resume upload cleanup after metadata commit.** Preserve the committed file when extraction-status persistence fails; distinguish pre-commit upload cleanup from post-commit recovery, return truthful upload/extraction feedback, and add focused mocked failure coverage. Scope stays in Student upload code/tests, with no migrations, role work or architectural redesign. **Recommendation only — NOT STARTED.**
+
+### FILES CHANGED
+
+- `HANDOFF_fitm-intern.md` only. Previous history retained. No source/frontend/test/config/env/migration file changed.
+
+### TESTS RUN
+
+- `docker exec intern_backend node --test test/jobMatching.test.js test/resumeText.test.js test/coopRequestCompany.test.js`: **27 passed / 0 failed / 0 skipped** (19 matching, 2 Resume text, 6 Company/request tests). Persistence/provider dependencies mocked; not database write acceptance.
+- `docker exec intern_backend node --test --test-name-pattern 'Student|Shared JWT' test/roleAuth.test.js`: **3 passed / 0 failed / 1 intentionally skipped** (unrelated route-loading case excluded).
+- Read-only runtime probes via `PowerShell here-string | docker exec -i intern_backend node`: ledger/catalog/Teacher SQL, active-advisor existence, Student authenticated GETs and Skills/Resume computation **PASS**. GETs: teachers, auth/me, both Student Profile aliases, Coop Request list, Mentor owner, Company search and duplicate check **200**; missing detail **404**; missing credentials **400**; no-token auth/me/teachers **401**. No personal response data printed.
+- First ledger probe used the wrong identifier `SequelizeMeta`, returned **42P01** and ended its read-only transaction; corrected to the configured `sequelize_meta` and all subsequent probes passed. This was an audit-probe error, not an application endpoint defect.
+- `PowerShell here-string | docker exec -i intern_backend node`: mocked Resume post-commit fault reproduction **PASS**, confirms committed-file deletion. All filesystem/DB effects mocked.
+- `PowerShell here-string | docker exec -i intern_frontend node`: actual `loadTeachers`/`saveStudentInfo` functions in mocked DOM **PASS**, confirms null advisor submission after directory failure; no API request sent.
+- No frontend build needed: frontend unchanged. No full backend/NLP/migration suite run. Documentation `git diff --check`: **PASS**. Final `git status --short`/diff file-scope verification: **PASS**, only this handoff modified, with additions only and all prior history retained.
+
+**STOP — audit complete; recommended next task not begun.**
+
+---
+
 ## Final checkpoint before Student work — 2026-10-06
 
 **CURRENT AUTHORITATIVE — Asia/Bangkok.** This checkpoint supersedes earlier next-task recommendations and project priorities. Recruitment and Department Staff / Teacher / Department Head backend are **IMPLEMENTATION COMPLETE**, verified in isolated PostgreSQL. This does **not** mean Local role schema/accounts are ready or that real company inbox acceptance was completed. **STAGING / TEST READY; PRODUCTION READY: NO.**

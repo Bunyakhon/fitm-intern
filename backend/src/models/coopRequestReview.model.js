@@ -2,6 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 module.exports = (sequelize) => {
   class CoopRequestReview extends Model {
     static associate(models) {
+      CoopRequestReview.belongsTo(models.Student, {foreignKey: 'student_id', as: 'student', onDelete: 'RESTRICT'});
       CoopRequestReview.belongsTo(models.CoopRequest, {
         foreignKey: "coop_request_id",
         as: "request",
@@ -29,6 +30,7 @@ module.exports = (sequelize) => {
       coop_request_id: { type: DataTypes.UUID, allowNull: false },
       actor_role: { type: DataTypes.STRING(32), allowNull: false },
       teacher_id: { type: DataTypes.UUID, allowNull: true },
+      student_id: { type: DataTypes.UUID, allowNull: true },
       department_staff_id: { type: DataTypes.UUID, allowNull: true },
       from_status: { type: DataTypes.STRING(32), allowNull: false },
       to_status: { type: DataTypes.STRING(32), allowNull: false },

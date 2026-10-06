@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const crypto = require("node:crypto");
+process.env.JWT_SECRET ||= crypto.randomBytes(32).toString('hex');
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const { Sequelize } = require("sequelize");
@@ -27,7 +28,7 @@ test(
   "Role authentication, scopes, workflow, concurrency and migration on disposable PostgreSQL",
   { skip: process.env.ROLE_BACKEND_INTEGRATION_TEST !== "true" },
   async (t) => {
-    const sequelize = new Sequelize("fitm_role_test", "postgres", null, {
+    const sequelize = process.env.ROLE_DISPOSABLE_DATABASE_URL ? new Sequelize(process.env.ROLE_DISPOSABLE_DATABASE_URL, {dialect: 'postgres', logging: false, pool: {max: 8}}) : new Sequelize("fitm_role_test", "postgres", null, {
       host: "a013-postgres",
       dialect: "postgres",
       logging: false,
@@ -61,7 +62,7 @@ test(
         }),
         logger: undefined,
       });
-      await umzug.up();
+      await umzug.up({to: '011_add_role_workflow_reviews.js'});
       await t.test(
         "011 up/down/up is reversible on empty fixture, with secure defaults",
         async () => {
@@ -100,10 +101,16 @@ test(
             ),
             false,
           );
-          await umzug.up();
-          assert.equal((await umzug.pending()).length, 0);
+          await umzug.up({to: '011_add_role_workflow_reviews.js'});
+          assert.deepEqual((await umzug.pending()).map(m => m.name), [
+            "012_coop_prerequisites_and_direct_review.js",
+            "013_add_coop_projects_and_current_files.js",
+            "014_add_coop_project_advisor_requests.js",
+            "015_add_company_evaluations.js",
+          ]);
         },
       );
+      await umzug.up(); // 012 corrects review constraints before workflow fixtures.
       const password = "fixture-password-123";
       const teacher = await m.Teacher.create({
         email: "advisor@example.test",
@@ -200,7 +207,7 @@ test(
           },
           ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
         });
-        const data = await response.json();
+        const data = response.headers.get('content-type')?.includes('application/json') ? await response.json() : {message: 'Route unavailable'};
         assert.equal(
           /password_hash|token_hash/.test(JSON.stringify(data)),
           false,
@@ -407,12 +414,12 @@ test(
         },
       );
       await t.test(
-        "Teacher → Staff → Head approval follows stages and preserves audit actors",
+        "Teacher → Head approval follows stages; Staff is view/cancel only",
         async () => {
           const row = await request();
           assert.equal(
             (await approve("staff", row.id, tokens.staff)).status,
-            409,
+            404,
           );
           assert.equal(
             (await approve("department-head", row.id, tokens.head)).status,
@@ -421,14 +428,10 @@ test(
           assert.equal(
             (await approve("teachers", row.id, tokens.teacher)).body.data
               .request.status,
-            "staff_review",
+            "department_head_review",
           );
           assert.equal(
             (await approve("teachers", row.id, tokens.teacher)).status,
-            409,
-          );
-          assert.equal(
-            (await approve("department-head", row.id, tokens.head)).status,
             409,
           );
           const staffList = await call("/api/staff/coop-requests", {
@@ -444,9 +447,8 @@ test(
             200,
           );
           assert.equal(
-            (await approve("staff", row.id, tokens.staff)).body.data.request
-              .status,
-            "department_head_review",
+            (await approve("staff", row.id, tokens.staff)).status,
+            404,
           );
           const headList = await call("/api/department-head/coop-requests", {
             token: tokens.head,
@@ -467,7 +469,7 @@ test(
           );
           assert.deepEqual(
             detail.body.data.reviews.map((r) => r.actor_role),
-            ["teacher", "department_staff", "department_head"],
+            ["teacher", "department_head"],
           );
           assert.ok(
             detail.body.data.reviews.every(
@@ -477,13 +479,13 @@ test(
         },
       );
       await t.test(
-        "advisor_review is accepted at Teacher stage without skipping Staff",
+        "advisor_review advances directly to Head",
         async () => {
           const row = await request("advisor_review");
           assert.equal(
             (await approve("teachers", row.id, tokens.teacher)).body.data
               .request.status,
-            "staff_review",
+            "department_head_review",
           );
         },
       );
@@ -492,7 +494,6 @@ test(
         async () => {
           for (const [namespace, status, token] of [
             ["teachers", "submitted", tokens.teacher],
-            ["staff", "staff_review", tokens.staff],
             ["department-head", "department_head_review", tokens.head],
           ]) {
             const row = await request(status);
@@ -587,10 +588,9 @@ test(
         },
       );
       await t.test(
-        "concurrent Staff/Head decisions each produce one legal transition",
+        "concurrent Head decisions produce one legal transition",
         async () => {
           for (const [namespace, status, token] of [
-            ["staff", "staff_review", tokens.staff],
             ["department-head", "department_head_review", tokens.head],
           ]) {
             const row = await request(status);
@@ -762,7 +762,7 @@ test(
         },
       );
       await t.test(
-        "Project advisor assignment is separate from class advisor and restricted to Co-op students",
+        "Legacy Head assignment cannot bypass Student request and Teacher confirmation",
         async () => {
           const result = await call(
             `/api/department-head/students/${student.id}/coop-advisor`,
@@ -772,10 +772,10 @@ test(
               body: { coop_advisor_teacher_id: other.id },
             },
           );
-          assert.equal(result.status, 200);
+          assert.equal(result.status, 409);
           await student.reload();
           assert.equal(student.advisor_teacher_id, teacher.id);
-          assert.equal(student.coop_advisor_teacher_id, other.id);
+          assert.equal(student.coop_advisor_teacher_id, null);
           await m.Student.update(
             { track: "internship" },
             { where: { id: student.id } },
@@ -791,7 +791,7 @@ test(
                 },
               )
             ).status,
-            400,
+            409,
           );
           await m.Student.update(
             { track: "co_op" },
@@ -808,7 +808,7 @@ test(
                 },
               )
             ).status,
-            400,
+            409,
           );
           await other.update({ status: "inactive" });
           assert.equal(
@@ -822,7 +822,7 @@ test(
                 },
               )
             ).status,
-            400,
+            409,
           );
           await other.update({ status: "active" });
         },
@@ -1032,7 +1032,7 @@ test(
             actor_role: "teacher",
             teacher_id: teacher.id,
             from_status: "submitted",
-            to_status: "staff_review",
+            to_status: "department_head_review",
             decision: "approve",
           };
           for (const override of [
@@ -1051,12 +1051,13 @@ test(
         "011 down refuses to erase populated audit records or privileges",
         async () => {
           const before = await m.CoopRequestReview.count();
+          const ledgerBefore = (await umzug.executed()).map(m => m.name);
           await assert.rejects(
             () => migration.down({ context: sequelize.getQueryInterface() }),
             /rollback refused/,
           );
           assert.equal(await m.CoopRequestReview.count(), before);
-          assert.equal((await umzug.executed()).length, 12);
+          assert.deepEqual((await umzug.executed()).map(m => m.name), ledgerBefore);
         },
       );
       await t.test(
@@ -1066,7 +1067,7 @@ test(
           const posting = await job();
           await staff.update({ is_active: false });
           assert.equal(
-            (await approve("staff", row.id, tokens.staff)).status,
+            (await call(`/api/staff/coop-requests/${row.id}/cancel`, {method: 'POST', token: tokens.staff, body: {reason: 'Fixture cancellation'}})).status,
             403,
           );
           assert.equal((await publish(posting.id)).status, 403);
@@ -1080,6 +1081,76 @@ test(
           await head.update({ is_department_head: true });
         },
       );
+      // Load the real controller against this guarded disposable registry only;
+      await t.test('Staff HTTP cancellation is audited, terminal-safe and concurrent-safe', async () => {
+        const cancel = id => call(`/api/staff/coop-requests/${id}/cancel`, {token:tokens.staff, method:'POST', body:{reason:'Department cancellation'}});
+        for (const status of ['submitted','advisor_review','staff_review','department_head_review']) {
+          const row = await request(status); const result = await cancel(row.id);
+          assert.equal(result.status,200); assert.equal(result.body.data.request.status,'cancelled');
+          assert.equal(result.body.data.review.actor_role,'department_staff'); assert.equal(result.body.data.review.from_status,status);
+        }
+        for (const status of ['approved','rejected','cancelled']) {const row = await request(status); assert.equal((await cancel(row.id)).status,409);}
+        const row = await request('advisor_review'); const results = await Promise.all([cancel(row.id),cancel(row.id)]);
+        assert.deepEqual(results.map(result=>result.status).sort(),[200,409]);
+        assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),1);
+        assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`, {token:tokens.teacher,method:'POST',body:{reason:'Fixture'}})).status,403);
+      });
+      // restore module caches immediately, never connect its normal DB instance.
+      const registryPath = require.resolve('../src/models');
+      const controllerPath = require.resolve('../src/controllers/coopRequest.controller');
+      const registryExports = require.cache[registryPath].exports;
+      const controllerCache = require.cache[controllerPath];
+      let studentController;
+      try {
+        require.cache[registryPath].exports = m;
+        delete require.cache[controllerPath];
+        studentController = require(controllerPath);
+      } finally {
+        require.cache[registryPath].exports = registryExports;
+        if (controllerCache) require.cache[controllerPath] = controllerCache;
+        else delete require.cache[controllerPath];
+      }
+      const {CATALOG} = require('../src/services/coopPrerequisites');
+      const response = () => ({statusCode: 200, status(code) {this.statusCode = code; return this;}, json(body) {this.body = body; return this;}});
+      const requestFields = {company_name:'Safe fixture', company_province:'Bangkok', company_address:'123 Fixture', letter_recipient_name:'Recipient', work_start_date:'2026-11-01', work_end_date:'2027-01-01', delivery_methods:['email']};
+      for (const program of ['IT','INE']) await t.test(`${program} real controller SQL create/detail/history snapshot`, async () => {
+        const owner = await m.Student.create({student_id:`coop-${program}`, email:`coop-${program}@email.kmutnb.ac.th`, first_name:'Fixture', last_name:'Student', track:'co_op', major:program, advisor_teacher_id:teacher.id, password});
+        const prerequisite_courses = CATALOG[program].map(([course_code], index) => ({course_code,status:index === 0 ? 'passed' : 'unselected',grade:index === 0 ? 'B+' : null}));
+        const create = response(); await studentController.createCoopRequest({user:{id:owner.id}, body:{...requestFields, prerequisite_courses}},create);
+        assert.equal(create.statusCode,201); assert.equal(create.body.data.status,'advisor_review');
+        const id = create.body.data.id;
+        assert.equal(await m.CoopRequestPrerequisiteCourse.count({where:{coop_request_id:id}}),5);
+        await owner.update({major:program === 'IT' ? 'INE' : 'IT'});
+        const detail = response(); await studentController.getCoopRequestById({user:{id:owner.id},params:{id}},detail);
+        assert.equal(detail.statusCode,200);
+        assert.deepEqual(detail.body.data.prerequisite_courses.map(row => row.course_code),CATALOG[program].map(([code]) => code));
+        assert.equal(detail.body.data.prerequisite_courses[0].program,program); assert.equal(detail.body.data.prerequisite_courses[0].grade,'B+');
+        const foreign = response(); await studentController.getCoopRequestById({user:{id:student.id},params:{id}},foreign); assert.equal(foreign.statusCode,404);
+        const cancelled = response(); await studentController.cancelCoopRequest({user:{id:owner.id},params:{id}},cancelled); assert.equal(cancelled.statusCode,200);
+        const history = response(); await studentController.getMyCoopRequests({user:{id:owner.id}},history); assert.ok(history.body.data.some(row=>row.id === id));
+        const old = response(); await studentController.getCoopRequestById({user:{id:owner.id},params:{id}},old); assert.equal(old.body.data.prerequisite_courses[0].grade,'B+');
+        assert.equal(old.body.data.reviews.length,2);
+        const nextProgram = program === 'IT' ? 'INE' : 'IT';
+        const second = response(); await studentController.createCoopRequest({user:{id:owner.id},body:{...requestFields,prerequisite_courses:CATALOG[nextProgram].map(([course_code],index)=>({course_code,status:index === 0 ? 'passed' : 'unselected',grade:index === 0 ? 'A' : null}))}},second);
+        assert.equal(second.statusCode,201);
+        const original = response(); await studentController.getCoopRequestById({user:{id:owner.id},params:{id}},original);
+        assert.equal(original.body.data.prerequisite_courses[0].grade,'B+'); assert.equal(original.body.data.prerequisite_courses[0].program,program);
+      });
+      await t.test('concurrent Student creates commit one complete request snapshot', async () => {
+        const owner=await m.Student.create({student_id:'coop-race',email:'coop-race@email.kmutnb.ac.th',first_name:'Fixture',last_name:'Student',track:'co_op',major:'IT',password});
+        const body={...requestFields,prerequisite_courses:CATALOG.IT.map(([course_code])=>({course_code,status:'unselected',grade:null}))};
+        const results=[response(),response()]; await Promise.all(results.map(res=>studentController.createCoopRequest({user:{id:owner.id},body},res)));
+        assert.deepEqual(results.map(res=>res.statusCode).sort(),[201,409]);
+        const created=await m.CoopRequest.findOne({where:{student_id:owner.id}}); assert.equal(await m.CoopRequestPrerequisiteCourse.count({where:{coop_request_id:created.id}}),5);
+        assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:created.id}}),1);
+      });
+      await t.test('real SQL snapshot failure rolls back Request and audit', async child => {
+        const owner = await m.Student.create({student_id:'coop-rollback',email:'rollback-fixture@email.kmutnb.ac.th',first_name:'Fixture',last_name:'Student',track:'co_op',major:'IT',password});
+        child.mock.method(console,'error',()=>{});
+        child.mock.method(m.CoopRequestPrerequisiteCourse,'bulkCreate',async()=>{throw new Error('injected prerequisite failure');});
+        const res=response(); await studentController.createCoopRequest({user:{id:owner.id},body:{...requestFields,prerequisite_courses:CATALOG.IT.map(([course_code])=>({course_code,status:'unselected',grade:null}))}},res);
+        assert.equal(res.statusCode,500); assert.equal(await m.CoopRequest.count({where:{student_id:owner.id}}),0);
+      });
     } finally {
       if (server) await new Promise((resolve) => server.close(resolve));
       await sequelize.close();

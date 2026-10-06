@@ -17,6 +17,8 @@ const {
 } = require("../services/roleWorkflow.service");
 const models = require("../models");
 const { rateLimit } = require("express-rate-limit");
+const { createCoopProjectAdvisorService } = require("../services/coopProjectAdvisor.service");
+const { createCoopProjectAdvisorController } = require("../controllers/coopProjectAdvisor.controller");
 function createLoginRateLimiter() {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -50,17 +52,24 @@ function createRoleWorkflowRouter(role, registry = models) {
         }),
   );
   router.get("/me", controller.profile(role));
+  if (role === "teacher") {
+    const advisor = createCoopProjectAdvisorController(createCoopProjectAdvisorService(registry));
+    router.get("/project-advisor-requests", advisor.list);
+    router.post("/project-advisor-requests/:id/accept", advisor.accept);
+    router.post("/project-advisor-requests/:id/reject", advisor.reject);
+  }
   router.get("/coop-requests", controller.listRequests(role));
   router.get("/coop-requests/:id", controller.requestDetail(role));
-  router.post(
+  if (role !== 'department_staff') router.post(
     "/coop-requests/:id/approve",
     controller.reviewRequest(role, "approve"),
   );
-  router.post(
+  if (role !== 'department_staff') router.post(
     "/coop-requests/:id/reject",
     controller.reviewRequest(role, "reject"),
   );
   if (role === "department_staff") {
+    router.post('/coop-requests/:id/cancel', controller.reviewRequest(role, 'cancel'));
     router.get("/job-postings", controller.listJobs);
     router.get("/job-postings/:id", controller.jobDetail);
     router.post("/job-postings/:id/publish", controller.reviewJob("approve"));

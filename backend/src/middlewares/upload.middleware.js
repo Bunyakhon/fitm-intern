@@ -13,14 +13,14 @@ const RESUME_MIME_EXTENSIONS = {
   "application/pdf": ".pdf",
 };
 
-const createStorage = (directoryName, mimeExtensions) => multer.diskStorage({
+const createStorage = (directoryName, mimeExtensions, studentStorage = ensureStudentStorage) => multer.diskStorage({
   destination: async (req, file, callback) => {
     try {
       if (!req.user?.id) {
         return callback(new Error("Authenticated student is required"));
       }
 
-      const paths = await ensureStudentStorage(req.user.id);
+      const paths = await studentStorage(req.user.id);
       return callback(null, paths[directoryName]);
     } catch (error) {
       return callback(error);
@@ -32,8 +32,9 @@ const createStorage = (directoryName, mimeExtensions) => multer.diskStorage({
   },
 });
 
-const createSingleFileUpload = (directoryName, mimeExtensions, fileSize) => multer({
-  storage: createStorage(directoryName, mimeExtensions),
+const createSingleFileUpload = (directoryName, mimeExtensions, fileSize, { storageConfig, ...options } = {}) => multer({
+  ...options,
+  storage: createStorage(directoryName, mimeExtensions, storageConfig?.ensureStudentStorage),
   limits: { fileSize },
   fileFilter: (req, file, callback) => {
     if (!mimeExtensions[file.mimetype]) {
@@ -57,6 +58,7 @@ const resumeUpload = createSingleFileUpload(
 );
 
 module.exports = {
+  createSingleFileUpload,
   profileImageUpload,
   resumeUpload,
   MIME_EXTENSIONS,

@@ -863,31 +863,45 @@
             <p>จัดการข้อมูลโครงการสหกิจศึกษา</p>
           </div>
 
-          <div class="section-card">
-            <div class="form-group">
-              <label for="projectAdvisor"> อาจารย์ที่ปรึกษาโครงการ </label>
+          <div class="section-card coop-project-card">
+            <div class="section-card-header">
+              <div>
+                <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> ข้อมูลโครงการ</h3>
+                <p>บันทึกหัวข้อโครงการและส่งคำขอให้อาจารย์ที่ปรึกษายืนยัน</p>
+              </div>
+            </div>
+            <div class="form-group project-advisor-field">
+              <label for="projectAdvisor">อาจารย์ที่ปรึกษาโครงการ</label>
 
-              <select id="projectAdvisor">
-                <option value="">-- ยังไม่มีข้อมูลอาจารย์ --</option>
+              <select id="projectAdvisor" disabled aria-describedby="projectAdvisorStatus projectAdvisorHelp">
+                <option value="">-- เลือกอาจารย์ --</option>
               </select>
+              <p id="projectAdvisorStatus" class="project-advisor-status" role="status"><span class="coop-status-badge project-advisor-badge">ยังไม่ได้เลือกอาจารย์</span></p>
+              <p id="projectAdvisorHelp" class="project-help">เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที</p>
+              <p class="message" id="projectAdvisorMessage" role="status"></p>
             </div>
 
             <div class="form-group">
-              <label for="projectTitle"> หัวข้อโครงการ </label>
+              <label for="projectTitle">หัวข้อโครงการ</label>
 
               <input
                 type="text"
                 id="projectTitle"
+                maxlength="500"
+                aria-describedby="projectTitleHelp"
                 placeholder="กรอกหัวข้อโครงการ"
               />
+              <p id="projectTitleHelp" class="project-help">บันทึกและแก้ไขหัวข้อได้ โดยไม่ต้องรออาจารย์ยืนยัน</p>
             </div>
 
-            <button type="button" class="btn-primary" id="saveProjectBtn">
-              <i class="fa-solid fa-floppy-disk"></i>
-              บันทึก
-            </button>
+            <div class="project-actions">
+              <button type="button" class="btn-primary" id="saveProjectBtn" disabled>
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                บันทึกหัวข้อโครงการ
+              </button>
 
-            <p class="message" id="projectMessage"></p>
+              <p class="message" id="projectMessage" role="status"></p>
+            </div>
           </div>
         </section>
 
@@ -902,33 +916,43 @@
             <p>อัปโหลดเล่มโครงการและโปสเตอร์</p>
           </div>
 
-          <div class="section-card">
-            <div class="form-group">
-              <label for="projectBookFile"> เล่มโครงการ </label>
+          <div class="section-card project-upload-card">
+            <div class="project-upload-grid">
+              <div class="form-group project-file-card">
+                <label for="projectBookFile"><i class="fa-solid fa-book" aria-hidden="true"></i> เล่มโครงการ</label>
+                <p id="projectBookHelp" class="project-help">PDF ขนาดไม่เกิน 10MB</p>
 
-              <input
-                type="file"
-                id="projectBookFile"
-                accept=".pdf,.doc,.docx"
-              />
+                <input
+                  type="file"
+                  id="projectBookFile"
+                  accept=".pdf,application/pdf"
+                  aria-describedby="projectBookHelp"
+                />
+                <div class="project-current-file" id="projectBookCurrent" aria-live="polite">กำลังโหลดไฟล์...</div>
+              </div>
+
+              <div class="form-group project-file-card">
+                <label for="posterFile"><i class="fa-solid fa-image" aria-hidden="true"></i> โปสเตอร์</label>
+                <p id="posterHelp" class="project-help">PDF, PNG หรือ JPEG ขนาดไม่เกิน 10MB</p>
+
+                <input
+                  type="file"
+                  id="posterFile"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  aria-describedby="posterHelp"
+                />
+                <div class="project-current-file" id="posterCurrent" aria-live="polite">กำลังโหลดไฟล์...</div>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="posterFile"> โปสเตอร์ </label>
+            <div class="project-actions">
+              <button type="button" class="btn-primary" id="uploadProjectBtn">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i>
+                อัปโหลดไฟล์ที่เลือก
+              </button>
 
-              <input
-                type="file"
-                id="posterFile"
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
+              <p class="message" id="projectUploadMessage" role="status"></p>
             </div>
-
-            <button type="button" class="btn-primary" id="uploadProjectBtn">
-              <i class="fa-solid fa-upload"></i>
-              อัปโหลด
-            </button>
-
-            <p class="message" id="projectUploadMessage"></p>
           </div>
         </section>
 
@@ -1035,19 +1059,146 @@
         <section class="content-panel" id="panel-evaluate">
           <div class="panel-header">
             <h2>ประเมินสถานประกอบการ</h2>
-
-            <p>ประเมินสถานประกอบการหลังการปฏิบัติงาน</p>
+            <p>แบบประเมินสถานประกอบการสำหรับนักศึกษาสหกิจศึกษา</p>
           </div>
 
-          <div class="section-card">
-            <div class="empty-state">
-              <i class="fa-solid fa-star"></i>
-
-              <h4>ยังไม่มีข้อมูลสำหรับการประเมิน</h4>
-
-              <p>เมื่อมีข้อมูลสถานประกอบการ ระบบจะแสดงแบบประเมินในส่วนนี้</p>
+          <div class="section-card evaluation-information">
+            <div class="section-card-header">
+              <h3><i class="fa-solid fa-building" aria-hidden="true"></i> ข้อมูลนักศึกษาและสถานประกอบการ</h3>
             </div>
+            <dl class="evaluation-info-grid">
+              <div><dt>ชื่อนักศึกษา</dt><dd id="evaluationStudentName">-</dd></div>
+              <div><dt>ชื่อพี่เลี้ยง</dt><dd id="evaluationMentorName">-</dd></div>
+              <div><dt>รหัสนักศึกษา</dt><dd id="evaluationStudentId">-</dd></div>
+              <div><dt>ตำแหน่งพี่เลี้ยง</dt><dd id="evaluationMentorPosition">-</dd></div>
+              <div><dt>สาขาวิชา</dt><dd id="evaluationMajor">-</dd></div>
+              <div><dt>ช่วงเวลาปฏิบัติงาน</dt><dd id="evaluationWorkPeriod">-</dd></div>
+              <div><dt>ชื่อสถานประกอบการ</dt><dd id="evaluationCompany">-</dd></div>
+              <div><dt>วันที่ประเมิน</dt><dd id="evaluationDate">-</dd></div>
+            </dl>
           </div>
+
+          <form id="companyEvaluationForm" novalidate>
+            <p id="evaluationScoreHelp" class="evaluation-help">เลือกคะแนน 1–10 ให้ครบทั้ง 5 ข้อ สามารถกลับมาแก้ไขแบบประเมินที่บันทึกแล้วได้</p>
+            <fieldset class="section-card evaluation-category">
+              <legend>หมวดที่ 1 การมอบหมายงานและความพร้อม</legend>
+              <div class="evaluation-question">
+                <label for="evaluationQ1"><span class="evaluation-question-number">1.</span> ความเข้าใจที่ได้รับจากงานสหกิจศึกษา เกี่ยวกับงานที่ปฏิบัติ</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ1" name="q1_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ2"><span class="evaluation-question-number">2.</span> งานที่ได้รับมอบหมายตรงตามสาขาวิชาของนักศึกษา</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ2" name="q2_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ3"><span class="evaluation-question-number">3.</span> มีการชี้แจงขั้นตอนการปฏิบัติงาน ก่อนเริ่มการปฏิบัติงาน</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ3" name="q3_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="section-card evaluation-category">
+              <legend>หมวดที่ 2 การดำเนินงานและการสนับสนุน</legend>
+              <div class="evaluation-question">
+                <label for="evaluationQ4"><span class="evaluation-question-number">4.</span> มีแผนการปฏิบัติงานชัดเจน</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ4" name="q4_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ5"><span class="evaluation-question-number">5.</span> มีการปรับปรุงแผนปฏิบัติงานเมื่อเกิดปัญหาในการปฏิบัติ</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ5" name="q5_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+            </fieldset>
+            <div class="section-card evaluation-comment-card">
+              <label for="evaluationComment">ข้อเสนอแนะเพิ่มเติม <span class="evaluation-help">(ไม่บังคับ)</span></label>
+              <textarea id="evaluationComment" rows="5" maxlength="2000" disabled aria-describedby="evaluationCommentHelp" placeholder="ข้อเสนอแนะเพื่อพัฒนาการปฏิบัติงานและการดูแลนักศึกษา"></textarea>
+              <p id="evaluationCommentHelp" class="evaluation-help">ไม่เกิน 2,000 ตัวอักษร</p>
+            </div>
+            <div class="section-card evaluation-summary-card">
+              <h3>สรุปผลการประเมิน</h3>
+              <div class="evaluation-summary-grid" aria-live="polite" aria-atomic="true">
+                <div><span>คะแนนรวม</span><strong id="evaluationTotal">0 / 50</strong></div>
+                <div><span>ค่าเฉลี่ย</span><strong id="evaluationAverage">0.00 / 10</strong></div>
+              </div>
+              <p class="evaluation-help">คะแนนรวมระหว่างเลือกคำตอบ ค่าเฉลี่ยคำนวณจากทั้ง 5 ข้อ</p>
+              <div class="evaluation-actions">
+                <p class="message" id="evaluationMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="btn-primary" id="saveEvaluationBtn" disabled>บันทึกแบบประเมิน</button>
+              </div>
+            </div>
+          </form>
         </section>
 
         <!-- ==============================
@@ -1711,8 +1862,10 @@
               </div>
             </fieldset>
             <section class="coop-form-section coop-course-section">
-              <h4>รายวิชาที่ต้องผ่านเกณฑ์</h4>
-              <div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody><tr><td colspan="3">ยังไม่มีข้อมูลผลการเรียนที่เชื่อมต่อกับระบบ</td></tr></tbody></table></div>
+              <h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกงาน / สหกิจศึกษา</h4>
+              <p class="coop-unavailable" id="coopPrerequisiteContext"></p>
+              <p class="coop-unavailable" id="coopPrerequisiteNotice">เลือกผ่านแล้วพร้อมผลการเรียน หรือกำลังศึกษา (กำลังลงทะเบียนเรียนในเทอมนี้) ข้อมูลรายวิชาจะบันทึกเป็นส่วนหนึ่งของคำร้องนี้</p>
+              <div class="coop-course-table-wrap"><table class="coop-course-table" aria-describedby="coopPrerequisiteContext coopPrerequisiteNotice"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopPrerequisiteCourses"></tbody></table></div>
             </section>
             <section class="coop-form-section coop-signer-section">
               <h4>ลงชื่อผู้ยื่นคำร้อง</h4>
@@ -1754,7 +1907,7 @@
             <section class="coop-form-section coop-student-section"><h4>ข้อมูลนักศึกษา</h4><div class="coop-readonly-grid" id="coopDetailStudent"></div></section>
             <section class="coop-form-section coop-company-section"><h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4><div class="coop-readonly-grid" id="coopDetailRequest"></div></section>
             <section class="coop-form-section coop-delivery-detail"><h4>การดำเนินการจัดส่งหนังสือ</h4><div class="coop-detail-chip-list" id="coopDetailDeliveryMethods"></div></section>
-            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody><tr><td colspan="3">ยังไม่มีข้อมูลผลการเรียนที่เชื่อมต่อกับระบบ</td></tr></tbody></table></div></section>
+            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
             <section class="coop-form-section coop-signer-section"><h4>ลงชื่อผู้ยื่นคำร้อง</h4><div class="coop-readonly-grid" id="coopDetailSigner"></div></section>
             <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p><div class="coop-readonly-grid coop-advisor-grid"><div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopDetailAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div><div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div></div></section>
             <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p></section>

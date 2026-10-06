@@ -18,6 +18,7 @@ const coopRequestRoutes = require("./routes/coopRequest.routes");
 const jobSubmissionRoutes = require("./routes/jobSubmission.routes");
 const staffAuthRoutes = require("./routes/staffAuth.routes");
 const jobMatchingRoutes = require("./routes/jobMatching.routes");
+const { createStudentCoopRouter } = require("./routes/studentCoop.routes");
 const { createRoleWorkflowRouter } = require("./routes/roleWorkflow.routes");
 // โหลด models ทั้งหมด
 // Student, StudentProfile และ associate()
@@ -79,6 +80,7 @@ app.use("/api/staff", createRoleWorkflowRouter("department_staff"));
 app.use("/api/teachers", createRoleWorkflowRouter("teacher"));
 app.use("/api/department-head", createRoleWorkflowRouter("department_head"));
 app.use("/api/job-matches", jobMatchingRoutes);
+app.use("/api/student-coop", createStudentCoopRouter());
 
 // Do not return Express parser stacks, SQL details or provider diagnostics.
 app.use((error, req, res, next) => {

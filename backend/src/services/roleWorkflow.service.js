@@ -14,10 +14,10 @@ const {
   toSafeTeacherProfile,
 } = require("./teacherAuth.service");
 const { toSafeDepartmentStaffProfile } = require("./staffAuth.service");
+const {prerequisiteInclude} = require('./coopPrerequisites');
 
 const STAGES = {
-  teacher: { from: ["submitted", "advisor_review"], next: "staff_review" },
-  department_staff: { from: ["staff_review"], next: "department_head_review" },
+  teacher: { from: ["submitted", "advisor_review"], next: "department_head_review" },
   department_head: { from: ["department_head_review"], next: "approved" },
 };
 const REQUEST_STATUSES = [
@@ -110,7 +110,7 @@ function createRoleWorkflowService(m = models) {
   async function listRequests(role, actorId, query) {
     const currentActor = await actor(role, actorId);
     const status =
-      query.status === undefined ? STAGES[role].from : query.status;
+      query.status === undefined ? (role === 'department_staff' ? REQUEST_STATUSES : STAGES[role].from) : query.status;
     if (
       query.status !== undefined &&
       (typeof status !== "string" || !REQUEST_STATUSES.includes(status))
@@ -148,6 +148,7 @@ function createRoleWorkflowService(m = models) {
         },
         { model: m.Company, as: "company" },
         { model: m.JobPosting, as: "jobPosting" },
+        prerequisiteInclude(m),
       ],
     });
     if (!request) throw new WorkflowError("Coop request was not found", 404);
@@ -162,10 +163,11 @@ function createRoleWorkflowService(m = models) {
     return { request, reviews };
   }
   async function reviewRequest(role, actorId, id, decision, body) {
+    if (role === 'department_staff' && decision !== 'cancel') throw new WorkflowError('Staff cannot approve or forward Coop Requests', 403);
     uuid(id);
-    const reason = decisionPayload(body, decision);
-    const stage = STAGES[role];
-    if (!stage || !["approve", "reject"].includes(decision))
+    const reason = decision === 'cancel' ? text(object(body, ['reason']).reason, 'reason', 2000) : decisionPayload(body, decision);
+    const stage = role === 'department_staff' ? {from: ['submitted','advisor_review','staff_review','department_head_review'], next: 'cancelled'} : STAGES[role];
+    if (!stage || !(role === 'department_staff' ? ['cancel'] : ['approve','reject']).includes(decision))
       throw new WorkflowError("Unsupported review decision");
     return m.sequelize.transaction(async (transaction) => {
       const currentActor = await actor(
@@ -198,8 +200,8 @@ function createRoleWorkflowService(m = models) {
           409,
         );
       const fromStatus = request.status;
-      const toStatus = decision === "approve" ? stage.next : "rejected";
-      await request.update({ status: toStatus }, { transaction });
+      const toStatus = decision === "reject" ? 'rejected' : stage.next;
+      await request.update({ status: toStatus, ...(decision === 'cancel' ? {cancelled_at: new Date()} : {}) }, { transaction });
       const review = await m.CoopRequestReview.create(
         {
           coop_request_id: id,
@@ -379,51 +381,9 @@ function createRoleWorkflowService(m = models) {
     });
   }
   async function assignProjectAdvisor(headId, studentId, body) {
-    uuid(studentId);
-    object(body, ["coop_advisor_teacher_id"]);
-    const teacherId = uuid(
-      body.coop_advisor_teacher_id,
-      "coop_advisor_teacher_id",
-    );
-    return m.sequelize.transaction(async (transaction) => {
-      const head = await actor(
-        "department_head",
-        headId,
-        transaction,
-        transaction.LOCK.SHARE,
-      );
-      const teacher = await m.Teacher.findOne({
-        where: { id: teacherId, status: "active", department: head.department },
-        attributes: ["id"],
-        transaction,
-        lock: transaction.LOCK.SHARE,
-      });
-      if (!teacher)
-        throw new WorkflowError(
-          "Project advisor must be active and belong to this department",
-        );
-      const student = await m.Student.findByPk(studentId, {
-        attributes: STUDENT_FIELDS,
-        transaction,
-        lock: transaction.LOCK.UPDATE,
-      });
-      if (!student) throw new WorkflowError("Student was not found", 404);
-      if (student.track !== "co_op")
-        throw new WorkflowError(
-          "Project advisor assignment requires a Co-op student",
-        );
-      await headStudentScope(head, student, transaction);
-      // Static update avoids Student's required virtual password validation.
-      await m.Student.update(
-        { coop_advisor_teacher_id: teacherId },
-        { where: { id: studentId }, transaction },
-      );
-      return {
-        id: studentId,
-        advisor_teacher_id: student.advisor_teacher_id,
-        coop_advisor_teacher_id: teacherId,
-      };
-    });
+    // Retain a clear response for old clients; direct assignment would bypass
+    // the Student request and the selected Teacher's explicit confirmation.
+    throw new WorkflowError("Project advisors require a Student request and Teacher acceptance", 409);
   }
   async function profile(role, id) {
     const currentActor = await actor(role, id);

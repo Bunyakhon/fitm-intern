@@ -3,6 +3,8 @@ const { DataTypes, Model } = require("sequelize");
 module.exports = (sequelize) => {
   class CoopRequest extends Model {
     static associate(models) {
+      CoopRequest.hasMany(models.CoopRequestPrerequisiteCourse, {foreignKey: 'coop_request_id', as: 'prerequisite_courses', onDelete: 'CASCADE', onUpdate: 'CASCADE'});
+      CoopRequest.hasMany(models.CoopRequestReview, {foreignKey: 'coop_request_id', as: 'reviews', onDelete: 'RESTRICT'});
       CoopRequest.belongsTo(models.Student, {
         foreignKey: "student_id",
         as: "student",

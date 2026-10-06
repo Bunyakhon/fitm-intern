@@ -2709,6 +2709,9 @@ textarea::placeholder {
 
 .coop-course-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.coop-course-table td[colspan] {
   color: var(--muted);
   text-align: center;
 }
@@ -3133,5 +3136,413 @@ textarea::placeholder {
 
   .student-info-form-full {
     grid-column: auto;
+  }
+}
+
+/* Student's company evaluation: scoped to its existing menu panel. */
+#panel-evaluate .evaluation-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+  margin-top: 20px;
+}
+
+#panel-evaluate .evaluation-info-grid > div {
+  min-width: 0;
+}
+
+#panel-evaluate dt,
+#panel-evaluate .evaluation-help {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+#panel-evaluate dd {
+  margin: 5px 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+#panel-evaluate #evaluationScoreHelp {
+  margin: 20px 0 8px;
+}
+
+#panel-evaluate .evaluation-category {
+  min-width: 0;
+  padding: 12px 22px 6px;
+}
+
+#panel-evaluate .evaluation-category legend {
+  max-width: 100%;
+  padding: 0 8px;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+#panel-evaluate .evaluation-question {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 24px;
+  padding: 18px 0;
+}
+
+#panel-evaluate .evaluation-question + .evaluation-question {
+  border-top: 1px solid var(--border);
+}
+
+#panel-evaluate .evaluation-question label {
+  min-width: 0;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+#panel-evaluate .evaluation-question-number {
+  color: var(--primary);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+#panel-evaluate .evaluation-score-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+#panel-evaluate select,
+#panel-evaluate textarea {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+#panel-evaluate select {
+  min-height: 44px;
+}
+
+#panel-evaluate textarea {
+  display: block;
+  width: 100%;
+  margin: 12px 0 8px;
+  resize: vertical;
+  line-height: 1.8;
+}
+
+#panel-evaluate :is(select, textarea, button):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+#panel-evaluate :is(select, textarea):disabled {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+#panel-evaluate .evaluation-comment-card > label,
+#panel-evaluate .evaluation-summary-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+#panel-evaluate .evaluation-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 10px;
+}
+
+#panel-evaluate .evaluation-summary-grid > div {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  min-width: 0;
+  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+#panel-evaluate .evaluation-summary-grid span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+#panel-evaluate .evaluation-summary-grid strong {
+  color: var(--primary);
+  font-size: 1.35rem;
+  overflow-wrap: anywhere;
+}
+
+#panel-evaluate .evaluation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+#panel-evaluate .evaluation-actions .message {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  #panel-evaluate .evaluation-info-grid,
+  #panel-evaluate .evaluation-question,
+  #panel-evaluate .evaluation-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #panel-evaluate .evaluation-category {
+    padding: 10px 16px 4px;
+  }
+
+  #panel-evaluate .evaluation-score-control select {
+    flex: 1;
+  }
+
+  #panel-evaluate .evaluation-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Project and project uploads: keep layout changes within these two panels. */
+#panel-coop .coop-project-card,
+#panel-report-upload .project-upload-card {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+  min-width: 0;
+}
+
+#panel-coop .form-group,
+#panel-report-upload .form-group {
+  margin: 0;
+  min-width: 0;
+}
+
+#panel-coop .form-group label,
+#panel-report-upload .form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+#panel-coop .form-group input,
+#panel-coop .form-group select,
+#panel-report-upload input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.86rem;
+  background: var(--white);
+  color: var(--text);
+}
+
+#panel-coop .form-group input,
+#panel-coop .form-group select {
+  padding: 10px 12px;
+}
+
+#panel-coop .form-group select:disabled {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+#panel-coop :is(input, select, button):focus-visible,
+#panel-report-upload :is(input, button):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+#panel-coop .project-advisor-field {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+#panel-coop .project-advisor-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+#panel-coop .project-advisor-badge {
+  max-width: 100%;
+  white-space: normal;
+}
+
+#panel-coop .project-advisor-reason {
+  color: var(--danger);
+}
+
+#panel-coop .project-help,
+#panel-report-upload .project-help {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+#panel-coop .project-actions,
+#panel-report-upload .project-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+#panel-coop .project-actions .message,
+#panel-report-upload .project-actions .message {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#panel-report-upload .project-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+#panel-report-upload .project-file-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+#panel-report-upload .project-file-card label {
+  margin: 0;
+}
+
+#panel-report-upload .project-file-card label i {
+  margin-right: 6px;
+  color: var(--primary);
+}
+
+#panel-report-upload .project-file-card .project-help {
+  margin: 0;
+}
+
+#panel-report-upload input[type="file"] {
+  padding: 0;
+  line-height: 44px;
+}
+
+#panel-report-upload input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#panel-report-upload .project-current-file {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding: 14px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+#panel-report-upload .project-file-meta {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+#panel-report-upload .project-file-name {
+  color: var(--text);
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#panel-report-upload .project-file-date {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+#panel-report-upload .project-file-preview {
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+@media (max-width: 900px) {
+  #panel-report-upload .project-upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  #panel-coop .coop-project-card,
+  #panel-report-upload .project-upload-card {
+    padding: 16px;
+    gap: 20px;
+  }
+
+  #panel-report-upload .project-file-card {
+    padding: 16px;
+  }
+
+  #panel-report-upload .project-current-file {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #panel-report-upload .project-file-preview {
+    align-self: flex-start;
+  }
+
+  #panel-coop .project-actions,
+  #panel-report-upload .project-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
