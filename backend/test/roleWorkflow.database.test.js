@@ -107,6 +107,7 @@ test(
             "013_add_coop_projects_and_current_files.js",
             "014_add_coop_project_advisor_requests.js",
             "015_add_company_evaluations.js",
+            "016_add_coop_documents.js",
           ]);
         },
       );
@@ -219,7 +220,7 @@ test(
           );
         return { status: response.status, body: data };
       }
-      const request = (status = "submitted", studentId = student.id) =>
+      const request = (status = "advisor_review", studentId = student.id) =>
         m.CoopRequest.create({
           student_id: studentId,
           company_name: "Test Company",
@@ -493,7 +494,7 @@ test(
         "each role may reject only its own stage, with required persisted reason",
         async () => {
           for (const [namespace, status, token] of [
-            ["teachers", "submitted", tokens.teacher],
+            ["teachers", "advisor_review", tokens.teacher],
             ["department-head", "department_head_review", tokens.head],
           ]) {
             const row = await request(status);
@@ -517,6 +518,9 @@ test(
         "terminal states and unsupported payloads/UUIDs cannot be reviewed",
         async () => {
           for (const status of [
+            "submitted",
+            "staff_review",
+            "department_head_review",
             "approved",
             "document_issued",
             "in_progress",
@@ -1006,7 +1010,7 @@ test(
             service.reviewRequest("teacher", teacher.id, row.id, "approve", {}),
           );
           await row.reload();
-          assert.equal(row.status, "submitted");
+          assert.equal(row.status, "advisor_review");
           const posting = await job();
           const jobs = createRoleWorkflowService({
             ...m,
@@ -1113,6 +1117,103 @@ test(
       const {CATALOG} = require('../src/services/coopPrerequisites');
       const response = () => ({statusCode: 200, status(code) {this.statusCode = code; return this;}, json(body) {this.body = body; return this;}});
       const requestFields = {company_name:'Safe fixture', company_province:'Bangkok', company_address:'123 Fixture', letter_recipient_name:'Recipient', work_start_date:'2026-11-01', work_end_date:'2027-01-01', delivery_methods:['email']};
+      for (const decision of ['approve','reject']) await t.test(`Head ${decision}: full authenticated Class -> Head HTTP/SQL/Student history with safe named actors`,async()=>{
+        const suffix=crypto.randomUUID().slice(0,8);
+        const owner=await m.Student.create({student_id:`head-${suffix}`,email:`head-${suffix}@email.kmutnb.ac.th`,first_name:'Head',last_name:'Advisee',major:'IT',track:'co_op',advisor_teacher_id:teacher.id,coop_advisor_teacher_id:other.id,password});
+        const created=response();await studentController.createCoopRequest({user:{id:owner.id},body:{...requestFields,prerequisite_courses:CATALOG.IT.map(([course_code])=>({course_code,status:'passed',grade:'B+'}))}},created);
+        assert.equal(created.statusCode,201);const id=created.body.data.id;
+        assert.equal((await approve('department-head',id,tokens.head)).status,409);assert.equal((await reject('department-head',id,tokens.head)).status,409);
+        assert.equal((await m.CoopRequest.findByPk(id)).status,'advisor_review');assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:id}}),1);
+        assert.equal((await approve('teachers',id,tokens.teacher)).status,200);assert.equal((await approve('teachers',id,tokens.teacher)).status,409);
+        const queue=await call('/api/department-head/coop-requests',{token:tokens.head});assert.equal(queue.status,200);
+        const mine=queue.body.data.find(row=>row.id===id);assert.ok(mine);assert.equal(mine.status,'department_head_review');assert.equal(mine.student.advisorTeacher.id,teacher.id);assert.equal(mine.student.email,undefined);
+        assert.equal(mine.prerequisite_courses.length,5);const approvedByClass=mine.reviews.find(row=>row.actor_role==='teacher');assert.equal(approvedByClass.teacher.id,teacher.id);assert.ok(approvedByClass.createdAt);
+        const detail=await call(`/api/department-head/coop-requests/${id}`,{token:tokens.head});assert.equal(detail.status,200);assert.equal(detail.body.data.reviews.length,2);assert.equal(detail.body.data.reviews.find(row=>row.actor_role==='teacher').teacher.first_name,teacher.first_name);
+        for(const token of [tokens.teacher,tokens.other,tokens.staff,tokens.student]) {
+          for(const route of ['/api/department-head/coop-requests?is_department_head=true',`/api/department-head/coop-requests/${id}`])assert.equal((await call(route,{token})).status,403);
+          assert.equal((await approve('department-head',id,token)).status,403);assert.equal((await reject('department-head',id,token)).status,403);
+        }
+        assert.equal((await approve('department-head',id,undefined)).status,401);
+        assert.equal((await approve('department-head',id,tokens.head,{is_department_head:true})).status,400);
+        assert.equal((await approve('department-head',id,tokens.head,{teacher_id:teacher.id})).status,400);
+        const results=await Promise.all(Array.from({length:2},()=>decision==='approve'?approve('department-head',id,tokens.head):reject('department-head',id,tokens.head,'  Head correction  ')));
+        assert.deepEqual(results.map(row=>row.status).sort(),[200,409]);const expected=decision==='approve'?'approved':'rejected';
+        assert.equal((await approve('department-head',id,tokens.head)).status,409);assert.equal((await reject('department-head',id,tokens.head)).status,409);
+        const audits=await m.CoopRequestReview.findAll({where:{coop_request_id:id},order:[['created_at','ASC']]});assert.equal(audits.length,3);
+        assert.deepEqual(audits.map(row=>row.actor_role),['student','teacher','department_head']);assert.equal(audits[2].teacher_id,head.id);assert.equal(audits[2].from_status,'department_head_review');assert.equal(audits[2].to_status,expected);assert.equal(audits[2].decision,decision);assert.ok(audits.every(row=>row.createdAt));
+        const read=response();await studentController.getCoopRequestById({user:{id:owner.id},params:{id}},read);assert.equal(read.statusCode,200);assert.equal(read.body.data.status,expected);assert.equal(read.body.data.reviews.length,3);
+        if(decision==='reject')assert.equal(read.body.data.reviews.find(row=>row.actor_role==='department_head').reason,'Head correction');
+        const history=response();await studentController.getMyCoopRequests({user:{id:owner.id}},history);assert.equal(history.body.data.find(row=>row.id===id).status,expected);
+        const finalDetail=await call(`/api/department-head/coop-requests/${id}`,{token:tokens.head});assert.equal(finalDetail.body.data.reviews.find(row=>row.actor_role==='department_head').teacher.id,head.id);
+        await owner.reload();assert.equal(owner.advisor_teacher_id,teacher.id);assert.equal(owner.coop_advisor_teacher_id,other.id);
+      });
+      await t.test('Head department scope and live flag block queue/detail/decisions despite spoofed text/claims',async()=>{
+        const owner=await m.Student.create({student_id:'head-foreign-fixture',email:'head-foreign-fixture@email.kmutnb.ac.th',first_name:'Other',last_name:'Department',major:'IT',track:'co_op',advisor_teacher_id:outsider.id,password});
+        const foreign=await request('department_head_review',owner.id);
+        assert.ok(!(await call(`/api/department-head/coop-requests?department=OTHER&teacher_id=${outsider.id}&is_department_head=true`,{token:tokens.head})).body.data.some(row=>row.id===foreign.id));
+        assert.equal((await call(`/api/department-head/coop-requests/${foreign.id}`,{token:tokens.head})).status,403);
+        assert.equal((await approve('department-head',foreign.id,tokens.head)).status,403);assert.equal((await reject('department-head',foreign.id,tokens.head)).status,403);
+        const row=await request('department_head_review');await head.update({is_department_head:false});
+        try {
+          assert.equal((await call('/api/department-head/coop-requests',{token:tokens.head})).status,403);assert.equal((await call(`/api/department-head/coop-requests/${row.id}`,{token:tokens.head})).status,403);
+          assert.equal((await approve('department-head',row.id,tokens.head)).status,403);assert.equal((await reject('department-head',row.id,tokens.head)).status,403);
+        }finally{await head.update({is_department_head:true});}
+        const spoofed=jwt.sign({id:teacher.id,teacher_id:teacher.id,actor_type:'teacher',role:'department_head',is_department_head:true},process.env.JWT_SECRET,{expiresIn:'1h'});
+        assert.equal((await approve('department-head',row.id,spoofed)).status,403);
+        assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:foreign.id}}),0);
+      });
+      await t.test('Head refuses every non-department_head_review state with no mutation or audit',async()=>{
+        for(const state of ['submitted','staff_review','advisor_review','approved','rejected','cancelled','document_issued','in_progress']) {
+          const row=await request(state);assert.equal((await approve('department-head',row.id,tokens.head)).status,409);assert.equal((await reject('department-head',row.id,tokens.head)).status,409);
+          assert.equal((await m.CoopRequest.findByPk(row.id)).status,state);assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);
+        }
+      });
+      for (const decision of ['approve', 'reject']) await t.test(`Class A / Project B ${decision}: authenticated HTTP, SQL history and Student read-back`, async () => {
+        const suffix = crypto.randomUUID().slice(0, 8);
+        const owner = await m.Student.create({student_id:`class-${suffix}`,email:`class-${suffix}@email.kmutnb.ac.th`,first_name:'Class',last_name:'Fixture',major:'IT',track:'co_op',advisor_teacher_id:teacher.id,coop_advisor_teacher_id:other.id,password});
+        const created = response();
+        await studentController.createCoopRequest({user:{id:owner.id},body:{...requestFields,prerequisite_courses:CATALOG.IT.map(([course_code])=>({course_code,status:'passed',grade:'A'}))}},created);
+        assert.equal(created.statusCode,201); const id=created.body.data.id;
+        const mine = await call(`/api/teachers/coop-requests?status=advisor_review&teacher_id=${other.id}`,{token:tokens.teacher});
+        const listed = mine.body.data.find(row=>row.id===id); assert.ok(listed); assert.equal(listed.prerequisite_courses.length,5); assert.equal(listed.student.email,undefined);
+        assert.ok(!(await call(`/api/teachers/coop-requests?teacher_id=${teacher.id}`,{token:tokens.other})).body.data.some(row=>row.id===id));
+        assert.equal((await approve('teachers',id,tokens.other)).status,403);
+        assert.equal((await reject('teachers',id,tokens.other)).status,403);
+        assert.equal((await approve('teachers',id,undefined)).status,401);
+        assert.equal((await approve('teachers',id,tokens.teacher,{teacher_id:other.id})).status,400);
+        assert.equal((await m.CoopRequest.findByPk(id)).status,'advisor_review');
+        const results=await Promise.all(Array.from({length:2},()=>decision==='approve'?approve('teachers',id,tokens.teacher):reject('teachers',id,tokens.teacher,'  Correction required  ')));
+        assert.deepEqual(results.map(row=>row.status).sort(),[200,409]);
+        const expected=decision==='approve'?'department_head_review':'rejected';
+        assert.equal((await m.CoopRequest.findByPk(id)).status,expected);
+        const audits=await m.CoopRequestReview.findAll({where:{coop_request_id:id},order:[['created_at','ASC']]});
+        assert.equal(audits.length,2); assert.equal(audits[0].decision,'submit'); assert.equal(audits[1].actor_role,'teacher');
+        assert.equal(audits[1].teacher_id,teacher.id); assert.equal(audits[1].from_status,'advisor_review'); assert.equal(audits[1].to_status,expected);
+        if(decision==='reject') assert.equal(audits[1].reason,'Correction required');
+        const read=response(); await studentController.getCoopRequestById({user:{id:owner.id},params:{id}},read);
+        assert.equal(read.statusCode,200); assert.equal(read.body.data.status,expected); assert.equal(read.body.data.reviews.length,2);
+        if(decision==='reject') assert.equal(read.body.data.reviews.find(row=>row.decision==='reject').reason,'Correction required');
+        const history=response(); await studentController.getMyCoopRequests({user:{id:owner.id}},history);
+        assert.equal(history.body.data.find(row=>row.id===id).status,expected);
+        const staffDetail=await call(`/api/staff/coop-requests/${id}`,{token:tokens.staff}); assert.equal(staffDetail.status,200); assert.equal(staffDetail.body.data.reviews.length,2);
+        assert.equal((await approve('staff',id,tokens.staff)).status,404);
+        assert.equal((await approve('teachers',id,tokens.staff)).status,403);
+        await owner.reload(); assert.equal(owner.advisor_teacher_id,teacher.id); assert.equal(owner.coop_advisor_teacher_id,other.id);
+      });
+      await t.test('every non-advisor_review state blocks both Teacher decisions without history', async () => {
+        for(const state of ['submitted','staff_review','department_head_review','approved','document_issued','in_progress','rejected','cancelled']) {
+          const row=await request(state); assert.equal((await approve('teachers',row.id,tokens.teacher)).status,409); assert.equal((await reject('teachers',row.id,tokens.teacher)).status,409);
+          assert.equal((await m.CoopRequest.findByPk(row.id)).status,state); assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);
+        }
+      });
+      await t.test('Head flag on Teacher namespace cannot skip Class Advisor or perform final approval', async () => {
+        const row=await request(); assert.equal((await approve('teachers',row.id,tokens.head)).status,403);
+        const owner=await m.Student.create({student_id:'head-class-fixture',email:'head-class-fixture@email.kmutnb.ac.th',first_name:'Head',last_name:'Advisee',major:'IT',track:'co_op',advisor_teacher_id:head.id,password});
+        const own=await request('advisor_review',owner.id);
+        assert.equal((await approve('teachers',own.id,tokens.head)).body.data.request.status,'department_head_review');
+        assert.equal((await approve('teachers',own.id,tokens.head)).status,409);
+        assert.equal((await approve('department-head',row.id,tokens.teacher)).status,403);
+      });
       for (const program of ['IT','INE']) await t.test(`${program} real controller SQL create/detail/history snapshot`, async () => {
         const owner = await m.Student.create({student_id:`coop-${program}`, email:`coop-${program}@email.kmutnb.ac.th`, first_name:'Fixture', last_name:'Student', track:'co_op', major:program, advisor_teacher_id:teacher.id, password});
         const prerequisite_courses = CATALOG[program].map(([course_code], index) => ({course_code,status:index === 0 ? 'passed' : 'unselected',grade:index === 0 ? 'B+' : null}));

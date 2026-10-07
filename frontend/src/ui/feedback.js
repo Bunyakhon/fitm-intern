@@ -128,6 +128,9 @@ export function showConfirmModal({
   cancelLabel = "ยกเลิก",
   loadingLabel = "กำลังดำเนินการ...",
   closeOnBackdrop = false,
+  reasonLabel = "",
+  reasonMaxLength = 2000,
+  onClose,
   onConfirm,
 }) {
   const root = getFeedbackRoot();
@@ -151,6 +154,22 @@ export function showConfirmModal({
   const confirmButton = modal.querySelector(".app-confirm-modal__confirm");
   modal.querySelector("#appConfirmTitle").textContent = title;
   modal.querySelector("#appConfirmMessage").textContent = message;
+  let reasonInput;
+  if (reasonLabel) {
+    const label = document.createElement("label");
+    label.className = "app-confirm-modal__reason";
+    label.textContent = reasonLabel;
+    reasonInput = document.createElement("textarea");
+    reasonInput.required = true;
+    reasonInput.maxLength = reasonMaxLength;
+    reasonInput.rows = 4;
+    label.append(reasonInput);
+    modal.querySelector(".app-confirm-modal").append(label);
+  }
+  const errorMessage = document.createElement("p");
+  errorMessage.className = "app-confirm-modal__error";
+  errorMessage.setAttribute("role", "alert");
+  modal.querySelector(".app-confirm-modal").append(errorMessage, modal.querySelector(".app-confirm-modal__actions"));
   cancelButton.textContent = cancelLabel;
   confirmButton.textContent = confirmLabel;
   root.append(modal);
@@ -158,15 +177,18 @@ export function showConfirmModal({
   confirmButton.focus();
 
   let isSubmitting = false;
+  let isClosed = false;
 
   function close() {
-    if (isSubmitting) {
+    if (isSubmitting || isClosed) {
       return;
     }
 
+    isClosed = true;
     modal.classList.add("is-leaving");
     document.body.classList.remove("has-app-modal");
     document.removeEventListener("keydown", handleEscape);
+    onClose?.();
     window.setTimeout(() => {
       modal.remove();
       previousFocus?.focus?.();
@@ -179,31 +201,49 @@ export function showConfirmModal({
       close();
     }
   });
-  document.addEventListener("keydown", function handleEscape(event) {
+  function handleEscape(event) {
+    if (event.key === "Tab") {
+      const controls = [reasonInput, cancelButton, confirmButton].filter(button => button && !button.disabled);
+      if (!controls.length) { event.preventDefault(); return; }
+      const first = controls[0], last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      return;
+    }
     if (event.key !== "Escape") {
       return;
     }
 
     close();
-  });
+  }
+  document.addEventListener("keydown", handleEscape);
   confirmButton.addEventListener("click", async () => {
-    if (isSubmitting) {
+    if (isSubmitting || isClosed) {
       return;
     }
 
+    if (reasonInput && (!reasonInput.value.trim() || reasonInput.value.trim().length > reasonMaxLength)) {
+      errorMessage.textContent = `กรุณาระบุเหตุผลไม่เกิน ${reasonMaxLength} ตัวอักษร`;
+      reasonInput.focus();
+      return;
+    }
+    errorMessage.textContent = "";
+
     isSubmitting = true;
+    if (reasonInput) reasonInput.disabled = true;
     cancelButton.disabled = true;
     setButtonLoading(confirmButton, true, loadingLabel, confirmLabel);
 
     try {
-      await onConfirm?.();
+      await onConfirm?.(reasonInput?.value.trim());
       isSubmitting = false;
       close();
     } catch (error) {
       isSubmitting = false;
+      if (reasonInput) reasonInput.disabled = false;
       cancelButton.disabled = false;
       setButtonLoading(confirmButton, false, loadingLabel, confirmLabel);
-      throw error;
+      errorMessage.textContent = error.message || "ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง";
     }
   });
 }

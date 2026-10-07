@@ -2190,7 +2190,7 @@ const COOP_STATUS_META = {
   },
   department_head_review: {
     label: "รอหัวหน้าภาควิชาพิจารณา",
-    summary: "คำร้องอยู่ระหว่างรอหัวหน้าภาควิชาพิจารณา",
+    summary: "ผ่านการอนุมัติจากอาจารย์ที่ปรึกษาแล้ว รอหัวหน้าภาควิชาพิจารณา",
     step: 3,
   },
   approved: {
@@ -2809,6 +2809,10 @@ function renderCoopRequestDetail(request) {
     createCoopDetailItem("เริ่มปฏิบัติงาน", formatCoopDate(request.work_start_date)),
     createCoopDetailItem("สิ้นสุดปฏิบัติงาน", formatCoopDate(request.work_end_date)),
   );
+  const rejection = [...(request.reviews || [])].reverse().find(review => review.decision === "reject");
+  if (request.status === "rejected" && rejection?.reason) {
+    coopDetailRequest.append(createCoopDetailItem("เหตุผลที่ไม่ได้รับการอนุมัติ", rejection.reason, true));
+  }
   coopDetailDeliveryMethods.replaceChildren();
   const deliveryLabels = getCoopDeliveryMethodLabels(request);
   if (deliveryLabels.length) {

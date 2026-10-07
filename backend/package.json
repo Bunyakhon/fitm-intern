@@ -12,6 +12,7 @@
     "db:migrate:undo": "node src/db/migrate.js down",
     "seed:jobs": "node src/db/seedJobMatchingDemo.js",
     "staff:create": "node src/seeders/createDepartmentStaff.js",
+    "dev:teacher-credential": "node src/seeders/devTeacherCredential.js",
     "test": "node --test"
   },
   "keywords": [],

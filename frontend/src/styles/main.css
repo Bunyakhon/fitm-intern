@@ -464,3 +464,8 @@ button.is-loading::before {
     font-size: 12px;
   }
 }
+
+/* Shared confirmation form, used by advisor rejection. */
+.app-confirm-modal__reason { display: block; text-align: left; margin: 16px 0; }
+.app-confirm-modal__reason textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; resize: vertical; }
+.app-confirm-modal .app-confirm-modal__error { color: #c94b4b; white-space: pre-wrap; }

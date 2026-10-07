@@ -43,9 +43,11 @@ function createCoopProjectAdvisorService(m) {
   }
   async function list(teacherId, query) {
     await teacher(teacherId); const pagination = page(query);
-    const requests = await R.findAll({ where: { requested_advisor_teacher_id: teacherId, status: "pending" }, include: [{ model: m.Student, as: "student", attributes: ["id", "student_id", "first_name", "last_name"] }], order: [["requested_at", "ASC"], ["id", "ASC"]], ...pagination });
+    const status = query?.status ?? "pending";
+    if (!["pending", "confirmed", "rejected"].includes(status)) throw new WorkflowError("Invalid advisor request status");
+    const requests = await R.findAll({ where: { requested_advisor_teacher_id: teacherId, status }, include: [{ model: m.Student, as: "student", attributes: ["id", "student_id", "first_name", "last_name", "major"] }], order: [["requested_at", "ASC"], ["id", "ASC"]], ...pagination });
     const projects = requests.length ? await m.CoopProject.findAll({ where: { student_id: { [Op.in]: requests.map(r => r.student_id) } }, attributes: ["student_id", "topic"] }) : [];
-    return requests.map(r => ({ id: r.id, requested_at: r.requested_at, student: r.student.toJSON(), topic: projects.find(p => p.student_id === r.student_id)?.topic || "" }));
+    return requests.map(r => ({ id: r.id, status: r.status, requested_at: r.requested_at, confirmed_at: r.confirmed_at, rejected_at: r.rejected_at, rejection_reason: r.rejection_reason, student: r.student.toJSON(), topic: projects.find(p => p.student_id === r.student_id)?.topic || "" }));
   }
   async function decide(teacherId, requestId, decision, body) {
     uuid(teacherId); uuid(requestId); if (!["accept", "reject"].includes(decision)) throw new WorkflowError("Unsupported decision");

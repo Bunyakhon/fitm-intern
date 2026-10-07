@@ -17,7 +17,7 @@ const { toSafeDepartmentStaffProfile } = require("./staffAuth.service");
 const {prerequisiteInclude} = require('./coopPrerequisites');
 
 const STAGES = {
-  teacher: { from: ["submitted", "advisor_review"], next: "department_head_review" },
+  teacher: { from: ["advisor_review"], next: "department_head_review" },
   department_head: { from: ["department_head_review"], next: "approved" },
 };
 const REQUEST_STATUSES = [
@@ -98,13 +98,22 @@ function createRoleWorkflowService(m = models) {
     if (role === "department_head")
       await headStudentScope(currentActor, student, transaction);
   }
-  function studentInclude(where) {
+  function studentInclude(where, role) {
     return {
       model: m.Student,
       as: "student",
-      attributes: STUDENT_FIELDS,
+      attributes: role !== "department_staff" ? STUDENT_FIELDS.filter(field => !["email", "track", "status"].includes(field)) : STUDENT_FIELDS,
+      ...(role === "department_head" ? { include: [{ model: m.Teacher, as: "advisorTeacher", attributes: ["id", "academic_title", "first_name", "last_name"] }] } : {}),
       required: true,
       ...(where ? { where } : {}),
+    };
+  }
+  function reviewInclude() {
+    return {
+      model: m.CoopRequestReview, as: "reviews", separate: true,
+      attributes: ["id", "actor_role", "teacher_id", "from_status", "to_status", "decision", "reason", "createdAt"],
+      include: [{ model: m.Teacher, as: "teacher", attributes: ["id", "academic_title", "first_name", "last_name"] }],
+      order: [["created_at", "ASC"], ["id", "ASC"]],
     };
   }
   async function listRequests(role, actorId, query) {
@@ -127,7 +136,7 @@ function createRoleWorkflowService(m = models) {
     }
     return m.CoopRequest.findAll({
       where: { status },
-      include: [studentInclude(where)],
+      include: [studentInclude(where, role), prerequisiteInclude(m), ...(role === "department_head" ? [reviewInclude()] : [])],
       order: [
         ["submitted_at", "ASC"],
         ["id", "ASC"],
@@ -140,7 +149,7 @@ function createRoleWorkflowService(m = models) {
     const currentActor = await actor(role, actorId);
     const request = await m.CoopRequest.findByPk(id, {
       include: [
-        studentInclude(),
+        studentInclude(undefined, role),
         {
           model: m.CoopRequestDeliveryMethod,
           as: "deliveryMethods",
@@ -155,6 +164,7 @@ function createRoleWorkflowService(m = models) {
     await authorizeRequest(role, currentActor, request.student);
     const reviews = await m.CoopRequestReview.findAll({
       where: { coop_request_id: id },
+      ...(role === "department_head" ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
       order: [
         ["created_at", "ASC"],
         ["id", "ASC"],

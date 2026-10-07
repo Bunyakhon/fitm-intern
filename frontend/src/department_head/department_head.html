@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>อนุมัติคำร้องสหกิจ · หัวหน้าภาควิชา | KIWI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+    <link rel="stylesheet" href="/src/styles/student_coop.css" />
+    <link rel="stylesheet" href="/src/styles/teacher_coop.css" />
+  </head>
+  <body class="teacher-page" data-workflow-role="department_head">
+    <header class="navbar"><div class="nav-container">
+      <a href="/index.html" class="brand"><img src="/images/logo_kiwi.png" alt="KIWI" class="brand-logo" /><div class="brand-text"><strong>KIWI</strong><span>ระบบจัดการสหกิจศึกษา</span></div></a>
+      <div class="nav-right"><div class="nav-user-info"><small>หัวหน้าภาควิชา</small><span id="headName">กำลังตรวจสอบผู้ใช้งาน...</span></div><button class="btn-logout" id="headLogout" type="button">ออกจากระบบ</button></div>
+    </div></header>
+    <div class="dashboard-layout">
+      <aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">เมนูหัวหน้าภาควิชา</span><small>ระบบสหกิจศึกษา</small></div>
+        <nav class="sidebar-menu"><a class="sidebar-item active" href="#coopApprovals" aria-current="page">อนุมัติคำร้องสหกิจ</a><a class="sidebar-item" href="/src/teacher_coop/teacher_coop.html">งานอาจารย์</a></nav>
+      </aside>
+      <main class="dashboard-content">
+        <section id="coopApprovals" aria-labelledby="coopApprovalHeading">
+          <div class="teacher-heading"><div><h1 id="coopApprovalHeading">อนุมัติคำร้องสหกิจ</h1><p>พิจารณาคำร้องในภาควิชาที่ผ่านการอนุมัติจากอาจารย์ที่ปรึกษาประจำชั้นแล้ว</p></div><button class="teacher-button" id="teacherCoopRefresh" type="button" disabled>รีเฟรช</button></div>
+          <div class="teacher-toolbar"><label for="teacherCoopStatus">สถานะคำร้อง</label><select id="teacherCoopStatus" disabled><option value="department_head_review">รอหัวหน้าภาควิชาพิจารณา</option><option value="approved">อนุมัติแล้ว</option><option value="rejected">ไม่ได้รับการอนุมัติ</option><option value="cancelled">ยกเลิกแล้ว</option><option value="document_issued">ออกเอกสารแล้ว</option><option value="in_progress">กำลังปฏิบัติงาน</option><option value="advisor_review">รออาจารย์ที่ปรึกษาพิจารณา</option><option value="submitted">สถานะเดิม: ยื่นคำร้อง</option><option value="staff_review">สถานะเดิม: รอเจ้าหน้าที่</option></select></div>
+          <p id="teacherCoopMessage" class="teacher-message" role="status" aria-live="polite"></p>
+          <a id="teacherCoopSignIn" class="teacher-button" href="/department-head-login.html" hidden>เข้าสู่ระบบหัวหน้าภาควิชาอีกครั้ง</a>
+          <div id="teacherCoopList" class="teacher-request-list" aria-busy="true"></div>
+          <div class="teacher-pagination"><button class="teacher-button" id="teacherCoopPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherCoopPage"></span><button class="teacher-button" id="teacherCoopNext" type="button" disabled>ถัดไป</button></div>
+          <section id="teacherCoopDetail" class="teacher-request-card teacher-coop-detail" aria-labelledby="teacherCoopDetailHeading" hidden tabindex="-1"><div class="teacher-heading"><h2 id="teacherCoopDetailHeading">รายละเอียดคำร้อง</h2><button id="teacherCoopCloseDetail" class="teacher-button" type="button">ปิดรายละเอียด</button></div><p id="teacherCoopDetailMessage" role="status" aria-live="polite"></p><div id="teacherCoopDetailBody"></div></section>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/pages/departmentHead.js"></script>
+  </body>
+</html>

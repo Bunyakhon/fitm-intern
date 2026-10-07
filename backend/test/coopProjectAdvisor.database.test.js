@@ -27,7 +27,7 @@ test("Project advisor requests, Teacher authentication and independent topics on
     const [a, b, c] = teachers;
     const inactive = await m.Teacher.create({ first_name: "Inactive", last_name: "Fixture", email: `inactive-${run}@fixture.invalid`, status: "inactive", password }); teachers.push(inactive);
     const head = await m.Teacher.create({ first_name: "Head", last_name: "Fixture", email: `head-${run}@fixture.invalid`, department: "FITM", is_department_head: true, password }); teachers.push(head);
-    const makeStudent = async () => { const owner = await m.Student.create({ student_id: `advisor-${students.length}-${run}`, email: `advisor-${students.length}-${run}@email.kmutnb.ac.th`, first_name: "Disposable", last_name: "Student", track: "co_op", advisor_teacher_id: c.id, password }); students.push(owner); return owner; };
+    const makeStudent = async () => { const owner = await m.Student.create({ student_id: `advisor-${students.length}-${run}`, email: `advisor-${students.length}-${run}@email.kmutnb.ac.th`, first_name: "Disposable", last_name: "Student", major: "IT", track: "co_op", advisor_teacher_id: c.id, password }); students.push(owner); return owner; };
     const studentToken = owner => jwt.sign({ id: owner.id, student_id: owner.student_id, actor_type: "student", role: "student" }, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "10m" });
     const app = express(); app.use(express.json());
     app.use("/api/student-coop", require("../src/routes/studentCoop.routes").createStudentCoopRouter({ models: m }));
@@ -69,8 +69,14 @@ test("Project advisor requests, Teacher authentication and independent topics on
       assert.equal((await decide(first.id, tokenA)).status, 409);
       assert.equal((await decide(changed.id, tokenA)).status, 404); assert.equal((await decide(changed.id, tokenC, "reject", { reason: "Wrong Teacher" })).status, 404);
       const pending = await json(await request("/api/teachers/project-advisor-requests", tokenB)); assert.ok(pending.some(r => r.id === changed.id)); assert.doesNotMatch(JSON.stringify(pending), /password|is_department_head/);
+      const own = pending.find(r => r.id === changed.id); assert.equal(own.status, "pending"); assert.equal(own.student.major, "IT"); assert.match(own.topic, /สหกิจศึกษา/);
+      for (const token of [tokenA, tokenC]) assert.ok(!(await json(await request(`/api/teachers/project-advisor-requests?teacher_id=${b.id}`, token))).some(r => r.id === changed.id));
       assert.equal((await decide(changed.id, tokenB)).status, 200); await owner.reload(); assert.equal(owner.coop_advisor_teacher_id, b.id); assert.equal(owner.advisor_teacher_id, c.id);
       const confirmed = await read(owner); assert.equal(confirmed.advisor_request.status, "confirmed"); assert.equal(confirmed.confirmed_advisor.id, b.id);
+      assert.ok(!(await json(await request("/api/teachers/project-advisor-requests", tokenB))).some(r => r.id === changed.id));
+      const saved = await json(await request("/api/teachers/project-advisor-requests?status=confirmed", tokenB)); assert.ok(saved.some(r => r.id === changed.id && r.status === "confirmed" && r.confirmed_at));
+      assert.ok(!(await json(await request("/api/teachers/project-advisor-requests?status=confirmed", tokenA))).some(r => r.id === changed.id));
+      assert.equal((await request("/api/teachers/project-advisor-requests?status=superseded", tokenB)).status, 400);
       assert.equal((await decide(changed.id, tokenB)).status, 409); assert.equal((await select(owner, a)).status, 409);
       assert.equal((await topic(owner, "Confirmed advisor topic edit")).status, 200); assert.equal(await savedTopic(owner), "Confirmed advisor topic edit");
     });
@@ -80,6 +86,8 @@ test("Project advisor requests, Teacher authentication and independent topics on
       assert.equal((await decide(initial.id, tokenA, "reject")).status, 400);
       assert.equal((await decide(initial.id, tokenA, "reject", { reason: "  Supervision capacity full  " })).status, 200);
       const rejected = await read(rejectedOwner); assert.equal(rejected.advisor_request.status, "rejected"); assert.equal(rejected.advisor_request.rejection_reason, "Supervision capacity full"); assert.ok(rejected.advisor_request.rejected_at); assert.equal(rejected.confirmed_advisor, null);
+      assert.equal((await decide(initial.id, tokenA)).status, 409); assert.equal((await decide(initial.id, tokenA, "reject", { reason: "Again" })).status, 409);
+      assert.ok((await json(await request("/api/teachers/project-advisor-requests?status=rejected", tokenA))).some(r => r.id === initial.id && r.rejection_reason === "Supervision capacity full"));
       assert.equal((await topic(rejectedOwner, "Edited after rejection")).status, 200); assert.equal(await savedTopic(rejectedOwner), "Edited after rejection");
       const next = (await json(await select(rejectedOwner, b))).advisor_request; assert.equal(next.status, "pending");
       const historical = await m.CoopProjectAdvisorRequest.findByPk(initial.id); assert.equal(historical.status, "superseded"); assert.equal(historical.rejection_reason, "Supervision capacity full"); assert.ok(historical.rejected_at);
@@ -119,6 +127,7 @@ test("Project advisor requests, Teacher authentication and independent topics on
       const student = await makeStudent(); const current = (await json(await select(student, a))).advisor_request;
       assert.equal((await request("/api/student-coop/project-advisor-request", null)).status, 401);
       assert.equal((await decide(current.id, null)).status, 401); assert.equal((await decide(current.id, studentToken(student))).status, 403);
+      assert.equal((await request("/api/teachers/project-advisor-requests", null)).status, 401); assert.equal((await request("/api/teachers/project-advisor-requests", studentToken(student))).status, 403);
       assert.equal((await request("/api/student-coop/project-advisor-request", tokenA, { teacher_id: a.id })).status, 403);
       for (const body of [{ teacher_id: b.id, student_id: owner.id }, { teacher_id: b.id, coop_advisor_teacher_id: b.id }, { teacher_id: b.id, advisor_teacher_id: b.id }, { teacher_id: "bad" }]) assert.equal((await request("/api/student-coop/project-advisor-request", studentToken(student), body)).status, 400);
       assert.equal((await select(student, inactive)).status, 403);
@@ -128,6 +137,39 @@ test("Project advisor requests, Teacher authentication and independent topics on
       await m.Teacher.update({ status: "inactive" }, { where: { id: a.id } });
       try { assert.equal((await decide(current.id, tokenA)).status, 403); } finally { await m.Teacher.update({ status: "active" }, { where: { id: a.id } }); }
       await student.reload(); assert.equal(student.advisor_teacher_id, c.id); assert.equal(student.coop_advisor_teacher_id, null);
+    });
+    await t.test("actual Teacher API and page accept/reject/stale actions persist through HTTP and SQL", async () => {
+      const vm = require("node:vm");
+      const { teacherFixture } = await import(require("node:url").pathToFileURL(path.resolve(__dirname, "../../frontend/test/helpers/teacherCoopFixture.js")));
+      const source = fs.readFileSync(path.resolve(__dirname, "../../frontend/src/api/teacherProjectAdvisor.api.js"), "utf8").replace(/^import .*;\r?\n/gm, "").replace(/export /g, "");
+      const context = vm.createContext({ URLSearchParams, sessionStorage: { getItem: () => tokenA }, apiRequest: async (url, options = {}) => {
+        const response = await request(url, options.headers?.Authorization?.slice(7), options.body, options.method || "GET");
+        const data = await response.json();
+        if (!response.ok) throw Object.assign(Error(data.message), { status: response.status });
+        return data;
+      } });
+      vm.runInContext(source, context);
+      const adapters = vm.runInContext("({me: getCurrentTeacher, list: getTeacherAdvisorRequests, decide: decideTeacherAdvisorRequest})", context);
+      const student = await makeStudent(); let current = (await json(await select(student, a))).advisor_request;
+      const findCard = f => f.get("teacherRequestList").children.find(card => card.textContent.includes(student.student_id));
+      const accept = teacherFixture(adapters); await accept.app.ready;
+      await findCard(accept).querySelectorAll("button")[0].dispatch("click"); await accept.modal().querySelector(".app-confirm-modal__confirm").dispatch("click");
+      await student.reload(); assert.equal(student.coop_advisor_teacher_id, a.id); assert.equal(student.advisor_teacher_id, c.id);
+      assert.equal((await m.CoopProjectAdvisorRequest.findByPk(current.id)).status, "confirmed");
+      await accept.filter("confirmed"); assert.equal(findCard(accept).querySelectorAll("button").length, 0);
+      const rejectedStudent = await makeStudent(); current = (await json(await select(rejectedStudent, a))).advisor_request;
+      const reject = teacherFixture(adapters); await reject.app.ready;
+      const rejectedCard = reject.get("teacherRequestList").children.find(card => card.textContent.includes(rejectedStudent.student_id));
+      await rejectedCard.querySelectorAll("button")[1].dispatch("click"); reject.modal().querySelector("textarea").value = "  Capacity full  "; await reject.modal().querySelector(".app-confirm-modal__confirm").dispatch("click");
+      await rejectedStudent.reload(); assert.equal(rejectedStudent.coop_advisor_teacher_id, null); assert.equal((await m.CoopProjectAdvisorRequest.findByPk(current.id)).rejection_reason, "Capacity full");
+      assert.equal((await select(rejectedStudent, b)).status, 200);
+      const staleStudent = await makeStudent(); current = (await json(await select(staleStudent, a))).advisor_request;
+      const stale = teacherFixture(adapters); await stale.app.ready;
+      await stale.get("teacherRequestList").children.find(card => card.textContent.includes(staleStudent.student_id)).querySelectorAll("button")[0].dispatch("click");
+      assert.equal((await select(staleStudent, b)).status, 200);
+      await stale.modal().querySelector(".app-confirm-modal__confirm").dispatch("click");
+      assert.match(stale.get("teacherRequestMessage").textContent, /เปลี่ยนแปลง/); await staleStudent.reload(); assert.equal(staleStudent.coop_advisor_teacher_id, null);
+      assert.equal((await m.CoopProjectAdvisorRequest.findByPk(current.id)).status, "superseded");
     });
     await t.test("actual frontend API/page bridge persists pending selection and topic across fresh fixtures", async () => {
       const student = await makeStudent(); const vm = require("node:vm");

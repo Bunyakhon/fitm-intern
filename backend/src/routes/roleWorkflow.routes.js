@@ -69,6 +69,7 @@ function createRoleWorkflowRouter(role, registry = models) {
     controller.reviewRequest(role, "reject"),
   );
   if (role === "department_staff") {
+    router.use('/document-requests', require('./staffDocuments.routes').createStaffDocumentsRouter(registry));
     router.post('/coop-requests/:id/cancel', controller.reviewRequest(role, 'cancel'));
     router.get("/job-postings", controller.listJobs);
     router.get("/job-postings/:id", controller.jobDetail);

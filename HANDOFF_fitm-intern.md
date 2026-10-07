@@ -1,5 +1,342 @@
 # FITM-INTERN PROJECT HANDOFF
 
+## Department Staff Document Processing - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. COOPERATION LETTER DEVELOPMENT FLOW: AUTOMATED + LOCAL HTTP/SQL PASS. PLACEMENT LETTER: BLOCKED (UNCONFIRMED BUSINESS PREREQUISITES). REAL BROWSER: NOT RUN. OFFICIAL TEMPLATE/PDF ISSUANCE: PENDING.** Supersedes earlier Staff-not-started and Local 16-migration/21-table descriptions. Staff remains outside request approval; no next task, commit/push/deploy.
+
+### Audit and business boundary
+
+- Read current HANDOFF/README/Compose, Student/Company/Staff/request/review/file models, migrations 001–015 including 007a, auth/routes/controllers/services, storage/project file patterns, shared feedback/frontend/tests. Searched the repository for document/cooperation/placement/letter/PDF/print/staff/company response and Thai letter terms. Actual Local schema has no existing document/acceptance table; Staff frontend and document endpoints were absent. Existing Staff password login/profile/global request list/detail/history/pending cancellation remain authoritative.
+- Request contains saved company/recipient/work dates and `document_issued_at`/`started_at`. `document_issued` exists in enums and Student UI labels it placement-document-issued; **no executable issuance transition or prerequisite exists**. No Company Acceptance/Response persistence or official template/PDF generator exists; `pdf-parse` reads uploads. General FAQ guidance does not define a company-response prerequisite.
+- Schema extension is necessary for request/type ownership, separate document lifecycle, versioned metadata/frozen snapshots/generated content and immutable Staff history. `student_files` covers different upload categories and lacks this ownership/evidence; no StudentFile schema/data/storage work was introduced.
+- Cooperation drafts require a request in accepted `approved/document_issued/in_progress`, required Student/company/recipient/work dates and actual canonical Class/Head approval evidence. Staff cannot approve/forward or impersonate either role. Request status/timestamps and both advisor IDs are untouched by document actions.
+- Placement creation is **409 / PLACEMENT_PREREQUISITE_UNCONFIRMED**; no placement row/acceptance is fabricated. Asked the user whether company response is required or approved request/complete data suffices; no answer/business rule has been assumed. **If company response is mandatory, the absent Company Acceptance/Response flow is the concrete blocker.** Do not report a source-confirmed prerequisite or Placement PASS until clarified.
+
+### Backend, persistence and security
+
+- Reuse existing Staff JWT/live-active guard; new `/api/staff/document-requests` queue/detail and request-owned `/documents/:type` create/edit, `/generate`, `/preview`, `/download` routes. Queue reuses offset/limit validation and adds escaped search (company/code/first/last/full name), accepted request status and cooperation missing/draft/generated filters. Safe named actual Class/Head history, source and saved document snapshot are distinguishable.
+- **016_add_coop_documents.js** adds `coop_documents` and `coop_document_revisions` with request/type uniqueness, optional manually supplied number uniqueness, FK RESTRICT, version/type/state checks and revision/version uniqueness. No running-number architecture, new approval enum/stage, earlier migration edit or data backfill. Populated rollback is refused; injected partial DDL rolls back. Named CommonJS exports handle Local Umzug dynamic import and test-image require. Local first import attempts failed before DDL; an empty owned diagnostic schema was guardedly removed, then standard Umzug applied 016 with consistent ledger and verified original data preservation.
+- Each mutation SHARE-locks/rechecks active Staff and locks Student -> request -> document consistently with existing workflow. Body identity/approval/status/storage fields rejected. Optimistic version and locks prevent duplicate creates/generates/lost updates/audit duplication; conflicting or stale writes return 409. Existing Staff global request visibility is reused, not silently narrowed to document creator.
+- Lifecycle: draft -> generated development artifact; editing generated metadata returns current document to draft, invalidating its artifact; explicit regenerate uses original saved snapshot and keeps prior generated revisions. Identical metadata updates add no history. Each substantive action stores authenticated Staff actor, version/action/status/metadata/snapshot/template/content hash/time atomically.
+- Server-rendered **dev-letter-v1 HTML**, not official PDF. No approved official template is available. Optional number/date/draft signer/notes are editable; identity/company/approval/snapshot remain server sourced. Backend validates required data with `DOCUMENT_MISSING_DATA` / readable `missing_fields`; saved snapshot validation remains independent of later source changes.
+- Generated HTML bytes, SHA256, metadata/status/version and revision persist together in PostgreSQL; **no external file/path** or partial file/metadata commit. Authenticated inline/attachment HTML uses generated UUID/type/version filename, UTF-8, no-store/nosniff/CSP; all template values escaped, no scripts/resources/forms. Current draft preview returns 409; prior generated `?version=N` stays accessible. No raw filesystem path or secret response.
+
+### Staff UI
+
+- New `/staff-login.html` and `/src/department_staff/department_staff.html`, linked from general login; separate `staffToken` sessionStorage preserves Teacher/Student sessions. Actual Staff profile must be active. Logout/expired/forbidden clears private state and in-flight responses cannot restore it.
+- **จัดการเอกสาร** queue shows real Student/code/major/company/request/cooperation/placement status/latest update; search, filters, 25 + lookahead pagination, loading/empty/error/retry. Detail shows request snapshot/contact/work period, actual named approval history, distinct frozen document data, metadata form/current version and named Staff audit history.
+- Shared confirmation/toast/loading; save then list/detail server refresh; stale 409 refreshes without false save claim. Committed save with failed reload reports truthfully and hides stale actions. Unsaved edits must be saved before generation. Preview/download use authenticated Blob; URLs revoked on close/replacement/logout. Sandboxed preview has no scripts; native preview print button included, with error handling. **Native print/layout/focus not browser-verified.** Placement shows exact blocker and disabled create. Persistent dev notice avoids representing examples as official letters.
+
+### Local acceptance and preservation
+
+- `runLocalStaffDocumentsAcceptance.js`: explicit development + `FITM_LOCAL_STAFF_DOCUMENT_ACCEPTANCE=1`, exact intern_system, 23 Teachers/1 existing Head/17 migrations/3 files; existing Class `TEACHER_TEST_ID` and private absolute owner-only `TEACHER_TEST_PASSWORD_PATH`. Generated in-memory secret for owned temporary Staff uses production model/bcrypt -> actual password login/profile. Existing real Head credentials temporarily provisioned/restored through the original helper; real Head flag stays true, A credential preserved, no Teacher inserted or valid JWT fabricated.
+- **Cooperation Local PASS**: real Student submit -> Class approve -> real Head approve -> Staff queue/detail -> draft/edit/concurrent generate/regenerate -> persisted metadata/content/history -> authenticated preview/download -> Student approved read-back. Request still approved with document_issued_at null, exactly three canonical review events and unchanged class/project advisor IDs. Six document revisions in correct action order and authenticated Staff actor. Safe HTML bytes/hash match preview/download; prior generated version readable.
+- **Negative Local PASS**: pending/rejected writes 409; missing required data structured 400; anonymous 401; Student/Teacher/Head/revoked Staff 403; spoofed identities/request/status, invalid type/date/version/unknown request denied; duplicate/stale 409 with one generation audit. Staff approve route remains absent. **Placement Local BLOCKED**; enforcement test PASS only, not Placement creation PASS.
+- Final run cleaned **5 owned Students**, owned request/course/delivery/review/document/revision rows and the temporary Staff, deleting RESTRICT evidence first and verifying ownership/no StudentFiles. Head credentials restored to original absent values; correct real flag remains true. Staff returns to **0 accounts**, so manual login needs an authorized Staff setup; no generated credential retained/logged/committed.
+- Before schema: **21 public tables / 16 executed / 0 pending**. After: **23 public tables / 17 executed / 0 pending**, exactly two new empty document tables and ledger entry 016; **all 20 earlier application tables** match full-row counts/fingerprints. Before/after Local acceptance and final cleanup: **all 23 tables identical**, changedTables **[]**. Teachers **23**, real Head **1**, StudentFiles **3 / 7d0bf012a44869f32fd415f75b08471c**, real requests/reviews unchanged. No unrelated cleanup or storage change.
+- Safe evidence in ignored logs: `staff-documents-before-schema-20261007.json`, `staff-documents-after-schema-20261007.json`, `staff-documents-local-final-report-20261007.json`, migration/local/final preservation logs. Private final acceptance source: `intern_backend:/tmp/fitm-local-staff-documents-IilIDE/report.json`; schema baselines `/tmp/fitm-staff-documents-phajpk/`. All report exports are secret free.
+
+### Validation
+
+- Full **Backend 241 PASS / 0 failures / 0 skips; Frontend 166 PASS / 0 failures / 1 existing browser skip**: `logs/staff-documents-full-20261007.log`. Includes existing Class/Head/Project Advisor/Topic/Book/Poster/Company Evaluation/file regressions. New document backend 15 checks include migration atomicity/rollback/constraints, real password HTTP/SQL, versions/concurrency/snapshot/actors/security/content, render/audit rollback and actual Staff UI/modal/API -> SQL -> Student bridge. New Staff DOM suite 15 checks; no DOM/browser conflation.
+- Final targeted document backend **15 PASS**, after named-import assertions/full-name search/saved-snapshot validation changes: `logs/staff-documents-backend-final-20261007.log`. Full suite uses guarded dedicated disposable DBs, tmpfs/internal labelled Docker network/read-only checkout, never persistent Local. Owned resources cleaned.
+- Final production build **13 HTML entries / 105 modules PASS**: `logs/staff-documents-build-final-20261007.log`. `node --check` **135 source/script JS files + 3 new test/helper files PASS**, PowerShell runner parse **PASS**, final `git diff --check` **PASS**. Logs: `staff-documents-syntax-20261007.log`, `staff-documents-diff-20261007.log`. Final read-only preservation report `logs/staff-documents-final-preservation-20261007.json` confirms 17/0, all 23 acceptance fingerprints identical, original 20 application tables preserved and all owned labelled test resources absent.
+- **REAL BROWSER: NOT RUN**. No callable browser tool or existing Playwright/Puppeteer setup; none installed. [Audit/API/Local evidence and manual Chrome checklist](docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md) covers account preparation, desktop/mobile/focus/modal/loading/save/refresh/preview/download/print, security, blockers and read-only SQL.
+
+### Files changed in this continuation
+
+- New backend: migration `016_add_coop_documents.js`; models `coopDocument.model.js`, `coopDocumentRevision.model.js`; services `staffDocuments.service.js`, `coopDocumentTemplate.js`; router `staffDocuments.routes.js`; test `staffDocuments.database.test.js`; explicit Local runner `runLocalStaffDocumentsAcceptance.js`.
+- Updated backend: existing `roleWorkflow.routes.js` mounts Staff document router after its guards; `roleWorkflow.database.test.js` adds new migration to expected pending list; existing disposable test PowerShell adds dedicated document DB and optional focused/backend-only switches. Local Class/Head acceptance scripts derive migration count from current files, without changing their workflows.
+- New frontend: `staff-login.html`, `src/department_staff/department_staff.html`, `src/pages/staffLogin.js`, `src/pages/staffDocuments.js`, `src/api/staffDocuments.api.js`, `src/styles/staff_documents.css`, `test/staffDocuments.test.js`, `test/helpers/staffDocumentsFixture.js`. Existing login link and Vite two entry points updated; no unrelated page redesign.
+- Docs: this HANDOFF, stable README, new Staff acceptance/manual checklist; existing Teacher/Class/Head manual migration expectations updated to 17/0. Previous uncommitted work preserved; existing Teacher/Head/Project/Topic production logic unchanged.
+
+### Remaining and exact next task
+
+**RECOMMENDED NEXT TASK: Confirm Placement Letter prerequisites, then implement Company Acceptance/Response if required and obtain approved official letter templates.** Placement creation and official issuance/PDF cannot be called complete while those decisions/templates are missing. Real Chrome acceptance (including native print) and non-document Staff UI remain pending. No next task started, commit, push or deploy.
+
+## Authorized real Department Head Local acceptance - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. POSITIVE LOCAL HEAD HTTP/SQL ACCEPTANCE: PASS. REAL BROWSER: NOT RUN.** This checkpoint supersedes the earlier zero-Head/blocker below. The user identified **ผศ.ดร.ขนิษฐา นามี** as the real Department Head and explicitly authorized correcting only that existing faculty's Local `is_department_head` from false to true. Staff document processing has not started.
+
+### Existing faculty and final role data
+
+- Resolved the exact first/last name from actual Local PostgreSQL, not an ID from documentation: **exactly one** matching faculty, academic title `ผศ.ดร.`, status `active`, department `เทคโนโลยีสารสนเทศ`, original email null/password hash absent/Head flag false. Recorded original safe fields and all 21 table baselines durably **before** updating. A zero/multiple match would fail before mutation.
+- Updated only that existing record's `is_department_head` to **true**, preserving all other fields, including timestamps. Final state: **23 Teachers / 1 active Head**. No Teacher inserted and no other Teacher granted Head privilege. The correct real role remains true after acceptance; it is not a temporary test role.
+- Name is used only in the one-off Local setup. Runtime login/authorization is unchanged: active live DB Teacher, actual `is_department_head === true`, matching JWT actor/role and valid department scope. Name/title/position/client flags do not authorize. The resolved UUID is a Local implementation detail in the acceptance reports, never a business rule.
+- Head originally had no credential. Reused `createTeacherCredentialManager` / `dev:teacher-credential` architecture with generated secret and a private owner-only original credential backup outside Git. No plaintext password/hash/token was printed or committed. After testing, original **email=null / password_hash=null were restored**; Head flag remains true. Existing non-Head Class Advisor A credential was preserved. Head therefore needs an explicitly provisioned credential before manual browser login.
+
+### Actual Local HTTP/SQL results
+
+- **PASS:** real Head password login and `/api/department-head/me` return the resolved faculty with server-side flag true. Head queue and detail include the owned request, prerequisite snapshot and actual named Class approval/history.
+- **PASS:** owned Student submit -> `advisor_review` -> Class Advisor approve -> `department_head_review` -> Head approve -> **approved**. SQL status and Student list/detail read-back agree.
+- **PASS:** a second owned Student/request follows the same Class stage, then Head rejects -> **rejected** with persisted reason, also visible in Student list/detail. Empty reason fails 400 before saving.
+- **PASS:** non-Head password login to Head, `/me`, queue, detail, approve/reject and client flag spoof are denied 403; anonymous decision 401. These attempts do not change request status/history.
+- **PASS:** Head approve/reject before Class approval fail 409 and leave submission/history intact. Duplicate and opposite follow-up decisions fail 409, including repeated Class approval; no duplicate audit events.
+- Each completed request has exactly **3 canonical events: Student -> Class Advisor -> Head**, with correct actors, decisions, from/to status and timestamps. Both `advisor_teacher_id` and `coop_advisor_teacher_id` remain unchanged. No Class/Project Advisor source or flow was changed in this continuation.
+
+### Database safety and evidence
+
+- Runner created and removed **2 owned disposable Students** and their requests/course/delivery/history rows; cleanup checks ownership and absence of StudentFiles and deletes RESTRICT review rows first. No real faculty cleanup, file/storage work or migration application.
+- **Before role correction -> after full Local acceptance:** all **20 unrelated tables** have identical counts/full-row fingerprints. Teachers count remains **23**; per-row fingerprints excluding only `is_department_head` match for every Teacher, including email/password hash/timestamps. The only intentional difference is the resolved target's false -> true Head flag; full-row `teachers` fingerprint changes accordingly.
+- **After role correction -> after fixture/credential cleanup:** all **21 tables** match exactly. StudentFiles remain **3 / 7d0bf012a44869f32fd415f75b08471c**; migrations read-only status **16 executed / 0 pending**; original real requests/reviews and all other data preserved.
+- Safe ignored evidence: `logs/department-head-before-role-update-20261007.json`, `logs/department-head-authorized-local-report-20261007.json`, `logs/department-head-authorized-preservation-20261007.json`, plus corresponding setup/acceptance/preservation/migration logs. Private source reports: `intern_backend:/tmp/fitm-authorized-real-head-hEgoiA/` and `/tmp/fitm-local-head-acceptance-HoOhjN/report.json`. Credential originals remain private outside Git; no secret values appear in these safe reports.
+
+### Validation and documentation
+
+- Fresh full regression **Backend 226 PASS / 0 failures / 0 skips; Frontend 151 PASS / 0 failures / 1 existing browser skip**. Log: `logs/department-head-authorized-full-20261007.log`. Existing guarded `runTeacherAdvisorAcceptance.ps1 -FullBackend` uses labelled disposable PostgreSQL/tmpfs/internal network with read-only workspace mount, never persistent Local. Full Student -> Class UI -> Head approve/reject -> SQL -> Student read-back bridges pass; owned test container/network cleaned.
+- Production build **11 entries / 99 modules PASS**; `node --check` **125 source/script JS files PASS**; `git diff --check` **PASS**. Logs: `logs/department-head-authorized-build-20261007.log`, `logs/department-head-authorized-syntax-20261007.log`, `logs/department-head-authorized-diff-20261007.log`.
+- Updated this authoritative checkpoint, stable Local Head status in README, and the [manual Chrome checklist](docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md). Earlier blocked preflight remains historical evidence only.
+- **REAL BROWSER ACCEPTANCE: NOT RUN.** HTTP/SQL and DOM regression results do not establish desktop/mobile/keyboard browser acceptance. The manual checklist remains pending; restored Head credentials must be provisioned using the existing helper if manual login is needed.
+
+### Remaining and next task
+
+Local positive Head acceptance is closed. Real Chrome acceptance and other Head administration menus remain pending; existing unrelated limitations are unchanged. **Recommended next: Department Staff Document Processing (หนังสือขอความอนุเคราะห์ / หนังสือส่งตัวนักศึกษา).** This round does not start that task. No commit, push or deploy.
+
+## Department Head Coop Request Approval - 2026-10-07
+
+**HISTORICAL IMPLEMENTATION CHECKPOINT - superseded by the authorized real Head acceptance above.** HEAD REQUEST UI IMPLEMENTED; AUTOMATED ACCEPTANCE PASS; REAL BROWSER: NOT RUN. At this earlier checkpoint, positive Local acceptance was BLOCKED with no authorized Head record, and faculty identity/flag authorization had been requested. This round added only Head request approval; it did not complete other Head menus or start Staff document generation.
+
+### Audit and authorization
+
+- Read current HANDOFF/README, Student/Teacher/request/review models, migrations 011/012, Student and role request routes/controllers/services, Teacher login/JWT/live middleware, current Teacher frontend/shared feedback and tests before editing. No usable Head frontend existed.
+- Reused existing `/api/department-head/auth/login`, `/me`, `/coop-requests`, `/coop-requests/:id`, and `/:id/approve|reject`. Head login is Teacher bcrypt/JWT authentication with `headOnly`; all Head routes require active live DB identity, JWT actor/role consistency, actual `teachers.is_department_head` and valid department. Requests are scoped via the selected class advisor's department because Students have no department column.
+- Head flag is authoritative; position/title/name/email and client flags/body/query fields do not authorize. No auth middleware/login/privilege rules were relaxed. No duplicate endpoints, tables or migrations were created.
+- Head decisions remain **department_head_review -> approved/rejected only**. Early or wrong-stage decisions fail 409. Service preserves Teacher/Student/request locks and transactional review insertion. Required rejection reason already exists (trimmed/max 2000); duplicate/concurrent/opposite follow-up decisions cannot create duplicate history. Student submit -> Class Advisor -> Head remains canonical; Staff is not an approval stage.
+- Minimal service projection change: Head Student reads omit email/track/status and include safe current class-advisor ID/title/name. Head list/detail review projections include only review evidence plus safe named Teacher actor. This supplies actual Class approval actor/date and current advisor separately; historical actor identity is not inferred from the Student's current advisor. No password/hash/storage data is included. Teacher/Staff authority and Project Advisor workflow are unchanged.
+
+### Frontend and read-back
+
+- New `/department-head-login.html` and `/src/department_head/department_head.html`, linked from Teacher login. Head page has **อนุมัติคำร้องสหกิจ**, role name/logout and a link to existing Teacher work. No unfinished Head administration menus are represented as implemented.
+- Reused Teacher sessionStorage/Bearer helper, login controller, request list/detail/decision controller, existing CSS and shared modal/toast/button loading. Small role/destination options preserve Teacher defaults; static page attributes prevent imported Teacher modules from auto-mounting an extra controller on Head pages. Head profile is loaded from `/me` and must have **is_department_head === true** before queue loading. Non-Head client/server responses fail closed; logout/session expiry preserves the separate Student localStorage session.
+- Default actionable queue is `department_head_review`; filter/pagination (25 + lookahead), loading/empty/error/retry/session handling retained. Cards show Student name/code/major, real company snapshot/submission date/current status/courses, current Class Advisor and actual Class approval actor/date from review history.
+- Detail uses safe text fields for Student, saved company/recipient/address/work period, linked job when present, course snapshots and named actor/from/to/time/reason history. Only `department_head_review` has decision buttons. Custom confirmation and required reject reason block duplicate submissions; successful decisions re-fetch list and open detail from server, clearing old actions. Stale failures also reload; committed save with failed reload is reported truthfully.
+- Student existing approved wording and rejection-detail reason already work; no Student production source was changed this round. Isolated UI bridges exercise actual Student submit -> Class modal -> Head approve/reject modal -> real SQL -> Student request reload, with exactly three canonical audit events and unchanged class/project advisor IDs.
+
+### Local credential strategy and evidence
+
+- Read-only preflight: **23 active Teachers / 0 Head flags / 0 Head-login-ready records**. There is no authorized Local Head to reuse. Do not derive a Head from position/name/email or set a random faculty flag to obtain a PASS. Required clarification was requested asynchronously; independent implementation/tests continued.
+- Existing non-Head A credential, private password/restore paths from previous checkpoints remain unchanged. No Teacher was inserted, no `is_department_head` flag was set, and no credential was changed during the current Local negative acceptance.
+- New explicit `backend/scripts/runLocalDepartmentHeadAcceptance.js` requires development + `FITM_LOCAL_HEAD_ACCEPTANCE=1`, exact `intern_system`, 23 Teachers, existing Class `TEACHER_TEST_ID` and owner-only absolute `TEACHER_TEST_PASSWORD_PATH`. It chooses only an already-active authorized Head (explicit `HEAD_TEST_ID` if several); an already-ready distinct Head needs `HEAD_TEST_PASSWORD_PATH`. If that existing Head lacks credentials, the existing credential helper provisions and restores them in finally. No new credential system or privilege-grant code was added.
+- Positive branch is ready for an authorized Head: real Student submit/Class login/approve, Head password login/me/list/detail, early-stage refusal, final approve/reject, duplicate/opposite failures, named audit/Student read-back, unchanged A/B advisor IDs; it restores any temporary Head/non-Head credentials and deletes only owned fixtures. Existing A credentials remain ready. This branch has **not run on Local** while no Head exists.
+- Actual Local negative acceptance **PASS**: owned Student has class=A/project=B; real Student submit -> Class A approve -> `department_head_review`; Class A cannot finalize. Real non-Head credentials cannot Head-login or use `/me`/queue/detail/approve/reject even with client flag spoof. Anonymous decision returns 401; forbidden attempts leave status/history unchanged. No valid login token was fabricated.
+- Runner reported **BLOCKED (exit 2)** for positive Head approve/reject/early-approval; it does not label this a full Local Head PASS. One owned Student and its request/course/delivery/review fixtures were removed, with RESTRICT review rows deleted first and no StudentFiles allowed in cleanup.
+- Before/after **all 21 public table counts/full-row fingerprints match**, changed tables **[]**. Teachers **23**, existing Head flags **0**, credential-ready Teachers **1**, ledger **16**, CoopRequests **2**, reviews **2**, StudentFiles **3 / 7d0bf012a44869f32fd415f75b08471c**. No migration or storage/unrelated data change. Safe report `logs/department-head-local-preflight-report-20261007.json`; private source `intern_backend:/tmp/fitm-local-head-acceptance-hEfBfE/report.json`.
+
+### Automated validation and browser
+
+- Focused Head/Teacher UI: **51 PASS / 0 failures**. Build **11 entries PASS**; `node --check` **125 source/script JS files PASS**; `git diff --check` **PASS**. Build log `logs/department-head-build-20261007.log`.
+- Full regression: **Backend 226 PASS / 0 failures / 0 skips; Frontend 151 PASS / 0 failures / 1 existing browser skip**, log `logs/department-head-full-20261007.log`. Both full Student -> Class UI -> Head approve/reject -> SQL -> Student read-back bridges pass. Uses existing `runTeacherAdvisorAcceptance.ps1 -FullBackend`, dedicated guarded databases/markers in labelled Docker tmpfs PostgreSQL and an internal network; workspace mounted read-only. Persistent Local is never the integration target. Owned test containers/network were cleaned after success; label-filtered enumeration is empty.
+- New HTTP/SQL regressions cover safe scoped Head list/detail, Class approval actor/date, final approve/reject/Student read-back, all eight wrong states, live flag revocation and spoofed claims/text/query/body, non-Head/Student/Staff/anonymous refusal, department scope, duplicate/concurrent/opposite decisions/audit once and unchanged advisor IDs. Existing Class Advisor/Project Advisor/Topic/file regressions remain in the full run.
+- Head DOM cases reuse actual shared controllers/modal/API adapter and cover strict server flag, login/forbidden/session/logout, default queue, safe detail/named history, wrong-state actions, duplicate prevention, server refresh, stale errors, pagination/empty/retry. Two additional disposable SQL bridges cover full Student -> Class UI -> Head UI -> Student read-back. These are **DOM simulations, not a browser PASS**.
+- **REAL BROWSER ACCEPTANCE: NOT RUN.** No browser tool or installed Playwright/Puppeteer dependency/config was found; none was installed. [Manual Chrome checklist](docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md) includes URLs, authorized account/environment setup, prepare Student/Class request, Head approve/reject, Student reload, non-Head refusal, desktop/mobile/keyboard and read-only SQL. Positive Local/browser execution also needs the authorized Head identity/setup.
+
+### Files in this continuation
+
+- Backend: `backend/src/services/roleWorkflow.service.js`, `backend/test/roleWorkflow.database.test.js`, `backend/scripts/runLocalDepartmentHeadAcceptance.js`.
+- Frontend: `frontend/department-head-login.html`, `frontend/src/department_head/department_head.html`, `frontend/src/api/departmentHead.api.js`, `frontend/src/pages/departmentHead.js`, `frontend/src/pages/departmentHeadLogin.js`, `frontend/src/api/teacherProjectAdvisor.api.js` (export existing bearer helper), `frontend/src/pages/teacherLogin.js`, `frontend/src/pages/teacherCoopRequests.js` (shared role options), `frontend/teacher-login.html`, `frontend/vite.config.js`.
+- Tests: `frontend/test/departmentHead.test.js`, `frontend/test/helpers/teacherCoopFixture.js`, `frontend/test/studentCoopSavedAcceptance.test.js`.
+- Docs: `docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md`, stable overview in `README.md`, this HANDOFF. Previous uncommitted changes preserved.
+
+### Remaining and next task
+
+**Required to finish positive Local acceptance:** user identifies the actual Head faculty and explicitly authorizes the correct Local flag/account setup (and restore strategy). Do not create a fake Head to satisfy a test. Manual real Chrome acceptance and other Head administration menus remain pending; existing unrelated limitations are unchanged.
+
+**RECOMMENDED NEXT TASK: Department Staff Document Processing / Cooperation Letter + Student Placement Letter.** Do not start until user review. No commit, push or deploy.
+
+## Teacher / Class Advisor Coop Request Approval - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. CLASS ADVISOR UI IMPLEMENTED; AUTOMATED AND LOCAL AUTHENTICATED HTTP/SQL ACCEPTANCE PASS. REAL BROWSER ACCEPTANCE: NOT RUN.** This continuation adds Class Advisor request decisions to the existing Teacher page and supersedes earlier backend-only descriptions. It stops at Head review. Earlier checkpoints below are historical.
+
+### Audit and existing contract
+
+- Read HANDOFF/README, Student/Teacher/CoopRequest/review models, Teacher JWT/login/live guards, role and Student routes/controllers/services, migrations 011/012, current Teacher/Student frontend, shared feedback and regression fixtures before editing. No duplicate endpoint/table/credential mechanism was needed.
+- Existing Teacher APIs: `GET /api/teachers/coop-requests?status=advisor_review&offset=0&limit=26`, `GET /api/teachers/coop-requests/:id`, `POST /api/teachers/coop-requests/:id/approve` with `{}`, and `/reject` with `{reason}` (required, trimmed, max 2000). List returns `{success,data:[...]}`; detail returns `{success,data:{request,reviews}}`. All supported status filters remain owner scoped.
+- Actual request enums: `submitted`, `staff_review`, `advisor_review`, `department_head_review`, `approved`, `document_issued`, `in_progress`, `rejected`, `cancelled`. Student's actual submit controller already creates `advisor_review` and writes submission audit/course snapshots in one transaction. Model/legacy `submitted` is retained for compatibility, not made a new Teacher decision stage.
+- Authorization already used `req.user.id` from authenticated Teacher JWT and an active live Teacher row, then `Student.advisor_teacher_id`. Request/history detail uses the same class relationship. Body identity/status fields are rejected; a query `teacher_id` cannot change scope. `coop_advisor_teacher_id` is project-only and never supplies Coop Request authority.
+- Existing `coop_request_reviews` stores actor/decision/from/to/reason/timestamp, including Student submission. Decisions lock Teacher/Student/request in transaction and insert audit atomically; concurrent second decisions return 409 without duplicate history. FK RESTRICT preserves historical actors/requests.
+- Audit found Teacher service still accepted legacy `submitted`. Narrowed Teacher `STAGES.from` to **advisor_review only**, as requested. Head and Staff authorization/transitions unchanged. Existing SQL legacy transition constraints were retained; no migration is needed for the stricter application guard.
+- Minimal projection additions: list now includes existing request-owned prerequisite snapshots; Teacher Student projection omits email/track/status. Head/Staff Student projection remains as before. No password/hash/storage paths are fetched in Teacher Student reads.
+
+### UI and Student read-back
+
+- Existing `/src/teacher_coop/teacher_coop.html` adds sidebar/section **อนุมัติคำร้องสหกิจ** while retaining Project Advisor. Own class-advisee cards show name/code/major, saved company, submitted date, course snapshot/status; nine real status filters, 25 rows/page with 26-row lookahead and recovery when a decision empties a later page.
+- Detail fetches real server data and renders an explicit text-only whitelist: Student name/code/major, company snapshot/address/recipient, linked job title/description when present, work dates, course snapshots and review history/reasons. Missing values show `-`; no raw objects/HTML/private unrelated profile data are rendered.
+- Only `advisor_review` has approve/reject buttons, in list and detail. Shared `showConfirmModal`, `showToast`, `setButtonLoading` handle confirmation, required reject reason, loading and duplicate prevention. Approval means **advisor_review -> department_head_review**; rejection means **advisor_review -> rejected**. UI does not make an optimistic status mutation; list and any open detail re-fetch server state after success. Stale failures discard detail/actions and reload; committed success with failed reload is reported truthfully.
+- Loading/empty/API errors/detail errors/pagination/session expiry are handled. Teacher sessionStorage is reused; Student localStorage is untouched. Revocation clears both Teacher sections and an in-flight Project list cannot restore old rows after the token is removed.
+- Student existing current request now explicitly says **ผ่านการอนุมัติจากอาจารย์ที่ปรึกษาแล้ว รอหัวหน้าภาควิชาพิจารณา**. Rejected request detail adds the persisted rejection reason from existing review history. No other Student page redesign was performed.
+- Class A / Project B separation passes: B cannot list/detail/approve/reject A's class request, A can decide, and both advisor IDs remain exactly A/B. Existing Project Advisor request/confirmation/topic/file regressions remain in the full run.
+- Staff retains list/detail/history and eligible pending cancellation. No Staff approve/reject/forward route/button was added. Head-flagged Teacher acting through the Teacher namespace must be the class advisor and cannot advance beyond Head review; Head privilege alone cannot bypass the class stage. No Head UI or authorization change was made.
+
+### Local acceptance and preservation
+
+- Explicit runner `backend/scripts/runLocalClassAdvisorAcceptance.js` uses running Local Backend `127.0.0.1:5000`, actual Student and Teacher password login, and real HTTP/SQL. It requires development, `FITM_LOCAL_CLASS_ADVISOR_ACCEPTANCE=1`, existing `TEACHER_TEST_ID`, private owner-only absolute `TEACHER_TEST_PASSWORD_PATH`, exact `intern_system` and 23 Teachers. It does not create Teachers or fabricate valid login JWTs.
+- Existing A remains **อ.ดร.กาญจน์ ณ ศรีธะ**, ID **ce1f3537-8438-42f4-baa8-debc8f5f4dd7**, email **fitm-advisor-local@fixture.invalid**. Private password and original recovery paths from the previous checkpoint are unchanged. Do not rerun the older `runLocalTeacherAdvisorAcceptance.js` on this credential-ready baseline; that script expects zero ready Teachers initially.
+- Temporarily provisioned existing B with a generated memory-only password via the existing credential manager, performed real B password login, and restored B exactly. A was never restored/reprovisioned this round. Final: exactly one credential-ready Teacher, original faculty membership/names/privileges/timestamps intact.
+- Three owned temporary Students each had class=A/project=B. Actual submission -> review; A list/detail returns five prerequisite snapshots. Flow A approves to Head; Flow B rejects with persisted required reason; Flow C verifies foreign/project B refusal and query spoof scope; Flow D verifies separate A/B canonical fields. Anonymous/body spoof/Head impersonation and duplicate decisions fail safely. Student owner list/detail read back correct statuses/history/reason.
+- Cleanup locks/proves owned Students, refuses if any StudentFile exists, deletes only their RESTRICT review rows and their requests/Students, then restores B in finally. All three Students and their request/snapshot/delivery/history fixtures are removed. Existing Student/faculty data and storage were not changed.
+- Final Local report: `logs/class-advisor-local-final-report-20261007.json` (ignored); private source `intern_backend:/tmp/fitm-local-class-acceptance-klAkGH/report.json`. **All 21 public tables** (20 application + ledger) have identical before/after row counts and full-row aggregate fingerprints; **changed tables = []**. Baseline/final: Teachers **23**, CoopRequests **2**, reviews **2**, prerequisite snapshots **5**, delivery methods **6**. Migration ledger **16 executed / 0 pending** also verified via read-only migration status CLI; no migration applied.
+- StudentFiles **3** / aggregate **7d0bf012a44869f32fd415f75b08471c** before/after. No existing files, volume data or unrelated DB rows were touched.
+
+### Validation and browser boundary
+
+- Final full regression totals: **Backend 222 PASS / 0 failures / 0 skips** (`logs/class-advisor-full-20261007.log`, backend summary); **Frontend 130 PASS / 0 failures / 1 existing browser skip** (`logs/class-advisor-frontend-final-20261007.log`). Teacher UI focused regression **32 PASS**. Both new Teacher modal -> SQL -> Student read-back cases pass.
+- Initial full run passed every Backend test but one newly added Student bridge asserted stale DOM because it reloaded only the profile. Corrected the fixture to call the actual `loadCoopRequests()` and reran the entire Frontend suite against fresh guarded disposable SQL targets. This was a test-fixture correction; no Backend change followed its passing 222-test run. The initial log retains that failed frontend attempt; the final frontend log supersedes it.
+- Full runner: `powershell -NoProfile -ExecutionPolicy Bypass -File backend/test/runTeacherAdvisorAcceptance.ps1 -FullBackend`. Frontend-only rerun adds `-FrontendOnly` (new optional switch; default behavior unchanged). Reuses existing image/dependencies and creates only labelled internal-network PostgreSQL tmpfs targets with dedicated guarded DBs/markers; checkout mounted read-only. Owned test containers/networks from both invocations were removed and label-filtered enumeration is empty. Integration tests never target persistent Local.
+- Added HTTP/SQL coverage for own/foreign list and detail, snapshots/projection, approve/reject/read-back, Class A/Project B, anonymous/spoof, all eight non-review states, duplicate approval/rejection/audit once, unchanged advisor fields, Staff/Head boundaries. Existing full regressions retain Project Advisor workflow. Teacher DOM tests use actual shared modal/adapter/controllers; two new disposable SQL bridges use Teacher modal -> SQL -> Student page reload/reason, explicitly DOM simulation.
+- Vite build **PASS, 9 entries**. `node --check` **PASS, 121 source/script JS files**. Focused Teacher UI **32 PASS / 0 failures**. `git diff --check` **PASS**. Log: `logs/class-advisor-build-20261007.log`.
+- **REAL BROWSER ACCEPTANCE: NOT RUN.** Tool discovery found no browser tool; no existing Playwright/Puppeteer dependency/config. No browser dependency was installed. API/SQL/DOM acceptance is not a Chrome/responsive/native-control/focus PASS. [Manual Chrome checklist](docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md) covers Teacher login/list/detail/approve confirmation/loading/toast/re-fetch, Student read-back, reasoned reject, keyboard/session and desktop/mobile checks. Existing A is retained for manual use; automated Students were cleaned.
+
+### Files in this continuation
+
+- Backend: `backend/src/services/roleWorkflow.service.js`, `backend/test/roleWorkflow.database.test.js`, `backend/scripts/runLocalClassAdvisorAcceptance.js`, `backend/test/runTeacherAdvisorAcceptance.ps1` (optional frontend-only rerun).
+- Frontend: `frontend/src/api/teacherProjectAdvisor.api.js`, `frontend/src/pages/teacherCoopRequests.js`, `frontend/src/pages/teacherCoop.js`, `frontend/src/teacher_coop/teacher_coop.html`, `frontend/src/styles/teacher_coop.css`, `frontend/src/pages/student_coop.js`.
+- Frontend tests: `frontend/test/helpers/teacherCoopFixture.js`, `frontend/test/teacherCoopRequests.test.js`, `frontend/test/studentCoopSavedAcceptance.test.js`.
+- Documentation: `docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md`, `README.md` (stable overview only), this HANDOFF. Earlier uncommitted work was preserved.
+
+### Remaining and next task
+
+Remaining acceptance is the manual real Chrome check above. Missing class-advisor linkage can still strand a request (existing known limitation); legacy `submitted/staff_review` are visible but cannot be decided by Teacher under this round's strict stage guard. Existing unrelated limitations below remain outside scope.
+
+**RECOMMENDED NEXT TASK: Department Head Coop Request Approval UI.** Class approval stops at `department_head_review`. No commit, push or deploy; stop for user review after reporting results.
+
+## Teacher Local credential and API acceptance - 2026-10-07
+
+**CURRENT AUTHORITATIVE - Asia/Bangkok. AUTOMATED / API / LOCAL CREDENTIAL ACCEPTANCE PASS. REAL BROWSER ACCEPTANCE: NOT RUN.** This authorized continuation supersedes the earlier no-login-ready-Teacher blocker. Teacher Project Advisor implementation is retained; no Class Advisor approval UI/new feature was started. Previous checkpoints remain historical below.
+
+### Audit and credential approach
+
+- Actual Local schema: nullable `teachers.email` (unique) / `password_hash`; login lookup is normalized email. Teacher virtual `password` invokes the existing beforeValidate bcrypt hook, cost 10; comparePassword uses bcrypt.compare. Seed imports the 23 real faculty with null credentials, and no reusable development credential mechanism existed.
+- Preflight: 23 active Teachers, **0 emails / 0 login-ready accounts**, 16 executed migrations / 0 pending through 015. Schema/catalog, model/auth/seed/migrations, Student/Teacher frontend/shared feedback and existing fixtures were inspected first.
+- Added explicit `npm run dev:teacher-credential` / `-- restore`. CLI requires explicit NODE_ENV development (test mode allowed only on guarded `fitm_advisor_test`), exact permitted database, existing active TEACHER_TEST_ID, env-supplied TEACHER_TEST_EMAIL/PASSWORD and absolute TEACHER_TEST_BACKUP_PATH outside repo. Never inserts Teachers or runs at app startup/migration; production/unset environments fail closed.
+- Locks existing row, validates through the production hashing hook, saves only email/hash with original timestamps retained. Owner-only backup is written/fsynced exclusively **before** DB write. Restore verifies DB/ID and installed fingerprint, preserves exact original values without rehashing, is idempotent and refuses intervening credential edits. No plaintext password/hash/JWT is printed by CLI.
+- Compose's backend mount is `/app`, unlike checkout `<repo>/backend`; corrected backup-root validation after an initial Local run stopped before credential writes. Passing Local/isolated results below use the correction.
+
+### Current Local Teacher and recovery
+
+- Existing faculty **อ.ดร.กาญจน์ ณ ศรีธะ**, ID **ce1f3537-8438-42f4-baa8-debc8f5f4dd7**, Local-only email **fitm-advisor-local@fixture.invalid**. Names, list membership, status, department, privileges and timestamps unchanged. Exactly **one** of 23 Teachers now has email/hash.
+- Generated password: private `intern_backend:/tmp/fitm-local-teacher-acceptance-iBJdom/teacher-password.txt`, mode **0600**; never printed/read through tool output or added to repo. Manual checklist provides a user-terminal clipboard command, not a plaintext password.
+- Current restore backup: `intern_backend:/tmp/fitm-local-teacher-acceptance-iBJdom/teacher-a-final-restore.json`, mode **0600**. Protected Windows copy: `C:\Users\suran\AppData\Local\Temp\fitm-teacher-restore-239a1a1845164701bc1b5063812d38e9\teacher-original.json`; inherited access removed and owner-only ACL verified.
+- Restore command: `docker exec -e NODE_ENV=development -e TEACHER_TEST_ID=ce1f3537-8438-42f4-baa8-debc8f5f4dd7 -e TEACHER_TEST_BACKUP_PATH=/tmp/fitm-local-teacher-acceptance-iBJdom/teacher-a-final-restore.json intern_backend npm run dev:teacher-credential -- restore`. Reprovisioned credentials require that invocation's new backup. Teacher credential restore does not undo project decisions.
+
+### Local Student -> Teacher -> Student acceptance
+
+Explicit runner `backend/scripts/runLocalTeacherAdvisorAcceptance.js` requires development + FITM_LOCAL_ADVISOR_ACCEPTANCE=1, intern_system, exactly 23 faculty and zero login-ready Teachers initially. It uses the **running Local Backend at 127.0.0.1:5000**, real Student password login and Teacher password login; no valid Student/Teacher JWT was fabricated to bypass login. An intentionally expired token is used only for a negative authorization test.
+
+- Teacher A login and `/me` verify exact ID/email/name plus JWT actor_type=teacher/role=teacher; safe responses exclude password hash.
+- Owned temporary Student selects A -> pending without canonical assignment; A queue sees request -> accept -> Student read-back confirmed and SQL canonical advisor equals A. Duplicate acceptance returns 409.
+- Separate owned Student -> A pending -> required-reason reject -> rejected read-back/SQL, null canonical advisor; duplicate decision 409; Student reselects B -> new pending.
+- Third owned Student A pending -> switches B -> old A becomes superseded. A stale decision 409, current B decision 404 to A; spoofed teacher_id query does not expose B's request.
+- Only one faculty has test credentials at a time: restore A, temporarily provision existing B, login B -> B queue/current acceptance -> confirmed B in Student API/SQL. Student replacement then returns 409 and canonical advisor stays B. Restore B exactly; reprovision A for manual use.
+- Every fixture's class `advisor_teacher_id` remains its original existing Teacher C across all decisions; project advisor stays separate.
+- Anonymous/invalid/expired sessions return 401; spoofed decision teacher_id is rejected 400; foreign request 404. No free-text position grants Head authority.
+- **Three owned temporary Students and their cascaded project-advisor requests removed**; no existing Student, class advisor, topic, Coop Request or file changed. Cleanup checks fixture ownership and absence of files; no unrelated cleanup.
+
+### Database before/after and security
+
+Baseline/final snapshots use real PostgreSQL repeatable-read/read-only transactions and aggregate full-row fingerprints. Application table count stays **20** plus ledger. **19/20 app tables plus ledger match exactly**; only intentional Teacher credentials differ, and Teacher faculty/noncredential fingerprint matches. A separate read-only check proves **23 total / 1 email / 1 hash / 1 login-ready**, solely the intended A UUID; B/other credentials are null.
+
+- Ledger: **16 executed / 0 pending**, same fingerprint; no Local migration/sync/seed/reset.
+- Final read-only verification after the full isolated suite: **21/21 public tables match the intended post-credential snapshot**, no further Local changes. Disposable test containers/networks absent.
+- StudentFiles: **3 before/after**, same full-row MD5 **7d0bf012a44869f32fd415f75b08471c**; no upload/storage/file-byte access. Existing Students/advisor requests return exactly to baseline after owned-fixture cleanup.
+- Original values backed up before each credential update. Credentials/JWTs never committed/pushed; password absent from Local execution log and new helper/runner/test source, checked internally without printing it. Private password/backup modes checked as 0600. No env/dependency/security config changes or external message/email.
+- Evidence: ignored `logs/teacher-credential-local-20261007.log`, `logs/teacher-credential-local-report-20261007.json` (counts/fingerprints/checks, no password/hash/JWT), `logs/teacher-credential-isolated-20261007.log`, `logs/teacher-credential-full-20261007.log`.
+
+### Tests and acceptance status
+
+| Acceptance | Result |
+| --- | --- |
+| AUTOMATED ACCEPTANCE | **PASS**, full backend **218 / 0 failed / 0 skipped**, frontend **108 / 0 failed / 1 existing browser skip**; earlier focused backend **121 passed** |
+| API ACCEPTANCE | **PASS**, disposable and actual running Local authenticated HTTP + SQL |
+| LOCAL CREDENTIAL ACCEPTANCE | **PASS**, real existing-faculty password login/me + exact temporary restore + one A credential retained |
+| REAL BROWSER ACCEPTANCE | **NOT RUN**, no browser tool or installed Playwright/Puppeteer/config; no dependency install/launch/security workaround |
+| Build / syntax | **PASS**, nine entries; **120 JS files** checked (118 src + Local runner + new DB test) |
+
+New guarded credential tests contribute **7 passed**: production/environment/target denial, nonexistent/invalid credential refusal without insertion, repository/existing backup refusal, bcrypt and only-two-field update/23 faculty preservation, restore ID/stale-edit refusal, exact/idempotent restoration. FullBackend opt-ins use disposable databases only, never Local. Command: `powershell -NoProfile -ExecutionPolicy Bypass -File backend/test/runTeacherAdvisorAcceptance.ps1 -FullBackend`. All existing backend test files ran sequentially with guarded 013/014/015 and recruitment/role/migration opt-ins; DBs exist only in tmpfs PostgreSQL on a labelled internal network. Runner cleanup and resource absence verified. Build command `npm.cmd --prefix frontend run build -- --configLoader native`; source/script/test syntax and `git diff --check` passed.
+
+### Files changed in this continuation
+
+New: `backend/src/seeders/devTeacherCredential.js`, `backend/scripts/runLocalTeacherAdvisorAcceptance.js`, `backend/test/devTeacherCredential.database.test.js`, `docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md`. Updated: `backend/package.json`, existing `backend/test/runTeacherAdvisorAcceptance.ps1` (credential tests and optional -FullBackend), HANDOFF and README. All previous Teacher frontend WIP retained; no frontend/business workflow rewrite.
+
+### Remaining acceptance / manual checklist / next task
+
+Desktop/mobile CSS/native form/focus/loading/toast and existing-user Chrome interactions remain **NOT RUN**. [Manual Chrome checklist](docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md) includes exact URLs, private-password access, two eligible Student scenarios, Teacher confirm/accept/reject/refetch, Student reload, session/mobile checks and read-only SQL expected results. Temporary automated Students were cleaned; use authorized development Student accounts for manual testing.
+
+**RECOMMENDED NEXT TASK: Teacher/Class Advisor Coop Request Approval UI. NOT STARTED.** Current Class Advisor -> Head -> Approved/Rejected workflow, topic independence, separate advisor fields and StudentFiles are preserved.
+
+**STOP after report for user review; no commit/push/deploy.**
+
+---
+
+## Teacher project-advisor frontend - 2026-10-07
+
+**CURRENT AUTHORITATIVE for this authorized Teacher UI task - Asia/Bangkok. UI IMPLEMENTED; ISOLATED AUTOMATED / HTTP / SQL ACCEPTANCE PASS. LOCAL AUTHENTICATED TEACHER ACCEPTANCE NOT RUN: NO LOGIN-READY TEACHER ACCOUNTS. REAL BROWSER NOT RUN.** This supersedes the earlier documentation-only STOP and Teacher-UI-absent descriptions for this task. Unrelated findings and full audit/history remain below. Production readiness is not claimed.
+
+### Audit and implementation
+
+- Before edits: no Teacher page/controller/CSS/login/sidebar existed. The Teacher directory adapter and Student login serve Students. Existing role router already implements Teacher login, profile, queue and decisions; no duplicate routes were created.
+- Teacher identity is derived from HS256 JWT actor/role claims plus live active-Teacher DB authorization, not a supplied teacher_id/name. Login returns `{token, teacher}`; `/me` returns `{success: true, data: safeTeacherProfile}`. Queue is an array, not a `{data: [...]}` wrapper.
+- Existing pending queue endpoint now accepts validated `status=pending|confirmed|rejected` (default remains pending), retains existing pagination/fields and adds major/status/decision timestamps/rejection reason. Authorization and decision transactions are reused unchanged. Superseded history remains stored, excluded from these current-status filters.
+- `/teacher-login.html`: actual email/password API, loading/errors, duplicate-submit guard and password clearing. Student login links to it.
+- `/src/teacher_coop/teacher_coop.html`: authenticated name/sidebar, status filter, 25-row pagination/refresh. Cards show real Student name/code/major/topic, request date, status, decision date/reason where available. Missing values display `-`, dates use Asia/Bangkok and backend strings use textContent.
+- Pending accept/reject use shared `showConfirmModal`, `showToast`, `setButtonLoading`. Rejection requires a trimmed reason <=2,000 characters. Page/modal controls lock during submit. Success shows feedback and re-fetches server data; committed decisions with failed refresh are reported truthfully. Stale/missing decisions show a readable Thai error, refresh data and close the old modal. Confirmed/rejected rows have no decision buttons.
+- Loading/empty/API errors and 401/403 states are connected. Auth errors clear Teacher token/data and expose sign-in. Teacher JWT uses sessionStorage `teacherToken`; explicit `auth:false` plus own Authorization header prevent the shared client attaching Student localStorage `token`. Logout leaves the Student session untouched.
+- KIWI auth/dashboard styles are reused. Shared confirmation adds optional reason/inline errors/onClose. Fixed its existing out-of-scope handleEscape reference that prevented successful closure; tested Escape cleanup, duplicate submission and retry, with a keyboard focus loop added.
+
+### Backend/API used
+
+- `POST /api/teachers/auth/login` with `{email,password}`; `GET /api/teachers/me`.
+- `GET /api/teachers/project-advisor-requests?status=...&limit=26&offset=...` (UI displays 25 plus one lookahead).
+- `POST /api/teachers/project-advisor-requests/:id/accept` with `{}`.
+- `POST /api/teachers/project-advisor-requests/:id/reject` with `{reason}`.
+- No Teacher identity is supplied in queue/decision query/body. No endpoint, schema or migration was duplicated/added.
+
+### Protections and regressions verified
+
+Real bcrypt/JWT/HTTP/PostgreSQL tests prove own queue visibility; foreign queue/decision denial (including spoofed teacher_id query/body); anonymous/Student/inactive denial; atomic acceptance and correct `coop_advisor_teacher_id`; rejection without assignment and reselection; A -> B and A -> B -> A stale-ID refusal; accepted/rejected duplicate refusal; concurrent decision/selection serialization; transactional rollback; and silent confirmed-advisor replacement refusal.
+
+The actual new Teacher adapter/controller/shared modal -> authenticated HTTP -> disposable SQL bridge passes accept, reject and stale-page cases. Student `advisor_teacher_id` stays unchanged. Existing Student dropdown/none/pending/rejected/confirmed/replacement/topic create-edit-read regressions pass, as do Class Advisor -> Head Coop Request/history/prerequisites, profile class-advisor preservation and project-file storage/preview on disposable fixtures. Staff remains outside approval stages. No Student page/controller, profile/file schema, Topic rule or Coop Request implementation changed.
+
+### Fresh acceptance results
+
+| Check | Result |
+| --- | --- |
+| Backend: advisor + 013/014 migrations + project files + role/auth/profile/prerequisites/direct workflow | **114 PASS / 0 FAIL / 0 SKIP** |
+| Full frontend, including saved-prerequisite disposable SQL | **108 PASS / 0 FAIL / 1 existing browser SKIP** |
+| New Teacher frontend cases | **12 PASS**, included above |
+| AUTOMATED ACCEPTANCE | **PASS**, actual controller/shared feedback on simulated DOM plus real HTTP/SQL |
+| API ACCEPTANCE | **PASS on disposable authenticated HTTP**, real login/me/list/accept/reject and frontend bridge; Local protected reads 401 |
+| REAL BROWSER ACCEPTANCE | **NOT RUN**, no browser tool in session; prior Chrome/Node EPERM remains historical; no browser/security workaround |
+| Frontend build | **PASS**, all nine entries including both new pages |
+| Source JS syntax | **117 PASS** |
+| Local smoke | New pages **200**, DB health **200**, anonymous Teacher me/pending/confirmed reads **401** |
+| Local preservation | **20/20 application tables plus ledger unchanged**, counts/full-row fingerprints match |
+
+Repeatable command: `powershell -NoProfile -ExecutionPolicy Bypass -File backend/test/runTeacherAdvisorAcceptance.ps1`. Policy override is process-only, without changing system policy. Runner reuses Node test/installed backend image: labelled internal network, tmpfs PostgreSQL 16, no published ports/Local volume, guarded `fitm_advisor_test`, `fitm_project_test`, `fitm_role_test` (`fitm.a013_disposable` / `fitm.a014_disposable=on`). Repository mount is read-only; uploads use separate temporary fixture storage. Sequential files avoid DDL races. Container/network cleanup and absence verified; no dependencies/framework installed. Initial runner policy/readiness failures were corrected before the passing run; TCP readiness excludes the temporary initialization socket server.
+
+Evidence (ignored local artifacts): `logs/teacher-advisor-acceptance-20261007.log`, `logs/teacher-advisor-local-preservation-20261007.json`. Build: `npm.cmd --prefix frontend run build -- --configLoader native`. `node --check` checked all backend/src/frontend/src JS. `git diff --check` passed.
+
+### Database verification and remaining issues
+
+- Existing Local `intern_system`: **16 executed / 0 pending**, through 015, from existing status CLI. No Local migration/sync/seed/reset/account/privilege mutation or authenticated application write.
+- Before/after probes enforce `default_transaction_read_only=on`, explicit UTC and verified target. All 20 application tables plus `sequelize_meta` match. StudentFiles remain **3**, full-row MD5 **7d0bf012a44869f32fd415f75b08471c**; no existing file bytes accessed/changed. Older StudentFile anomaly remains unresolved/out of scope.
+- Current requests: **1 pending / 2 superseded**, zero confirmed/rejected. Zero confirmed-request/canonical-advisor mismatches is an empty confirmed set, not Local accept verification. Accepted/rejected writes were verified only on disposable SQL.
+- **23 active Teachers / 0 with both email and password_hash**. Local page is served, but Teacher data cannot support successful password login. No credentials invented/accounts created/passwords reset. Local authenticated accept/reject/read-back is **NOT RUN / blocked by account readiness**.
+- Real desktop/mobile layout, native inputs/keyboard/focus and existing-user browser acceptance remain untested. Teacher Class Advisor Coop Request UI, Staff/Head UI and confirmed replacement remain outside scope.
+
+### Files changed
+
+- Backend: `src/services/coopProjectAdvisor.service.js` (queue filter/projection only), `test/coopProjectAdvisor.database.test.js` (queue/state and actual Teacher HTTP/SQL bridge), new `test/runTeacherAdvisorAcceptance.ps1`.
+- Frontend new: `teacher-login.html`, `src/teacher_coop/teacher_coop.html`, `src/api/teacherProjectAdvisor.api.js`, `src/pages/teacherLogin.js`, `src/pages/teacherCoop.js`, `src/styles/teacher_coop.css`, `test/teacherCoop.test.js`, `test/helpers/teacherCoopFixture.js`.
+- Frontend updated: `login.html`, `vite.config.js`, shared `src/ui/feedback.js`, `src/styles/main.css`. Documentation: HANDOFF/README. No env/migration/dependency changes.
+
+### Recommended NEXT TASK - exactly one
+
+**Local Teacher project-advisor browser acceptance, with authorized Teacher account setup as its prerequisite.** Obtain intended account/credentials and explicit account-setup scope before Local credential mutation, then check Student selection -> Teacher login -> accept/reject -> Student read-back, stale A -> B, duplicate submit, session expiry and desktop/mobile feedback in Chrome. Account setup/browser acceptance are not started by this handoff.
+
+**STOP - ready for user review. No commit/push/deploy.**
+
+---
+
 ## Full project state audit - 2026-10-07
 
 **CURRENT AUTHORITATIVE - Asia/Bangkok. FULL READ/TEST AUDIT COMPLETE; DOCUMENTATION ONLY. LOCAL: 16 EXECUTED / 0 PENDING THROUGH 015. PRODUCTION READY: NO.** This supersedes old migration counts, Staff approval stages, Head direct project-advisor assignment and topic/file/evaluation placeholder descriptions. Historical handoff content is preserved below.

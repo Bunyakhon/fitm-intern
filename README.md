@@ -30,9 +30,9 @@ Docker Compose provides frontend, backend, PostgreSQL, NLP and pgAdmin. Job rank
 | Role | Current responsibilities and limits |
 | --- | --- |
 | Student | Password registration/login, own profile, company discovery/matching, requests, prerequisites, Mentor records, project-advisor requests, topic/files and workplace evaluation |
-| Teacher | Backend login/profile, own class-advisee request decisions, requested project-advisor accept/reject; no Teacher dashboard yet |
-| Department Head | Teacher identity with explicit `is_department_head`, live DB authorization and department scope; final request decisions and permitted Teacher administration; no Head dashboard yet |
-| Department Staff | Backend login/profile, request list/detail/history and pending cancellation; recruitment publish/reject; no Staff dashboard yet |
+| Teacher | Login/profile, project-advisor queue/accept/reject and own class-advisee Coop Request list/detail/approve/reject pages |
+| Department Head | Teacher identity with explicit `is_department_head`, live DB authorization and department scope; login/request-decision dashboard implemented; permitted Teacher administration remains backend only |
+| Department Staff | Login/document dashboard, approved-request queue/detail, Cooperation Letter drafts/generated dev previews/history; request cancellation/recruitment remain backend only; never a request approval stage |
 | Mentor | Token-linked profile verification/confirmation page; daily-log review and academic evaluations are not implemented |
 | Company/Public | Public recruitment form and email verification; no Company management portal |
 
@@ -57,19 +57,24 @@ WORKING means the required application layers are connected and relevant automat
 | Skills/Resume job matching | PARTIAL | Connected to real NLP, published jobs only; expiry filtering omitted |
 | Student request create/list/detail/cancel/history | WORKING | Request/delivery/audit persistence and ownership tested |
 | IT/INE prerequisite snapshots | WORKING | Five canonical courses, program switching, grades and saved history |
-| Complete request approval UI workflow | PARTIAL | Student UI connected; Teacher/Head decision UI missing |
-| Project-advisor request workflow | PARTIAL | Student UI connected; Teacher decisions are BACKEND ONLY |
+| Complete request approval UI workflow | PARTIAL | Student, Class Advisor and Head decision UI connected; authorized real Local Head HTTP/SQL acceptance passes; real browser acceptance remains pending |
+| Project-advisor request workflow | PARTIAL | Student/Teacher UI connected; isolated and Local credential/authenticated HTTP/SQL acceptance pass; real browser acceptance pending |
 | Project topic | WORKING | Owner-scoped create/edit/read-back, independent of advisor confirmation |
 | Project Book / Poster | WORKING | Private storage, replacement and authenticated Blob preview; real browser/native preview pending |
 | Student Company Evaluation | WORKING | Dedicated table, five 1–10 scores, comment, total/average and all eight real context sources; migration 015 applied on Local |
 | Student Mentor management / verification | PARTIAL | CRUD, email/resend and token-confirmation page implemented; fresh live acceptance pending |
-| Staff / Teacher / Head backends | BACKEND ONLY | Authorization and SQL decisions tested; role dashboards absent |
-| Staff / Teacher / Head frontends | NOT STARTED | No usable login/dashboard/core-action pages |
+| Staff recruitment/cancellation / Head Teacher administration | BACKEND ONLY | Authorization and SQL operations tested; corresponding administration pages absent |
+| Department Head request frontend | PARTIAL | Login/live Head guard, scoped request list/detail/Class history and final approve/reject connected; Local HTTP/SQL acceptance passes; browser and other Head menus remain pending |
+| Teacher Class Advisor frontend | PARTIAL | Own request list/detail/course snapshot/history, approve to Head and reasoned reject connected; automated and Local HTTP/SQL acceptance pass; real browser pending |
+| Teacher project-advisor frontend | PARTIAL | Login, own queue, accept/reject/reason and refresh implemented; guarded Local credential helper/API acceptance pass; browser acceptance pending |
+| Staff frontend | PARTIAL | Login, document queue/search/filter/pagination/detail, metadata/version/history, preview/download/print controls connected; real browser pending |
+| Cooperation Letter document processing | PARTIAL | PostgreSQL drafts/frozen snapshots/revisions and authenticated server-rendered dev HTML pass Local HTTP/SQL; approved official template/PDF issuance pending |
+| Placement Letter | BLOCKED | Creation prerequisites unconfirmed; Company Acceptance/Response persistence absent; API fails closed without changing request status |
 | Public recruitment through publication | PARTIAL | Submission/verification implemented; inbox acceptance and Staff UI missing |
 | Daily Log / company transfer / landing jobs and chatbot | MOCK / UI ONLY | DOM/demo behavior; no corresponding persistent end-to-end flow |
 | FastAPI FAQ chatbot | BACKEND ONLY | Endpoint runs, but two existing tests fail and document-intent quality needs review; no Express/website bridge |
 | Google login button | MOCK / UI ONLY | Placeholder; OAuth callback/account/JWT flow NOT STARTED |
-| Supervision, academic scores, official documents, Internship Report | NOT STARTED | Project Book and Poster are separate existing features; workplace feedback is not academic grading |
+| Supervision, academic scores, official document issuance/PDF, Internship Report | NOT STARTED | Staff dev letter artifacts do not establish official issuance; Project Book/Poster and workplace feedback are separate features |
 | Production deployment | PARTIAL | Development Compose and staging helper exist; current VM/schema/HTTPS readiness unverified |
 
 Company Evaluation context comes from authenticated Student name/code/major, current owner Mentor name/position, exactly one owner request in `approved/document_issued/in_progress` (company snapshot first, linked Company fallback), that request's work dates, and the evaluation's last saved timestamp. Zero/multiple accepted requests and missing real values display `-`.
@@ -109,11 +114,21 @@ These are development setup instructions, not actions performed by the audit. St
 | NLP | `intern_nlp_service` | [health](http://localhost:8000/health), [API docs](http://localhost:8000/docs) |
 | pgAdmin | `intern_pgadmin` | [localhost:5050](http://localhost:5050) |
 
-Main pages: `/login.html`, `/register.html`, `/src/student_coop/student_coop.html`, `/src/mentor_coop/mentor_verify_user.html`, `/src/recruit_student/recruit_student.html`, `/src/recruit_student/recruit_verify_email.html`. Email-verification links require a current authorized token; do not record/reuse tokens.
+Main pages: `/login.html`, `/register.html`, `/teacher-login.html`, `/src/teacher_coop/teacher_coop.html`, `/department-head-login.html`, `/src/department_head/department_head.html`, `/staff-login.html`, `/src/department_staff/department_staff.html`, `/src/student_coop/student_coop.html`, `/src/mentor_coop/mentor_verify_user.html`, `/src/recruit_student/recruit_student.html`, `/src/recruit_student/recruit_verify_email.html`. Email-verification links require a current authorized token; do not record/reuse tokens.
+
+Teacher login uses existing `/api/teachers/auth/login` and `/me` APIs. Project-advisor lists/decisions use `/api/teachers/project-advisor-requests`; status filters are pending (default), confirmed and rejected. Separate Teacher sessionStorage preserves the Student session. Local password login and authenticated Student -> Teacher -> Student read-back have now passed with existing faculty; real browser acceptance remains pending.
+
+Teacher **อนุมัติคำร้องสหกิจ** uses existing `/api/teachers/coop-requests` list/detail and `/:id/approve|reject` APIs. Only the authenticated Student class advisor (`advisor_teacher_id`) may decide `advisor_review`; approval stops at `department_head_review`, rejection requires a persisted history reason. Project-advisor identity grants no request approval authority. Shared confirmation/toast/loading and server refresh are used. [Class Advisor Chrome checklist](docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md) tracks the pending browser acceptance.
+
+Head login/profile and request actions use existing `/api/department-head` APIs and the Teacher session. Backend requires a live active Teacher with `is_department_head=true` and valid department scope; position/name/email/client flags do not authorize. Only `department_head_review` can become `approved` or `rejected`; named Class approval history is shown and successful decisions reload server state. See [Head Chrome checklist](docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md) for authorized account preparation and pending browser acceptance. The request dashboard does not imply all Head menus are complete.
+
+Staff **จัดการเอกสาร** uses existing password login/live Staff guards and a separate session. `/api/staff/document-requests` supplies eligible request search/list/detail; request-owned `/documents/cooperation` create/edit/generate and authenticated preview/download use frozen server snapshots, optimistic versions and persisted revisions. Generated development HTML and metadata commit together in PostgreSQL, with no `student_files` or filesystem path changes. Draft edit invalidates the current artifact and retains old generated revisions. Dev generation does not set `document_issued`; Placement creation fails 409 until its business prerequisite is confirmed. Official templates and server PDF generation are not established. See [Staff acceptance and Chrome checklist](docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md).
+
+Local credentials are provisioned explicitly with `npm run dev:teacher-credential` (or `-- restore`). It requires `NODE_ENV=development`, an existing active `TEACHER_TEST_ID`, environment-supplied `TEACHER_TEST_EMAIL` / `TEACHER_TEST_PASSWORD`, and an absolute `TEACHER_TEST_BACKUP_PATH` outside the repository. It updates only email/password hash through the Teacher bcrypt hook, preserves faculty/name/privilege/timestamps, records original values before writing, and refuses stale restore. It never inserts Teachers, changes migrations or runs automatically in production/startup. Current Local account/private recovery instructions and the pending Chrome checklist are in [Teacher manual acceptance](docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md); no plaintext password is stored in the repository.
 
 ## Database migrations
 
-**Verified persistent Local: 16 executed / 0 pending, through 015**, on 2026-10-07. This includes 001–009, 007a, 010, 011, 012, 013, 014 and 015. No migration was applied or rolled back during the full audit.
+**Verified persistent Local: 17 executed / 0 pending, through 016**, on 2026-10-07. This includes 001–009, 007a and 010–016. Document migration 016 was explicitly applied to Local after disposable DDL/rollback tests; it adds two tables and preserves all earlier application data.
 
 | Migration | Purpose |
 | --- | --- |
@@ -125,14 +140,15 @@ Main pages: `/login.html`, `/register.html`, `/src/student_coop/student_coop.htm
 | 013 | CoopProject topic and one current Book/Poster per Student/category |
 | 014 | Immutable project-advisor request/history and Teacher confirmation |
 | 015 | Dedicated CompanyEvaluation, one editable row per Student |
+| 016 | Request-owned documents, frozen snapshots, versions, generated dev content and Staff revision/audit history |
 
 Important FK/unique constraints were checked on Local. StudentFile storage has exactly one canonical storage-path UNIQUE; required Resume/project-category uniqueness remains present. A previous StudentFile fingerprint anomaly is unresolved and outside current scope. The full audit's read-only baseline/final comparison matched all 20 application tables, including three StudentFiles and their current aggregate fingerprint; no rows or files were changed.
 
-Local currently has zero Staff accounts and zero Head flags. Do not create accounts or grant privileges without separate authorization. Current VM migration/schema/availability was not inspected; historical VM counts must not be treated as current.
+Local currently has zero Staff accounts and one explicitly authorized Head flag on the existing real faculty **ผศ.ดร.ขนิษฐา นามี**; Teacher count remains 23. Temporary Head acceptance credentials were restored to their original absent values; manual login needs provisioning with the existing development credential helper. Runtime authority uses the live DB flag and department scope. Additional accounts/privilege changes require separate authorization. Current VM migration/schema/availability was not inspected; historical VM counts must not be treated as current.
 
 ## Testing and acceptance
 
-Latest full audit: backend **210 passed / 0 failed / 0 skipped**; frontend **96 passed / 0 failed / 1 existing browser skip**; NLP **14 passed / 2 failed**. Build: seven entries passed. Syntax: 114 source JS files passed. See HANDOFF for the exact disposable target configuration, logs and preservation evidence.
+The earlier full repository audit recorded backend **210 passed** / frontend **96 passed + 1 browser skip**, and NLP **14 passed / 2 failed**. Role/document continuations have newer regression, build and Local acceptance evidence in HANDOFF. The NLP limitation is unchanged. Integration checks use guarded disposable databases; real browser evidence is tracked separately.
 
 The two NLP chatbot tests use `TestClient(app)` without entering FastAPI lifespan, leaving the classifier untrained. They remain failing; no source/test fix was made. A running document question also returned a different low-confidence intent and fallback, so endpoint HTTP 200 is not an intent-quality PASS.
 
