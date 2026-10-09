@@ -81,6 +81,9 @@ app.use("/api/teachers", createRoleWorkflowRouter("teacher"));
 app.use("/api/department-head", createRoleWorkflowRouter("department_head"));
 app.use("/api/job-matches", jobMatchingRoutes);
 app.use("/api/student-coop", createStudentCoopRouter());
+app.use("/api/internship-logs", require("./routes/internshipLogs.routes").createInternshipLogsRouter());
+app.use("/api/supervision", require("./routes/supervision.routes").createSupervisionRouter());
+app.use("/api/coop-activities", require("./routes/coopActivities.routes").createCoopActivitiesRouter());
 
 // Do not return Express parser stacks, SQL details or provider diagnostics.
 app.use((error, req, res, next) => {

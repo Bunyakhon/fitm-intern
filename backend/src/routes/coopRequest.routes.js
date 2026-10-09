@@ -25,6 +25,7 @@ router.get("/companies/search", searchCompanies);
 router.get("/companies/duplicate-check", checkCompanyDuplicate);
 router.get("/job-postings/:id", getPublishedJobPostingForCoopRequest);
 router.get("/me", getMyCoopRequests);
+router.get('/:id/company-response', require('../controllers/companyResponse.controller').createStudentCompanyResponseHandler(require('../models')));
 router.get("/:id", getCoopRequestById);
 router.post("/", createCoopRequest);
 router.patch("/:id/cancel", cancelCoopRequest);

@@ -13,6 +13,11 @@ function createStaffDocumentsRouter(registry) {
   }
   router.get('/', handler(async (req, res) => res.json({ success: true, data: await service.list(req.user.id, req.query) })));
   router.get('/:id', handler(async (req, res) => res.json({ success: true, data: await service.detail(req.user.id, req.params.id) })));
+  router.get('/:id/company-response', handler(async (req, res) => res.json({ success: true, data: await service.getCompanyResponse(req.user.id, req.params.id) })));
+  router.get('/:id/company-response/history', handler(async (req, res) => res.json({ success: true, data: (await service.getCompanyResponse(req.user.id, req.params.id)).history })));
+  router.post('/:id/company-response', handler(async (req, res) => res.json({ success: true, data: await service.recordCompanyResponse(req.user.id, req.params.id, req.body) })));
+  router.put('/:id/company-response', handler(async (req, res) => res.json({ success: true, data: await service.recordCompanyResponse(req.user.id, req.params.id, req.body, true) })));
+  router.get('/:id/placement-eligibility', handler(async (req, res) => res.json({ success: true, data: (await service.detail(req.user.id, req.params.id)).placement })));
   for (const [method, suffix, action] of [['post', '', 'create'], ['put', '', 'edit'], ['post', '/generate', 'generate']])
     router[method]('/:id/documents/:type' + suffix, handler(async (req, res) => res.json({ success: true, data: await service.mutate(req.user.id, req.params.id, req.params.type, action, req.body) })));
   for (const mode of ['preview', 'download']) router.get('/:id/documents/:type/' + mode, handler(async (req, res) => {

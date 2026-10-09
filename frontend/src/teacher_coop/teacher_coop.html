@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/student_coop.css" />
     <link rel="stylesheet" href="/src/styles/teacher_coop.css" />
+    <link rel="stylesheet" href="/src/styles/supervision.css" />
   </head>
   <body class="teacher-page">
     <header class="navbar"><div class="nav-container">
@@ -16,7 +17,7 @@
     </div></header>
     <div class="dashboard-layout">
       <aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">เมนูอาจารย์</span><small>ระบบสหกิจศึกษา</small></div>
-        <nav class="sidebar-menu"><a class="sidebar-item" href="#coopApprovals">อนุมัติคำร้องสหกิจ</a><a class="sidebar-item" href="#advisorRequests">คำขอที่ปรึกษาโครงการ</a></nav>
+        <nav class="sidebar-menu"><a class="sidebar-item" href="#coopApprovals">อนุมัติคำร้องสหกิจ</a><a class="sidebar-item" href="#advisorRequests">คำขอที่ปรึกษาโครงการ</a><a class="sidebar-item" href="#supervisionScheduling">นัดนิเทศครั้งที่ 1–2</a></nav>
       </aside>
       <main class="dashboard-content">
         <section id="coopApprovals" aria-labelledby="coopApprovalHeading">
@@ -36,9 +37,44 @@
         <div id="teacherRequestList" class="teacher-request-list" aria-busy="true"></div>
         <div class="teacher-pagination"><button class="teacher-button" id="teacherPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherPageNumber"></span><button class="teacher-button" id="teacherNext" type="button" disabled>ถัดไป</button></div>
         </section>
+        <section id="supervisionScheduling" aria-labelledby="supervisionHeading">
+          <div class="teacher-heading"><div><h1 id="supervisionHeading">นัดนิเทศครั้งที่ 1–2</h1><p>นัดนักศึกษาที่คุณเป็นอาจารย์นิเทศ / ที่ปรึกษาโครงการ วันเวลาใช้ Asia/Bangkok</p></div><button id="supervisionRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
+          <p id="supervisionMessage" class="supervision-message" role="status" aria-live="polite"></p>
+          <label for="supervisionStudentSelect">นักศึกษาในความดูแล</label><select id="supervisionStudentSelect" class="teacher-button"></select>
+          <div id="supervisionStudents"></div>
+          <div class="teacher-pagination"><button id="supervisionPrevious" type="button" class="teacher-button" disabled>ก่อนหน้า</button><button id="supervisionNext" type="button" class="teacher-button" disabled>ถัดไป</button></div>
+          <section id="supervisionDetail" hidden>
+            <h2 id="supervisionStudentName"></h2><p id="supervisionPlacementInfo"></p><p id="supervisionMentorInfo"></p>
+            <div id="supervisionAppointments"></div>
+            <div class="teacher-heading"><h3>สร้าง / แก้ไขนัดหมาย</h3><button id="supervisionNew" type="button" class="teacher-button">เริ่มนัดใหม่</button></div>
+            <form id="supervisionForm">
+              <input id="supervisionVersion" type="hidden" />
+              <fieldset id="supervisionFieldset" class="supervision-form">
+                <legend>ข้อมูลนัดนิเทศ</legend>
+                <label>ครั้งนิเทศ<select id="supervisionVisit"><option value="1">ครั้งที่ 1</option><option value="2">ครั้งที่ 2</option></select></label>
+                <label>วันที่<input id="supervisionDate" type="date" required /></label>
+                <label>เวลา (Asia/Bangkok)<input id="supervisionTime" type="time" required /></label>
+                <label>หมายเหตุ<textarea id="supervisionNotes" maxlength="2000"></textarea></label>
+                <label id="supervisionReasonGroup" hidden>เหตุผลที่แก้ไข / เลื่อนนัด<textarea id="supervisionReason" maxlength="2000"></textarea></label>
+                <label class="supervision-check supervision-wide"><input id="supervisionMentorChecked" type="checkbox" required />ตรวจสอบข้อมูลพี่เลี้ยงที่ยืนยันแล้วก่อนนัดหมาย</label>
+                <label class="supervision-check supervision-wide"><input id="supervisionSubstitute" type="checkbox" />พี่เลี้ยงเดิมไม่สะดวก ใช้พี่เลี้ยงแทนสำหรับนัดนี้</label>
+                <div id="supervisionSubstituteFields" class="supervision-form supervision-wide" hidden>
+                  <label>อีเมลพี่เลี้ยงแทน<input id="substitute_email" type="email" maxlength="254" disabled /></label>
+                  <label>ชื่อ<input id="substitute_first_name" maxlength="254" disabled /></label>
+                  <label>นามสกุล<input id="substitute_last_name" maxlength="254" disabled /></label>
+                  <label>ตำแหน่ง<input id="substitute_position" maxlength="254" disabled /></label>
+                  <label class="supervision-wide">เหตุผลที่ใช้พี่เลี้ยงแทน<textarea id="substitute_reason" maxlength="2000" disabled></textarea></label>
+                </div>
+              </fieldset>
+              <button id="supervisionSave" type="submit" class="teacher-button">บันทึกนัดหมาย</button>
+            </form>
+            <h3>ประวัติการนัดและการยืนยัน</h3><div id="supervisionHistory"></div>
+          </section>
+        </section>
       </main>
     </div>
     <script type="module" src="/src/pages/teacherCoop.js"></script>
     <script type="module" src="/src/pages/teacherCoopRequests.js"></script>
+    <script type="module" src="/src/pages/teacherSupervision.js"></script>
   </body>
 </html>

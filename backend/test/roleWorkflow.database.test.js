@@ -108,6 +108,11 @@ test(
             "014_add_coop_project_advisor_requests.js",
             "015_add_company_evaluations.js",
             "016_add_coop_documents.js",
+            "017_add_company_responses.js",
+            "018_add_internship_logs.js",
+            "019_add_supervision_appointments.js",
+            "020_add_supervision_results.js",
+            "021_add_coop_activities.js",
           ]);
         },
       );

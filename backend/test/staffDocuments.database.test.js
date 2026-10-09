@@ -33,8 +33,19 @@ test('Staff documents: migration, authenticated HTTP/SQL, immutable snapshots an
       const original = qi.createTable; qi.createTable = async (...args) => { if (args[0] === 'coop_document_revisions') throw Error('injected DDL failure'); return original.apply(qi, args); };
       try { await assert.rejects(migration.up({ context: qi }), /injected DDL/); } finally { qi.createTable = original; }
       assert.equal((await db.query("SELECT to_regclass('coop_documents') AS name"))[0][0].name, null);
-      await umzug.up(); assert.equal((await umzug.executed()).length, 17); assert.equal((await umzug.pending()).length, 0);
+      await umzug.up({ to: '016_add_coop_documents.js' }); assert.equal((await umzug.executed()).length, 17); assert.equal((await umzug.pending()).length, 5);
       assert.equal((await db.query("SELECT md5(COALESCE(string_agg(to_jsonb(t)::text,'' ORDER BY id),'')) AS fingerprint FROM student_files t"))[0][0].fingerprint, before.fingerprint);
+    });
+    await t.test('017 empty UP/DOWN and injected partial DDL rollback preserve prior schema', async () => {
+      const responseMigration = require('../src/db/migrations/017_add_company_responses');
+      const imported = await import(pathToFileURL(require.resolve('../src/db/migrations/017_add_company_responses')).href);
+      assert.equal(typeof imported.up, 'function'); assert.equal(typeof imported.down, 'function');
+      await responseMigration.up({ context: qi }); await responseMigration.down({ context: qi });
+      const original = qi.createTable;
+      qi.createTable = async (...args) => { if (args[0] === 'company_response_history') throw Error('injected 017 DDL failure'); return original.apply(qi, args); };
+      try { await assert.rejects(responseMigration.up({ context: qi }), /injected 017/); } finally { qi.createTable = original; }
+      assert.equal((await db.query("SELECT to_regclass('company_responses') AS name"))[0][0].name, null);
+      await umzug.up(); assert.equal((await umzug.executed()).length, 22); assert.equal((await umzug.pending()).length, 0);
     });
     const password = crypto.randomBytes(24).toString('base64url'), suffix = crypto.randomUUID();
     const classTeacher = await m.Teacher.create({ first_name: 'Class', last_name: 'Advisor', department: 'FITM', email: `class-${suffix}@fixture.invalid`, password });
@@ -54,6 +65,7 @@ test('Staff documents: migration, authenticated HTTP/SQL, immutable snapshots an
     app.post('/api/auth/login', studentAuth.loginStudent);
     app.post('/api/coop-requests', authenticateStudentToken, studentRequests.createCoopRequest);
     app.get('/api/coop-requests/:id', authenticateStudentToken, studentRequests.getCoopRequestById);
+    app.get('/api/coop-requests/:id/company-response', authenticateStudentToken, require('../src/controllers/companyResponse.controller').createStudentCompanyResponseHandler(m));
     app.post('/api/staff/auth/login', createStaffLoginHandler({ DepartmentStaff: m.DepartmentStaff }));
     app.use('/api/staff', createRoleWorkflowRouter('department_staff', m));
     app.use('/api/teachers', createRoleWorkflowRouter('teacher', m));
@@ -139,8 +151,115 @@ test('Staff documents: migration, authenticated HTTP/SQL, immutable snapshots an
       assert.equal((await call(docUrl(owner.id, 'unsupported'), tokenStaff, {})).status, 400); assert.equal((await call(docUrl(crypto.randomUUID()), tokenStaff, {})).status, 404); assert.equal((await call(docUrl('../outside'), tokenStaff, {})).status, 404);
       const another = await fixture(); assert.equal((await call(docUrl(another.id), tokenStaff, { document_number: `DEV-${suffix}` })).status, 409); assert.equal(await m.CoopDocument.count({ where: { coop_request_id: another.id } }), 0);
     });
-    await t.test('Placement fails closed with explicit unconfirmed prerequisite; no fake company response/document', async () => {
-      const response = await call(docUrl(owner.id, 'placement'), tokenStaff, {}); assert.equal(response.status, 409); assert.equal(response.data.code, 'PLACEMENT_PREREQUISITE_UNCONFIRMED'); assert.equal(await m.CoopDocument.count({ where: { document_type: 'placement' } }), 0);
+    await t.test('Placement without completed cooperation or saved acceptance fails closed', async () => {
+      const response = await call(docUrl(owner.id, 'placement'), tokenStaff, {}); assert.equal(response.status, 409); assert.equal(response.data.code, 'COOPERATION_LETTER_REQUIRED');
+      doc = (await ok(call(docUrl(owner.id) + '/generate', tokenStaff, { version: doc.version }))).data;
+      const missing = await call(docUrl(owner.id, 'placement'), tokenStaff, {}); assert.equal(missing.status, 409); assert.equal(missing.data.code, 'COMPANY_RESPONSE_REQUIRED');
+      assert.equal(await m.CoopDocument.count({ where: { document_type: 'placement' } }), 0);
+    });
+    const responseUrl = id => `${endpoint(id)}/company-response`;
+    const acceptedBody = { status: 'accepted', responded_at: '2026-01-02', note: 'Acceptance received' };
+    let companyResponse, placement;
+    await t.test('Company response enforces authenticated Staff, approval, cooperation and validation', async () => {
+      for (const token of [null, owner.token, tokenA, tokenH]) assert.equal((await call(responseUrl(owner.id), token, acceptedBody)).status, token ? 403 : 401);
+      assert.equal((await call(responseUrl(crypto.randomUUID()), tokenStaff, acceptedBody)).status, 404);
+      const pending = await fixture('department_head_review'), noLetter = await fixture();
+      assert.equal((await call(responseUrl(pending.id), tokenStaff, acceptedBody)).status, 409);
+      assert.equal((await call(responseUrl(noLetter.id), tokenStaff, acceptedBody)).data.code, 'COOPERATION_LETTER_REQUIRED');
+      for (const body of [{}, { ...acceptedBody, status: 'pending' }, { ...acceptedBody, responded_at: '2026-02-31' }, { ...acceptedBody, responded_at: '2999-01-01' }, { ...acceptedBody, staff_id: secondStaff.id }, { status: 'accepted' }]) assert.equal((await call(responseUrl(owner.id), tokenStaff, body)).status, 400);
+      await staff.update({ is_active: false }); assert.equal((await call(responseUrl(owner.id), tokenStaff, acceptedBody)).status, 403); await staff.update({ is_active: true });
+    });
+    await t.test('Concurrent acceptance inserts one response/history and verifies Staff and Student read-back', async () => {
+      const results = await Promise.all([call(responseUrl(owner.id), tokenStaff, acceptedBody), call(responseUrl(owner.id), tokenEditor, acceptedBody)]);
+      assert.deepEqual(results.map(row => row.status).sort(), [200, 409]); companyResponse = results.find(row => row.status === 200).data.data;
+      assert.equal(companyResponse.coop_request_id, owner.id); assert.equal(companyResponse.cooperation_version, doc.version);
+      const saved = (await ok(call(responseUrl(owner.id), tokenStaff))).data;
+      assert.equal(saved.history.length, 1); assert.equal(saved.history[0].department_staff_id, companyResponse.department_staff_id); assert.equal(saved.response.staff.id, companyResponse.department_staff_id);
+      assert.equal((await ok(call(`/api/coop-requests/${owner.id}/company-response`, owner.token))).data.status, 'accepted');
+      const other = await fixture(); assert.equal((await call(`/api/coop-requests/${owner.id}/company-response`, other.token)).status, 404);
+      assert.equal((await ok(call(`${endpoint(owner.id)}/placement-eligibility`, tokenStaff))).data.available, true);
+      assert.equal((await call(responseUrl(owner.id), tokenStaff, acceptedBody)).status, 409);
+    });
+    await t.test('Response correction to rejection keeps immutable history and blocks placement', async () => {
+      companyResponse = (await ok(call(responseUrl(owner.id), tokenEditor, { ...acceptedBody, status: 'rejected', version: companyResponse.version, correction_reason: 'Company corrected decision' }, 'PUT'))).data;
+      assert.equal(companyResponse.version, 2); assert.equal(companyResponse.department_staff_id, secondStaff.id);
+      assert.equal((await call(docUrl(owner.id, 'placement'), tokenStaff, {})).data.code, 'COMPANY_RESPONSE_REJECTED');
+      const history = (await ok(call(responseUrl(owner.id) + '/history', tokenStaff))).data;
+      assert.deepEqual(history.map(row => row.status), ['accepted', 'rejected']); assert.equal(history[1].correction_reason, 'Company corrected decision');
+      await assert.rejects(db.query("UPDATE company_response_history SET note='tampered' WHERE id=:id", { replacements: { id: history[0].id } }), /immutable/);
+      await assert.rejects(db.query('DELETE FROM company_response_history WHERE id=:id', { replacements: { id: history[0].id } }), /immutable/);
+      assert.equal((await call(responseUrl(owner.id), tokenStaff, { ...acceptedBody, version: 1, correction_reason: 'Stale' }, 'PUT')).status, 409);
+    });
+    await t.test('Company response audit failure rolls back correction and optimistic version', async () => {
+      const original = m.CompanyResponseHistory.create; m.CompanyResponseHistory.create = async () => { throw Error('injected response audit'); };
+      try { assert.equal((await call(responseUrl(owner.id), tokenStaff, { ...acceptedBody, version: companyResponse.version, correction_reason: 'Correction' }, 'PUT')).status, 500); } finally { m.CompanyResponseHistory.create = original; }
+      assert.equal((await m.CompanyResponse.findByPk(companyResponse.id)).status, 'rejected'); assert.equal((await m.CompanyResponse.findByPk(companyResponse.id)).version, 2);
+      companyResponse = (await ok(call(responseUrl(owner.id), tokenStaff, { ...acceptedBody, version: companyResponse.version, correction_reason: 'Reinstated acceptance' }, 'PUT'))).data;
+    });
+    await t.test('Concurrent placement create/generate, frozen acceptance and version history are safe', async () => {
+      const results = await Promise.all([call(docUrl(owner.id, 'placement'), tokenStaff, {}), call(docUrl(owner.id, 'placement'), tokenEditor, {})]);
+      assert.deepEqual(results.map(row => row.status).sort(), [200, 409]); placement = results.find(row => row.status === 200).data.data;
+      assert.equal(placement.coop_request_id, owner.id); assert.equal(placement.snapshot.company_response.id, companyResponse.id); assert.equal(placement.snapshot.company_response.version, 3); assert.equal(placement.snapshot.cooperation_document.id, doc.id);
+      const snapshot = JSON.stringify(placement.snapshot);
+      const generations = await Promise.all([call(docUrl(owner.id, 'placement') + '/generate', tokenStaff, { version: placement.version }), call(docUrl(owner.id, 'placement') + '/generate', tokenStaff, { version: placement.version })]);
+      assert.deepEqual(generations.map(row => row.status).sort(), [200, 409]); placement = generations.find(row => row.status === 200).data.data;
+      await db.query("UPDATE coop_requests SET company_name='Changed source' WHERE id=:id", { replacements: { id: owner.id } });
+      placement = (await ok(call(docUrl(owner.id, 'placement') + '/generate', tokenEditor, { version: placement.version }))).data;
+      assert.equal(JSON.stringify(placement.snapshot), snapshot); assert.equal(placement.version, 3);
+      assert.equal((await call(docUrl(owner.id, 'placement') + '/preview?version=2', tokenStaff)).status, 200);
+      assert.match((await call(docUrl(owner.id, 'placement') + '/download', tokenStaff)).headers.get('content-disposition'), /placement-.*-v3.html/);
+      assert.equal(await m.CoopDocumentRevision.count({ where: { coop_document_id: placement.id } }), 3);
+      assert.equal((await m.CoopRequest.findByPk(owner.id)).status, 'approved');
+    });
+    await t.test('Existing placement draft or generated letter locks response correction without altering evidence', async () => {
+      const correction = await call(responseUrl(owner.id), tokenStaff, { ...acceptedBody, status: 'rejected', version: companyResponse.version, correction_reason: 'Cannot silently revoke' }, 'PUT');
+      assert.equal(correction.status, 409); assert.equal(correction.data.code, 'COMPANY_RESPONSE_LOCKED_BY_PLACEMENT');
+      assert.equal((await m.CompanyResponse.findByPk(companyResponse.id)).status, 'accepted'); assert.equal((await m.CoopDocument.findByPk(placement.id)).status, 'generated');
+      await assert.rejects(require('../src/db/migrations/017_add_company_responses').down({ context: qi }), /rollback refused/);
+    });
+    await t.test('017 PostgreSQL tables, FKs, UNIQUE/CHECK constraints and same-request revision protection', async () => {
+      const [[tables]] = await db.query("SELECT to_regclass('company_responses') IS NOT NULL AS response, to_regclass('company_response_history') IS NOT NULL AS history");
+      assert.equal(tables.response, true); assert.equal(tables.history, true);
+      const [constraints] = await db.query("SELECT conname,contype FROM pg_constraint WHERE conrelid IN ('company_responses'::regclass,'company_response_history'::regclass)");
+      for (const name of ['company_responses_values_check', 'company_response_history_values_check', 'company_response_history_action_check', 'company_responses_cooperation_revision_fk', 'company_response_history_cooperation_revision_fk']) assert.ok(constraints.some(row => row.conname === name), `Missing constraint ${name}`);
+      const response = await m.CompanyResponse.findByPk(companyResponse.id);
+      const payload = Object.fromEntries(['coop_request_id', 'status', 'responded_at', 'note', 'version', 'department_staff_id', 'cooperation_document_id', 'cooperation_version'].map(key => [key, response[key]]));
+      const pgError = code => error => error.parent?.code === code;
+      await assert.rejects(m.CompanyResponse.create(payload), pgError('23505'));
+      await assert.rejects(db.query("UPDATE company_responses SET status='pending' WHERE id=:id", { replacements: { id: response.id } }), pgError('23514'));
+      await assert.rejects(db.query('UPDATE company_responses SET version=0 WHERE id=:id', { replacements: { id: response.id } }), pgError('23514'));
+      await assert.rejects(db.query('UPDATE company_responses SET department_staff_id=:actor WHERE id=:id', { replacements: { actor: crypto.randomUUID(), id: response.id } }), pgError('23503'));
+      const other = await fixture();
+      await assert.rejects(m.CompanyResponse.create({ ...payload, coop_request_id: other.id }), /same request/);
+      await assert.rejects(m.CompanyResponse.create({ ...payload, cooperation_version: 1, coop_request_id: other.id }), /generated cooperation revision/);
+      const latest = (await m.CompanyResponseHistory.findAll({ where: { company_response_id: response.id }, order: [['version', 'DESC']] }))[0];
+      const event = Object.fromEntries(['company_response_id', 'status', 'responded_at', 'note', 'version', 'department_staff_id', 'cooperation_document_id', 'cooperation_version', 'action', 'correction_reason'].map(key => [key, latest[key]]));
+      await assert.rejects(m.CompanyResponseHistory.create(event), pgError('23505'));
+      await assert.rejects(m.CompanyResponseHistory.create({ ...event, version: event.version + 1, cooperation_version: 999 }), pgError('23503'));
+      await assert.rejects(m.CompanyResponseHistory.create({ ...event, version: event.version + 1, action: 'invalid' }), pgError('23514'));
+      await response.reload(); assert.equal(response.status, 'accepted'); assert.equal(response.version, companyResponse.version);
+    });
+    await t.test('Concurrent SQL-backed response corrections commit one version/history with the authenticated winner', async () => {
+      const owner = await fixture(); let letter = (await ok(call(docUrl(owner.id), tokenStaff, {}))).data;
+      letter = (await ok(call(docUrl(owner.id) + '/generate', tokenStaff, { version: letter.version }))).data;
+      const response = (await ok(call(responseUrl(owner.id), tokenStaff, { ...acceptedBody, status: 'rejected' }))).data;
+      const results = await Promise.all([tokenStaff, tokenEditor].map(token => call(responseUrl(owner.id), token, { ...acceptedBody, version: 1, correction_reason: 'Verified correction' }, 'PUT')));
+      assert.deepEqual(results.map(row => row.status).sort(), [200, 409]);
+      const winner = results.find(row => row.status === 200).data.data;
+      const saved = await m.CompanyResponse.findByPk(response.id); assert.equal(saved.version, 2); assert.equal(saved.department_staff_id, winner.department_staff_id);
+      const events = await m.CompanyResponseHistory.findAll({ where: { company_response_id: response.id }, order: [['version', 'ASC']] });
+      assert.deepEqual(events.map(row => row.status), ['rejected', 'accepted']); assert.equal(events[1].department_staff_id, winner.department_staff_id);
+    });
+    await t.test('SQL race between acceptance revocation and placement draft cannot create inconsistent state', async () => {
+      const owner = await fixture(); let letter = (await ok(call(docUrl(owner.id), tokenStaff, {}))).data;
+      letter = (await ok(call(docUrl(owner.id) + '/generate', tokenStaff, { version: letter.version }))).data;
+      await ok(call(responseUrl(owner.id), tokenStaff, acceptedBody));
+      const results = await Promise.all([call(responseUrl(owner.id), tokenEditor, { ...acceptedBody, status: 'rejected', version: 1, correction_reason: 'Company revocation' }, 'PUT'), call(docUrl(owner.id, 'placement'), tokenStaff, {})]);
+      assert.deepEqual(results.map(row => row.status).sort(), [200, 409]);
+      const saved = await m.CompanyResponse.findOne({ where: { coop_request_id: owner.id } });
+      const count = await m.CoopDocument.count({ where: { coop_request_id: owner.id, document_type: 'placement' } });
+      assert.equal(count, saved.status === 'accepted' ? 1 : 0);
+      assert.equal(results.find(row => row.status === 409).data.code, saved.status === 'accepted' ? 'COMPANY_RESPONSE_LOCKED_BY_PLACEMENT' : 'COMPANY_RESPONSE_REJECTED');
     });
     await t.test('Anonymous, Student, Teacher, Head and revoked Staff cannot list/write/preview/download', async () => {
       for (const token of [null, owner.token, tokenA, tokenH]) for (const [url, body] of [[endpoint(owner.id), undefined], [docUrl(owner.id), {}], [docUrl(owner.id) + '/preview', undefined], [docUrl(owner.id) + '/download', undefined]]) assert.equal((await call(url, token, body)).status, token ? 403 : 401);
@@ -160,10 +279,8 @@ test('Staff documents: migration, authenticated HTTP/SQL, immutable snapshots an
       const row = await m.CoopDocument.findByPk(doc.id); await assert.rejects(db.query('UPDATE coop_documents SET content_sha256=NULL,status=\'generated\',generated_at=now(),rendered_html=\'bad\' WHERE id=:id', { replacements: { id: row.id } }));
       await assert.rejects(db.query('UPDATE coop_documents SET document_type=\'invalid\' WHERE id=:id', { replacements: { id: row.id } }));
     });
-    // Only this disposable DB is targeted; fixtures never touch Local storage.
-    await m.CoopDocumentRevision.destroy({ where: {} }); await m.CoopDocument.destroy({ where: {} });
-    for (const owner of fixtures) { await m.CoopRequestReview.destroy({ where: { coop_request_id: owner.id } }); await m.CoopRequest.destroy({ where: { id: owner.id } }); await owner.student.destroy(); }
-    await secondStaff.destroy(); await staff.destroy(); await head.destroy(); await projectTeacher.destroy(); await classTeacher.destroy();
+    // Immutable evidence remains in this guarded disposable DB. The isolated
+    // runner removes its owned tmpfs PostgreSQL container after the test run.
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     await db.close(); process.env.JWT_SECRET = previousSecret;

@@ -1,0 +1,24 @@
+#supervisionScheduling { min-width: 0; overflow-wrap: anywhere; margin-top: 2rem; scroll-margin-top: 6rem; }
+#supervisionStudentSelect { width: 100%; max-width: 100%; min-width: 0; }
+.supervision-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; min-inline-size: 0; }
+.supervision-form label { display: flex; flex-direction: column; gap: .4rem; }
+.supervision-form input, .supervision-form select, .supervision-form textarea { width: 100%; padding: .65rem; border: 1px solid var(--border-color, #d8dee4); border-radius: .5rem; font: inherit; }
+.supervision-form .supervision-wide { grid-column: 1 / -1; }
+.supervision-form label.supervision-check { flex-direction: row; align-items: center; }
+.supervision-check input { width: auto; }
+.supervision-card, .supervision-history { margin: 1rem 0; padding: 1rem; border: 1px solid #d8dee4; border-radius: .7rem; overflow-wrap: anywhere; }
+.supervision-card p, .supervision-history p { margin: .45rem 0; white-space: pre-wrap; }
+.supervision-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+.supervision-message[data-type="error"] { color: #a51d2d; }
+.supervision-message[data-type="success"] { color: #17633a; }
+[hidden] { display: none !important; }
+@media (max-width: 640px) { .supervision-form { grid-template-columns: 1fr; } }
+.supervision-result { margin-top: 1rem; min-width: 0; }
+.supervision-result fieldset { min-inline-size: 0; border: 0; padding: 0; display: grid; gap: 1rem; }
+.supervision-result label { display: grid; gap: .4rem; min-width: 0; }
+.supervision-result input, .supervision-result textarea { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; padding: .6rem; border: 1px solid #cbd5e1; border-radius: .5rem; }
+.supervision-result img { display: block; max-width: 100%; width: 320px; max-height: 260px; object-fit: contain; }
+.supervision-result img[hidden] { display: none; }
+.supervision-result figure { margin: .8rem 0; }
+.supervision-result-readback p, .supervision-result-history p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.supervision-result-history details { margin-top: .5rem; padding: .6rem; border: 1px solid #e2e8f0; border-radius: .5rem; }

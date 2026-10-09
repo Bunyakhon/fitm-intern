@@ -26,7 +26,7 @@ async function run(m) {
       return result;
     });
   }
-  const before = await snapshot(); assert.equal(Object.keys(before).length, 23); assert.equal(before.teachers.rows, 23); assert.equal(before.sequelize_meta.rows, 17); assert.equal(before.student_files.rows, 3); assert.equal(before.student_files.fingerprint, '7d0bf012a44869f32fd415f75b08471c');
+  const before = await snapshot(); assert.equal(Object.keys(before).length, 25); assert.equal(before.teachers.rows, 23); assert.equal(before.sequelize_meta.rows, 18); assert.equal(before.student_files.rows, 3); assert.equal(before.student_files.fingerprint, '7d0bf012a44869f32fd415f75b08471c');
   await fs.writeFile(path.join(root, 'before.json'), JSON.stringify(before), { flag: 'wx', mode: 0o600 });
   async function api(url, token, body, method = body === undefined ? 'GET' : 'POST') {
     const response = await fetch('http://127.0.0.1:5000' + url, { method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
@@ -84,7 +84,7 @@ async function run(m) {
     for (const status of ['advisor_review', 'department_head_review', 'rejected']) { const bad = await fixture(status); assert.equal((await api(documentUrl(bad.requestId), tokenStaff, {})).status, 409); assert.equal((await api(`/api/staff/coop-requests/${bad.requestId}/approve`, tokenStaff, {})).status, 404); assert.equal((await m.CoopRequest.findByPk(bad.requestId)).status, status); }
     const incomplete = await fixture(); await m.sequelize.query('UPDATE students SET major=NULL WHERE id=:id', { replacements: { id: incomplete.student.id } }); const missing = await api(documentUrl(incomplete.requestId), tokenStaff, {}); assert.equal(missing.status, 400); assert.ok(missing.data.missing_fields.includes('student.major'));
     mark('Rejected/Class-pending/Head-pending document writes refused; Staff cannot approve; missing required data returns field list');
-    const placement = await api(documentUrl(id, 'placement'), tokenStaff, {}); assert.equal(placement.status, 409); assert.equal(placement.data.code, 'PLACEMENT_PREREQUISITE_UNCONFIRMED'); assert.equal(await m.CoopDocument.count({ where: { coop_request_id: id, document_type: 'placement' } }), 0);
+    const placement = await api(documentUrl(id, 'placement'), tokenStaff, {}); assert.equal(placement.status, 409); assert.equal(placement.data.code, 'COMPANY_RESPONSE_REQUIRED'); assert.equal(await m.CoopDocument.count({ where: { coop_request_id: id, document_type: 'placement' } }), 0);
     mark('Placement prerequisite gap fails closed; no fake company acceptance or placement document');
     await ownedStaff.update({ is_active: false }); assert.equal((await api(endpoint(id), tokenStaff)).status, 403); assert.equal((await api(documentUrl(id) + '/preview', tokenStaff)).status, 403); await ownedStaff.update({ is_active: true });
     const readback = (await ok(api(`/api/coop-requests/${id}`, owner.token))).data; assert.equal(readback.status, 'approved'); assert.equal(readback.reviews.length, 3);

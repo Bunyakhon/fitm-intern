@@ -1,5 +1,7 @@
 # Department Staff Document Processing acceptance
 
+**Historical checkpoint (2026-10-07).** Company Response และ Placement Letter ถูกพัฒนาต่อใน [checkpoint 2026-10-08](./COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md); ข้อความ Placement BLOCKED ด้านล่างอธิบายเวอร์ชันเก่า ไม่ใช่สถานะ source ปัจจุบัน ผล PostgreSQL/browser ของ continuation ใหม่ยังไม่ยืนยัน
+
 Date: 2026-10-07, Asia/Bangkok. **Cooperation Letter development flow: PASS. Placement Letter: BLOCKED pending confirmed business prerequisites. Real browser: NOT RUN. Official document/PDF readiness: not established.**
 
 ## Source audit and lifecycle decisions

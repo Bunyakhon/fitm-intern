@@ -18,6 +18,10 @@ const saveButton = document.getElementById("saveProfileButton");
 const confirmButton = document.getElementById("confirmVerificationButton");
 const studentName = document.getElementById("studentName");
 
+import { initMentorInternshipReview } from "./mentorInternshipReview.js";
+import { initMentorSupervision } from "./mentorSupervision.js";
+const reviewToken = new URLSearchParams(window.location.hash.slice(1)).get("review_token");
+const appointmentToken = new URLSearchParams(window.location.hash.slice(1)).get("appointment_token");
 let verificationToken = null;
 let isSaving = false;
 let isConfirming = false;
@@ -281,4 +285,10 @@ function confirmProfile() {
 form.addEventListener("submit", saveProfile);
 confirmButton.addEventListener("click", confirmProfile);
 
-loadVerification();
+if (appointmentToken) {
+  window.history.replaceState({}, "", window.location.pathname);
+  initMentorSupervision(appointmentToken);
+} else if (reviewToken) {
+  window.history.replaceState(null, document.title, window.location.pathname);
+  initMentorInternshipReview(reviewToken);
+} else loadVerification();

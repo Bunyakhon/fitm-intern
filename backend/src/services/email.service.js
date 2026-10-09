@@ -163,7 +163,27 @@ FITM Internship System`;
   });
 }
 
+async function sendMentorReviewEmail({ to, token }) {
+  const base = new URL(process.env.FRONTEND_URL);
+  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password) throw new Error("Invalid frontend URL");
+  const url = new URL(MENTOR_PAGE_PATH, base);
+  url.hash = new URLSearchParams({ review_token: token }).toString();
+  const { from, fromName } = getRequiredSmtpConfig();
+  return createTransporter().sendMail({ from: `"${fromName}" <${from}>`, to, subject: "ตรวจบันทึกฝึกงานประจำสัปดาห์", text: `บันทึกประจำสัปดาห์พร้อมตรวจ โปรดเก็บลิงก์นี้เป็นความลับ ลิงก์มีอายุ 7 วัน\n${url}` });
+}
+
+async function sendSupervisionEmail({ to, token }) {
+  const base = new URL(process.env.FRONTEND_URL);
+  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password || base.search || base.hash) throw Error("Invalid frontend URL");
+  const url = new URL(MENTOR_PAGE_PATH, base);
+  url.hash = new URLSearchParams({ appointment_token: token }).toString();
+  const { from, fromName } = getRequiredSmtpConfig();
+  return createTransporter().sendMail({ from: `"${fromName}" <${from}>`, to, subject: "ตรวจสอบข้อมูลและยืนยันนัดนิเทศสหกิจศึกษา", text: `กรุณาตรวจสอบข้อมูลส่วนบุคคลและนัดนิเทศก่อนยืนยัน ลิงก์ใช้ได้เฉพาะนัดฉบับนี้ มีอายุไม่เกิน 7 วันหรือเวลานัด และใช้ยืนยันได้ครั้งเดียว หากข้อมูลไม่ถูกต้องกรุณาติดต่ออาจารย์ โปรดเก็บลิงก์เป็นความลับ\n${url}` });
+}
+
 module.exports = {
+  sendSupervisionEmail,
+  sendMentorReviewEmail,
   buildCompanyVerificationUrl,
   verifyEmailConnection,
   sendCompanyVerificationEmail,

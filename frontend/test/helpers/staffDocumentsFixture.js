@@ -14,6 +14,7 @@ export function staffFixture(adapters = {}, login = false) {
   const calls = [], toasts = [], redirects = [], downloads = [], revoked = [], timers = []; let prints = 0, sequence = 0;
   const url = { createObjectURL: () => `blob:staff-${++sequence}`, revokeObjectURL: value => revoked.push(value) };
   const context = vm.createContext({ console, Intl, Date, STAFF_TOKEN_KEY: 'staffToken', URL: url, window: { setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {} } });
+  context.saveCompanyResponse = async () => { throw Error('Provide responseSave adapter for company response tests'); };
   vm.runInContext(readFileSync(new URL('../../src/ui/feedback.js', import.meta.url), 'utf8').replace(/export /g, ''), context);
   const controller = readFileSync(new URL(login ? '../../src/pages/staffLogin.js' : '../../src/pages/staffDocuments.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/export /g, '').replace(/^if \(typeof document.*$/gm, '');
   vm.runInContext(controller, context); context.document = document;
@@ -23,10 +24,10 @@ export function staffFixture(adapters = {}, login = false) {
     list: async query => { calls.push({ list: { ...query } }); return { success: true, data: rows.filter(row => !query.status || row.status === query.status).slice(query.offset, query.offset + query.limit) }; },
     detail: async id => { calls.push({ detail: id }); const request = rows.find(row => row.id === id); return { success: true, data: { request, documents: request.documents, revisions, reviews: [], missing_fields: [], eligible: true, placement: { available: false, message: 'รอยืนยันเงื่อนไขการตอบรับสถานประกอบการ' } } }; },
     save: async (id, type, action, body) => {
-      calls.push({ id, type, action, body: JSON.parse(JSON.stringify(body)) }); const owner = rows.find(row => row.id === id), existing = owner.documents[0];
+      calls.push({ id, type, action, body: JSON.parse(JSON.stringify(body)) }); const owner = rows.find(row => row.id === id), existing = owner.documents.find(doc => doc.document_type === type);
       const { version, document_number, ...metadata } = body;
       const doc = { id: existing?.id || 'document-a', document_type: type, version: (existing?.version || 0) + 1, status: action === 'generate' ? 'generated' : 'draft', document_number: document_number ?? existing?.document_number ?? null, metadata: { ...(existing?.metadata || {}), ...metadata } };
-      owner.documents = [doc]; revisions.push({ coop_document_id: doc.id, version: doc.version, action, staff: { first_name: 'Staff', last_name: 'One' }, createdAt: '2026-10-07T00:00:00Z' }); return { success: true, data: doc };
+      owner.documents = [...owner.documents.filter(doc => doc.document_type !== type), doc]; revisions.push({ coop_document_id: doc.id, version: doc.version, action, status: doc.status, staff: { first_name: 'Staff', last_name: 'One' }, createdAt: '2026-10-07T00:00:00Z' }); return { success: true, data: doc };
     },
     content: async (id, type, mode) => { calls.push({ content: { id, type, mode } }); return new Blob(['Development template'], { type: 'text/html' }); },
     download: (blob, name) => downloads.push({ blob, name }),

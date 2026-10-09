@@ -18,7 +18,9 @@
 
     <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/student_coop.css" />
-  </head>
+    <link rel="stylesheet" href="/src/styles/internship_log.css" />
+    <link rel="stylesheet" href="/src/styles/supervision.css" />
+  <link rel="stylesheet" href="/src/styles/coop_activities.css" /></head>
 
   <body>
     <!-- ==============================
@@ -75,7 +77,7 @@
           <small>ระบบสหกิจศึกษา</small>
         </div>
 
-        <nav class="sidebar-menu">
+        <nav class="sidebar-menu"><button type="button" class="sidebar-item" data-target="panel-activities"><span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span><span class="sidebar-text">ปฏิทินกิจกรรม</span></button>
           <button
             type="button"
             class="sidebar-item active"
@@ -194,7 +196,7 @@
          Content
          ============================== -->
 
-      <main class="dashboard-content">
+      <main class="dashboard-content"><section id="panel-activities" class="content-panel"><div id="activityCalendar"></div></section>
         <!-- ==============================
            Overview
            ============================== -->
@@ -266,6 +268,11 @@
               </p>
             </div>
           </div>
+          <section class="section-card" aria-labelledby="studentSupervisionHeading">
+            <div class="section-card-header"><h3 id="studentSupervisionHeading">นัดนิเทศครั้งที่ 1–2</h3><button id="studentSupervisionReload" type="button" class="btn-secondary">โหลดนัดล่าสุด</button></div>
+            <p id="studentSupervisionStatus" role="status" aria-live="polite"></p>
+            <div id="studentSupervisionAppointments"></div>
+          </section>
         </section>
 
         <!-- ==============================
@@ -825,12 +832,15 @@
             <p>บันทึกการปฏิบัติงานของนักศึกษาสหกิจศึกษา</p>
           </div>
 
-          <div class="section-actions">
-            <button type="button" class="btn-primary" id="addDailyLogBtn">
-              <i class="fa-solid fa-plus"></i>
-              เพิ่มบันทึก
-            </button>
+          <div class="internship-toolbar">
+            <label>เลือกวันที่เพื่อดูสัปดาห์หรือประวัติ <input type="date" id="dailyWeekDate" /></label>
+            <button type="button" class="btn-secondary" id="dailyReload">โหลดใหม่</button>
+            <button type="button" class="btn-primary" id="submitDailyWeek" disabled>ส่งบันทึกประจำสัปดาห์ให้พี่เลี้ยง</button>
+            <button type="button" class="btn-secondary" id="dailyResendLink">ส่งลิงก์ตรวจให้พี่เลี้ยงอีกครั้ง</button>
           </div>
+          <p id="dailyWeekSummary"></p>
+          <p>บันทึกทุกวัน ส่งครั้งละสัปดาห์จันทร์–อาทิตย์ ตามเวลาไทย วันที่ไม่ได้ปฏิบัติงานให้ระบุเหตุผล</p>
+          <p id="dailyStatus" class="internship-status" role="status" aria-live="polite"></p>
 
           <div class="table-wrapper">
             <table class="data-table">
@@ -850,6 +860,28 @@
               </tbody>
             </table>
           </div>
+          <section id="dailyEditor" class="internship-editor" hidden aria-labelledby="dailyEditorTitle">
+            <h3 id="dailyEditorTitle">บันทึกการปฏิบัติงาน</h3>
+            <p id="dailyEntryDate"></p>
+            <form id="dailyForm">
+              <input type="hidden" id="dailyDate" />
+              <fieldset id="dailyFieldset">
+                <legend>ส่วนที่ 1 (สำหรับนักศึกษา)</legend>
+                <label>ประเภทวัน <select id="dailyKind"><option value="working">วันทำงาน</option><option value="non_working">ไม่ได้ปฏิบัติงาน (วันหยุด / ลา / เหตุผลอื่น)</option></select></label>
+                <div id="dailyWorkingFields">
+                  <label>งานที่ได้รับมอบหมาย <textarea id="daily_assigned_work" maxlength="5000"></textarea></label>
+                  <label>ผลการปฏิบัติงาน <textarea id="daily_work_result" maxlength="5000"></textarea></label>
+                  <label>ปัญหาและอุปสรรค <textarea id="daily_problems" maxlength="5000" placeholder="หากไม่มีปัญหา ระบุ ไม่มีปัญหา"></textarea></label>
+                  <label>การแก้ไข <textarea id="daily_solutions" maxlength="5000" placeholder="หากไม่ต้องแก้ไข ระบุ ไม่ต้องแก้ไข"></textarea></label>
+                </div>
+                <div id="dailyNonWorkingFields" hidden><label>เหตุผลที่ไม่ได้ปฏิบัติงาน <textarea id="daily_non_working_reason" maxlength="5000"></textarea></label></div>
+                <label>หมายเหตุ <textarea id="daily_notes" maxlength="5000"></textarea></label>
+              </fieldset>
+              <button type="submit" class="btn-primary" id="saveDailyLogBtn">บันทึกประจำวัน</button>
+            </form>
+          </section>
+          <h3>ประวัติการส่งและข้อเสนอแนะจากผู้ดูแล</h3>
+          <div id="dailyHistory"></div>
         </section>
 
         <!-- ==============================
@@ -1240,50 +1272,6 @@
        Modal เพิ่มบันทึก
        ============================== -->
 
-    <div class="modal-overlay" id="dailyLogModal">
-      <div class="modal-box">
-        <div class="modal-header">
-          <div>
-            <h3>เพิ่มบันทึกการปฏิบัติงาน</h3>
-
-            <p>กรอกข้อมูลการปฏิบัติงานประจำวัน</p>
-          </div>
-
-          <button type="button" class="modal-close" id="closeDailyLogModal">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="dailyDate"> วันที่ </label>
-
-            <input type="date" id="dailyDate" />
-          </div>
-
-          <div class="form-group">
-            <label for="dailyWork"> งานที่ปฏิบัติ </label>
-
-            <textarea
-              id="dailyWork"
-              rows="5"
-              placeholder="กรอกรายละเอียดงานที่ปฏิบัติ"
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="cancelDailyLogBtn">
-            ยกเลิก
-          </button>
-
-          <button type="button" class="btn-primary" id="saveDailyLogBtn">
-            <i class="fa-solid fa-floppy-disk"></i>
-            บันทึก
-          </button>
-        </div>
-      </div>
-    </div>
     <!-- ==============================
      Modal แก้ไขประวัตินักศึกษา
      ============================== -->

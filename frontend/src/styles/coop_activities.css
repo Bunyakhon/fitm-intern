@@ -1,0 +1,27 @@
+.activity-widget { min-width:0; }
+.activity-filters,.activity-form { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0; }
+.activity-filters label,.activity-form label { display:flex;flex-direction:column;gap:6px;min-width:0; }
+.activity-form { padding:18px;border:1px solid #ddd;border-radius:12px; }
+.activity-form h3,.activity-form>p,.activity-form>div { grid-column:1/-1; }
+.activity-widget input,.activity-widget select,.activity-widget textarea { width:100%;min-width:0;box-sizing:border-box;padding:8px;border:1px solid #ccc;border-radius:6px;font:inherit; }
+.activity-widget button { cursor:pointer;max-width:100%; }
+.activity-widget button:disabled { cursor:wait;opacity:.55; }
+.activity-grid { display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:16px; }
+.activity-day { min-height:100px;padding:6px;border:1px solid #eee;min-width:0; }
+.activity-weekday { background:#f1f7f3;text-align:center;padding:8px 0; }
+.activity-event { display:block;width:100%;border:0;border-radius:5px;padding:5px;margin:4px 0;background:#e3f4e9;color:#18572d;text-align:left;overflow-wrap:anywhere;white-space:normal; }
+.activity-draft { background:#fff0ce;color:#624c16; }.activity-canceled { background:#fee8e8;color:#8e2424;text-decoration:line-through; }
+.activity-card,#activityDetail { padding:16px;border:1px solid #ddd;border-radius:10px;margin:14px 0;overflow-wrap:anywhere; }
+#activityDetailBody p,.activity-card p { white-space:pre-wrap; }
+.activity-paging,#activityActions { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0; }
+.activity-widget [hidden] { display:none!important; }
+@media(max-width:600px) { .activity-day { min-height:70px;padding:2px; }.activity-event { font-size:11px;padding:3px; }.activity-weekday { font-size:12px; }.activity-filters,.activity-form { grid-template-columns:1fr; }.activity-widget .teacher-heading { flex-wrap:wrap; } }
+@media(max-width:700px) {
+  body[data-workflow-role="department_staff"] .navbar { height:auto; }
+  body[data-workflow-role="department_staff"] .nav-container { height:auto;flex-wrap:wrap;padding:12px 14px;gap:12px; }
+  body[data-workflow-role="department_staff"] .nav-right { width:100%;justify-content:space-between;gap:12px; }
+  body[data-workflow-role="department_staff"] .btn-logout { width:auto;flex-shrink:0;padding:0 12px;white-space:nowrap; }
+}
+@media(max-width:600px) {
+  .activity-event { min-height:44px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical; }
+}

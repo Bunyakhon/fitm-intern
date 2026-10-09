@@ -1,0 +1,11 @@
+.internship-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0; }
+.internship-toolbar label { display: grid; gap: 6px; }
+.internship-editor { margin-top: 24px; padding: 20px; border: 1px solid #dbe2e8; border-radius: 12px; }
+.internship-editor fieldset { border: 0; padding: 0; min-width: 0; }
+.internship-editor label { display: grid; gap: 6px; margin: 12px 0; }
+.internship-editor textarea { width: 100%; min-height: 100px; box-sizing: border-box; padding: 10px; border: 1px solid #b9c6d0; border-radius: 8px; font: inherit; }
+.internship-entry { border-bottom: 1px solid #dbe2e8; padding: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.internship-review [hidden], #panel-daily [hidden] { display: none !important; }
+.internship-review button { margin: 4px; }
+.internship-status { margin: 12px 0; overflow-wrap: anywhere; }
+@media(max-width: 600px) { .internship-editor { padding: 12px; } .internship-toolbar > * { max-width: 100%; } .internship-review { min-width: 0; } }

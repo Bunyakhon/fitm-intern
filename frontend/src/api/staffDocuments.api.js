@@ -8,6 +8,7 @@ export const loginStaff = body => apiRequest('/api/staff/auth/login', { method: 
 export const getCurrentStaff = () => staffRequest('/api/staff/me');
 export const getDocumentQueue = query => staffRequest(`/api/staff/document-requests?${new URLSearchParams(query)}`);
 export const getDocumentRequest = id => staffRequest(`/api/staff/document-requests/${encodeURIComponent(id)}`);
+export const saveCompanyResponse = (id, body, correcting = false) => staffRequest(`/api/staff/document-requests/${encodeURIComponent(id)}/company-response`, { method: correcting ? 'PUT' : 'POST', body });
 export function saveStaffDocument(id, type, action, body) {
   if (!['create', 'edit', 'generate'].includes(action) || !['cooperation', 'placement'].includes(type)) throw Error('Unsupported document operation');
   return staffRequest(`/api/staff/document-requests/${encodeURIComponent(id)}/documents/${type}${action === 'generate' ? '/generate' : ''}`, { method: action === 'edit' ? 'PUT' : 'POST', body });

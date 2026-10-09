@@ -10,6 +10,9 @@
     <title>ยืนยันข้อมูลพี่เลี้ยง | ระบบสหกิจศึกษา</title>
     <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/mentor.css" />
+    <link rel="stylesheet" href="/src/styles/internship_log.css" />
+    <link rel="stylesheet" href="/src/styles/supervision.css" />
+    <meta name="referrer" content="no-referrer" />
   </head>
   <body>
     <main class="mentor-verification-page">
@@ -113,6 +116,30 @@
           </form>
         </section>
 
+        <section id="mentorReview" class="internship-review" hidden>
+          <p id="mentorReviewStudent"></p>
+          <p>ชื่อผู้ดูแล: <span id="mentorReviewName"></span></p>
+          <button id="mentorReviewReload" type="button" class="button button-secondary">โหลดใหม่</button>
+          <div id="mentorWeekList"></div>
+          <section id="mentorReviewDetail" hidden>
+            <h2 id="mentorReviewWeekTitle"></h2>
+            <div id="mentorReviewEntries"></div>
+            <div id="mentorReviewActions" class="internship-editor">
+              <label>ข้อเสนอแนะจากผู้ดูแล <textarea id="mentorWeeklyFeedback" maxlength="5000"></textarea></label>
+              <button id="mentorMarkReviewed" type="button" class="button button-primary">ยืนยันตรวจแล้วทั้งสัปดาห์</button>
+              <button id="mentorRequestRevision" type="button" class="button button-secondary">ขอแก้ไข</button>
+            </div>
+            <h3>ประวัติการส่งและการตรวจ</h3>
+            <div id="mentorReviewHistory"></div>
+          </section>
+        </section>
+        <section id="mentorAppointment" hidden>
+          <div id="mentorAppointmentDetails" class="supervision-card"></div>
+          <div id="mentorAppointmentActions" hidden>
+            <label class="supervision-check"><input id="mentorAppointmentIdentity" type="checkbox" />ชื่อ อีเมล ตำแหน่ง และนัดหมายข้างต้นเป็นข้อมูลของฉันและถูกต้อง</label>
+            <button id="mentorAppointmentConfirm" class="button button-primary" type="button" disabled>ยืนยันข้อมูลและนัดหมาย</button>
+          </div>
+        </section>
         <p class="security-note">
           โปรดเก็บลิงก์ยืนยันข้อมูลนี้ไว้เป็นความลับ
         </p>

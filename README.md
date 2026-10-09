@@ -2,7 +2,8 @@
 
 FITM-INTERN supports student co-op administration: profiles, company/job discovery, requests, project advisors, topics, private project files and student workplace feedback. Several departmental, Mentor and academic-assessment workflows remain unfinished.
 
-**Local development is running. Production ready: NO.** The latest full audit is dated **2026-10-07 Asia/Bangkok**. Read the authoritative top section of [HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md) for evidence, limitations and the one recommended next task.
+**Production ready: NO.** Current phase **2026-10-09 Asia/Bangkok**: Department Staff activity calendar — official requirement **2.3.2 (6)**. Staff create/edit/publish/cancel versioned activities; Students read published information. Monthly/list views, filters, private Staff notes and immutable history use the existing dashboard/API/database architecture. See the authoritative [Project Development Status](#project-development-status) and [HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md). Official university templates/PDF, scoring rubrics, real SMTP and persistent migration rollout remain pending.
+The earlier Daily Log / Weekly Mentor Review session implemented and verified disposable PostgreSQL and real Chrome workflows. Students save daily entries and submit complete weeks; verified Mentors review each batch. Historical results: Backend 293 PASS/0 FAIL/0 SKIP; Frontend 184 PASS/0 FAIL/1 existing SKIP; Daily SQL 21 PASS; Daily/Mentor Chrome 12 PASS. Current session results appear below. Persistent migration 018 and real SMTP remain pending. [Earlier implementation and acceptance](docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md).
 
 ## Architecture
 
@@ -30,10 +31,10 @@ Docker Compose provides frontend, backend, PostgreSQL, NLP and pgAdmin. Job rank
 | Role | Current responsibilities and limits |
 | --- | --- |
 | Student | Password registration/login, own profile, company discovery/matching, requests, prerequisites, Mentor records, project-advisor requests, topic/files and workplace evaluation |
-| Teacher | Login/profile, project-advisor queue/accept/reject and own class-advisee Coop Request list/detail/approve/reject pages |
+| Teacher | Login/profile, project-advisor queue/accept/reject, own class-advisee request decisions and project-advisee supervision scheduling |
 | Department Head | Teacher identity with explicit `is_department_head`, live DB authorization and department scope; login/request-decision dashboard implemented; permitted Teacher administration remains backend only |
 | Department Staff | Login/document dashboard, approved-request queue/detail, Cooperation Letter drafts/generated dev previews/history; request cancellation/recruitment remain backend only; never a request approval stage |
-| Mentor | Token-linked profile verification/confirmation page; daily-log review and academic evaluations are not implemented |
+| Mentor | Single-use profile verification, separate weekly-batch review links and separately scoped original/substitute appointment confirmation; academic scoring remains unfinished |
 | Company/Public | Public recruitment form and email verification; no Company management portal |
 
 **Co-op Request:** Student submission -> Class Advisor -> Department Head -> Approved / Rejected. Department Staff may view/history/cancel eligible pending requests and is **not an approval stage**. Legacy `staff_review` is retained for historical compatibility.
@@ -44,9 +45,9 @@ Docker Compose provides frontend, backend, PostgreSQL, NLP and pgAdmin. Job rank
 
 **Recruitment:** Public form -> Turnstile Siteverify -> transactional Company/submission/jobs/work modes -> verification email -> `pending_review` -> Staff backend publish/reject. Unverified/pending jobs do not appear in Student matching. SMTP failure preserves the submission and supports limited resend recovery; real browser/inbox acceptance remains pending.
 
-## Feature status summary
+## Earlier feature status summary
 
-WORKING means the required application layers are connected and relevant automated/read-only evidence exists. It does not mean every real-browser interaction has been accepted. PARTIAL identifies incomplete scope or missing acceptance evidence; backend completion does not imply role UI completion.
+The full requirements matrix below supersedes these earlier area summaries. Historical WORKING means connected application layers with relevant automated/read-only evidence, and does not establish full official-scope completion or every real-browser interaction.
 
 | Area | Status | Notes |
 | --- | --- | --- |
@@ -69,12 +70,15 @@ WORKING means the required application layers are connected and relevant automat
 | Teacher project-advisor frontend | PARTIAL | Login, own queue, accept/reject/reason and refresh implemented; guarded Local credential helper/API acceptance pass; browser acceptance pending |
 | Staff frontend | PARTIAL | Login, document queue/search/filter/pagination/detail, metadata/version/history, preview/download/print controls connected; real browser pending |
 | Cooperation Letter document processing | PARTIAL | PostgreSQL drafts/frozen snapshots/revisions and authenticated server-rendered dev HTML pass Local HTTP/SQL; approved official template/PDF issuance pending |
-| Placement Letter | BLOCKED | Creation prerequisites unconfirmed; Company Acceptance/Response persistence absent; API fails closed without changing request status |
+| Company Response / Placement Letter | WORKING (development HTML) | Staff response/history and versioned Placement verified on disposable PostgreSQL + real Chrome; completed Cooperation Letter/persisted acceptance required; official PDF and persistent 017 rollout pending |
 | Public recruitment through publication | PARTIAL | Submission/verification implemented; inbox acceptance and Staff UI missing |
-| Daily Log / company transfer / landing jobs and chatbot | MOCK / UI ONLY | DOM/demo behavior; no corresponding persistent end-to-end flow |
+| Daily Log / Weekly Mentor Review | WORKING (development; disposable verified) | Daily working/nonworking records, weekly snapshots/revisions and verified Mentor capability review pass PostgreSQL + real Chrome; persistent 018 rollout and real SMTP acceptance pending |
+| Company transfer / landing jobs and chatbot | MOCK / UI ONLY | DOM/demo behavior; no corresponding persistent end-to-end flow |
 | FastAPI FAQ chatbot | BACKEND ONLY | Endpoint runs, but two existing tests fail and document-intent quality needs review; no Express/website bridge |
 | Google login button | MOCK / UI ONLY | Placeholder; OAuth callback/account/JWT flow NOT STARTED |
-| Supervision, academic scores, official document issuance/PDF, Internship Report | NOT STARTED | Staff dev letter artifacts do not establish official issuance; Project Book/Poster and workplace feedback are separate features |
+| Supervision visit results 1–2 | WORKING (development; disposable verified) | Confirmed appointment → draft → completed; exactly two private images, retained revisions and Student read-only results |
+| Staff activity calendar | WORKING (development; disposable verified) | Monthly/list calendar, drafts/publication/cancellation, Student read-only visibility, duplicate/stale protection and immutable audit; migration 021 persistent rollout pending |
+| Academic scores, official document issuance/PDF, Internship Report | NOT STARTED / BLOCKED | Approved templates, scoring rubrics and logbook compilation remain unfinished |
 | Production deployment | PARTIAL | Development Compose and staging helper exist; current VM/schema/HTTPS readiness unverified |
 
 Company Evaluation context comes from authenticated Student name/code/major, current owner Mentor name/position, exactly one owner request in `approved/document_issued/in_progress` (company snapshot first, linked Company fallback), that request's work dates, and the evaluation's last saved timestamp. Zero/multiple accepted requests and missing real values display `-`.
@@ -122,13 +126,15 @@ Teacher **อนุมัติคำร้องสหกิจ** uses existing
 
 Head login/profile and request actions use existing `/api/department-head` APIs and the Teacher session. Backend requires a live active Teacher with `is_department_head=true` and valid department scope; position/name/email/client flags do not authorize. Only `department_head_review` can become `approved` or `rejected`; named Class approval history is shown and successful decisions reload server state. See [Head Chrome checklist](docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md) for authorized account preparation and pending browser acceptance. The request dashboard does not imply all Head menus are complete.
 
-Staff **จัดการเอกสาร** uses existing password login/live Staff guards and a separate session. `/api/staff/document-requests` supplies eligible request search/list/detail; request-owned `/documents/cooperation` create/edit/generate and authenticated preview/download use frozen server snapshots, optimistic versions and persisted revisions. Generated development HTML and metadata commit together in PostgreSQL, with no `student_files` or filesystem path changes. Draft edit invalidates the current artifact and retains old generated revisions. Dev generation does not set `document_issued`; Placement creation fails 409 until its business prerequisite is confirmed. Official templates and server PDF generation are not established. See [Staff acceptance and Chrome checklist](docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md).
+Staff **จัดการเอกสาร** uses existing password login/live Staff guards and a separate session. `/api/staff/document-requests` supplies eligible request search/list/detail; request-owned documents use frozen snapshots, optimistic versions, revisions and authenticated preview/download. The new Company Response form records acceptance/rejection and reasoned corrections with history. Placement creation requires completed Cooperation Letter processing and persisted acceptance; corrections are locked once a Placement draft exists. Both letters remain development HTML and do not set `document_issued`. Schema 016 Cooperation Letter processing remains available before 017 rollout. Official templates/PDF are pending. See [Company Response / Placement acceptance and Chrome checklist](docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md).
 
 Local credentials are provisioned explicitly with `npm run dev:teacher-credential` (or `-- restore`). It requires `NODE_ENV=development`, an existing active `TEACHER_TEST_ID`, environment-supplied `TEACHER_TEST_EMAIL` / `TEACHER_TEST_PASSWORD`, and an absolute `TEACHER_TEST_BACKUP_PATH` outside the repository. It updates only email/password hash through the Teacher bcrypt hook, preserves faculty/name/privilege/timestamps, records original values before writing, and refuses stale restore. It never inserts Teachers, changes migrations or runs automatically in production/startup. Current Local account/private recovery instructions and the pending Chrome checklist are in [Teacher manual acceptance](docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md); no plaintext password is stored in the repository.
 
 ## Database migrations
 
-**Verified persistent Local: 17 executed / 0 pending, through 016**, on 2026-10-07. This includes 001–009, 007a and 010–016. Document migration 016 was explicitly applied to Local after disposable DDL/rollback tests; it adds two tables and preserves all earlier application data.
+**Historical persistent Local verification: 17 executed, through 016**, on 2026-10-07. That session had zero pending migrations at that time. The checkout now includes 017–021; no persistent rollout occurred in the supervision/calendar sessions. This includes 001–009, 007a and 010–016. Historical authorized migration 016 added two tables while preserving earlier application data.
+
+Those are historical persistent counts. On 2026-10-08 migration 017 was verified through apply/rollback/reapply on isolated disposable PostgreSQL: 18 executed / 0 pending there. It has not been applied to existing Local/staging/production databases; their current counts were not inspected by this verification.
 
 | Migration | Purpose |
 | --- | --- |
@@ -141,10 +147,15 @@ Local credentials are provisioned explicitly with `npm run dev:teacher-credentia
 | 014 | Immutable project-advisor request/history and Teacher confirmation |
 | 015 | Dedicated CompanyEvaluation, one editable row per Student |
 | 016 | Request-owned documents, frozen snapshots, versions, generated dev content and Staff revision/audit history |
+| 017 (disposable verified; persistent rollout pending) | Request-owned Company Responses, generated Cooperation Letter evidence, immutable correction history; Placement reuses 016 document tables |
+| 018 (disposable verified; persistent rollout pending) | Daily logs, immutable weekly submission/review snapshots, events and separate Mentor review capabilities |
+| 019 (persistent rollout pending) | Supervision appointments, immutable version history, hash-only single-use confirmation capabilities; composite request/Mentor ownership FKs |
+| 020 (disposable verified; persistent rollout pending) | Supervision results/images/revisions, exact two-image completion, immutable evidence, version/identity constraints and appointment protection |
+| 021 (disposable verified; persistent rollout pending) | Coop activities and immutable named history; publication/private notes, idempotency keys, active duplicate index, protected cancellation/version transitions and populated rollback refusal |
 
 Important FK/unique constraints were checked on Local. StudentFile storage has exactly one canonical storage-path UNIQUE; required Resume/project-category uniqueness remains present. A previous StudentFile fingerprint anomaly is unresolved and outside current scope. The full audit's read-only baseline/final comparison matched all 20 application tables, including three StudentFiles and their current aggregate fingerprint; no rows or files were changed.
 
-Local currently has zero Staff accounts and one explicitly authorized Head flag on the existing real faculty **ผศ.ดร.ขนิษฐา นามี**; Teacher count remains 23. Temporary Head acceptance credentials were restored to their original absent values; manual login needs provisioning with the existing development credential helper. Runtime authority uses the live DB flag and department scope. Additional accounts/privilege changes require separate authorization. Current VM migration/schema/availability was not inspected; historical VM counts must not be treated as current.
+Historical Local verification recorded zero Staff accounts, one authorized Head flag on existing faculty **ผศ.ดร.ขนิษฐา นามี**, and 23 Teachers. These counts were not rechecked in this session. Temporary Head acceptance credentials were restored then; manual login needs authorized provisioning with the existing helper. Runtime authority uses the live DB flag and department scope. Current VM migration/schema/availability was not inspected.
 
 ## Testing and acceptance
 
@@ -168,14 +179,14 @@ The existing backend runner does not configure every newer evaluation/advisor/pr
 
 NLP tests require installed dependencies and the test directory: `python -m pytest -q -p no:cacheprovider`. The standard NLP image does not include tests; the audit mounted source/tests/FAQ read-only into a disposable, network-disabled container.
 
-**Real browser acceptance remains required** for authentication, responsive/native controls, project previews and evaluation save/edit/reload. The audit ran no browser and changed no security/configuration to work around prior Chrome/Node EPERM failures. Live company/Mentor inbox acceptance was not performed.
+The initial audit did not run Chrome. Later disposable sessions verified password login, Staff documents, Daily/Mentor review, supervision/results and the activity calendar with real Chrome. Broader profile/project/native preview acceptance and live company/Mentor inbox acceptance remain pending; see the current verification section and the preserved reports.
 
 ## Known limitations and deployment boundary
 
 - Matching and published-job prefill/create check published status but omit expiry eligibility. Current Local has 20 published jobs and none expired, which does not remove the source defect.
 - A request can be submitted without a class advisor; an incomplete/unknown major is rejected by prerequisite normalization. Missing class-advisor linkage can strand review authority. No change was made.
 - Resume storage/extraction is implemented, but final extraction-status persistence can still return 500 after upload metadata commit; the fixed invariant retains the committed physical file.
-- FAQ answers describe document issuance and persistent/Mentor-reviewed Daily Logs that the application does not implement.
+- FAQ guidance still needs alignment with development-only documents, implemented weekly log review and pending persistent rollout.
 - Authentication/project/evaluation projections avoid password hashes, verification secrets and absolute storage paths. Profile/image responses still return an owner-relative `profile_image` storage reference; `/health/db` can expose a raw DB error message on failure. These need review before production.
 - Student login/register and Mentor resend lack the dedicated route rate limits found on role login/recruitment. Student JWTs are stored in localStorage. No observed compromise is claimed.
 - Compose/Dockerfiles use Vite, nodemon and Uvicorn reload for development, publish DB/pgAdmin/API/NLP ports, and retain pgAdmin development credential defaults. Only PostgreSQL has a Compose healthcheck.
@@ -185,4 +196,111 @@ Production needs separately planned role UI/workflow completion, provider/browse
 
 ## Documentation
 
-[HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md) is the authoritative audit/resume point. Its top section supersedes historical migration counts, Staff-approval rules, Head direct project-advisor assignment and old topic/file/evaluation placeholder descriptions. This README remains a stable overview rather than a daily work log.
+[HANDOFF_fitm-intern.md](./HANDOFF_fitm-intern.md) is the authoritative audit/resume point. Its top section supersedes historical migration counts, Staff-approval rules, Head direct project-advisor assignment and old topic/file/evaluation placeholder descriptions. [Tomorrow's review](docs/NEXT_DAY_DEVELOPMENT_REVIEW.md) lists this session's files, tests and manual steps.
+
+## Project Development Status
+
+**Last verified date:** 2026-10-09 Asia/Bangkok. **Phase:** independent Department Staff activity calendar, preserving previous supervision/log/document workflows. Official supervision PDF and academic scoring remain separate blocked phases. The table is based on current source and actual acceptance runs.
+
+Migration files present: `001_create_companies.js`, `002_create_job_submissions.js`, `003_create_job_postings.js`, `004_create_job_posting_work_modes.js`, `005_create_company_access_tokens.js`, `006_add_company_job_indexes_and_checks.js`, `007_create_department_staffs.js`, `007a_create_missing_base_tables.js`, `008_add_resume_extraction.js`, `009_add_coop_request_company_job_links.js`, `010_cleanup_student_file_schema_drift.js`, `011_add_role_workflow_reviews.js`, `012_coop_prerequisites_and_direct_review.js`, `013_add_coop_projects_and_current_files.js`, `014_add_coop_project_advisor_requests.js`, `015_add_company_evaluations.js`, `016_add_coop_documents.js`, `017_add_company_responses.js`, `018_add_internship_logs.js`, `019_add_supervision_appointments.js`, `020_add_supervision_results.js`, `021_add_coop_activities.js` (22 files including 007a).
+
+| Environment | Migration execution state |
+|---|---|
+| Owned disposable PostgreSQL | 22 executed / 0 pending through 021; empty UP/DOWN/reapply, injected DDL rollback and populated rollback refusal passed |
+| Existing Local | Not modified or inspected this session; historical ledger through 016 only; 017–021 rollout remains pending |
+| Staging / production | Not accessed; current execution state unknown |
+
+**Actual calendar-session verification:** full disposable Backend **357 PASS / 0 FAIL / 0 SKIP**; Frontend with actual SQL bridges **215 PASS / 0 FAIL / 1 existing Student-prerequisite browser SKIP**. Calendar PostgreSQL **13 PASS / 0 FAIL / 0 SKIP** (12 scenarios + parent), frontend calendar/controller tests **10 PASS**. Real Chrome calendar **13 PASS**, existing Staff documents **12 PASS**, supervision scheduling/results **24 PASS**, each with **0 FAIL / 0 SKIP**. Build **13 HTML entries / 121 modules PASS**, syntax **238 JS files PASS**, PowerShell parser **0 errors**, diff check PASS. See the [review report](docs/NEXT_DAY_DEVELOPMENT_REVIEW.md) for final logs and limits. Counts overlap and must not be summed.
+
+Calendar APIs use `/api/coop-activities`: Staff `GET/POST /staff`, `GET/PUT /staff/:id`, `POST /staff/:id/cancel`; Student `GET /student` and `/student/:id`. Activity title/category/start/end/status are required; descriptions, locations, https meeting links and separate private Staff notes are optional. All dates display as Asia/Bangkok; API date inputs require +07:00 and end after start. Draft publication is explicit. Published activities cannot return to draft; cancellation keeps previously published information visible with a canceled label. Canceled drafts stay private. Edits and cancellation require the current version and a Staff-only reason. Actor identities come from live authenticated accounts. Idempotent creation retries reuse `creation_key`; normalized identical title/start/end conflicts across active activities. There is no automatic attendance policy, academic deadline, supervision merge, public history or private Student-data projection. Categories are descriptive labels, not academic rules. No existing Staff department/term/cohort relationship was available to reuse, so no invented scope was added.
+
+**Historical supervision-session verification:** Backend 344 PASS; Frontend 205 PASS / 1 existing SKIP; result SQL 21 PASS; scheduling/results Chrome 24 PASS; Daily/Mentor and Staff Chrome 12 PASS each. Those earlier counts remain historical evidence.
+
+Teacher result APIs reuse `/api/supervision`: `GET/PUT /teacher/students/:id/appointments/:appointment/visits/:visit/result`, `POST .../complete`, authenticated `GET .../images/:image`. Student `GET /student/appointments/:appointment/visits/:visit/result` and its image route expose only completed results/current images. Teacher reads revisions and old evidence. A confirmed appointment is required before the first draft; drafts can omit fields/images. Completion requires an actual visit date, descriptive outcome and both images. PNG/JPEG uploads are limited to 5 MB each and checked by extension, MIME, byte signature and size. Atomic draft uploads retain committed historical evidence and clean staged files after rollback. All identity/context comes from the saved canonical appointment. Starting a result protects that appointment from rescheduling; cancelled placements freeze further result writes while preserving history. No numeric rubric or official report wording is invented.
+
+Statuses: VERIFIED = complete behavior for that requirement with relevant acceptance actually passed; IMPLEMENTED / NEEDS VERIFICATION = connected source with required acceptance still incomplete; PARTIAL = missing part of the requirement; UI ONLY = placeholder; NOT STARTED = absent; BLOCKED = named prerequisite missing. No overall completion percentage is inferred. Broader requirements stay PARTIAL even if one subflow passes.
+
+### Full Requirements Status Matrix
+
+| Requirement ID | Role | Feature | Status | Evidence / Implemented Files | Remaining Work |
+|---|---|---|---|---|---|
+| 2.3.1.1 (1) | Student | Email/password registration/login + Google OAuth | PARTIAL | `backend/src/controllers/auth.controller.js`, `frontend/src/pages/login.js`, `register.js`; password login in Chrome fixtures | Google OAuth placeholder; verify registration browser flow |
+| 2.3.1.1 (2) | Student | Personal/academic/family/emergency/class advisor/skills profile | IMPLEMENTED / NEEDS VERIFICATION | `studentProfile.controller.js`, Student/Profile models, `student_coop.js` | Full profile fields and provider/file browser acceptance |
+| 2.3.1.1 (3) | Student | Resume upload | IMPLEMENTED / NEEDS VERIFICATION | `upload.middleware.js`, `studentProfile.controller.js`, `resumeText.service.js`, upload tests | Native browser replacement/extraction and live OCR acceptance |
+| 2.3.1.1 (4) | Student | Resume-based company/job recommendations | PARTIAL | `jobMatching.controller.js`, `nlpMatching.client.js`, NLP matching; `jobMatching.test.js` | Published job expiry eligibility; end-to-end NLP/browser acceptance |
+| 2.3.1.1 (5) | Student | Create/cancel Coop Request | IMPLEMENTED / NEEDS VERIFICATION | `coopRequest.controller.js`, request/course/delivery models; SQL/DOM regressions | Full real Chrome create/cancel through Student form |
+| 2.3.1.1 (6) | Student | Track request/cooperation/placement status | PARTIAL | `student_coop.js`, request history/company-response read-back; Staff document APIs | Student cooperation/placement artifact status read-back; official issuance |
+| 2.3.1.1 (7) | Student | Manage project advisor | PARTIAL | `coopProjectAdvisor.service.js`, migration 014, Student/Teacher pages and SQL bridge | Confirmed replacement policy/flow; complete Chrome request decision |
+| 2.3.1.1 (8) | Student | Verify/acknowledge confirmed project advisor | PARTIAL | `student_coop.js` confirmed-advisor display, request read-back | Persisted explicit Student acknowledgement |
+| 2.3.1.1 (9) | Student | Manage examination/project topic | IMPLEMENTED / NEEDS VERIFICATION | `studentCoopProject.service.js`, `coopProject.model.js`, project tests | Native browser topic acceptance; topic is independent of advisor confirmation |
+| 2.3.1.1 (10) | Student | Record Mentor email/name/position | IMPLEMENTED / NEEDS VERIFICATION | `mentor.controller.js`, `mentor.model.js`, Student Mentor form | Complete Student CRUD/resend browser acceptance and intended-recipient SMTP |
+| 2.3.1.1 (11) | Student | Daily work logs + compiled internship logbook | PARTIAL | Migration 018, `internshipLog.service.js`, `studentInternshipLog.js`, SQL/Chrome evidence | Full logbook compilation/export; weekly review has no numeric rubric |
+| 2.3.1.1 (12) | Student | Evaluate company/workplace | IMPLEMENTED / NEEDS VERIFICATION | Migration 015, `companyEvaluation.service.js`, `studentCompanyEvaluation.js`, real SQL/DOM bridge | Native Chrome save/edit/read-back |
+| 2.3.1.1 (13) | Student | Upload Project Book | IMPLEMENTED / NEEDS VERIFICATION | `studentCoopProject.service.js`, private authenticated file routes, SQL/DOM tests | Native browser upload/preview; this is not final assessment |
+| 2.3.1.1 (14) | Student | Upload Poster | IMPLEMENTED / NEEDS VERIFICATION | Same private project-file service, signature/MIME/ownership tests | Native browser PDF/image preview |
+| 2.3.1.1 (15) | Student | Documentation/procedure chatbot | PARTIAL | `nlp-service/app` FAQ endpoint; `frontend/src/pages/index.js` placeholder | NLP lifespan/intent tests and authenticated Express/UI bridge |
+| 2.3.1.1 (16) | Student | Search workplaces | IMPLEMENTED / NEEDS VERIFICATION | `coopRequest.controller.js`, company search and frontend matching/search adapters | Complete real browser search/filter acceptance |
+| 2.3.2 (1) | Staff | Track requests/cooperation/placement | PARTIAL | `staffDocuments.service.js`, `staffDocuments.js`, SQL and current Staff Chrome regression | Full pending-request tracking UI beyond eligible approved document queue; persistent rollout |
+| 2.3.2 (2) | Staff | Cancel eligible requests | PARTIAL | `roleWorkflow.service.js`, Staff cancellation API/SQL guards | User-facing cancellation controls and browser acceptance |
+| 2.3.2 (3) | Staff | Manage cooperation/placement letters | PARTIAL | Migrations 016/017, frozen document revisions, HTML preview/download/history | Approved official templates/PDF and issuance/reissuance policy |
+| 2.3.2 (4) | Staff | Document-status chatbot | NOT STARTED | No authenticated document-status chatbot service/UI | Owner/role-scoped status query and UI |
+| 2.3.2 (5) | Staff | Manage workplace information | PARTIAL | Recruitment publish/reject in `roleWorkflow.service.js`, job review models | Company CRUD administration UI and corresponding backend |
+| 2.3.2 (6) | Staff | Coop activity calendar | VERIFIED | Migration 021; `coopActivity.service.js`, `coopActivities.routes.js`, `coopActivities.js`; real SQL/Chrome acceptance, Staff monthly/list and Student read-only views | Separately authorized persistent migration rollout; real deployment acceptance |
+| 2.3.2 (7) | Staff | Manage Teacher information | NOT STARTED | Existing Teacher administration endpoints are Head-only | Staff-scoped authorized administration and UI |
+| 2.3.2 (8) | Staff | Manage all Student scores | BLOCKED | No academic score model/workflow | Supplied grading rubrics/maxima and scoring policy; Staff score UI |
+| 2.3.3.1 (1) | Teacher | Select Students for supervision/project advising | PARTIAL | Explicit project-advisor request acceptance; `coop_advisor_teacher_id` drives supervision | Independent Teacher student-selection/supervision assignment flow |
+| 2.3.3.1 (2) | Teacher | Confirm project advisor relationship | IMPLEMENTED / NEEDS VERIFICATION | Migration 014, advisor service, `teacherCoop.js`, SQL/DOM tests | Real Chrome Student request → Teacher decision → Student read-back |
+| 2.3.3.1 (3) | Teacher | Search companies and Students | PARTIAL | Active company search; own class/project queues and paged supervision list | Full Teacher search UI/scoped backend |
+| 2.3.3.1 (4) | Teacher | Schedule supervision visits 1–2 | VERIFIED | Migration 019, `supervision.service.js`, `supervision.routes.js`, `teacherSupervision.js`; PostgreSQL 20 / Chrome 13 PASS | Separate persistent rollout; visit results/photos are separate requirements |
+| 2.3.3.1 (5) | Teacher | Verify Mentor information before supervision | VERIFIED | Live verified Mentor/stamp validation and Teacher review checkbox, frozen identity; SQL/Chrome PASS | Incorrect personal details require correction/reverification |
+| 2.3.3.1 (6) | Teacher | Manage substitute Mentor for unavailable original | VERIFIED | Per-appointment nomination/name/email/position/reason; recipient-only capability/history; SQL/Chrome PASS | Intended-recipient SMTP acceptance; global Mentor reassignment is separate |
+| 2.3.3.1 (7) | Teacher | Visit 1 result + two photos | VERIFIED | Migration 020, `supervisionResult.service.js`, `supervisionResult.js`; result SQL 21 / combined Chrome 24 PASS | Separate persistent rollout; official PDF is (8) |
+| 2.3.3.1 (8) | Teacher | Visit 1 individual PDF with identity/photos/signature names | BLOCKED | Result/photo data retained; no approved university supervision PDF template | Approved template and authorized PDF rendering/signature policy |
+| 2.3.3.1 (9) | Teacher | Visit 2 result + two photos | VERIFIED | Same scoped result/image/revision architecture; independent visit 2 SQL/Chrome PASS | Separate persistent rollout; official PDF is (10) |
+| 2.3.3.1 (10) | Teacher | Visit 2 individual PDF with identity/photos/signature names | BLOCKED | Result/photo data retained; no approved university supervision PDF template | Approved template and authorized PDF rendering/signature policy |
+| 2.3.3.1 (11) | Teacher | Evaluate Students | BLOCKED | No final Teacher assessment workflow | Defined rubric/maxima and authorized evaluation persistence/UI |
+| 2.3.3.1 (12) | Teacher | Evaluate workplaces | NOT STARTED | Student workplace feedback is a separate owner-scoped service | Teacher criteria, authorized workplace evaluation and UI |
+| 2.3.3.1 (13) | Teacher | Visit 2 Student evaluation | BLOCKED | Visit 2 descriptive result implemented; no academic assessment model | Supplied rubric/maxima and authorized assessment flow |
+| 2.3.3.1 (14) | Teacher | Evaluate logbook/Book/work/Poster/examination | BLOCKED | Private Book/Poster uploads are prerequisites only | Rubrics/maxima, logbook compilation and chair + two committee workflow |
+| 2.3.3.1 (15) | Teacher | Personal account management | PARTIAL | Password login and safe GET profile; Teacher page display | Teacher self-edit API/UI (Head self-edit is distinct) |
+| 2.3.3.1 (16) | Teacher | Approve/reject Coop Requests | IMPLEMENTED / NEEDS VERIFICATION | Canonical Class Advisor API, `teacherCoopRequests.js`, SQL/DOM regression | Full real Chrome decision acceptance; project advisor grants no Class authority |
+| 2.3.3.2 (1) | Head | Search Teachers | PARTIAL | Head-only department-scoped Teacher search API and SQL tests | Head Teacher search dashboard |
+| 2.3.3.2 (2) | Head | Search Coop Students | PARTIAL | Department-scoped request list/search in role workflow service | Dedicated Student directory/search UI |
+| 2.3.3.2 (3) | Head | Assign Coop advisors | BLOCKED | Existing direct assignment returns 409; explicit Student/Teacher confirmation is canonical | Define Head nomination/assignment policy compatible with accepted relationships |
+| 2.3.3.2 (4) | Head | Manage Teachers | PARTIAL | Scoped PATCH Teacher with bcrypt hook and live DB Head flag | Head management dashboard and browser acceptance |
+| 2.3.3.2 (5) | Head | Personal account management | PARTIAL | Head GET/PATCH profile service/API | Profile editing dashboard and browser acceptance |
+| 2.3.3.2 (6) | Head | Approve/reject requests | IMPLEMENTED / NEEDS VERIFICATION | `departmentHead.js`, canonical department_head_review transitions, SQL/DOM tests | Real Chrome Head decision UI acceptance |
+| 2.3.4 (1) | Company | Public jobs/contact/location/category/vacancies/allowance/modes/days/CAPTCHA | IMPLEMENTED / NEEDS VERIFICATION | `jobSubmission.service.js`, recruitment validator/Turnstile, transactional jobs/modes; public form | Live Turnstile/SMTP/browser acceptance and publication UI |
+| 2.3.4 (2) | Company | Manage own company information | NOT STARTED | Submission/email verification are not an owner management portal | Scoped Company management capability/account, CRUD/UI |
+| 2.3.4 (3) | Company | Verify company information | PARTIAL | Company email verification/lifecycle APIs and tests | Company profile verification policy and real inbox acceptance |
+| 2.3.5.1 (1) | Mentor | Review/evaluate daily logs as weekly batches | PARTIAL | Migration 018, weekly Mentor feedback/revision UI and SQL/Chrome tests | Numeric weekly evaluation requires supplied rubric; SMTP/rollout pending |
+| 2.3.5.1 (2) | Mentor | Verify personal information | VERIFIED | `mentorToken.service.js`, verification controllers/page; original single-use confirmation and Daily Chrome regression PASS | Real intended-recipient SMTP remains unverified |
+| 2.3.5.1 (3) | Mentor | Confirm personal information for supervision appointments | VERIFIED | Appointment-scoped identity checkbox, hash-only/versioned single-use link, `mentorSupervision.js`; SQL/Chrome PASS | Real SMTP and separate persistent rollout |
+| 2.3.5.1 (4) | Mentor | Verify substitute Mentor for supervision | VERIFIED | Teacher nomination + substitute recipient's explicit identity/named appointment confirmation; SQL/Chrome PASS | Real SMTP and separate persistent rollout |
+| 2.3.5.1 (5) | Mentor | Attendance/behavior/absence/leave/lateness | PARTIAL | Student nonworking reasons only in daily logs | Mentor attendance/behavior recording; no invented penalties |
+| 2.3.5.1 (6) | Mentor | Final Student/Book/work/Poster evaluation | BLOCKED | Weekly feedback is separate from final assessment | Defined Mentor rubric/maxima and final evaluation workflow |
+| 2.3.6.1 | Academic | Total score: Mentor weekly 20% + final 30%; department Book 10% + Poster 5% + overall work/content 25% + examination 10%, chair + two members | BLOCKED | Exact proportions documented; no invented score engine or committee weighting | Supplied rubrics/maxima/committee aggregation; final assessment sources, assignment and total calculation |
+
+### Additional Development Summary
+
+| Date | Feature | Implementation | Tests | Database Migration | Notes |
+|---|---|---|---|---|---|
+| 2026-10-07 | Advisor/Class/Head/Staff document workflows | Canonical request approval, advisor confirmation, dev cooperation snapshots | Historical reports retained in HANDOFF | Through 016 historically Local | Original faculty/private storage preserved |
+| 2026-10-08 (earlier session) | Company Response / Placement | Persisted acceptance before Placement; dev HTML/history | Historical 268 Backend / 175 Frontend / 12 Staff Chrome | 017 disposable only | No official PDF |
+| 2026-10-08 (earlier session) | Daily Log / weekly Mentor review | Daily entries, immutable weekly snapshots/revisions/feedback | Historical 293 Backend / 184 Frontend / 12 Daily Chrome | 018 disposable only | No logbook compilation or numeric assessment |
+| 2026-10-08 (earlier session) | Supervision appointments 1–2 | Teacher scheduling/reschedule/history; original/substitute scoped identity confirmation; Student read-back | Historical Backend 320 / Frontend 194 (+1 skip); supervision SQL 20 / Chrome 13 | 019 disposable only | Foundation reused by results |
+| 2026-10-08 (previous session) | Supervision results 1–2 | Descriptive drafts/completion, exactly two private images, retained revisions, Student read-only view | Backend 344 / Frontend 205 (+1 skip); result SQL 21 / combined Chrome 24; Daily/Staff Chrome 12 each | New 020, disposable only | No persistent DB changes; official PDF/scoring pending |
+| 2026-10-09 | Staff activity calendar — 2.3.2 (6) | Monthly/list views, create/edit/publish/cancel, immutable private history and Student publication visibility | Calendar SQL 13 / frontend 10 / Chrome 13; Staff Chrome 12 / supervision Chrome 24 | New 021, disposable only | Persistent database untouched; no commit/push/deploy |
+
+### Remaining Tasks
+
+- [x] Visit 1/2 result entry, exactly two private supporting photos, role-scoped read/edit and immutable history — 2.3.3.1 (7)/(9).
+- [ ] Separately authorized 017–021 persistent rollout after backup/schema review; intended-recipient Mentor SMTP acceptance.
+- [ ] Compile/export internship logbook — remaining portion of 2.3.1.1 (11).
+- [x] Independent Staff activity calendar — 2.3.2 (6), including Student read-only published activities.
+- [ ] Staff request-cancellation UI — 2.3.2 (2); Company/Teacher administration dashboards and account editing.
+- [ ] Supply official letter/supervision templates before PDF issuance.
+- [ ] Supply academic/weekly/final rubrics, maxima and committee aggregation rules before score calculation.
+- [ ] Resolve Head advisor assignment policy, Google OAuth, Company owner portal, chatbot bridge/quality and incomplete browser/provider acceptance shown above.
+
+**Known limits:** existing Local cannot use new migrations until separate authorized rollout; appointment confirmation proves mailbox capability possession plus explicit identity acknowledgement, and does not certify attendance. Confirmation links expire after seven days or at appointment time. Appointment edits require a future existing appointment/current version/reason and are blocked once a result exists. Completed results are immutable; post-completion correction and cancellation workflows require separately defined policy. Incorrect personal details require Teacher correction/reissue or original Mentor reverification before recording. Official PDFs, numeric grading and global Mentor reassignment remain pending. The independent activity calendar does not merge private supervision appointments. Next independent feature: Staff eligible-request cancellation UI — 2.3.2 (2).

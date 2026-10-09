@@ -1,0 +1,15 @@
+import { apiRequest } from "./client.js";
+import { teacherRequest } from "./teacherProjectAdvisor.api.js";
+const root = "/api/supervision";
+export const listSupervisionStudents = (offset = 0) => teacherRequest(`${root}/teacher/students?${new URLSearchParams({ offset, limit: 26 })}`);
+export const getSupervisionStudent = id => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}`);
+export const saveSupervision = (id, visit, body, existing) => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}/visits/${visit}`, { method: existing ? "PUT" : "POST", body });
+export const resendSupervisionLink = (id, appointment, version) => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}/appointments/${encodeURIComponent(appointment)}/link`, { method: "POST", body: { version } });
+export const getStudentSupervision = () => apiRequest(`${root}/student`);
+export const getMentorAppointment = token => apiRequest(`${root}/mentor/appointment`, { auth: false, headers: { Authorization: `Bearer ${token}` } });
+export const confirmMentorAppointment = (token, version) => apiRequest(`${root}/mentor/confirm`, { method: "POST", body: { version, confirm_identity: true }, auth: false, headers: { Authorization: `Bearer ${token}` } });
+const resultPath = (student, row) => student ? `${root}/teacher/students/${encodeURIComponent(student)}/appointments/${encodeURIComponent(row.id)}/visits/${row.visit_number}/result` : `${root}/student/appointments/${encodeURIComponent(row.id)}/visits/${row.visit_number}/result`;
+export const getSupervisionResult = (student, row) => (student ? teacherRequest : apiRequest)(resultPath(student, row));
+export const saveSupervisionResult = (student, row, body) => teacherRequest(resultPath(student, row), { method: "PUT", body });
+export const completeSupervisionResult = (student, row, version) => teacherRequest(`${resultPath(student, row)}/complete`, { method: "POST", body: { version } });
+export const getSupervisionImage = (student, row, image) => (student ? teacherRequest : apiRequest)(`${resultPath(student, row)}/images/${encodeURIComponent(image)}`, { responseType: "blob" });

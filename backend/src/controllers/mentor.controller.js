@@ -453,10 +453,10 @@ exports.deleteMyMentor = async (
         "ลบข้อมูลพี่เลี้ยงสำเร็จ",
     });
   } catch (error) {
-    console.error(
-      "DELETE MENTOR ERROR:",
-      error,
-    );
+    if (error.name === "SequelizeForeignKeyConstraintError") {
+      return res.status(409).json({ success: false, code: "MENTOR_HISTORY_EXISTS", message: "พี่เลี้ยงมีประวัติบันทึกฝึกงานหรือนัดนิเทศแล้ว จึงลบข้อมูลผู้ดูแลไม่ได้" });
+    }
+    console.error("DELETE MENTOR ERROR");
 
     return res.status(500).json({
       success: false,
