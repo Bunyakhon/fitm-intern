@@ -278,6 +278,18 @@ test('HTML-derived surrounding request acceptance (simulation)', async t => {
   });
 });
 
+test('Student reads Staff cancellation reason and actor without editing controls', async () => {
+  const f = fixture('IT'); await f.load();
+  const request = {id:'cancelled-fixture',status:'cancelled',cancelled_at:'2026-10-09T01:00:00.000Z',student:{},reviews:[{actor_role:'department_staff',decision:'cancel',reason:'<script>Saved cancellation reason</script>'}]};
+  f.run(`coopRequests=[${JSON.stringify(request)}]; renderCoopRequests(); renderCoopRequestDetail(${JSON.stringify(request)})`);
+  assert.match(f.get('coopDetailRequest').textContent,/Saved cancellation reason.*เจ้าหน้าที่ภาควิชา/s);
+  assert.equal(f.get('coopDetailRequest').querySelector('script'),null);
+  assert.equal(f.get('coopDetailRequest').querySelector('textarea'),null);
+  assert.equal(f.get('coopRequestCurrent').hidden,true);
+  assert.equal(f.get('coopRequestHistoryBody').querySelectorAll('button').length,1);
+  assert.match(f.get('coopRequestHistoryBody').querySelector('button').textContent,/ดูรายละเอียด/);
+});
+
 test('Student approval progress and cancellation labels match the current workflow', async t => {
   const f=fixture(); await f.load();
   const steps=['ยื่นคำร้อง','อาจารย์ที่ปรึกษาพิจารณา','หัวหน้าภาควิชาพิจารณา','อนุมัติคำร้อง'];

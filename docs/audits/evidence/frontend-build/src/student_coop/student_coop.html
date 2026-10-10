@@ -1,0 +1,1975 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>แดชบอร์ดนักศึกษาสหกิจศึกษา | KIWI</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  <script type="module" crossorigin src="/assets/studentCoop-DdVyyul0.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/client-DPLsZUU1.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth.api-DwOJUyKR.js">
+  <link rel="modulepreload" crossorigin href="/assets/feedback-CUQPlHFG.js">
+  <link rel="modulepreload" crossorigin href="/assets/teacherProjectAdvisor.api-CSEFIC3z.js">
+  <link rel="modulepreload" crossorigin href="/assets/supervisionView-D4v5i-La.js">
+  <link rel="modulepreload" crossorigin href="/assets/supervisionResult-CyxBxgLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/staffDocuments.api-BG6CZlPB.js">
+  <link rel="modulepreload" crossorigin href="/assets/coopActivities-BtArZkKp.js">
+  <link rel="modulepreload" crossorigin href="/assets/internshipLogView-C7hHljZQ.js">
+  <link rel="stylesheet" crossorigin href="/assets/client-CBlW_4jl.css">
+  <link rel="stylesheet" crossorigin href="/assets/supervisionView-CjQk7BTf.css">
+  <link rel="stylesheet" crossorigin href="/assets/coopActivities-6TAXVOJl.css">
+  <link rel="stylesheet" crossorigin href="/assets/internshipLogView-DiDgYmpn.css">
+  <link rel="stylesheet" crossorigin href="/assets/student_coop-BaBnPiAX.css">
+</head>
+
+  <body>
+    <!-- ==============================
+       Navbar
+       ============================== -->
+
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="/index.html" class="brand">
+          <img src="/assets/logo_kiwi-Dov6wizJ.png" alt="KIWI Logo" class="brand-logo" />
+
+          <div class="brand-text">
+            <strong>KIWI</strong>
+            <span>ระบบจัดการสหกิจศึกษา</span>
+          </div>
+        </a>
+
+        <div class="nav-right">
+          <div class="nav-user">
+            <div class="nav-user-icon">
+              <i class="fa-solid fa-user"></i>
+            </div>
+
+            <div class="nav-user-info">
+              <small>นักศึกษาสหกิจศึกษา</small>
+              <span id="userNameDisplay">กำลังโหลด...</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-logout" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>ออกจากระบบ</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==============================
+       Dashboard
+       ============================== -->
+
+    <div class="dashboard-layout">
+      <!-- ==============================
+         Sidebar
+         ============================== -->
+
+      <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">
+            <i class="fa-solid fa-bars"></i>
+            เมนูนักศึกษา
+          </span>
+
+          <small>ระบบสหกิจศึกษา</small>
+        </div>
+
+        <nav class="sidebar-menu"><button type="button" class="sidebar-item" data-target="panel-activities"><span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span><span class="sidebar-text">ปฏิทินกิจกรรม</span></button>
+          <button
+            type="button"
+            class="sidebar-item active"
+            data-target="panel-overview"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-gauge-high"></i>
+            </span>
+
+            <span class="sidebar-text"> ภาพรวม </span>
+          </button>
+
+          <button
+            type="button"
+            class="sidebar-item"
+            data-target="panel-profile"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-id-card"></i>
+            </span>
+
+            <span class="sidebar-text"> ประวัตินักศึกษา </span>
+          </button>
+
+          <button type="button" class="sidebar-item" data-target="panel-job-matching">
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-building"></i>
+            </span>
+
+            <span class="sidebar-text"> ค้นหาสถานประกอบการ </span>
+          </button>
+
+          <div class="sidebar-divider">
+            <span>การดำเนินงาน</span>
+          </div>
+
+          <button
+            type="button"
+            class="sidebar-item"
+            data-target="panel-request"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-file-signature"></i>
+            </span>
+
+            <span class="sidebar-text"> คำร้องสหกิจศึกษา </span>
+          </button>
+
+          <button type="button" class="sidebar-item" data-target="panel-daily">
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-calendar-check"></i>
+            </span>
+
+            <span class="sidebar-text"> บันทึกการปฏิบัติงาน </span>
+          </button>
+
+          <button type="button" class="sidebar-item" data-target="panel-coop">
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </span>
+
+            <span class="sidebar-text"> โครงการสหกิจศึกษา </span>
+          </button>
+
+          <button
+            type="button"
+            class="sidebar-item"
+            data-target="panel-report-upload"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </span>
+
+            <span class="sidebar-text"> อัปโหลดโครงการ </span>
+          </button>
+
+          <button type="button" class="sidebar-item" data-target="panel-mentor">
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-user-tie"></i>
+            </span>
+
+            <span class="sidebar-text"> ข้อมูลพี่เลี้ยง </span>
+          </button>
+
+          <button
+            type="button"
+            class="sidebar-item"
+            data-target="panel-evaluate"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-star"></i>
+            </span>
+
+            <span class="sidebar-text"> ประเมินสถานประกอบการ </span>
+          </button>
+
+          <div class="sidebar-divider">
+            <span>อื่น ๆ</span>
+          </div>
+
+          <button
+            type="button"
+            class="sidebar-item sidebar-danger"
+            data-target="panel-transfer"
+          >
+            <span class="sidebar-icon">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </span>
+
+            <span class="sidebar-text"> ขอย้ายสถานประกอบการ </span>
+          </button>
+        </nav>
+      </aside>
+
+      <!-- ==============================
+         Content
+         ============================== -->
+
+      <main class="dashboard-content"><section id="panel-activities" class="content-panel"><div id="activityCalendar"></div></section>
+        <!-- ==============================
+           Overview
+           ============================== -->
+
+        <section class="content-panel active" id="panel-overview">
+          <div class="dashboard-banner">
+            <div>
+              <b id="overviewGreeting"> กำลังโหลดข้อมูล... </b>
+
+              <span> ภาพรวมสถานะสหกิจศึกษาของคุณ </span>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-box">
+              <div class="stat-icon">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+
+              <div>
+                <b id="requestCount">0</b>
+                <span>คำร้องที่ยื่นแล้ว</span>
+              </div>
+            </div>
+
+            <div class="stat-box">
+              <div class="stat-icon">
+                <i class="fa-solid fa-book-open"></i>
+              </div>
+
+              <div>
+                <b id="dailyCount">0</b>
+                <span>บันทึกการปฏิบัติงาน</span>
+              </div>
+            </div>
+
+            <div class="stat-box">
+              <div class="stat-icon">
+                <i class="fa-solid fa-circle-info"></i>
+              </div>
+
+              <div>
+                <b id="studentStatus">-</b>
+                <span>สถานะปัจจุบัน</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-card-header">
+              <div>
+                <h3>
+                  <i class="fa-solid fa-briefcase"></i>
+                  ข้อมูลสหกิจศึกษา
+                </h3>
+
+                <p>รายละเอียดสถานประกอบการและการปฏิบัติงาน</p>
+              </div>
+            </div>
+
+            <div class="empty-state" id="coopOverviewEmpty">
+              <i class="fa-solid fa-building-circle-exclamation"></i>
+
+              <h4>ยังไม่มีข้อมูลสหกิจศึกษา</h4>
+
+              <p>
+                เมื่อมีข้อมูลสถานประกอบการและการปฏิบัติงาน
+                ระบบจะแสดงข้อมูลในส่วนนี้
+              </p>
+            </div>
+          </div>
+          <section class="section-card" aria-labelledby="studentSupervisionHeading">
+            <div class="section-card-header"><h3 id="studentSupervisionHeading">นัดนิเทศครั้งที่ 1–2</h3><button id="studentSupervisionReload" type="button" class="btn-secondary">โหลดนัดล่าสุด</button></div>
+            <p id="studentSupervisionStatus" role="status" aria-live="polite"></p>
+            <div id="studentSupervisionAppointments"></div>
+          </section>
+        </section>
+
+        <!-- ==============================
+     ประวัตินักศึกษา
+     ============================== -->
+
+        <section class="content-panel" id="panel-profile">
+          <div class="panel-header">
+            <h2>ประวัตินักศึกษา</h2>
+            <p>ข้อมูลประวัตินักศึกษาจากระบบ</p>
+          </div>
+
+          <p
+            class="message profile-load-message"
+            id="profileLoadMessage"
+            role="status"
+            aria-live="polite"
+          ></p>
+
+          <!-- ==============================
+       Profile Header
+       ============================== -->
+
+          <div class="profile-card">
+            <div
+              class="profile-avatar profile-avatar-editable"
+              id="profileAvatarButton"
+              role="button"
+              tabindex="0"
+              aria-label="เปลี่ยนรูปโปรไฟล์"
+            >
+              <i
+                id="profileAvatarPlaceholder"
+                class="fa-solid fa-user"
+                aria-hidden="true"
+              ></i>
+              <img id="profileAvatarImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
+              <div class="profile-avatar-overlay" aria-hidden="true">
+                <i class="fa-solid fa-camera"></i>
+                <span>เปลี่ยนรูป</span>
+              </div>
+            </div>
+
+            <div class="profile-main">
+              <span class="profile-label"> นักศึกษาสหกิจศึกษา </span>
+
+              <h3 id="profileFullName">-</h3>
+
+              <p>
+                คำนำหน้า:
+                <strong id="profilePrefix"> - </strong>
+              </p>
+
+              <p>
+                รหัสประจำตัวนักศึกษา:
+                <strong id="profileStudentId"> - </strong>
+              </p>
+
+              <p>
+                อีเมล:
+                <strong id="profileEmail"> - </strong>
+              </p>
+              <button type="button" class="btn-primary" id="btnEditProfile">
+                <i class="fa-solid fa-pen-to-square"></i>
+                แก้ไขประวัติ
+              </button>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลนักศึกษา
+       ============================== -->
+
+          <div class="info-card student-info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-graduation-cap"></i>
+              ข้อมูลนักศึกษา
+            </div>
+
+            <form id="studentInfoForm" class="student-info-form" novalidate>
+              <div class="student-info-form-grid">
+                <div class="form-group">
+                  <label for="studentFullName">ชื่อ-นามสกุล</label>
+                  <input type="text" id="studentFullName" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="studentIdInput">รหัสนักศึกษา</label>
+                  <input type="text" id="studentIdInput" readonly />
+                </div>
+                <div class="form-group student-info-form-full">
+                  <label for="studentEmailInput">Email</label>
+                  <input type="email" id="studentEmailInput" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="studentMajorInput">สาขา</label>
+                  <select id="studentMajorInput" required>
+                    <option value="">เลือกสาขา</option>
+                    <option value="IT">IT</option>
+                    <option value="INE">INE</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="studentYearLevelInput">ชั้นปี</label>
+                  <select id="studentYearLevelInput" required>
+                    <option value="">เลือกชั้นปี</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="studentGpaInput">GPA</label>
+                  <input
+                    type="number"
+                    id="studentGpaInput"
+                    min="0"
+                    max="4"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="studentAdvisorInput"
+                    >อาจารย์ที่ปรึกษาประจำชั้น</label
+                  >
+                  <select id="studentAdvisorInput">
+                    <option value="">ยังไม่ได้กำหนด</option>
+                  </select>
+                </div>
+                <div class="form-group student-info-form-full">
+                  <label for="studentCoopAdvisorInput"
+                    >อาจารย์ที่ปรึกษาสหกิจศึกษา / อาจารย์นิเทศ</label
+                  >
+                  <input
+                    type="text"
+                    id="studentCoopAdvisorInput"
+                    value="ยังไม่ได้กำหนด"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <div class="student-info-submit">
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  id="saveStudentInfoBtn"
+                >
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  บันทึกข้อมูลนักศึกษา
+                </button>
+                <p
+                  class="message"
+                  id="studentInfoMessage"
+                  aria-live="polite"
+                ></p>
+              </div>
+            </form>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลส่วนตัว
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-circle-user"></i>
+              ข้อมูลส่วนตัว
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>วันเกิด</span>
+                <strong id="profileBirthDate"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อายุ</span>
+                <strong id="profileAge"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ส่วนสูง</span>
+                <strong id="profileHeight"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>น้ำหนัก</span>
+                <strong id="profileWeight"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>สัญชาติ</span>
+                <strong id="profileNationality"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>เชื้อชาติ</span>
+                <strong id="profileEthnicity"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ศาสนา</span>
+                <strong id="profileReligion"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ความสามารถพิเศษ</span>
+                <strong id="profileSpecialAbilities"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span>
+                <strong id="profileRelatedSkills"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-heart-pulse"></i>
+              ข้อมูลสุขภาพ
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>กรุ๊ปเลือด</span>
+                <strong id="profileBloodType"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โรคประจำตัว</span>
+                <strong id="profileMedicalConditions"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อาการแพ้</span>
+                <strong id="profileAllergies"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลที่อยู่
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-location-dot"></i>
+              ข้อมูลที่อยู่
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ภูมิลำเนา</span>
+                <strong id="profileHometownAddress"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โทรศัพท์ภูมิลำเนา</span>
+                <strong id="profileHometownPhone"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ที่อยู่ปัจจุบัน</span>
+                <strong id="profileCurrentAddress"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โทรศัพท์ปัจจุบัน</span>
+                <strong id="profileCurrentPhone"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลบิดา
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-person"></i>
+              ข้อมูลบิดา
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ชื่อบิดา</span>
+                <strong id="profileFatherName"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อายุบิดา</span>
+                <strong id="profileFatherAge"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อาชีพบิดา</span>
+                <strong id="profileFatherOccupation"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลมารดา
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-person-dress"></i>
+              ข้อมูลมารดา
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ชื่อมารดา</span>
+                <strong id="profileMotherName"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อายุมารดา</span>
+                <strong id="profileMotherAge"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>อาชีพมารดา</span>
+                <strong id="profileMotherOccupation"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       ข้อมูลผู้ปกครอง
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-people-roof"></i>
+              ข้อมูลผู้ปกครอง
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ที่อยู่ที่สามารถติดต่อได้</span>
+                <strong id="profileParentAddress"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โทรศัพท์</span>
+                <strong id="profileParentPhone"> - </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==============================
+       บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน
+       ============================== -->
+
+          <div class="info-card">
+            <div class="card-title">
+              <i class="fa-solid fa-phone-volume"></i>
+              บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span>ชื่อ-นามสกุล</span>
+                <strong id="profileEmergencyName"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ความเกี่ยวข้อง</span>
+                <strong id="profileEmergencyRelation"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>ที่อยู่</span>
+                <strong id="profileEmergencyAddress"> - </strong>
+              </div>
+
+              <div class="info-item">
+                <span>โทรศัพท์</span>
+                <strong id="profileEmergencyPhone"> - </strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==============================
+           Resume
+           ============================== -->
+
+        <section class="content-panel" id="panel-job-matching">
+          <div class="panel-header">
+            <h2>ค้นหาสถานประกอบการ</h2>
+
+            <p>ระบบวิเคราะห์จากสาขา ทักษะที่เกี่ยวข้อง และข้อมูลจากเรซูเม่เมื่อสามารถอ่านข้อความได้</p>
+          </div>
+
+          <div class="section-card">
+            <div class="section-card-header">
+              <h3>ข้อมูลที่ใช้จับคู่ตำแหน่งงาน</h3>
+              <button type="button" class="btn-secondary" id="editJobMatchingProfileBtn">แก้ไขข้อมูลทักษะ</button>
+            </div>
+            <dl class="job-matching-source">
+              <div><dt>สาขา</dt><dd id="jobMatchingMajor">ยังไม่ได้ระบุ</dd></div>
+              <div><dt>ทักษะที่เกี่ยวข้อง</dt><dd id="jobMatchingSkills">ยังไม่ได้ระบุ</dd></div>
+            </dl>
+          </div>
+
+          <div class="section-card">
+            <div class="section-card-header">
+              <h3 id="jobMatchingResultsTitle">ตำแหน่งงานที่แนะนำ</h3>
+              <div class="job-matching-actions">
+                <button type="button" class="btn-primary" id="jobMatchingSkillsBtn">วิเคราะห์จากทักษะ</button>
+                <button type="button" class="btn-secondary" id="jobMatchingResumeBtn">วิเคราะห์จาก Resume</button>
+              </div>
+            </div>
+            <p class="message" id="jobMatchingMessage" role="status" aria-live="polite" aria-atomic="true">กดค้นหาเพื่อดูตำแหน่งงานที่เหมาะกับคุณ</p>
+            <div class="job-matching-loading" id="jobMatchingLoading" aria-hidden="true" hidden>
+              <h4 class="job-matching-loading-title" id="jobMatchingLoadingTitle">กำลังวิเคราะห์ตำแหน่งงานที่เหมาะกับคุณ</h4>
+              <p class="job-matching-loading-caption" id="jobMatchingLoadingCaption">ระบบกำลังเปรียบเทียบทักษะของคุณกับตำแหน่งงานที่เปิดรับ</p>
+              <div class="job-matching-progress">
+                <strong class="job-matching-progress-value" id="jobMatchingProgressValue">0%</strong>
+                <div class="job-matching-progress-track" id="jobMatchingProgressTrack" role="progressbar" aria-label="ความคืบหน้าการรอผลวิเคราะห์" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span class="job-matching-progress-fill" id="jobMatchingProgressFill"></span>
+                </div>
+                <p class="job-matching-progress-note" id="jobMatchingProgressNote">เปอร์เซ็นต์แสดงการรอการตอบกลับ ไม่ใช่ความคืบหน้าการวิเคราะห์จริง</p>
+              </div>
+              <div class="job-matching-skeletons">
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+                <article class="job-matching-skeleton-card"><span></span><span></span><span></span></article>
+              </div>
+            </div>
+            <p id="jobMatchingResultSource" class="job-matching-result-source" hidden></p>
+            <div id="jobMatchingResults" class="job-matching-results" aria-labelledby="jobMatchingResultsTitle" aria-busy="false"></div>
+            <div id="jobMatchingEmpty" class="empty-state" hidden>
+              <h4>ยังไม่พบตำแหน่งงานที่ผ่านเกณฑ์ความเหมาะสม</h4>
+              <p>ลองตรวจสอบข้อมูลสาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา แล้วค้นหาใหม่</p>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <p class="job-matching-note" id="resumeMatchingNotice">ระบบจะวิเคราะห์จากสาขา ทักษะที่เกี่ยวข้อง และข้อมูลจากเรซูเม่เมื่อสามารถอ่านข้อความได้</p>
+            <div class="upload-box">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+
+              <h3>อัปโหลดเรซูเม่</h3>
+
+              <p>รองรับไฟล์ PDF ขนาดไม่เกิน 10 MB ระบบจะบันทึกไฟล์เรซูเม่ของคุณ</p>
+
+              <input
+                type="file"
+                id="resumeFile"
+                accept=".pdf,application/pdf"
+                aria-describedby="resumeMessage resumeMatchingNotice"
+                aria-label="เลือกไฟล์เรซูเม่ PDF"
+              />
+
+              <button type="button" class="btn-primary" id="uploadResumeBtn">
+                <i class="fa-solid fa-upload"></i>
+                อัปโหลดเรซูเม่
+              </button>
+            </div>
+
+            <p class="message" id="resumeMessage"></p>
+          </div>
+        </section>
+
+        <!-- ==============================
+           Request
+           ============================== -->
+
+        <section class="content-panel" id="panel-request">
+          <div class="panel-header">
+            <h2>คำร้องสหกิจศึกษา</h2>
+
+            <p>ยื่นและติดตามสถานะคำร้องสหกิจศึกษา</p>
+          </div>
+
+          <p class="message" id="coopRequestMessage" role="status" aria-live="polite"></p>
+
+          <div class="section-card coop-request-current" id="coopRequestCurrent" tabindex="-1" hidden>
+            <div class="request-card-head coop-current-card-head">
+              <div>
+                <p class="coop-current-eyebrow"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> คำร้องสหกิจศึกษาปัจจุบัน</p>
+                <h4 id="coopCurrentHeading">คำร้องสหกิจศึกษาปัจจุบัน</h4>
+                <p id="coopCurrentSubheading">ข้อมูลคำร้องที่กำลังดำเนินการของคุณ</p>
+              </div>
+              <span class="coop-status-badge" id="coopCurrentStatus"></span>
+            </div>
+            <div class="coop-stepper" id="coopCurrentStepper" aria-label="ความคืบหน้าคำร้องสหกิจศึกษา"></div>
+            <div class="coop-request-summary">
+              <div><span>สถานประกอบการ</span><strong id="coopCurrentCompany"></strong></div>
+              <div><span>จังหวัด</span><strong id="coopCurrentProvince"></strong></div>
+              <div><span>วันที่ยื่นคำร้อง</span><strong id="coopCurrentSubmittedAt"></strong></div>
+              <div><span>วันเริ่มสหกิจศึกษา</span><strong id="coopCurrentStartDate"></strong></div>
+              <div><span>วันสิ้นสุดสหกิจศึกษา</span><strong id="coopCurrentEndDate"></strong></div>
+              <div class="coop-request-summary-full"><span>วิธีจัดส่งหนังสือ</span><strong id="coopCurrentDeliveryMethods"></strong></div>
+            </div>
+            <p class="coop-status-summary" id="coopCurrentStatusSummary" role="status" aria-live="polite"></p>
+            <div class="request-actions">
+              <button type="button" class="btn-secondary" id="viewCurrentCoopRequestBtn">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i> ดูรายละเอียดคำร้อง
+              </button>
+              <button type="button" class="btn-secondary" id="createAnotherCoopRequestBtn">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> เขียนคำร้องสหกิจ
+              </button>
+              <button type="button" class="btn-danger-outline" id="cancelCoopRequestBtn">
+                <i class="fa-solid fa-ban" aria-hidden="true"></i> ยกเลิกคำร้อง
+              </button>
+            </div>
+          </div>
+
+          <div class="section-card coop-request-empty" id="coopRequestEmpty">
+            <div class="empty-state">
+              <i class="fa-solid fa-file-circle-plus"></i>
+
+              <h4>ยังไม่มีคำร้องสหกิจศึกษา</h4>
+
+              <p>เมื่อมีการยื่นคำร้อง รายการจะปรากฏในส่วนนี้</p>
+
+              <button type="button" class="btn-primary" id="createRequestBtn">
+                <i class="fa-solid fa-plus"></i>
+                สร้างคำร้อง
+              </button>
+            </div>
+          </div>
+
+          <div class="section-card coop-request-history" id="coopRequestHistory" tabindex="-1" hidden>
+            <div class="request-card-head">
+              <div>
+                <h4><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ประวัติคำร้องสหกิจศึกษาทั้งหมด</h4>
+                <p>แสดงคำร้องทั้งหมดของคุณ เรียงตามวันที่ยื่นล่าสุด</p>
+              </div>
+            </div>
+            <div class="table-wrapper coop-history-table-wrapper">
+              <table class="data-table">
+                <thead><tr><th>สถานประกอบการ</th><th>จังหวัด</th><th>วันที่ยื่น</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead>
+                <tbody id="coopRequestHistoryBody"></tbody>
+              </table>
+            </div>
+            <p class="coop-history-empty" id="coopRequestHistoryEmpty" hidden>ยังไม่มีประวัติคำร้อง</p>
+          </div>
+        </section>
+
+        <!-- ==============================
+           Daily log
+           ============================== -->
+
+        <section class="content-panel" id="panel-daily">
+          <div class="panel-header">
+            <h2>บันทึกการปฏิบัติงาน</h2>
+
+            <p>บันทึกการปฏิบัติงานของนักศึกษาสหกิจศึกษา</p>
+          </div>
+
+          <div class="internship-toolbar">
+            <label>เลือกวันที่เพื่อดูสัปดาห์หรือประวัติ <input type="date" id="dailyWeekDate" /></label>
+            <button type="button" class="btn-secondary" id="dailyReload">โหลดใหม่</button>
+            <button type="button" class="btn-primary" id="submitDailyWeek" disabled>ส่งบันทึกประจำสัปดาห์ให้พี่เลี้ยง</button>
+            <button type="button" class="btn-secondary" id="dailyResendLink">ส่งลิงก์ตรวจให้พี่เลี้ยงอีกครั้ง</button>
+          </div>
+          <p id="dailyWeekSummary"></p>
+          <p>บันทึกทุกวัน ส่งครั้งละสัปดาห์จันทร์–อาทิตย์ ตามเวลาไทย วันที่ไม่ได้ปฏิบัติงานให้ระบุเหตุผล</p>
+          <p id="dailyStatus" class="internship-status" role="status" aria-live="polite"></p>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>วันที่</th>
+                  <th>งานที่ปฏิบัติ</th>
+                  <th>สถานะ</th>
+                  <th>การดำเนินการ</th>
+                </tr>
+              </thead>
+
+              <tbody id="dailyLogTableBody">
+                <tr class="empty-table-row">
+                  <td colspan="4">ยังไม่มีบันทึกการปฏิบัติงาน</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <section id="dailyEditor" class="internship-editor" hidden aria-labelledby="dailyEditorTitle">
+            <h3 id="dailyEditorTitle">บันทึกการปฏิบัติงาน</h3>
+            <p id="dailyEntryDate"></p>
+            <form id="dailyForm">
+              <input type="hidden" id="dailyDate" />
+              <fieldset id="dailyFieldset">
+                <legend>ส่วนที่ 1 (สำหรับนักศึกษา)</legend>
+                <label>ประเภทวัน <select id="dailyKind"><option value="working">วันทำงาน</option><option value="non_working">ไม่ได้ปฏิบัติงาน (วันหยุด / ลา / เหตุผลอื่น)</option></select></label>
+                <div id="dailyWorkingFields">
+                  <label>งานที่ได้รับมอบหมาย <textarea id="daily_assigned_work" maxlength="5000"></textarea></label>
+                  <label>ผลการปฏิบัติงาน <textarea id="daily_work_result" maxlength="5000"></textarea></label>
+                  <label>ปัญหาและอุปสรรค <textarea id="daily_problems" maxlength="5000" placeholder="หากไม่มีปัญหา ระบุ ไม่มีปัญหา"></textarea></label>
+                  <label>การแก้ไข <textarea id="daily_solutions" maxlength="5000" placeholder="หากไม่ต้องแก้ไข ระบุ ไม่ต้องแก้ไข"></textarea></label>
+                </div>
+                <div id="dailyNonWorkingFields" hidden><label>เหตุผลที่ไม่ได้ปฏิบัติงาน <textarea id="daily_non_working_reason" maxlength="5000"></textarea></label></div>
+                <label>หมายเหตุ <textarea id="daily_notes" maxlength="5000"></textarea></label>
+              </fieldset>
+              <button type="submit" class="btn-primary" id="saveDailyLogBtn">บันทึกประจำวัน</button>
+            </form>
+          </section>
+          <h3>ประวัติการส่งและข้อเสนอแนะจากผู้ดูแล</h3>
+          <div id="dailyHistory"></div>
+        </section>
+
+        <!-- ==============================
+           Coop project
+           ============================== -->
+
+        <section class="content-panel" id="panel-coop">
+          <div class="panel-header">
+            <h2>โครงการสหกิจศึกษา</h2>
+
+            <p>จัดการข้อมูลโครงการสหกิจศึกษา</p>
+          </div>
+
+          <div class="section-card coop-project-card">
+            <div class="section-card-header">
+              <div>
+                <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> ข้อมูลโครงการ</h3>
+                <p>บันทึกหัวข้อโครงการและส่งคำขอให้อาจารย์ที่ปรึกษายืนยัน</p>
+              </div>
+            </div>
+            <div class="form-group project-advisor-field">
+              <label for="projectAdvisor">อาจารย์ที่ปรึกษาโครงการ</label>
+
+              <select id="projectAdvisor" disabled aria-describedby="projectAdvisorStatus projectAdvisorHelp">
+                <option value="">-- เลือกอาจารย์ --</option>
+              </select>
+              <p id="projectAdvisorStatus" class="project-advisor-status" role="status"><span class="coop-status-badge project-advisor-badge">ยังไม่ได้เลือกอาจารย์</span></p>
+              <p id="projectAdvisorHelp" class="project-help">เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที</p>
+              <p class="message" id="projectAdvisorMessage" role="status"></p>
+            </div>
+
+            <div class="form-group">
+              <label for="projectTitle">หัวข้อโครงการ</label>
+
+              <input
+                type="text"
+                id="projectTitle"
+                maxlength="500"
+                aria-describedby="projectTitleHelp"
+                placeholder="กรอกหัวข้อโครงการ"
+              />
+              <p id="projectTitleHelp" class="project-help">บันทึกและแก้ไขหัวข้อได้ โดยไม่ต้องรออาจารย์ยืนยัน</p>
+            </div>
+
+            <div class="project-actions">
+              <button type="button" class="btn-primary" id="saveProjectBtn" disabled>
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                บันทึกหัวข้อโครงการ
+              </button>
+
+              <p class="message" id="projectMessage" role="status"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==============================
+           Report Upload
+           ============================== -->
+
+        <section class="content-panel" id="panel-report-upload">
+          <div class="panel-header">
+            <h2>อัปโหลดโครงการ</h2>
+
+            <p>อัปโหลดเล่มโครงการและโปสเตอร์</p>
+          </div>
+
+          <div class="section-card project-upload-card">
+            <div class="project-upload-grid">
+              <div class="form-group project-file-card">
+                <label for="projectBookFile"><i class="fa-solid fa-book" aria-hidden="true"></i> เล่มโครงการ</label>
+                <p id="projectBookHelp" class="project-help">PDF ขนาดไม่เกิน 10MB</p>
+
+                <input
+                  type="file"
+                  id="projectBookFile"
+                  accept=".pdf,application/pdf"
+                  aria-describedby="projectBookHelp"
+                />
+                <div class="project-current-file" id="projectBookCurrent" aria-live="polite">กำลังโหลดไฟล์...</div>
+              </div>
+
+              <div class="form-group project-file-card">
+                <label for="posterFile"><i class="fa-solid fa-image" aria-hidden="true"></i> โปสเตอร์</label>
+                <p id="posterHelp" class="project-help">PDF, PNG หรือ JPEG ขนาดไม่เกิน 10MB</p>
+
+                <input
+                  type="file"
+                  id="posterFile"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  aria-describedby="posterHelp"
+                />
+                <div class="project-current-file" id="posterCurrent" aria-live="polite">กำลังโหลดไฟล์...</div>
+              </div>
+            </div>
+
+            <div class="project-actions">
+              <button type="button" class="btn-primary" id="uploadProjectBtn">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i>
+                อัปโหลดไฟล์ที่เลือก
+              </button>
+
+              <p class="message" id="projectUploadMessage" role="status"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==============================
+     Mentor
+     ============================== -->
+        <section class="content-panel" id="panel-mentor">
+          <div class="panel-header">
+            <h2>ข้อมูลพี่เลี้ยง</h2>
+
+            <p>จัดการข้อมูลพี่เลี้ยงสำหรับสหกิจศึกษา</p>
+          </div>
+
+          <div class="section-card">
+            <div class="request-card-head">
+              <div>
+                <h4>
+                  <i class="fa-solid fa-user-tie"></i>
+                  ข้อมูลพี่เลี้ยงปัจจุบัน
+                </h4>
+
+                <p>ข้อมูลที่ใช้ติดต่อและประสานงานระหว่างสหกิจศึกษา</p>
+              </div>
+            </div>
+
+            <div class="info-grid" style="margin-top: 14px">
+              <div class="info-item">
+                <span>Email</span>
+
+                <strong id="mentorEmail">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>ชื่อ</span>
+
+                <strong id="mentorFirstName">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>นามสกุล</span>
+
+                <strong id="mentorLastName">-</strong>
+              </div>
+
+              <div class="info-item">
+                <span>ตำแหน่ง</span>
+
+                <strong id="mentorPosition">-</strong>
+              </div>
+
+              <div class="info-item mentor-verification-status" id="mentorVerificationStatusItem" hidden>
+                <span>สถานะการยืนยัน</span>
+
+                <strong id="mentorVerificationStatus" class="mentor-status-badge">
+                  <i aria-hidden="true"></i>
+                  <span id="mentorVerificationStatusLabel"></span>
+                </strong>
+
+                <p id="mentorVerificationHint" class="mentor-verification-hint" hidden></p>
+
+                <button type="button" class="btn-mock-sm mentor-resend-button" id="btnResendMentorVerification" hidden>
+                  <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                  <span id="mentorResendButtonLabel">ส่งอีเมลยืนยันอีกครั้ง</span>
+                </button>
+              </div>
+            </div>
+
+            <p
+              class="message mentor-message"
+              id="mentorMessage"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+            <div class="request-actions">
+              <button type="button" class="btn-mock-sm solid" id="btnAddMentor">
+                <i class="fa-solid fa-plus"></i>
+                เพิ่มข้อมูลพี่เลี้ยง
+              </button>
+
+              <button type="button" class="btn-mock-sm" id="btnEditMentor">
+                <i class="fa-solid fa-pen"></i>
+                แก้ไขข้อมูลพี่เลี้ยง
+              </button>
+
+              <button
+                type="button"
+                class="btn-danger-outline"
+                id="btnDeleteMentor"
+                style="cursor: pointer"
+              >
+                <i class="fa-solid fa-trash"></i>
+                ลบข้อมูลพี่เลี้ยง
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ==============================
+           Evaluate
+           ============================== -->
+
+        <section class="content-panel" id="panel-evaluate">
+          <div class="panel-header">
+            <h2>ประเมินสถานประกอบการ</h2>
+            <p>แบบประเมินสถานประกอบการสำหรับนักศึกษาสหกิจศึกษา</p>
+          </div>
+
+          <div class="section-card evaluation-information">
+            <div class="section-card-header">
+              <h3><i class="fa-solid fa-building" aria-hidden="true"></i> ข้อมูลนักศึกษาและสถานประกอบการ</h3>
+            </div>
+            <dl class="evaluation-info-grid">
+              <div><dt>ชื่อนักศึกษา</dt><dd id="evaluationStudentName">-</dd></div>
+              <div><dt>ชื่อพี่เลี้ยง</dt><dd id="evaluationMentorName">-</dd></div>
+              <div><dt>รหัสนักศึกษา</dt><dd id="evaluationStudentId">-</dd></div>
+              <div><dt>ตำแหน่งพี่เลี้ยง</dt><dd id="evaluationMentorPosition">-</dd></div>
+              <div><dt>สาขาวิชา</dt><dd id="evaluationMajor">-</dd></div>
+              <div><dt>ช่วงเวลาปฏิบัติงาน</dt><dd id="evaluationWorkPeriod">-</dd></div>
+              <div><dt>ชื่อสถานประกอบการ</dt><dd id="evaluationCompany">-</dd></div>
+              <div><dt>วันที่ประเมิน</dt><dd id="evaluationDate">-</dd></div>
+            </dl>
+          </div>
+
+          <form id="companyEvaluationForm" novalidate>
+            <p id="evaluationScoreHelp" class="evaluation-help">เลือกคะแนน 1–10 ให้ครบทั้ง 5 ข้อ สามารถกลับมาแก้ไขแบบประเมินที่บันทึกแล้วได้</p>
+            <fieldset class="section-card evaluation-category">
+              <legend>หมวดที่ 1 การมอบหมายงานและความพร้อม</legend>
+              <div class="evaluation-question">
+                <label for="evaluationQ1"><span class="evaluation-question-number">1.</span> ความเข้าใจที่ได้รับจากงานสหกิจศึกษา เกี่ยวกับงานที่ปฏิบัติ</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ1" name="q1_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ2"><span class="evaluation-question-number">2.</span> งานที่ได้รับมอบหมายตรงตามสาขาวิชาของนักศึกษา</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ2" name="q2_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ3"><span class="evaluation-question-number">3.</span> มีการชี้แจงขั้นตอนการปฏิบัติงาน ก่อนเริ่มการปฏิบัติงาน</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ3" name="q3_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="section-card evaluation-category">
+              <legend>หมวดที่ 2 การดำเนินงานและการสนับสนุน</legend>
+              <div class="evaluation-question">
+                <label for="evaluationQ4"><span class="evaluation-question-number">4.</span> มีแผนการปฏิบัติงานชัดเจน</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ4" name="q4_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+              <div class="evaluation-question">
+                <label for="evaluationQ5"><span class="evaluation-question-number">5.</span> มีการปรับปรุงแผนปฏิบัติงานเมื่อเกิดปัญหาในการปฏิบัติ</label>
+                <div class="evaluation-score-control">
+                  <select id="evaluationQ5" name="q5_score" required disabled aria-describedby="evaluationScoreHelp">
+                    <option value="">เลือกคะแนน</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <span aria-hidden="true">/10</span>
+                </div>
+              </div>
+            </fieldset>
+            <div class="section-card evaluation-comment-card">
+              <label for="evaluationComment">ข้อเสนอแนะเพิ่มเติม <span class="evaluation-help">(ไม่บังคับ)</span></label>
+              <textarea id="evaluationComment" rows="5" maxlength="2000" disabled aria-describedby="evaluationCommentHelp" placeholder="ข้อเสนอแนะเพื่อพัฒนาการปฏิบัติงานและการดูแลนักศึกษา"></textarea>
+              <p id="evaluationCommentHelp" class="evaluation-help">ไม่เกิน 2,000 ตัวอักษร</p>
+            </div>
+            <div class="section-card evaluation-summary-card">
+              <h3>สรุปผลการประเมิน</h3>
+              <div class="evaluation-summary-grid" aria-live="polite" aria-atomic="true">
+                <div><span>คะแนนรวม</span><strong id="evaluationTotal">0 / 50</strong></div>
+                <div><span>ค่าเฉลี่ย</span><strong id="evaluationAverage">0.00 / 10</strong></div>
+              </div>
+              <p class="evaluation-help">คะแนนรวมระหว่างเลือกคำตอบ ค่าเฉลี่ยคำนวณจากทั้ง 5 ข้อ</p>
+              <div class="evaluation-actions">
+                <p class="message" id="evaluationMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="btn-primary" id="saveEvaluationBtn" disabled>บันทึกแบบประเมิน</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- ==============================
+           Transfer company
+           ============================== -->
+
+        <section class="content-panel" id="panel-transfer">
+          <div class="panel-header">
+            <h2>ขอย้ายสถานประกอบการ</h2>
+
+            <p>ส่งคำร้องขอย้ายสถานประกอบการ</p>
+          </div>
+
+          <div class="section-card">
+            <div class="form-group">
+              <label for="transferReason">
+                เหตุผลในการขอย้ายสถานประกอบการ
+              </label>
+
+              <textarea
+                id="transferReason"
+                rows="6"
+                placeholder="กรอกเหตุผล..."
+              ></textarea>
+            </div>
+
+            <button type="button" class="btn-danger" id="submitTransferBtn">
+              <i class="fa-solid fa-paper-plane"></i>
+              ส่งคำร้อง
+            </button>
+
+            <p class="message" id="transferMessage"></p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ==============================
+       Modal เพิ่มบันทึก
+       ============================== -->
+
+    <!-- ==============================
+     Modal แก้ไขประวัตินักศึกษา
+     ============================== -->
+
+    <div class="modal-overlay" id="profileEditModal" aria-hidden="true">
+      <div class="modal-box profile-edit-modal">
+        <!-- Header -->
+        <div class="modal-header">
+          <div>
+            <h3>
+              <i class="fa-solid fa-user-pen"></i>
+              แก้ไขประวัตินักศึกษา
+            </h3>
+
+            <p>แก้ไขข้อมูลส่วนตัวของนักศึกษาสหกิจศึกษา</p>
+          </div>
+
+          <button
+            type="button"
+            class="modal-close"
+            id="closeProfileEditModal"
+            aria-label="ปิด"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <form id="profileEditForm">
+            <div
+              class="profile-form-section profile-image-form-section"
+              id="profileImageEditorSection"
+            >
+              <div class="profile-form-title">
+                <i class="fa-solid fa-camera"></i>
+                <div>
+                  <h4>รูปโปรไฟล์</h4>
+                  <p>เลือกรูปใหม่และอัปโหลดเมื่อพร้อม</p>
+                </div>
+              </div>
+
+              <div class="modal-profile-image-editor">
+                <div class="modal-profile-image-preview" aria-live="polite">
+                  <i
+                    id="modalProfileImagePlaceholder"
+                    class="fa-solid fa-user"
+                    aria-hidden="true"
+                  ></i>
+                  <img id="modalProfileImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
+                </div>
+
+                <div class="modal-profile-image-actions">
+                  <label for="profileImageInput" class="btn-secondary">
+                    <i class="fa-solid fa-image"></i>
+                    เลือกรูปใหม่
+                  </label>
+                  <input
+                    type="file"
+                    id="profileImageInput"
+                    accept="image/jpeg,image/png,image/webp"
+                  />
+                  <small>รองรับ JPG, PNG และ WEBP ขนาดไม่เกิน 5 MB</small>
+                  <button
+                    type="button"
+                    class="btn-primary"
+                    id="uploadProfileImageBtn"
+                    disabled
+                  >
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    อัปโหลดรูป
+                  </button>
+                  <p
+                    class="message"
+                    id="profileImageMessage"
+                    aria-live="polite"
+                  ></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลส่วนตัว
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-circle-user"></i>
+
+                <div>
+                  <h4>ข้อมูลส่วนตัว</h4>
+                  <p>ข้อมูลทั่วไปและข้อมูลสุขภาพของนักศึกษา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editPrefix">คำนำหน้า</label>
+
+                  <select id="editPrefix" name="prefix">
+                    <option value="">-- เลือกคำนำหน้า --</option>
+                    <option value="นาย">นาย</option>
+                    <option value="นางสาว">นางสาว</option>
+                    <option value="นาง">นาง</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="editBirthDate"> วันเกิด </label>
+
+                  <input type="date" id="editBirthDate" name="birth_date" />
+                </div>
+
+                <div class="form-group">
+                  <label for="editAge">อายุ</label>
+
+                  <input type="text" id="editAge" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="editHeight"> ส่วนสูง (ซม.) </label>
+
+                  <input
+                    type="number"
+                    id="editHeight"
+                    name="height_cm"
+                    min="1"
+                    placeholder="เช่น 172"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editWeight"> น้ำหนัก (กก.) </label>
+
+                  <input
+                    type="number"
+                    id="editWeight"
+                    name="weight_kg"
+                    min="1"
+                    step="0.1"
+                    placeholder="เช่น 67"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editNationality"> สัญชาติ </label>
+
+                  <input
+                    type="text"
+                    id="editNationality"
+                    name="nationality"
+                    placeholder="เช่น ไทย"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editEthnicity"> เชื้อชาติ </label>
+
+                  <input
+                    type="text"
+                    id="editEthnicity"
+                    name="ethnicity"
+                    placeholder="เช่น ไทย"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editReligion"> ศาสนา </label>
+
+                  <input
+                    type="text"
+                    id="editReligion"
+                    name="religion"
+                    placeholder="เช่น พุทธ"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editBloodType"> กรุ๊ปเลือด </label>
+
+                  <select id="editBloodType" name="blood_type">
+                    <option value="">-- เลือกกรุ๊ปเลือด --</option>
+
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="AB">AB</option>
+                    <option value="O">O</option>
+                    <option value="ไม่ทราบ">ไม่ทราบ</option>
+                  </select>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editMedicalConditions"> โรคประจำตัว </label>
+
+                  <textarea
+                    id="editMedicalConditions"
+                    name="medical_conditions"
+                    rows="3"
+                    placeholder="ระบุโรคประจำตัว หากไม่มีสามารถเว้นว่าง"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editAllergies"> อาการแพ้ </label>
+
+                  <textarea
+                    id="editAllergies"
+                    name="allergies"
+                    rows="3"
+                    placeholder="ระบุยา อาหาร หรือสิ่งที่แพ้"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editSpecialAbilities"> ความสามารถพิเศษ </label>
+
+                  <textarea
+                    id="editSpecialAbilities"
+                    name="special_abilities"
+                    rows="3"
+                    placeholder="ระบุความสามารถพิเศษ"
+                  ></textarea>
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editRelatedSkills">
+                    ทักษะที่เกี่ยวข้องกับสหกิจศึกษา
+                  </label>
+
+                  <textarea
+                    id="editRelatedSkills"
+                    name="related_skills"
+                    rows="3"
+                    placeholder="เช่น HTML, CSS, JavaScript, React, SQL"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลที่อยู่
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-location-dot"></i>
+
+                <div>
+                  <h4>ข้อมูลที่อยู่</h4>
+                  <p>ภูมิลำเนาและที่อยู่ปัจจุบัน</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group profile-form-full">
+                  <label for="editHometownAddress"> ภูมิลำเนา </label>
+
+                  <textarea
+                    id="editHometownAddress"
+                    name="hometown_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ภูมิลำเนา"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editHometownPhone"> โทรศัพท์ภูมิลำเนา </label>
+
+                  <input
+                    type="tel"
+                    id="editHometownPhone"
+                    name="hometown_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editCurrentAddress"> ที่อยู่ปัจจุบัน </label>
+
+                  <textarea
+                    id="editCurrentAddress"
+                    name="current_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ปัจจุบัน"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editCurrentPhone"> โทรศัพท์ปัจจุบัน </label>
+
+                  <input
+                    type="tel"
+                    id="editCurrentPhone"
+                    name="current_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลบิดา
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-person"></i>
+
+                <div>
+                  <h4>ข้อมูลบิดา</h4>
+                  <p>ข้อมูลพื้นฐานของบิดา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editFatherName"> ชื่อบิดา </label>
+
+                  <input
+                    type="text"
+                    id="editFatherName"
+                    name="father_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editFatherAge"> อายุบิดา </label>
+
+                  <input
+                    type="number"
+                    id="editFatherAge"
+                    name="father_age"
+                    min="1"
+                    placeholder="อายุ"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editFatherOccupation"> อาชีพบิดา </label>
+
+                  <input
+                    type="text"
+                    id="editFatherOccupation"
+                    name="father_occupation"
+                    placeholder="อาชีพ"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลมารดา
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-person-dress"></i>
+
+                <div>
+                  <h4>ข้อมูลมารดา</h4>
+                  <p>ข้อมูลพื้นฐานของมารดา</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editMotherName"> ชื่อมารดา </label>
+
+                  <input
+                    type="text"
+                    id="editMotherName"
+                    name="mother_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editMotherAge"> อายุมารดา </label>
+
+                  <input
+                    type="number"
+                    id="editMotherAge"
+                    name="mother_age"
+                    min="1"
+                    placeholder="อายุ"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editMotherOccupation"> อาชีพมารดา </label>
+
+                  <input
+                    type="text"
+                    id="editMotherOccupation"
+                    name="mother_occupation"
+                    placeholder="อาชีพ"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ข้อมูลผู้ปกครอง
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-people-roof"></i>
+
+                <div>
+                  <h4>ข้อมูลผู้ปกครอง</h4>
+                  <p>ข้อมูลสำหรับติดต่อผู้ปกครอง</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group profile-form-full">
+                  <label for="editParentAddress">
+                    ที่อยู่ที่สามารถติดต่อได้
+                  </label>
+
+                  <textarea
+                    id="editParentAddress"
+                    name="parent_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่ผู้ปกครอง"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editParentPhone"> โทรศัพท์ </label>
+
+                  <input
+                    type="tel"
+                    id="editParentPhone"
+                    name="parent_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ==============================
+             ผู้ติดต่อกรณีฉุกเฉิน
+             ============================== -->
+
+            <div class="profile-form-section">
+              <div class="profile-form-title">
+                <i class="fa-solid fa-phone-volume"></i>
+
+                <div>
+                  <h4>บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน</h4>
+
+                  <p>ข้อมูลบุคคลสำหรับติดต่อในกรณีฉุกเฉิน</p>
+                </div>
+              </div>
+
+              <div class="profile-form-grid">
+                <div class="form-group">
+                  <label for="editEmergencyName"> ชื่อ-นามสกุล </label>
+
+                  <input
+                    type="text"
+                    id="editEmergencyName"
+                    name="emergency_name"
+                    placeholder="ชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="editEmergencyRelation"> ความเกี่ยวข้อง </label>
+
+                  <input
+                    type="text"
+                    id="editEmergencyRelation"
+                    name="emergency_relation"
+                    placeholder="เช่น บิดา มารดา พี่สาว"
+                  />
+                </div>
+
+                <div class="form-group profile-form-full">
+                  <label for="editEmergencyAddress"> ที่อยู่ </label>
+
+                  <textarea
+                    id="editEmergencyAddress"
+                    name="emergency_address"
+                    rows="3"
+                    placeholder="กรอกที่อยู่"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="editEmergencyPhone"> โทรศัพท์ </label>
+
+                  <input
+                    type="tel"
+                    id="editEmergencyPhone"
+                    name="emergency_phone"
+                    placeholder="เช่น 0812345678"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <p class="message" id="profileEditMessage"></p>
+          </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelProfileEditBtn">
+            <i class="fa-solid fa-xmark"></i>
+            ยกเลิก
+          </button>
+
+          <button type="button" class="btn-primary" id="saveProfileBtn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            บันทึกข้อมูล
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="coopRequestModal" aria-hidden="true">
+      <div class="modal-box coop-request-modal" role="dialog" aria-modal="true" aria-labelledby="coopRequestModalTitle">
+        <div class="modal-header coop-request-modal-head">
+          <div><h3 id="coopRequestModalTitle">ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</h3><p>แบบคำร้องสำหรับยื่นต่อหัวหน้าภาควิชาเทคโนโลยีสารสนเทศ</p></div>
+          <button type="button" class="modal-close" id="closeCoopRequestModal" aria-label="ปิด"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <form id="coopRequestForm" novalidate>
+          <div class="modal-body coop-request-modal-body">
+            <section class="coop-form-section coop-student-section">
+              <h4>ข้อมูลนักศึกษา <small>ข้อมูลจากระบบ</small></h4>
+              <div class="coop-readonly-grid">
+                <div><span>ชื่อ-นามสกุล</span><strong id="coopStudentName">ไม่พบข้อมูล</strong></div>
+                <div><span>รหัสนักศึกษา</span><strong id="coopStudentId">ไม่พบข้อมูล</strong></div>
+                <div><span>ชั้นปี</span><strong id="coopStudentYear">ไม่พบข้อมูล</strong></div>
+                <div><span>GPA</span><strong id="coopStudentGpa">ไม่พบข้อมูล</strong></div>
+                <div><span>เบอร์โทร</span><strong id="coopStudentPhone">ไม่พบข้อมูล</strong></div>
+                <div><span>Email</span><strong id="coopStudentEmail">ไม่พบข้อมูล</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-system-section">
+              <h4>เรื่อง / เรียน <small>ข้อมูลระบบ</small></h4>
+              <div class="coop-readonly-grid">
+                <div class="coop-readonly-full"><span>เรื่อง</span><strong>ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</strong></div>
+                <div class="coop-readonly-full"><span>เรียน</span><strong>หัวหน้าภาควิชาเทคโนโลยีสารสนเทศ</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-company-section">
+              <h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4>
+              <div class="coop-company-picker coop-form-full">
+                <label for="coopCompanySearch">ค้นหาสถานประกอบการที่มีอยู่</label>
+                <input id="coopCompanySearch" type="search" autocomplete="off" placeholder="พิมพ์ชื่อบริษัทอย่างน้อย 2 ตัวอักษร">
+                <div id="coopCompanySearchResults" class="coop-company-search-results" role="status" aria-live="polite"></div>
+                <button type="button" class="btn-secondary" id="coopManualCompanyBtn">ไม่พบสถานประกอบการที่ต้องการ — กรอกข้อมูลเอง</button>
+                <p class="message" id="coopCompanyDuplicateMessage" role="status" aria-live="polite"></p>
+                <div id="coopSelectedJobPosting" class="coop-selected-job" hidden></div>
+              </div>
+              <div class="coop-form-grid">
+                <div class="form-group coop-form-full"><label for="coopCompanyName">ชื่อบริษัท / หน่วยงาน <span aria-hidden="true">*</span></label><input id="coopCompanyName" name="company_name" maxlength="255" required></div>
+                <div class="form-group"><label for="coopCompanyProvince">จังหวัด <span aria-hidden="true">*</span></label><select id="coopCompanyProvince" name="company_province" required><option value="">เลือกจังหวัด</option><option>กรุงเทพมหานคร</option><option>กระบี่</option><option>กาญจนบุรี</option><option>กาฬสินธุ์</option><option>กำแพงเพชร</option><option>ขอนแก่น</option><option>จันทบุรี</option><option>ฉะเชิงเทรา</option><option>ชลบุรี</option><option>ชัยนาท</option><option>ชัยภูมิ</option><option>ชุมพร</option><option>เชียงราย</option><option>เชียงใหม่</option><option>ตรัง</option><option>ตราด</option><option>ตาก</option><option>นครนายก</option><option>นครปฐม</option><option>นครพนม</option><option>นครราชสีมา</option><option>นครศรีธรรมราช</option><option>นครสวรรค์</option><option>นนทบุรี</option><option>นราธิวาส</option><option>น่าน</option><option>บึงกาฬ</option><option>บุรีรัมย์</option><option>ปทุมธานี</option><option>ประจวบคีรีขันธ์</option><option>ปราจีนบุรี</option><option>ปัตตานี</option><option>พระนครศรีอยุธยา</option><option>พะเยา</option><option>พังงา</option><option>พัทลุง</option><option>พิจิตร</option><option>พิษณุโลก</option><option>เพชรบุรี</option><option>เพชรบูรณ์</option><option>แพร่</option><option>ภูเก็ต</option><option>มหาสารคาม</option><option>มุกดาหาร</option><option>แม่ฮ่องสอน</option><option>ยโสธร</option><option>ยะลา</option><option>ร้อยเอ็ด</option><option>ระนอง</option><option>ระยอง</option><option>ราชบุรี</option><option>ลพบุรี</option><option>ลำปาง</option><option>ลำพูน</option><option>เลย</option><option>ศรีสะเกษ</option><option>สกลนคร</option><option>สงขลา</option><option>สตูล</option><option>สมุทรปราการ</option><option>สมุทรสงคราม</option><option>สมุทรสาคร</option><option>สระแก้ว</option><option>สระบุรี</option><option>สิงห์บุรี</option><option>สุโขทัย</option><option>สุพรรณบุรี</option><option>สุราษฎร์ธานี</option><option>สุรินทร์</option><option>หนองคาย</option><option>หนองบัวลำภู</option><option>อ่างทอง</option><option>อำนาจเจริญ</option><option>อุดรธานี</option><option>อุตรดิตถ์</option><option>อุทัยธานี</option><option>อุบลราชธานี</option></select></div>
+                <div class="form-group"><label for="coopLetterRecipientName">เรียนถึง <span aria-hidden="true">*</span></label><input id="coopLetterRecipientName" name="letter_recipient_name" maxlength="255" required></div>
+                <div class="form-group"><label for="coopRecipientPosition">ตำแหน่ง / หน่วยงานผู้รับหนังสือ</label><input id="coopRecipientPosition" name="letter_recipient_position_department" maxlength="255"></div>
+                <div class="form-group coop-form-full"><label for="coopCompanyAddress">ที่อยู่ <span aria-hidden="true">*</span></label><textarea id="coopCompanyAddress" name="company_address" required></textarea></div>
+                <div class="form-group"><label for="coopWorkStartDate">วันเริ่มปฏิบัติงาน <span aria-hidden="true">*</span></label><input type="date" id="coopWorkStartDate" name="work_start_date" required></div>
+                <div class="form-group"><label for="coopWorkEndDate">วันสิ้นสุดปฏิบัติงาน <span aria-hidden="true">*</span></label><input type="date" id="coopWorkEndDate" name="work_end_date" required></div>
+              </div>
+            </section>
+            <fieldset class="coop-form-section coop-delivery-methods"><legend>การดำเนินการจัดส่งหนังสือ <span aria-hidden="true">*</span></legend><p>กรุณาทำเครื่องหมาย ✓ เลือกได้มากกว่า 1 วิธี</p>
+              <div class="coop-check-row">
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="self_submit"> <span>นักศึกษานำหนังสือไปยื่นด้วยตนเอง</span></label>
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="postal"> <span>ให้ภาควิชาฯ จัดส่งให้ทางไปรษณีย์</span></label>
+                <label class="coop-check-item"><input type="checkbox" name="delivery_methods" value="email"> <span>จัดส่งให้ทาง E-mail</span></label>
+              </div>
+            </fieldset>
+            <section class="coop-form-section coop-course-section">
+              <h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกงาน / สหกิจศึกษา</h4>
+              <p class="coop-unavailable" id="coopPrerequisiteContext"></p>
+              <p class="coop-unavailable" id="coopPrerequisiteNotice">เลือกผ่านแล้วพร้อมผลการเรียน หรือกำลังศึกษา (กำลังลงทะเบียนเรียนในเทอมนี้) ข้อมูลรายวิชาจะบันทึกเป็นส่วนหนึ่งของคำร้องนี้</p>
+              <div class="coop-course-table-wrap"><table class="coop-course-table" aria-describedby="coopPrerequisiteContext coopPrerequisiteNotice"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopPrerequisiteCourses"></tbody></table></div>
+            </section>
+            <section class="coop-form-section coop-signer-section">
+              <h4>ลงชื่อผู้ยื่นคำร้อง</h4>
+              <div class="coop-readonly-grid"><div><span>ลงชื่อ</span><strong id="coopSignerName">ไม่พบข้อมูล</strong></div><div><span>ชื่อ-สกุล</span><strong id="coopSignerFullName">ไม่พบข้อมูล</strong></div></div>
+            </section>
+            <section class="coop-form-section coop-approval-section">
+              <h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4>
+              <p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p>
+              <div class="coop-readonly-grid coop-advisor-grid">
+                <div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div>
+                <div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div>
+              </div>
+            </section>
+            <section class="coop-form-section coop-approval-section">
+              <h4>ความเห็นชอบของหัวหน้าภาควิชา</h4>
+              <p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p>
+            </section>
+            <p class="message" id="coopRequestFormMessage" role="alert" aria-live="assertive"></p>
+          </div>
+          <div class="modal-footer coop-request-modal-foot"><button type="button" class="btn-secondary" id="cancelCoopRequestModal">ปิด</button><button type="submit" class="btn-primary" id="saveCoopRequestBtn"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>ส่งคำร้อง</span></button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="coopRequestDetailModal" aria-hidden="true">
+      <div class="modal-box coop-request-modal" role="dialog" aria-modal="true" aria-labelledby="coopRequestDetailTitle" aria-describedby="coopRequestDetailDescription">
+        <div class="modal-header coop-request-modal-head">
+          <div>
+            <h3 id="coopRequestDetailTitle">ขอจัดทำหนังสือขอความอนุเคราะห์รับนักศึกษาสหกิจศึกษา</h3>
+            <p id="coopRequestDetailDescription">รายละเอียดคำร้องสหกิจศึกษาจากระบบ</p>
+          </div>
+          <button type="button" class="modal-close" id="closeCoopRequestDetailModal" aria-label="ปิด"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body" id="coopRequestDetailContent" aria-busy="false">
+          <p class="message" id="coopRequestDetailMessage" role="status" aria-live="polite"></p>
+          <div id="coopRequestDetailData" hidden>
+            <div class="coop-detail-status"><span>สถานะคำร้อง</span><strong class="coop-status-badge" id="coopDetailStatus"></strong></div>
+            <section class="coop-form-section coop-system-section"><h4>เรื่อง / เรียน</h4><div class="coop-readonly-grid" id="coopDetailDocument"></div></section>
+            <section class="coop-form-section coop-student-section"><h4>ข้อมูลนักศึกษา</h4><div class="coop-readonly-grid" id="coopDetailStudent"></div></section>
+            <section class="coop-form-section coop-company-section"><h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4><div class="coop-readonly-grid" id="coopDetailRequest"></div></section>
+            <section class="coop-form-section coop-delivery-detail"><h4>การดำเนินการจัดส่งหนังสือ</h4><div class="coop-detail-chip-list" id="coopDetailDeliveryMethods"></div></section>
+            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
+            <section class="coop-form-section coop-signer-section"><h4>ลงชื่อผู้ยื่นคำร้อง</h4><div class="coop-readonly-grid" id="coopDetailSigner"></div></section>
+            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p><div class="coop-readonly-grid coop-advisor-grid"><div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopDetailAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div><div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div></div></section>
+            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p></section>
+            <section class="coop-form-section coop-progress-section"><h4>สถานะการดำเนินการ</h4><div class="coop-stepper" id="coopDetailStepper"></div></section>
+          </div>
+        </div>
+        <div class="modal-footer coop-request-modal-foot"><button type="button" class="btn-secondary" id="closeCoopRequestDetailFooterBtn">ปิด</button></div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="mentorModal" aria-hidden="true">
+      <div class="modal-box mentor-modal" role="dialog" aria-modal="true" aria-labelledby="mentorModalTitle">
+        <div class="modal-header">
+          <div>
+            <h3 id="mentorModalTitle">เพิ่มข้อมูลพี่เลี้ยง</h3>
+            <p id="mentorModalDescription">กรอกข้อมูลสำหรับติดต่อพี่เลี้ยงสหกิจศึกษา</p>
+          </div>
+          <button type="button" class="modal-close" id="closeMentorModal" aria-label="ปิด">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="mentorForm" novalidate>
+          <div class="modal-body">
+            <div class="mentor-form-grid">
+              <div class="form-group mentor-form-full">
+                <label for="mentorFormEmail">อีเมล</label>
+                <input type="email" id="mentorFormEmail" name="email" autocomplete="email" required />
+              </div>
+              <div class="form-group">
+                <label for="mentorFormFirstName">ชื่อ</label>
+                <input type="text" id="mentorFormFirstName" name="first_name" autocomplete="given-name" required />
+              </div>
+              <div class="form-group">
+                <label for="mentorFormLastName">นามสกุล</label>
+                <input type="text" id="mentorFormLastName" name="last_name" autocomplete="family-name" required />
+              </div>
+              <div class="form-group mentor-form-full">
+                <label for="mentorFormPosition">ตำแหน่ง</label>
+                <input type="text" id="mentorFormPosition" name="position" autocomplete="organization-title" required />
+              </div>
+            </div>
+            <p class="message" id="mentorFormMessage" role="alert" aria-live="assertive"></p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="cancelMentorModal">ยกเลิก</button>
+            <button type="submit" class="btn-primary" id="saveMentorBtn">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>บันทึกข้อมูล</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- ==============================
+       Footer
+       ============================== -->
+
+    <footer class="footer">
+      <p>
+        © Development of a Web Platform for Co-operative Education Management
+      </p>
+    </footer>
+
+  </body>
+</html>

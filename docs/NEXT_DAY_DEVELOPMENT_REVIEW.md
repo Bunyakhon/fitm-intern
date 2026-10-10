@@ -1,5 +1,132 @@
 # Next Day Development Review — FITM-INTERN
 
+## Latest Review — Scenario K Date Boundary — 2026-10-10
+
+**IMPLEMENTED / NEEDS VERIFICATION.** Latest actual final run `a76f101314ab4cd283c5a1724b9f7e9e`: Preflight PASS, Cancellation **24 PASS / 1 FAIL** (K), six dependent stages BLOCKED, Cleanup Verification PASS, overall exit 1. D passed; this failure is neither keyboard nor focus. K's Company Response setup received HTTP 400 because Bangkok today (`2026-10-10`) parsed as midnight UTC was still future at `2026-10-09T17:17:09.046Z`. Prior K passed at `16:43:19.017Z`, before Bangkok midnight. Source and reproduction with the real validator confirm a time-dependent fixture bug; no production rule was changed.
+
+Minimal fix: test-only UTC calendar-date helper used by K, with eight validator-backed regression cases. All cancellation/retained-document/SQL/approval/Student assertions remain. Document positive fixtures already use a past date. Latest cleanup has passing Node and PowerShell ownership records; validator checks those records and local profile/storage absence. Supplied independent cleanup log reports one resource suite PASS. No resource deletion or new restricted Docker/Chrome attempt occurred; the old Document owner's physical state is still unknown.
+
+Executed local checks: Backend **202 PASS / 0 FAIL / 17 SKIP**, Frontend **248 PASS / 0 FAIL / 2 SKIP**, date/Company Response **27/0/0** included in Backend, build **123 modules PASS**, four JS syntax checks, three PS AST parses and diff check PASS. Logs: `logs/staff-cancellation-k-date-fix-20261010/`. Opt-in SQL/browser tests are unexecuted, not verified. [Detailed report and actual stage table](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#scenario-k-date-boundary--2026-10-10).
+
+Replay the existing final runner from the repository root in Windows CMD, requiring all nine stages and overall exit 0 before VERIFIED:
+
+```cmd
+powershell.exe -NoProfile -File backend\test\runStaffCancellationFinalAcceptance.ps1
+```
+
+Earlier entries are historical snapshots.
+
+## Latest Review — Document Initial Focus / Cleanup Evidence — 2026-10-10
+
+**IMPLEMENTED / NEEDS VERIFICATION.** Reviewed final run `6d835dc61fc248d7974b63fd4a2a598a`: Cancellation Chrome **28/0/0** (including J/UI), Documents **1 PASS / 1 FAIL**, five later suites BLOCKED and cleanup verification FAIL. Documents failed before Back/Escape because the new test assumed Cancel initial focus, while `showConfirmModal()` calls Confirm focus. Expected boolean true, actual false; Chrome's exact active element was not recorded. This is a test-contract defect, not evidence of failed focus restoration or CDP keyboard input. Production modal/Staff/Student APIs and passed cancellation scenarios were preserved.
+
+Cleanup FAIL is missing Document PowerShell ownership evidence. Node cleanup errors are empty and its owned directories are absent. The old runner converted exceptions into a generic message, so the original parent exception type is unavailable. Reproduced its native stderr / PowerShell Stop defect with an interrupted unit child (exit -1, no cleanup marker); repaired native-process capture preserves exit 7 and waits for the child cleanup marker. Added five process-controller units plus a validator regression that distinguishes a failed document test with successful cleanup from genuinely missing ownership evidence. Missing evidence still fails; no success is mocked.
+
+New results: Backend **194 PASS / 0 FAIL / 17 SKIP**, Frontend **248 PASS / 0 FAIL / 2 SKIP**, focused helpers **46/0/0**, relevant DOM **97/0/0**, build through the new process controller **123 modules PASS**, JS syntax/three PowerShell parses/diff PASS. Original 15 evidence files retain their hashes. Logs: `logs/staff-cancellation-document-cleanup-fix-20261009/`. Docker label query was denied; no new real Chrome/SQL execution or resource deletion occurred. Old PostgreSQL resource state remains UNVERIFIED, not confirmed clean or leaked.
+
+Run once from the repository root in an authorized ordinary Windows CMD terminal:
+
+```cmd
+powershell.exe -NoProfile -File backend\test\runStaffCancellationFinalAcceptance.ps1
+```
+
+This replays every suite in a new GUID directory. Review `process-result.json` (real child exit), full `suite.log`, safe document focus/mutation diagnostics, separate Node scenario/cleanup statuses, PowerShell ownership records and final gates. Maintain NEEDS VERIFICATION until real Document/SQL/backend/frontend/evidence/cleanup results are complete. Inspect any old owned container with verified label/disposable marker before cleanup; do not delete by similar name or touch volumes/persistent data. [Detailed current report](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#document-initial-focus-and-native-stderr-cleanup-fix--2026-10-10).
+
+Earlier review entries below are historical snapshots.
+
+## Latest Review — Scenario J and One-Command Final Acceptance — 2026-10-09
+
+**IMPLEMENTED / NEEDS VERIFICATION.** Inspected actual Chrome run `4ee57f6f59b448de9d9cc45cab350b8b`: 25 passing scenario entries, J failed, UI not reached. D and earlier native input fixes now pass actual Chrome. Root J failure is the E2E foreign-list URL (`GET /api/coop-requests` has no route; production Student adapter/router use `/me`). Its later Student cancellation call also needed PATCH rather than POST. Owner readback and foreign-detail assertions had already completed; the remaining reload/immutability/mobile assertions must execute in the replay.
+
+Coverage is explicit for all nine statuses, including a new `C-advisor_review` label backed by the F-G real UI cancellation and SQL audit. New document Back/Escape DOM regression failed before the minimal opener/fallback options were added to document modal callers. Six new DOM tests now cover save/generate/Company Response focus and dismissal without writes. Chrome default document mode retains its original assertions and adds native modal focus/no-HTTP/no-SQL checks, failure propagation and per-run JSON evidence.
+
+Executed here: Backend **188 PASS / 0 FAIL / 17 SKIP**, Frontend **248 PASS / 0 FAIL / 2 SKIP**, build **123 modules PASS**, route-contract/evidence units **14/0/0**, JS syntax, three PS AST parses and diff check PASS. Safe local backend targets an unavailable loopback test port; SQL opt-ins were disabled. Route-contract units use the real router/auth/controller with explicit SQL stubs and do not represent integration/browser success. Logs: `logs/staff-cancellation-final-fix-20261009/`.
+
+One-command orchestrator is implemented and parsed: preflight → Cancellation Chrome → Documents Chrome → focused SQL → full Backend → Frontend with disposable saved-data test → build → evidence → cleanup. Its actual invocation was denied at PowerShell script loading, exit 1, before any runner body/resource creation; no new Chrome/Docker acceptance or runtime orchestration PASS is claimed. Do not change execution policy, sandbox, ACLs or Docker settings to execute it here.
+
+From the repository root in an ordinary Windows CMD terminal already permitted to run project scripts:
+
+```cmd
+powershell.exe -NoProfile -File backend\test\runStaffCancellationFinalAcceptance.ps1
+```
+
+Review `logs/staff-cancellation-final-<guid>/final-summary.json`, suite logs, screenshots, `test-counts.json` and both Node/PowerShell cleanup records. Missing/unexecuted scenarios, wrong run identities, required SQL/backend skips or retained owned resources reject VERIFIED. The optional standalone prerequisite-browser fixture is an explicit skip, never counted as executed. No persistent DB/migration/business rules changed; only owned disposable containers/networks are removed. [Detailed report and known limitations](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#scenario-j-contract-fix-and-final-acceptance-runner--2026-10-09).
+
+Earlier reviews below are historical snapshots.
+
+## Latest Review — Chrome Cancellation E2E Preparation — 2026-10-09
+
+**IMPLEMENTED / NEEDS VERIFICATION; CHROME E2E IMPLEMENTED — EXECUTION PENDING.** Native CDP/Node browser runner now has an isolated `-Cancellation` mode, 27 planned scenario subtests and read-only `-CheckEnvironment`. The A–L matrix was recorded before implementation. Browser scenarios exercise the actual Staff UI/API/SQL and Student password-login/readback, rapid clicks while a real request is held, stale status/time, all nine eligibility states, real HTTP 400/401/403/404/409/500, transport failure/retry, document evidence retention and Class→Head approval regression. Fault injection never returns mocked success.
+
+New results: Backend units **148/0/17**, Frontend DOM **233/0/2**, build **123 modules PASS**, JavaScript syntax **245 files PASS**, PowerShell parse and diff PASS. Evidence directory: `logs/staff-cancellation-preparation-20261009-1791556436745/`. The 17 SQL roots and two frontend SQL/native-browser prerequisites remain skipped under the safe local configuration. These runs do not execute Chrome or PostgreSQL. User-supplied previous focused PostgreSQL **46/0/0** and Full Backend **241/0/1**, exit 0, remain distinct earlier evidence.
+
+Two attempted safe negative runner invocations were denied at script load by PowerShell execution policy, exit 1. Their assertions are **BLOCKED**; no runner resource was created. No policy modification or alternate invocation was tried. No Docker/Chrome retry or persistent schema/data change. Existing document mode requires user execution after shared runner cleanup/preflight improvements; available unit/build checks do not prove browser regression.
+
+Next review: run permitted ordinary CMD preflight, cancellation, default document browser regression and SQL/backend replays; inspect per-run `summary.json`, `runner.json`, screenshots and exit codes before deciding VERIFIED. If script/browser policy blocks the permitted terminal too, stop that execution and use the documented manual matrix only after an isolated review environment and test accounts are actually available. [Complete commands, data-safety details and manual acceptance](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#chrome-cancellation-acceptance-preparation--2026-10-09).
+
+Earlier reviews below are retained as history.
+
+## Latest Review — Student Cancellation Fixture Fix — 2026-10-09
+
+Confirmed the reported PostgreSQL failure is invalid Student fixture email, not an established readback API bug. Changed only that subtest's UUID-suffixed student_id/email to the required university domain; preserved all assertions and added owner/audit/foreign-list/unchanged-persistence checks. New local checks: Model validation PASS (old email rejected/new email accepted without SQL), focused Backend units **40 PASS / 0 FAIL / 0 SKIP**, syntax/diff PASS. Production code and inherited changes remain intact.
+
+User-reported pre-fix SQL **44 PASS / 2 FAIL / 0 SKIP** remains the latest PostgreSQL execution evidence. Codex Docker version probe is still denied at the named pipe; no Docker retries, bypass or settings changes. Next: user runs guarded focused SQL in ordinary Windows CMD and returns log/exit code, then completes real Staff/Student cancellation Browser Acceptance. **Scope 2.3.2 (2) remains IMPLEMENTED / NEEDS VERIFICATION. Post-fix SQL/Browser NOT VERIFIED.** [Root cause and exact replay command](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#student-cancellation-fixture-root-cause-fix--2026-10-09).
+
+## Latest Environment Follow-up — 2026-10-09
+
+Ordinary Windows CMD Docker/WSL success is now user-reported; the current Codex session still cannot open the `desktop-linux` named pipe. Stop Docker retries in this session. Local Windows sandbox selection is `unelevated`, with `workspace-write`/approvals `never`; restricted token/policy access is plausible, exact pipe ACL attribution remains unproven. No application bug is established and no application/test source changed. Existing regression counts below were inspected, not rerun in this follow-up; `git diff --check` passes. PostgreSQL/Chrome remain **NOT VERIFIED**, scope **2.3.2 (2) IMPLEMENTED / NEEDS VERIFICATION**.
+
+Recommended next task: execute the existing guarded disposable SQL focused/full runners from ordinary CMD, preserve output, then run document Chrome regression and complete cancellation-specific Staff/Student/negative-case Chrome coverage. The current document browser runner alone cannot verify cancellation. [Reviewed CMD commands, safety boundaries and evidence](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#codex-access-follow-up--2026-10-09). No settings changes, sandbox bypass, persistent migration rollout or new feature work is required for this replay.
+
+## Current Review — Final Cancellation Acceptance Recheck — 2026-10-09 Asia/Bangkok
+
+Next review **2026-10-10**. Scope **2.3.2 (2) remains IMPLEMENTED / NEEDS VERIFICATION**. No new feature/refactor/application bug fix/test-source change. Preserve all inherited 11 modified tracked and 5 untracked feature/report files. This acceptance turn updated only the four requested documents and added ignored evidence logs. No commit/push/PR/deploy or persistent data/schema/account/container/volume changes.
+
+| Current actual execution | PASS | FAIL | SKIP | Evidence |
+|---|---:|---:|---:|---|
+| All 33 Backend test files, safe unit configuration | 144 | 0 | 17 | `logs/staff-cancellation-acceptance-backend-20261009.log` |
+| All 18 Frontend test files | 231 | 0 | 2 | `logs/staff-cancellation-acceptance-frontend-20261009.log` |
+| Production build: 13 HTML entries / 123 modules | PASS | 0 | — | `logs/staff-cancellation-acceptance-build-20261009.log` |
+| Syntax: 242 source/test/script files | 242 | 0 | — | `logs/staff-cancellation-acceptance-syntax-20261009.log` |
+| Final whitespace diff check | PASS | 0 | — | `logs/staff-cancellation-acceptance-diff-check-20261009.log` |
+| Disposable PostgreSQL acceptance / integrity / races / rollback | — | — | — | NOT VERIFIED; Docker named pipe access denied |
+| Real Chrome Staff/Student/approval/document acceptance | — | — | — | NOT VERIFIED; safe DB unavailable and smoke command policy rejection |
+
+Current commands: local Node 24.11.1 `node --test --test-isolation=none` across complete backend/frontend `*.test.js` lists; `npm.cmd --prefix frontend run build -- --configLoader native`; `node --check` across source/test/script JS; `git diff --check`. Backend disabled integration flags, cleared disposable URLs and used test-only credentials with `127.0.0.1:1/fitm_unavailable_test`. No persistent endpoint was contacted.
+
+Count reconciliation is now backed by actual log parsing: historical 357 PASS has 156 root tests + 201 nested tests. Current discovers all old roots plus 5 new cancellation unit roots; 17 opt-in integration roots skip and their 201 children do not execute. Historical 139 unit + 218 integration = 357; current 139 unit + 5 new unit = 144 PASS. `missingRootTests=[]` in `logs/staff-cancellation-acceptance-count-comparison-20261009.log`. Full historical runner enabled guarded disposable URLs/markers, current unavailable-environment run disabled them. The difference is not a demonstrated regression. Earlier focused 76 PASS, prior syntax/build and failed Docker logs were inspected, not summed with current executions.
+
+Diagnosis evidence: `logs/staff-cancellation-acceptance-docker-diagnosis-20261009.log`. Both `desktop-linux` and explicit `default` named-pipe probes return permission denied; no context change. Docker Desktop/backend and WSL processes are running, but WSL `--status`/`--list --verbose` return `Wsl/EnumerateDistros/Service/E_ACCESSDENIED`. Actual Engine health/integration cannot be confirmed. Read-only host backend-log/settings inspection adds no definitive engine-state explanation. This establishes access failure in the session, not proof of Engine stopped or disabled WSL integration. Installed Chrome metadata is 154.0.8037.98; automatic approval review rejected smoke launch/profile handling as `blocked by policy` before execution. No browser profile was created. No unavailable test is marked PASS.
+
+Action for next session: ordinary PowerShell `docker version`/`docker info`/`wsl --status` comparison, then guarded disposable focused SQL/full regression and actual Chrome checklist once access is available. See [final acceptance recheck and replay commands](STAFF_COOP_CANCELLATION_ACCEPTANCE.md#final-acceptance-recheck--2026-10-09). A successful existing Staff document browser runner alone does not accept cancellation interactions; those require the separate Staff/Student/stale/offline/mobile/authorization checklist. No reset/prune/volume removal/Engine restart/group/settings change or pending persistent migration as a workaround.
+
+## Current Review — Staff Coop Request Cancellation — 2026-10-09 Asia/Bangkok
+
+Intended next review: **2026-10-10**. This section supersedes older calendar/supervision results for this continuation. **2.3.2 (2): IMPLEMENTED / NEEDS VERIFICATION**. Current SQL/Chrome acceptance was blocked by Docker engine permission denied; no persistent DB/schema/account changes or commit/push/PR/deploy occurred.
+
+Audited clean Git state, README/current HANDOFF/review, Compose/package/configuration, request/review models/routes/controllers/services/migrations, existing cancellation tests, Staff document UI and shared feedback/responsive CSS. Existing cancellation supports only four pending states; approval remains Class Advisor → Head. Existing schema stores reason/Staff/from/to/server time and already has appropriate review actor/transition/reason constraints. No new migration/dependency/permissions required.
+
+Implemented request search/filter/page/detail/history within the original document menu, authoritative server cancellation eligibility, reasoned shared modal, duplicate/loading/success/error/auth/stale handling and current-state refresh. Server adds optional status/timestamp preconditions under existing locks and safe named Staff detail history; old reason-only clients remain supported. Student readonly detail displays saved cancellation reason/actor/date. Document/Company Response/Placement writes are never performed by cancellation; approved/issued/in-progress/rejected/canceled states remain blocked.
+
+| Executed check | PASS | FAIL | SKIP | Evidence |
+|---|---:|---:|---:|---|
+| All Backend test files with safe unit configuration | 144 | 0 | 17 | `logs/staff-cancellation-backend-20261009.log` |
+| All Frontend test files | 231 | 0 | 2 | `logs/staff-cancellation-frontend-20261009.log` |
+| Focused cancellation/Student | 76 | 0 | 0 | `logs/staff-cancellation-focused-20261009.log` |
+| Build: 13 HTML entries / 123 modules | PASS | 0 | — | `logs/staff-cancellation-build-20261009.log` |
+| JavaScript syntax: 242 source/test/script files | 242 | 0 | — | `logs/staff-cancellation-syntax-20261009.log` |
+| Whitespace diff check | PASS | 0 | — | `logs/staff-cancellation-diff-check-20261009.log` |
+| New disposable PostgreSQL cases | — | — | — | NOT VERIFIED; `logs/staff-cancellation-postgresql-blocker-20261009.log` |
+| Real Chrome cancellation/documents | — | — | — | NOT VERIFIED; safe PostgreSQL prerequisite unavailable |
+
+Counts overlap; do not sum them. Two initial focused failures were fixture assumptions (missing `reviews` on pagination rows; Student child button hidden individually versus hidden parent section). Final focused/full runs passed. Two initial-auth/server-eligibility UI cases were added after focused execution and passed the final full Frontend suite. No source tests were disabled, assertions removed or extra skips added. Seventeen Backend suites are existing integration opt-ins; Frontend skips are existing real prerequisite-browser and SQL bridge checks. Earlier calendar 357 Backend/215 Frontend/current-at-the-time SQL/Chrome evidence remains historical.
+
+Commands executed: `node --test --test-isolation=none` across each complete backend/frontend test-file list and the three targeted files; `npm.cmd --prefix frontend run build -- --configLoader native`; `node --check` on repository JS; `git diff --check`; `docker compose config --quiet`; `docker version --format '{{.Server.Version}}'`. Backend run set only test credentials/DB `127.0.0.1:1/fitm_unavailable_test`, cleared disposable URLs and explicitly disabled integration opt-ins. Compose parsed with unset root `POSTGRES_PASSWORD` warning; no service startup/recreation or migration followed. No environment secrets are recorded in evidence.
+
+New SQL tests are guarded by the existing exact **fitm_role_test** name and **fitm.a013_disposable=on** marker. They cover reason/body/ID validation, anonymous/other roles/inactive Staff, safe search/named history, status/timestamp stale rejection, cancellation-versus-Class/Head races, transactional audit rollback, approved document retention and Student owner/history/repeat denial. These assertions have only syntax validation here; their actual SQL outcomes remain pending. Current persistent migration counts/ledger/schema were not inspected; no pending 017–021 rollout took place.
+
+Next: run `backend/test/runTeacherAdvisorAcceptance.ps1 -BackendOnly -FocusedBackendTests roleWorkflow.database.test.js -FastExit`, then the full disposable runner and existing Staff Chrome regression when Docker access is restored. The existing browser runner covers documents, not the new cancellation interaction. Follow the [dedicated real Chrome cancellation checklist](STAFF_COOP_CANCELLATION_ACCEPTANCE.md) in a disposable review instance for Staff login/search/modal/reason/status/reload/Student-readback/stale/offline/mobile/auth and console/network checks. Record actual results before any VERIFIED upgrade. No persistent migrations/testing or broader post-approval cancellation policy as a workaround.
+
 ## Current Review — Staff Activity Calendar — 2026-10-09 Asia/Bangkok
 
 This authoritative section supersedes the older supervision review below. Requirement **2.3.2 (6)** is implemented with real database/API/UI integration. Continue from the existing working tree; preserve the earlier document, daily-log and supervision changes. **No persistent Local/staging/production schema or data was modified. No commit/push/PR/deployment.** Intended next review: **2026-10-10**.

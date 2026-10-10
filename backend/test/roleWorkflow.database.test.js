@@ -1098,11 +1098,58 @@ test(
           assert.equal(result.status,200); assert.equal(result.body.data.request.status,'cancelled');
           assert.equal(result.body.data.review.actor_role,'department_staff'); assert.equal(result.body.data.review.from_status,status);
         }
-        for (const status of ['approved','rejected','cancelled']) {const row = await request(status); assert.equal((await cancel(row.id)).status,409);}
+        for (const status of ['approved','document_issued','in_progress','rejected','cancelled']) {const row = await request(status); assert.equal((await cancel(row.id)).status,409);}
         const row = await request('advisor_review'); const results = await Promise.all([cancel(row.id),cancel(row.id)]);
         assert.deepEqual(results.map(result=>result.status).sort(),[200,409]);
         assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),1);
         assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`, {token:tokens.teacher,method:'POST',body:{reason:'Fixture'}})).status,403);
+      });
+      await t.test('Staff cancellation validates direct HTTP payloads, actors and missing requests', async () => {
+        const row = await request();
+        const route = `/api/staff/coop-requests/${row.id}/cancel`;
+        for (const body of [null, [], {}, {reason:null}, {reason:1}, {reason:''}, {reason:'   '}, {reason:'x'.repeat(2001)}, {reason:'OK',staff_id:staff.id}, {reason:'OK',expected_status:'advisor_review'}, {reason:'OK',expected_status:'advisor_review',expected_updated_at:'invalid'}])
+          assert.equal((await call(route,{token:tokens.staff,method:'POST',body})).status,400);
+        assert.equal((await call('/api/staff/coop-requests/not-a-uuid/cancel',{token:tokens.staff,method:'POST',body:{reason:'OK'}})).status,400);
+        assert.equal((await call(`/api/staff/coop-requests/${crypto.randomUUID()}/cancel`,{token:tokens.staff,method:'POST',body:{reason:'OK'}})).status,404);
+        assert.equal((await call(route,{method:'POST',body:{reason:'OK'}})).status,401);
+        for (const token of [tokens.student,tokens.teacher,tokens.head]) assert.equal((await call(route,{token,method:'POST',body:{reason:'OK'}})).status,403);
+        const disabled = await m.DepartmentStaff.create({first_name:'Inactive',last_name:'Fixture',email:'cancel-disabled@fixture.invalid',password,is_active:false});
+        assert.equal((await call(route,{token:issueDepartmentStaffToken(disabled),method:'POST',body:{reason:'OK'}})).status,403);
+        assert.equal((await m.CoopRequest.findByPk(row.id)).status,'advisor_review');assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);
+      });
+      await t.test('Staff search and detail expose named safe history and current cancellation preconditions', async () => {
+        const row = await request();await row.update({company_name:'Cancellation Search Fixture'});
+        const list = await call('/api/staff/coop-requests?search=Cancellation%20Search&limit=26&offset=0',{token:tokens.staff});
+        assert.equal(list.status,200);assert.ok(list.body.data.some(item=>item.id===row.id));assert.ok(list.body.data.every(item=>item.company_name.includes('Cancellation Search')));
+        const studentSearch = await call(`/api/staff/coop-requests?search=${encodeURIComponent(student.student_id)}`,{token:tokens.staff});assert.equal(studentSearch.status,200);assert.ok(studentSearch.body.data.length);assert.ok(studentSearch.body.data.every(item=>item.student.student_id===student.student_id));
+        const loaded=await call(`/api/staff/coop-requests/${row.id}`,{token:tokens.staff});assert.equal(loaded.body.data.cancellation.allowed,true);
+        const cancelled=await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body:{reason:'  Saved Staff reason  ',expected_status:loaded.body.data.cancellation.expected_status,expected_updated_at:loaded.body.data.cancellation.expected_updated_at}});
+        assert.equal(cancelled.status,200);assert.equal(cancelled.body.data.review.reason,'Saved Staff reason');assert.equal(cancelled.body.data.review.department_staff_id,staff.id);assert.ok(cancelled.body.data.request.cancelled_at);
+        const after=await call(`/api/staff/coop-requests/${row.id}`,{token:tokens.staff});assert.equal(after.body.data.cancellation.allowed,false);assert.equal(after.body.data.reviews[0].staff.first_name,staff.first_name);
+      });
+      await t.test('Staff stale cancellable stage/timestamp and approval races preserve current SQL state', async () => {
+        const service = createRoleWorkflowService(m);
+        for (const [role,status,actorId] of [['teacher','advisor_review',teacher.id],['department_head','department_head_review',head.id]]) {
+          const row=await request(status);const body={reason:'Race cancellation',expected_status:status,expected_updated_at:row.updatedAt.toISOString()};
+          const results=await Promise.allSettled([service.reviewRequest(role,actorId,row.id,'approve',{}),service.reviewRequest('department_staff',staff.id,row.id,'cancel',body)]);
+          assert.equal(results.filter(item=>item.status==='fulfilled').length,1);assert.equal(results.find(item=>item.status==='rejected').reason.status,409);assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),1);
+        }
+        const row=await request();const body={reason:'Stale reason',expected_status:row.status,expected_updated_at:row.updatedAt.toISOString()};
+        await service.reviewRequest('teacher',teacher.id,row.id,'approve',{});
+        assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body})).status,409);
+        const fresh=await m.CoopRequest.findByPk(row.id);
+        assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body:{...body,expected_status:fresh.status,expected_updated_at:'2000-01-01T00:00:00.000Z'}})).status,409);
+        assert.equal((await m.CoopRequest.findByPk(row.id)).status,'department_head_review');assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),1);
+      });
+      await t.test('Staff cancellation audit failure rolls back status and cancellation timestamp in PostgreSQL', async child => {
+        const row=await request();child.mock.method(m.CoopRequestReview,'create',async()=>{throw Error('injected cancellation audit failure');});
+        const failed=await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body:{reason:'Rollback reason'}});assert.equal(failed.status,500);
+        const after=await m.CoopRequest.findByPk(row.id);assert.equal(after.status,'advisor_review');assert.equal(after.cancelled_at,null);assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);
+      });
+      await t.test('Staff cancellation refuses approved document owners and retains document evidence', async () => {
+        const row=await request('approved');const document=await m.CoopDocument.create({coop_request_id:row.id,document_type:'cooperation',status:'draft',version:1,metadata:{},snapshot:{},template_version:'fixture',created_by:staff.id,updated_by:staff.id});
+        assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body:{reason:'Not permitted'}})).status,409);
+        assert.deepEqual((await m.CoopDocument.findByPk(document.id)).toJSON(),document.toJSON());assert.equal((await m.CoopRequest.findByPk(row.id)).status,'approved');assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),0);
       });
       // restore module caches immediately, never connect its normal DB instance.
       const registryPath = require.resolve('../src/models');
@@ -1121,6 +1168,21 @@ test(
       }
       const {CATALOG} = require('../src/services/coopPrerequisites');
       const response = () => ({statusCode: 200, status(code) {this.statusCode = code; return this;}, json(body) {this.body = body; return this;}});
+      await t.test('Student owner reads Staff cancellation state/reason/audit and foreign owner stays forbidden',async()=>{
+        const suffix=crypto.randomUUID();
+        const owner=await m.Student.create({student_id:`staff-cancel-owner-${suffix}`,email:`staff-cancel-owner-${suffix}@email.kmutnb.ac.th`,first_name:'Cancel',last_name:'Owner',major:'IT',track:'co_op',advisor_teacher_id:teacher.id,password});
+        const row=await request('advisor_review',owner.id);
+        assert.equal((await call(`/api/staff/coop-requests/${row.id}/cancel`,{token:tokens.staff,method:'POST',body:{reason:'Student-visible cancellation'}})).status,200);
+        const detail=response();await studentController.getCoopRequestById({user:{id:owner.id},params:{id:row.id}},detail);assert.equal(detail.statusCode,200);assert.equal(detail.body.data.status,'cancelled');assert.equal(detail.body.data.reviews[0].department_staff_id,staff.id);assert.equal(detail.body.data.reviews[0].reason,'Student-visible cancellation');
+        assert.equal(detail.body.data.student_id,owner.id);assert.ok(detail.body.data.cancelled_at);assert.equal(detail.body.data.reviews.length,1);
+        const audit=detail.body.data.reviews[0];assert.equal(audit.actor_role,'department_staff');assert.equal(audit.decision,'cancel');assert.equal(audit.from_status,'advisor_review');assert.equal(audit.to_status,'cancelled');assert.ok(audit.get('created_at'));
+        const savedRequest=(await m.CoopRequest.findByPk(row.id)).toJSON();const savedReviews=(await m.CoopRequestReview.findAll({where:{coop_request_id:row.id}})).map(review=>review.toJSON());
+        const list=response();await studentController.getMyCoopRequests({user:{id:owner.id}},list);assert.equal(list.body.data.find(item=>item.id===row.id).status,'cancelled');
+        const foreign=response();await studentController.getCoopRequestById({user:{id:student.id},params:{id:row.id}},foreign);assert.equal(foreign.statusCode,404);
+        assert.equal(foreign.body.data,undefined);const foreignList=response();await studentController.getMyCoopRequests({user:{id:student.id}},foreignList);assert.equal(foreignList.statusCode,200);assert.ok(foreignList.body.data.every(item=>item.id!==row.id));
+        const repeat=response();await studentController.cancelCoopRequest({user:{id:owner.id},params:{id:row.id}},repeat);assert.equal(repeat.statusCode,400);assert.equal(await m.CoopRequestReview.count({where:{coop_request_id:row.id}}),1);
+        assert.deepEqual((await m.CoopRequest.findByPk(row.id)).toJSON(),savedRequest);assert.deepEqual((await m.CoopRequestReview.findAll({where:{coop_request_id:row.id}})).map(review=>review.toJSON()),savedReviews);
+      });
       const requestFields = {company_name:'Safe fixture', company_province:'Bangkok', company_address:'123 Fixture', letter_recipient_name:'Recipient', work_start_date:'2026-11-01', work_end_date:'2027-01-01', delivery_methods:['email']};
       for (const decision of ['approve','reject']) await t.test(`Head ${decision}: full authenticated Class -> Head HTTP/SQL/Student history with safe named actors`,async()=>{
         const suffix=crypto.randomUUID().slice(0,8);

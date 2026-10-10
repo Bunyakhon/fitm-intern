@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="หน้ายืนยันและปรับปรุงข้อมูลพี่เลี้ยงสหกิจศึกษา"
+    />
+    <title>ยืนยันข้อมูลพี่เลี้ยง | ระบบสหกิจศึกษา</title>
+    <meta name="referrer" content="no-referrer" />
+    <script type="module" crossorigin src="/assets/mentorVerifyUser-4YS1UOsn.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/client-DPLsZUU1.js">
+    <link rel="modulepreload" crossorigin href="/assets/feedback-CUQPlHFG.js">
+    <link rel="modulepreload" crossorigin href="/assets/teacherProjectAdvisor.api-CSEFIC3z.js">
+    <link rel="modulepreload" crossorigin href="/assets/supervisionView-D4v5i-La.js">
+    <link rel="modulepreload" crossorigin href="/assets/internshipLogView-C7hHljZQ.js">
+    <link rel="stylesheet" crossorigin href="/assets/client-CBlW_4jl.css">
+    <link rel="stylesheet" crossorigin href="/assets/supervisionView-CjQk7BTf.css">
+    <link rel="stylesheet" crossorigin href="/assets/internshipLogView-DiDgYmpn.css">
+    <link rel="stylesheet" crossorigin href="/assets/mentorVerifyUser-BBkHjUMY.css">
+  </head>
+  <body>
+    <main class="mentor-verification-page">
+      <section class="mentor-verification-card" aria-labelledby="pageTitle">
+        <header class="mentor-verification-header">
+          <p class="eyebrow">ระบบสหกิจศึกษา</p>
+          <h1 id="pageTitle">ยืนยันข้อมูลพี่เลี้ยง</h1>
+          <p>
+            ตรวจสอบข้อมูลของท่านให้ถูกต้องก่อนยืนยัน เพื่อให้การประสานงานสหกิจศึกษาเป็นไปอย่างราบรื่น
+          </p>
+        </header>
+
+        <div
+          id="verificationState"
+          class="verification-state is-loading"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="state-indicator" aria-hidden="true"></span>
+          <p id="verificationStateMessage">กำลังตรวจสอบลิงก์ยืนยันข้อมูล...</p>
+        </div>
+
+        <section id="mentorContent" class="mentor-content" hidden>
+          <section class="student-context" aria-labelledby="studentContextTitle">
+            <h2 id="studentContextTitle">ข้อมูลการดูแลนักศึกษา</h2>
+
+            <dl class="student-context-list">
+              <div>
+                <dt>มหาวิทยาลัย</dt>
+                <dd>มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</dd>
+              </div>
+              <div>
+                <dt>นักศึกษาที่ท่านดูแล</dt>
+                <dd id="studentName">ไม่พบข้อมูลนักศึกษา</dd>
+              </div>
+            </dl>
+          </section>
+
+          <form id="mentorVerificationForm" novalidate>
+            <fieldset id="mentorFieldset" disabled>
+              <legend>ข้อมูลพี่เลี้ยง</legend>
+
+              <div class="form-grid">
+                <div class="form-group form-group-full">
+                  <label for="mentorEmail">อีเมล</label>
+                  <input
+                    id="mentorEmail"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="mentorFirstName">ชื่อ</label>
+                  <input
+                    id="mentorFirstName"
+                    name="first_name"
+                    type="text"
+                    autocomplete="given-name"
+                    maxlength="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="mentorLastName">นามสกุล</label>
+                  <input
+                    id="mentorLastName"
+                    name="last_name"
+                    type="text"
+                    autocomplete="family-name"
+                    maxlength="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group form-group-full">
+                  <label for="mentorPosition">ตำแหน่ง</label>
+                  <input
+                    id="mentorPosition"
+                    name="position"
+                    type="text"
+                    autocomplete="organization-title"
+                    maxlength="150"
+                    required
+                  />
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button id="saveProfileButton" class="button button-secondary" type="submit">
+                บันทึกการแก้ไข
+              </button>
+              <button id="confirmVerificationButton" class="button button-primary" type="button">
+                ยืนยันข้อมูล
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section id="mentorReview" class="internship-review" hidden>
+          <p id="mentorReviewStudent"></p>
+          <p>ชื่อผู้ดูแล: <span id="mentorReviewName"></span></p>
+          <button id="mentorReviewReload" type="button" class="button button-secondary">โหลดใหม่</button>
+          <div id="mentorWeekList"></div>
+          <section id="mentorReviewDetail" hidden>
+            <h2 id="mentorReviewWeekTitle"></h2>
+            <div id="mentorReviewEntries"></div>
+            <div id="mentorReviewActions" class="internship-editor">
+              <label>ข้อเสนอแนะจากผู้ดูแล <textarea id="mentorWeeklyFeedback" maxlength="5000"></textarea></label>
+              <button id="mentorMarkReviewed" type="button" class="button button-primary">ยืนยันตรวจแล้วทั้งสัปดาห์</button>
+              <button id="mentorRequestRevision" type="button" class="button button-secondary">ขอแก้ไข</button>
+            </div>
+            <h3>ประวัติการส่งและการตรวจ</h3>
+            <div id="mentorReviewHistory"></div>
+          </section>
+        </section>
+        <section id="mentorAppointment" hidden>
+          <div id="mentorAppointmentDetails" class="supervision-card"></div>
+          <div id="mentorAppointmentActions" hidden>
+            <label class="supervision-check"><input id="mentorAppointmentIdentity" type="checkbox" />ชื่อ อีเมล ตำแหน่ง และนัดหมายข้างต้นเป็นข้อมูลของฉันและถูกต้อง</label>
+            <button id="mentorAppointmentConfirm" class="button button-primary" type="button" disabled>ยืนยันข้อมูลและนัดหมาย</button>
+          </div>
+        </section>
+        <p class="security-note">
+          โปรดเก็บลิงก์ยืนยันข้อมูลนี้ไว้เป็นความลับ
+        </p>
+      </section>
+    </main>
+
+  </body>
+</html>

@@ -31,6 +31,11 @@ const REQUEST_STATUSES = [
   "rejected",
   "cancelled",
 ];
+const STAFF_CANCELLABLE_STATUSES = ['submitted', 'staff_review', 'advisor_review', 'department_head_review'];
+function cancellationState(request) {
+  return { allowed: STAFF_CANCELLABLE_STATUSES.includes(request.status), expected_status: request.status,
+    expected_updated_at: request.updatedAt };
+}
 const JOB_STATUSES = [
   "pending_email_verification",
   "pending_review",
@@ -134,8 +139,14 @@ function createRoleWorkflowService(m = models) {
       });
       where = { advisor_teacher_id: { [Op.in]: advisors.map((t) => t.id) } };
     }
-    return m.CoopRequest.findAll({
-      where: { status },
+    const requestWhere = { status };
+    if (role === 'department_staff' && query.search !== undefined) {
+      const search = text(query.search, 'search', 100).replace(/[\\%_]/g, '\\$&');
+      requestWhere[Op.or] = ['company_name', '$student.student_id$', '$student.first_name$', '$student.last_name$']
+        .map(field => ({ [field]: { [Op.iLike]: `%${search}%` } }));
+    }
+    const requests = await m.CoopRequest.findAll({
+      where: requestWhere,
       include: [studentInclude(where, role), prerequisiteInclude(m), ...(role === "department_head" ? [reviewInclude()] : [])],
       order: [
         ["submitted_at", "ASC"],
@@ -143,6 +154,7 @@ function createRoleWorkflowService(m = models) {
       ],
       ...page(query),
     });
+    return role === 'department_staff' ? requests.map(request => ({ ...request.toJSON(), cancellation: cancellationState(request) })) : requests;
   }
   async function requestDetail(role, actorId, id) {
     uuid(id);
@@ -165,18 +177,37 @@ function createRoleWorkflowService(m = models) {
     const reviews = await m.CoopRequestReview.findAll({
       where: { coop_request_id: id },
       ...(role === "department_head" ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
+      ...(role === 'department_staff' ? { include: [
+        { model: m.DepartmentStaff, as: 'staff', attributes: ['id', 'first_name', 'last_name'] },
+        { model: m.Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'] },
+      ] } : {}),
       order: [
         ["created_at", "ASC"],
         ["id", "ASC"],
       ],
     });
-    return { request, reviews };
+    return { request, reviews, ...(role === 'department_staff' ? { cancellation: cancellationState(request) } : {}) };
   }
   async function reviewRequest(role, actorId, id, decision, body) {
     if (role === 'department_staff' && decision !== 'cancel') throw new WorkflowError('Staff cannot approve or forward Coop Requests', 403);
     uuid(id);
-    const reason = decision === 'cancel' ? text(object(body, ['reason']).reason, 'reason', 2000) : decisionPayload(body, decision);
-    const stage = role === 'department_staff' ? {from: ['submitted','advisor_review','staff_review','department_head_review'], next: 'cancelled'} : STAGES[role];
+    const cancellation = role === 'department_staff' && decision === 'cancel';
+    let expected;
+    if (cancellation) {
+      object(body, ['reason', 'expected_status', 'expected_updated_at']);
+      // Older reason-only clients remain supported. The Staff UI sends both
+      // preconditions, including transitions between two cancellable stages.
+      if ('expected_status' in body || 'expected_updated_at' in body) {
+        if (!REQUEST_STATUSES.includes(body.expected_status) || typeof body.expected_updated_at !== 'string'
+          || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(body.expected_updated_at)
+          || !Number.isFinite(Date.parse(body.expected_updated_at))
+          || new Date(body.expected_updated_at).toISOString() !== body.expected_updated_at)
+          throw new WorkflowError('Expected status and updated timestamp must both be valid');
+        expected = { status: body.expected_status, time: Date.parse(body.expected_updated_at) };
+      }
+    }
+    const reason = cancellation ? text(body.reason, 'reason', 2000) : decisionPayload(body, decision);
+    const stage = role === 'department_staff' ? {from: STAFF_CANCELLABLE_STATUSES, next: 'cancelled'} : STAGES[role];
     if (!stage || !(role === 'department_staff' ? ['cancel'] : ['approve','reject']).includes(decision))
       throw new WorkflowError("Unsupported review decision");
     return m.sequelize.transaction(async (transaction) => {
@@ -204,6 +235,9 @@ function createRoleWorkflowService(m = models) {
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
+      if (!request) throw new WorkflowError('Coop request was not found', 404);
+      if (expected && (request.status !== expected.status || new Date(request.updatedAt).getTime() !== expected.time))
+        throw new WorkflowError('Request changed since it was loaded; refresh before cancelling', 409);
       if (!stage.from.includes(request.status))
         throw new WorkflowError(
           "Request is no longer awaiting this review stage",

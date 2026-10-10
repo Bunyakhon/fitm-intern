@@ -1,0 +1,2067 @@
+{
+  "candidateFiles": 360,
+  "developmentDirectoriesIncludingRoot": 55,
+  "targetedReviewFiles": 101,
+  "structuralTextFiles": 356,
+  "metadataFiles": 4,
+  "remainingForInitialTargetedSemanticReview": [
+    ".env.example",
+    ".gitignore",
+    "HANDOFF_fitm-intern.md",
+    "README.md",
+    "backend/.dockerignore",
+    "backend/.env.example",
+    "backend/package.json",
+    "backend/scripts/coopActivityBrowserScenarios.js",
+    "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+    "backend/scripts/runLocalClassAdvisorAcceptance.js",
+    "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+    "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+    "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+    "backend/scripts/staffAcceptanceProcess.js",
+    "backend/scripts/staffBrowserEnvironment.js",
+    "backend/scripts/staffBrowserEvaluation.js",
+    "backend/scripts/staffBrowserFixtureDate.js",
+    "backend/scripts/staffBrowserInput.js",
+    "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+    "backend/scripts/supervisionBrowserScenarios.js",
+    "backend/scripts/supervisionResultBrowserScenarios.js",
+    "backend/src/config/nlp.js",
+    "backend/src/controllers/companyEvaluation.controller.js",
+    "backend/src/controllers/companyResponse.controller.js",
+    "backend/src/controllers/coopProjectAdvisor.controller.js",
+    "backend/src/controllers/coopRequest.controller.js",
+    "backend/src/controllers/jobSubmission.controller.js",
+    "backend/src/controllers/staffAuth.controller.js",
+    "backend/src/controllers/teacherAuth.controller.js",
+    "backend/src/db/migrations/001_create_companies.js",
+    "backend/src/db/migrations/002_create_job_submissions.js",
+    "backend/src/db/migrations/003_create_job_postings.js",
+    "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+    "backend/src/db/migrations/005_create_company_access_tokens.js",
+    "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js",
+    "backend/src/db/migrations/007_create_department_staffs.js",
+    "backend/src/db/migrations/007a_create_missing_base_tables.js",
+    "backend/src/db/migrations/008_add_resume_extraction.js",
+    "backend/src/db/migrations/009_add_coop_request_company_job_links.js",
+    "backend/src/db/migrations/010_cleanup_student_file_schema_drift.js",
+    "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+    "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+    "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+    "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+    "backend/src/db/migrations/015_add_company_evaluations.js",
+    "backend/src/db/migrations/016_add_coop_documents.js",
+    "backend/src/db/migrations/017_add_company_responses.js",
+    "backend/src/db/migrations/018_add_internship_logs.js",
+    "backend/src/db/migrations/019_add_supervision_appointments.js",
+    "backend/src/db/migrations/020_add_supervision_results.js",
+    "backend/src/db/migrations/021_add_coop_activities.js",
+    "backend/src/db/seedJobMatchingDemo.js",
+    "backend/src/middlewares/recruitmentRateLimit.middleware.js",
+    "backend/src/models/company.model.js",
+    "backend/src/models/companyAccessToken.model.js",
+    "backend/src/models/companyEvaluation.model.js",
+    "backend/src/models/companyResponse.model.js",
+    "backend/src/models/companyResponseHistory.model.js",
+    "backend/src/models/coopActivity.model.js",
+    "backend/src/models/coopActivityHistory.model.js",
+    "backend/src/models/coopDocument.model.js",
+    "backend/src/models/coopDocumentRevision.model.js",
+    "backend/src/models/coopProject.model.js",
+    "backend/src/models/coopProjectAdvisorRequest.model.js",
+    "backend/src/models/coopRequest.model.js",
+    "backend/src/models/coopRequestDeliveryMethod.model.js",
+    "backend/src/models/coopRequestPrerequisiteCourse.model.js",
+    "backend/src/models/coopRequestReview.model.js",
+    "backend/src/models/departmentStaff.model.js",
+    "backend/src/models/internshipDailyLog.model.js",
+    "backend/src/models/internshipReviewToken.model.js",
+    "backend/src/models/internshipWeek.model.js",
+    "backend/src/models/internshipWeekEvent.model.js",
+    "backend/src/models/jobPosting.model.js",
+    "backend/src/models/jobPostingReview.model.js",
+    "backend/src/models/jobPostingWorkMode.model.js",
+    "backend/src/models/jobSubmission.model.js",
+    "backend/src/models/mentor.model.js",
+    "backend/src/models/mentorToken.model.js",
+    "backend/src/models/studentFile.model.js",
+    "backend/src/models/studentProfile.model.js",
+    "backend/src/models/supervisionAppointment.model.js",
+    "backend/src/models/supervisionEvent.model.js",
+    "backend/src/models/supervisionImage.model.js",
+    "backend/src/models/supervisionResult.model.js",
+    "backend/src/models/supervisionResultRevision.model.js",
+    "backend/src/models/supervisionToken.model.js",
+    "backend/src/models/teacher.model.js",
+    "backend/src/seeders/devTeacherCredential.js",
+    "backend/src/seeders/seedTeachers.js",
+    "backend/src/seeders/setDepartmentHead.js",
+    "backend/src/services/captcha.service.js",
+    "backend/src/services/companyResponseRules.js",
+    "backend/src/services/companyVerification.service.js",
+    "backend/src/services/coopActivityRules.js",
+    "backend/src/services/coopDocumentTemplate.js",
+    "backend/src/services/coopPrerequisites.js",
+    "backend/src/services/email.service.js",
+    "backend/src/services/internshipLogRules.js",
+    "backend/src/services/jobSubmission.service.js",
+    "backend/src/services/recruitmentRecovery.service.js",
+    "backend/src/services/resumeText.service.js",
+    "backend/src/services/staffAuth.service.js",
+    "backend/src/services/staffDocuments.service.js",
+    "backend/src/services/supervisionResultRules.js",
+    "backend/src/services/supervisionRules.js",
+    "backend/src/services/teacherAuth.service.js",
+    "backend/src/validators/jobSubmission.validator.js",
+    "backend/test/companyEvaluation.database.test.js",
+    "backend/test/companyEvaluationContext.test.js",
+    "backend/test/companyEvaluationMigration.test.js",
+    "backend/test/companyResponse.test.js",
+    "backend/test/coopActivities.database.test.js",
+    "backend/test/coopDirectWorkflow.test.js",
+    "backend/test/coopPrerequisiteMigration.test.js",
+    "backend/test/coopPrerequisites.test.js",
+    "backend/test/coopProjectAdvisor.database.test.js",
+    "backend/test/coopProjectAdvisorMigration.test.js",
+    "backend/test/coopProjectMigration.test.js",
+    "backend/test/coopRequestCompany.test.js",
+    "backend/test/devTeacherCredential.database.test.js",
+    "backend/test/fixtures/coopFaculty.json",
+    "backend/test/helpers/staffAcceptanceProcessFixture.js",
+    "backend/test/internshipLogRules.test.js",
+    "backend/test/internshipLogs.database.test.js",
+    "backend/test/jobMatching.test.js",
+    "backend/test/jobSubmission.database.test.js",
+    "backend/test/jobSubmission.test.js",
+    "backend/test/recruitmentLifecycle.database.test.js",
+    "backend/test/recruitmentSecurity.test.js",
+    "backend/test/resumeText.test.js",
+    "backend/test/roleAuth.test.js",
+    "backend/test/roleWorkflow.database.test.js",
+    "backend/test/runIsolatedWorkflow.ps1",
+    "backend/test/staffAuth.test.js",
+    "backend/test/staffBrowserEnvironment.test.js",
+    "backend/test/staffBrowserEvaluation.test.js",
+    "backend/test/staffBrowserFixtureDate.test.js",
+    "backend/test/staffBrowserInput.test.js",
+    "backend/test/staffCancellationFinalEvidence.test.js",
+    "backend/test/staffCancellationStudentContract.test.js",
+    "backend/test/staffDocuments.database.test.js",
+    "backend/test/studentAdvisor.test.js",
+    "backend/test/studentCoopProject.database.test.js",
+    "backend/test/studentFileSchemaDrift.test.js",
+    "backend/test/supervision.database.test.js",
+    "backend/test/supervisionResultRules.test.js",
+    "backend/test/supervisionResults.database.test.js",
+    "backend/test/supervisionRules.test.js",
+    "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md",
+    "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md",
+    "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md",
+    "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md",
+    "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+    "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+    "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md",
+    "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md",
+    "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md",
+    "frontend/.dockerignore",
+    "frontend/.env.example",
+    "frontend/.env.staging.example",
+    "frontend/package.json",
+    "frontend/src/api/coopActivities.api.js",
+    "frontend/src/api/coopRequest.api.js",
+    "frontend/src/api/internshipLogs.api.js",
+    "frontend/src/api/jobMatching.api.js",
+    "frontend/src/api/recruitStudent.api.js",
+    "frontend/src/api/supervision.api.js",
+    "frontend/src/api/teacher.api.js",
+    "frontend/src/api/teacherProjectAdvisor.api.js",
+    "frontend/src/pages/coopActivities.js",
+    "frontend/src/pages/coopActivityView.js",
+    "frontend/src/pages/departmentHead.js",
+    "frontend/src/pages/departmentHeadLogin.js",
+    "frontend/src/pages/internshipLogView.js",
+    "frontend/src/pages/mentor.js",
+    "frontend/src/pages/mentorInternshipReview.js",
+    "frontend/src/pages/mentorSupervision.js",
+    "frontend/src/pages/recruitStudent.js",
+    "frontend/src/pages/recruitVerifyEmail.js",
+    "frontend/src/pages/staffLogin.js",
+    "frontend/src/pages/studentCompanyEvaluation.js",
+    "frontend/src/pages/studentInternshipLog.js",
+    "frontend/src/pages/studentSupervision.js",
+    "frontend/src/pages/supervisionResult.js",
+    "frontend/src/pages/supervisionView.js",
+    "frontend/src/pages/teacherCoop.js",
+    "frontend/src/pages/teacherCoopRequests.js",
+    "frontend/src/pages/teacherLogin.js",
+    "frontend/src/pages/teacherSupervision.js",
+    "frontend/src/styles/auth.css",
+    "frontend/src/styles/coop_activities.css",
+    "frontend/src/styles/index.css",
+    "frontend/src/styles/internship_log.css",
+    "frontend/src/styles/main.css",
+    "frontend/src/styles/mentor.css",
+    "frontend/src/styles/recruit.css",
+    "frontend/src/styles/staff_documents.css",
+    "frontend/src/styles/student_coop.css",
+    "frontend/src/styles/supervision.css",
+    "frontend/src/styles/teacher_coop.css",
+    "frontend/test/companyResponse.test.js",
+    "frontend/test/coopActivities.test.js",
+    "frontend/test/coopActivityView.test.js",
+    "frontend/test/departmentHead.test.js",
+    "frontend/test/helpers/staffCoopRequestsFixture.js",
+    "frontend/test/helpers/staffDocumentsFixture.js",
+    "frontend/test/helpers/studentCompanyEvaluationFixture.js",
+    "frontend/test/helpers/studentCoopProjectFixture.js",
+    "frontend/test/helpers/teacherCoopFixture.js",
+    "frontend/test/internshipLogView.test.js",
+    "frontend/test/staffCoopRequests.test.js",
+    "frontend/test/staffDocuments.test.js",
+    "frontend/test/studentAdvisor.test.js",
+    "frontend/test/studentCompanyEvaluation.test.js",
+    "frontend/test/studentCoopAcceptance.test.js",
+    "frontend/test/studentCoopPrerequisites.test.js",
+    "frontend/test/studentCoopProject.test.js",
+    "frontend/test/studentCoopSavedAcceptance.test.js",
+    "frontend/test/studentInternshipLog.test.js",
+    "frontend/test/supervision.test.js",
+    "frontend/test/supervisionResult.test.js",
+    "frontend/test/teacherCoop.test.js",
+    "frontend/test/teacherCoopRequests.test.js",
+    "nlp-service/README.md",
+    "nlp-service/app/__init__.py",
+    "nlp-service/app/api/__init__.py",
+    "nlp-service/app/api/v1/__init__.py",
+    "nlp-service/app/api/v1/chatbot.py",
+    "nlp-service/app/api/v1/job_matching.py",
+    "nlp-service/app/api/v1/resume_matching.py",
+    "nlp-service/app/core/__init__.py",
+    "nlp-service/app/core/logging.py",
+    "nlp-service/app/nlp/__init__.py",
+    "nlp-service/app/nlp/chatbot/__init__.py",
+    "nlp-service/app/nlp/chatbot/response_selector.py",
+    "nlp-service/app/nlp/common/__init__.py",
+    "nlp-service/app/nlp/matching/__init__.py",
+    "nlp-service/app/schemas/__init__.py",
+    "nlp-service/app/schemas/chatbot.py",
+    "nlp-service/app/schemas/resume_matching.py",
+    "nlp-service/app/services/__init__.py",
+    "nlp-service/app/utils/__init__.py",
+    "nlp-service/app/utils/file_io.py",
+    "nlp-service/data/embeddings/.gitkeep",
+    "nlp-service/data/models/.gitkeep",
+    "nlp-service/data/models/chatbot/.gitkeep",
+    "nlp-service/data/models/matching/.gitkeep",
+    "nlp-service/data/processed/.gitkeep",
+    "nlp-service/data/processed/chatbot/faq_seed.json",
+    "nlp-service/data/raw/.gitkeep",
+    "nlp-service/requirements.txt",
+    "nlp-service/tests/__init__.py",
+    "nlp-service/tests/test_resume_matching.py",
+    "nlp-service/tests/test_resume_ocr.py"
+  ],
+  "perFile": [
+    {
+      "path": ".codex/config.toml",
+      "depth": "METADATA ONLY",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": ".env.example",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": ".gitignore",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "HANDOFF_fitm-intern.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "README.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/.dockerignore",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/.env.example",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/Dockerfile",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/package-lock.json",
+      "depth": "METADATA ONLY",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/package.json",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/coopActivityBrowserScenarios.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/runLocalClassAdvisorAcceptance.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffAcceptanceProcess.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffBrowserEnvironment.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffBrowserEvaluation.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffBrowserFixtureDate.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffBrowserInput.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffCancellationFinalEvidence.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/supervisionBrowserScenarios.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/scripts/supervisionResultBrowserScenarios.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/app.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/database.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/env.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/nlp.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/oauth.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/recruitment.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/config/storage.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/companyEvaluation.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/companyResponse.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/coopProjectAdvisor.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/coopRequest.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/jobMatching.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/jobSubmission.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/mentor.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/mentorVerification.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/roleWorkflow.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/staffAuth.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/studentProfile.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/teacher.controller.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/controllers/teacherAuth.controller.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrate.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/001_create_companies.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/002_create_job_submissions.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/003_create_job_postings.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/005_create_company_access_tokens.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/007_create_department_staffs.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/008_add_resume_extraction.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/009_add_coop_request_company_job_links.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/010_cleanup_student_file_schema_drift.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/015_add_company_evaluations.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/016_add_coop_documents.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/017_add_company_responses.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/018_add_internship_logs.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/019_add_supervision_appointments.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/020_add_supervision_results.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/migrations/021_add_coop_activities.js",
+      "depth": "MIGRATION STRUCTURAL REVIEW; primary apply UNKNOWN; full rollback semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/db/seedJobMatchingDemo.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/middlewares/auth.middleware.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/middlewares/recruitmentRateLimit.middleware.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/middlewares/teacherAuth.middleware.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/middlewares/upload.middleware.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/company.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/companyAccessToken.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/companyEvaluation.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/companyResponse.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/companyResponseHistory.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopActivity.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopActivityHistory.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopDocument.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopDocumentRevision.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopProject.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopProjectAdvisorRequest.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopRequest.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopRequestDeliveryMethod.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopRequestPrerequisiteCourse.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/coopRequestReview.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/departmentStaff.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/index.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/internshipDailyLog.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/internshipReviewToken.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/internshipWeek.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/internshipWeekEvent.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/jobPosting.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/jobPostingReview.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/jobPostingWorkMode.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/jobSubmission.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/mentor.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/mentorToken.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/student.model.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/studentFile.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/studentProfile.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionAppointment.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionEvent.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionImage.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionResult.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionResultRevision.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/supervisionToken.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/models/teacher.model.js",
+      "depth": "REGISTERED MODEL METADATA REVIEW; exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/auth.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/coopActivities.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/coopRequest.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/internshipLogs.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/jobMatching.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/jobSubmission.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/mentor.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/mentorVerification.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/roleWorkflow.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/staffAuth.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/staffDocuments.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/studentCoop.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/studentProfile.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/supervision.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/routes/teacher.routes.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/seeders/createDepartmentStaff.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/seeders/devTeacherCredential.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/seeders/seedTeachers.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/seeders/setDepartmentHead.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/captcha.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/companyEvaluation.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/companyResponseRules.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/companyVerification.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/coopActivity.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/coopActivityRules.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/coopDocumentTemplate.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/coopPrerequisites.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/coopProjectAdvisor.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/internshipLog.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/internshipLogRules.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/jobSubmission.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/mentorToken.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/nlpMatching.client.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/recruitmentRecovery.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/resumeOcr.client.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/resumeText.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/roleWorkflow.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/staffAuth.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/staffDocuments.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/studentCoopProject.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/supervision.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/supervisionResult.service.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/supervisionResultRules.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/supervisionRules.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/services/teacherAuth.service.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/validators/jobSubmission.validator.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/src/validators/roleWorkflow.validator.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/companyEvaluation.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/companyEvaluationContext.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/companyEvaluationMigration.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/companyResponse.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopActivities.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopDirectWorkflow.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopPrerequisiteMigration.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopPrerequisites.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopProjectAdvisor.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopProjectAdvisorMigration.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopProjectMigration.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/coopRequestCompany.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/devTeacherCredential.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/fixtures/coopFaculty.json",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/helpers/staffAcceptanceProcessFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/internshipLogRules.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/internshipLogs.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/jobMatching.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/jobSubmission.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/jobSubmission.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/recruitmentLifecycle.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/recruitmentSecurity.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/resumeText.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/resumeUpload.test.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/roleAuth.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/roleWorkflow.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/runIsolatedWorkflow.ps1",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/runStaffBrowserAcceptance.ps1",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/runStaffCancellationFinalAcceptance.ps1",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/runTeacherAdvisorAcceptance.ps1",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffAcceptanceProcess.test.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffAuth.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffBrowserEnvironment.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffBrowserEvaluation.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffBrowserFixtureDate.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffBrowserInput.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffCancellationFinalEvidence.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffCancellationStudentContract.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/staffDocuments.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/studentAdvisor.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/studentCoopProject.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/studentFileSchemaDrift.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/supervision.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/supervisionResultRules.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/supervisionResults.database.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "backend/test/supervisionRules.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "deploy.sh",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docker-compose.yml",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/.dockerignore",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/.env.example",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/.env.staging.example",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/Dockerfile",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/department-head-login.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/images/logo_kiwi.png",
+      "depth": "METADATA ONLY",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/index.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/login.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "depth": "METADATA ONLY",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/package.json",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/register.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/auth.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/client.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/coopActivities.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/coopRequest.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/departmentHead.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/internshipLogs.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/jobMatching.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/mentor.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/mentorVerification.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/recruitStudent.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/staffCoopRequests.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/staffDocuments.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/studentCoop.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/studentProfile.api.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/supervision.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/teacher.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/api/teacherProjectAdvisor.api.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/department_head/department_head.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/department_staff/department_staff.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/mentor_coop/mentor_verify_user.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/coopActivities.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/coopActivityView.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/departmentHead.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/departmentHeadLogin.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/index.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/internshipLogView.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/login.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/mentor.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/mentorInternshipReview.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/mentorSupervision.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/recruitStudent.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/recruitVerifyEmail.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/register.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/staffCoopRequests.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/staffDocuments.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/staffLogin.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/studentCompanyEvaluation.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/studentInternshipLog.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/studentSupervision.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/student_coop.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/supervisionResult.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/supervisionView.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/teacherCoop.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/teacherCoopRequests.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/teacherLogin.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/pages/teacherSupervision.js",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/recruit_student/recruit_student.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/recruit_student/recruit_verify_email.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/student_coop/student_coop.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/auth.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/coop_activities.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/index.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/internship_log.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/main.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/mentor.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/recruit.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/staff_documents.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/student_coop.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/supervision.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/styles/teacher_coop.css",
+      "depth": "CSS STRUCTURAL/BUILD REVIEW; visual/keyboard PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/teacher_coop/teacher_coop.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/src/ui/feedback.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/staff-login.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/teacher-login.html",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/companyResponse.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/coopActivities.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/coopActivityView.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/departmentHead.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/helpers/staffCoopRequestsFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/helpers/staffDocumentsFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/helpers/studentCompanyEvaluationFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/helpers/studentCoopProjectFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/helpers/teacherCoopFixture.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/internshipLogView.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/staffCoopRequests.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/staffDocuments.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentAdvisor.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentCompanyEvaluation.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentCoopAcceptance.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentCoopPrerequisites.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentCoopProject.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentCoopSavedAcceptance.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/studentInternshipLog.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/supervision.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/supervisionResult.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/teacherCoop.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/test/teacherCoopRequests.test.js",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/Dockerfile",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/README.md",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/v1/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/v1/chatbot.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/v1/job_matching.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/v1/resume_matching.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/api/v1/resume_ocr.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/core/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/core/config.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/core/logging.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/main.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/intent_classifier.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/response_selector.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/common/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/common/preprocessing.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/feature_extraction.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/similarity.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/schemas/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/schemas/chatbot.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/schemas/job_matching.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/schemas/resume_matching.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/services/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/services/chatbot_service.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/services/job_matching_service.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/services/matching_service.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/utils/__init__.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/app/utils/file_io.py",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/embeddings/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/models/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/models/chatbot/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/models/matching/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/processed/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/processed/chatbot/faq_seed.json",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/data/raw/.gitkeep",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/requirements.txt",
+      "depth": "STRUCTURAL ONLY; exhaustive semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/tests/__init__.py",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/tests/test_chatbot.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/tests/test_job_matching.py",
+      "depth": "TARGETED SOURCE/CONTRACT REVIEW (may be excerpts); exhaustive semantics PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/tests/test_resume_matching.py",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    },
+    {
+      "path": "nlp-service/tests/test_resume_ocr.py",
+      "depth": "TEST STRUCTURAL/EXECUTION REVIEW where enabled; per-assertion semantic review PENDING",
+      "wholeFileHumanReadClaim": false
+    }
+  ],
+  "overall": "PENDING: official source, full semantics, live primary DB/providers/fresh all-screen browser"
+}

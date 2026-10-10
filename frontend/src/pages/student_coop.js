@@ -2816,6 +2816,14 @@ function renderCoopRequestDetail(request) {
   if (request.status === "rejected" && rejection?.reason) {
     coopDetailRequest.append(createCoopDetailItem("เหตุผลที่ไม่ได้รับการอนุมัติ", rejection.reason, true));
   }
+  const cancellation = [...(request.reviews || [])].reverse().find(review => review.decision === "cancel");
+  if (request.status === "cancelled" && cancellation) {
+    coopDetailRequest.append(
+      createCoopDetailItem("เหตุผลการยกเลิก", cancellation.reason, true),
+      createCoopDetailItem("ผู้ยกเลิก", cancellation.actor_role === "department_staff" ? "เจ้าหน้าที่ภาควิชา" : "นักศึกษา"),
+      createCoopDetailItem("ยกเลิกเมื่อ", formatCoopDate(request.cancelled_at)),
+    );
+  }
   coopDetailDeliveryMethods.replaceChildren();
   const deliveryLabels = getCoopDeliveryMethodLabels(request);
   if (deliveryLabels.length) {

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>คำร้องและคำขอที่ปรึกษา | KIWI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/teacherCoop-Dd5WalNT.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/client-DPLsZUU1.js">
+    <link rel="modulepreload" crossorigin href="/assets/feedback-CUQPlHFG.js">
+    <link rel="modulepreload" crossorigin href="/assets/teacherProjectAdvisor.api-CSEFIC3z.js">
+    <link rel="modulepreload" crossorigin href="/assets/supervisionView-D4v5i-La.js">
+    <link rel="modulepreload" crossorigin href="/assets/teacherCoopRequests-DbH1hsyA.js">
+    <link rel="modulepreload" crossorigin href="/assets/supervisionResult-CyxBxgLm.js">
+    <link rel="stylesheet" crossorigin href="/assets/client-CBlW_4jl.css">
+    <link rel="stylesheet" crossorigin href="/assets/supervisionView-CjQk7BTf.css">
+    <link rel="stylesheet" crossorigin href="/assets/student_coop-BaBnPiAX.css">
+    <link rel="stylesheet" crossorigin href="/assets/teacher_coop-XYGncfZ7.css">
+  </head>
+  <body class="teacher-page">
+    <header class="navbar"><div class="nav-container">
+      <a href="/index.html" class="brand"><img src="/assets/logo_kiwi-Dov6wizJ.png" alt="KIWI" class="brand-logo" /><div class="brand-text"><strong>KIWI</strong><span>ระบบจัดการสหกิจศึกษา</span></div></a>
+      <div class="nav-right"><div class="nav-user-info"><small>อาจารย์</small><span id="teacherName">กำลังตรวจสอบผู้ใช้งาน...</span></div><button class="btn-logout" id="teacherLogout" type="button">ออกจากระบบ</button></div>
+    </div></header>
+    <div class="dashboard-layout">
+      <aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">เมนูอาจารย์</span><small>ระบบสหกิจศึกษา</small></div>
+        <nav class="sidebar-menu"><a class="sidebar-item" href="#coopApprovals">อนุมัติคำร้องสหกิจ</a><a class="sidebar-item" href="#advisorRequests">คำขอที่ปรึกษาโครงการ</a><a class="sidebar-item" href="#supervisionScheduling">นัดนิเทศครั้งที่ 1–2</a></nav>
+      </aside>
+      <main class="dashboard-content">
+        <section id="coopApprovals" aria-labelledby="coopApprovalHeading">
+          <div class="teacher-heading"><div><h1 id="coopApprovalHeading">อนุมัติคำร้องสหกิจ</h1><p>พิจารณาคำร้องของนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น เมื่ออนุมัติจะส่งต่อให้หัวหน้าภาควิชา</p></div><button class="teacher-button" id="teacherCoopRefresh" type="button" disabled>รีเฟรช</button></div>
+          <div class="teacher-toolbar"><label for="teacherCoopStatus">สถานะคำร้อง</label><select id="teacherCoopStatus" disabled><option value="advisor_review">รออาจารย์ที่ปรึกษาพิจารณา</option><option value="department_head_review">รอหัวหน้าภาควิชาพิจารณา</option><option value="approved">อนุมัติแล้ว</option><option value="rejected">ไม่ได้รับการอนุมัติ</option><option value="cancelled">ยกเลิกแล้ว</option><option value="document_issued">ออกเอกสารแล้ว</option><option value="in_progress">กำลังปฏิบัติงาน</option><option value="submitted">สถานะเดิม: ยื่นคำร้อง</option><option value="staff_review">สถานะเดิม: รอเจ้าหน้าที่</option></select></div>
+          <p id="teacherCoopMessage" class="teacher-message" role="status" aria-live="polite"></p>
+          <a id="teacherCoopSignIn" class="teacher-button" href="/teacher-login.html" hidden>เข้าสู่ระบบอาจารย์อีกครั้ง</a>
+          <div id="teacherCoopList" class="teacher-request-list" aria-busy="true"></div>
+          <div class="teacher-pagination"><button class="teacher-button" id="teacherCoopPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherCoopPage"></span><button class="teacher-button" id="teacherCoopNext" type="button" disabled>ถัดไป</button></div>
+          <section id="teacherCoopDetail" class="teacher-request-card teacher-coop-detail" aria-labelledby="teacherCoopDetailHeading" hidden tabindex="-1"><div class="teacher-heading"><h2 id="teacherCoopDetailHeading">รายละเอียดคำร้อง</h2><button id="teacherCoopCloseDetail" class="teacher-button" type="button">ปิดรายละเอียด</button></div><p id="teacherCoopDetailMessage" role="status" aria-live="polite"></p><div id="teacherCoopDetailBody"></div></section>
+        </section>
+        <section id="advisorRequests">
+        <div class="teacher-heading"><div><h1>คำขอเป็นอาจารย์ที่ปรึกษาโครงการ</h1><p>ยืนยันหรือปฏิเสธคำขอจากนักศึกษาที่เลือกคุณเป็นที่ปรึกษาโครงการสหกิจ</p></div><button class="teacher-button" id="teacherRefresh" type="button" disabled>รีเฟรช</button></div>
+        <div class="teacher-toolbar"><label for="teacherRequestStatus">สถานะคำขอ</label><select id="teacherRequestStatus" disabled><option value="pending">รอยืนยัน</option><option value="confirmed">ยืนยันแล้ว</option><option value="rejected">ปฏิเสธแล้ว</option></select></div>
+        <p id="teacherRequestMessage" class="teacher-message" role="status" aria-live="polite"></p>
+        <a id="teacherSignIn" class="teacher-button" href="/teacher-login.html" hidden>เข้าสู่ระบบอาจารย์อีกครั้ง</a>
+        <div id="teacherRequestList" class="teacher-request-list" aria-busy="true"></div>
+        <div class="teacher-pagination"><button class="teacher-button" id="teacherPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherPageNumber"></span><button class="teacher-button" id="teacherNext" type="button" disabled>ถัดไป</button></div>
+        </section>
+        <section id="supervisionScheduling" aria-labelledby="supervisionHeading">
+          <div class="teacher-heading"><div><h1 id="supervisionHeading">นัดนิเทศครั้งที่ 1–2</h1><p>นัดนักศึกษาที่คุณเป็นอาจารย์นิเทศ / ที่ปรึกษาโครงการ วันเวลาใช้ Asia/Bangkok</p></div><button id="supervisionRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
+          <p id="supervisionMessage" class="supervision-message" role="status" aria-live="polite"></p>
+          <label for="supervisionStudentSelect">นักศึกษาในความดูแล</label><select id="supervisionStudentSelect" class="teacher-button"></select>
+          <div id="supervisionStudents"></div>
+          <div class="teacher-pagination"><button id="supervisionPrevious" type="button" class="teacher-button" disabled>ก่อนหน้า</button><button id="supervisionNext" type="button" class="teacher-button" disabled>ถัดไป</button></div>
+          <section id="supervisionDetail" hidden>
+            <h2 id="supervisionStudentName"></h2><p id="supervisionPlacementInfo"></p><p id="supervisionMentorInfo"></p>
+            <div id="supervisionAppointments"></div>
+            <div class="teacher-heading"><h3>สร้าง / แก้ไขนัดหมาย</h3><button id="supervisionNew" type="button" class="teacher-button">เริ่มนัดใหม่</button></div>
+            <form id="supervisionForm">
+              <input id="supervisionVersion" type="hidden" />
+              <fieldset id="supervisionFieldset" class="supervision-form">
+                <legend>ข้อมูลนัดนิเทศ</legend>
+                <label>ครั้งนิเทศ<select id="supervisionVisit"><option value="1">ครั้งที่ 1</option><option value="2">ครั้งที่ 2</option></select></label>
+                <label>วันที่<input id="supervisionDate" type="date" required /></label>
+                <label>เวลา (Asia/Bangkok)<input id="supervisionTime" type="time" required /></label>
+                <label>หมายเหตุ<textarea id="supervisionNotes" maxlength="2000"></textarea></label>
+                <label id="supervisionReasonGroup" hidden>เหตุผลที่แก้ไข / เลื่อนนัด<textarea id="supervisionReason" maxlength="2000"></textarea></label>
+                <label class="supervision-check supervision-wide"><input id="supervisionMentorChecked" type="checkbox" required />ตรวจสอบข้อมูลพี่เลี้ยงที่ยืนยันแล้วก่อนนัดหมาย</label>
+                <label class="supervision-check supervision-wide"><input id="supervisionSubstitute" type="checkbox" />พี่เลี้ยงเดิมไม่สะดวก ใช้พี่เลี้ยงแทนสำหรับนัดนี้</label>
+                <div id="supervisionSubstituteFields" class="supervision-form supervision-wide" hidden>
+                  <label>อีเมลพี่เลี้ยงแทน<input id="substitute_email" type="email" maxlength="254" disabled /></label>
+                  <label>ชื่อ<input id="substitute_first_name" maxlength="254" disabled /></label>
+                  <label>นามสกุล<input id="substitute_last_name" maxlength="254" disabled /></label>
+                  <label>ตำแหน่ง<input id="substitute_position" maxlength="254" disabled /></label>
+                  <label class="supervision-wide">เหตุผลที่ใช้พี่เลี้ยงแทน<textarea id="substitute_reason" maxlength="2000" disabled></textarea></label>
+                </div>
+              </fieldset>
+              <button id="supervisionSave" type="submit" class="teacher-button">บันทึกนัดหมาย</button>
+            </form>
+            <h3>ประวัติการนัดและการยืนยัน</h3><div id="supervisionHistory"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

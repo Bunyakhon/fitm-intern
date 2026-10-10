@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ลงประกาศรับนักศึกษาสหกิจศึกษา | KIWI</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script type="module" crossorigin src="/assets/recruitStudent-DMgYq551.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/client-DPLsZUU1.js">
+    <link rel="modulepreload" crossorigin href="/assets/feedback-CUQPlHFG.js">
+    <link rel="modulepreload" crossorigin href="/assets/recruitStudent.api-CiyfI2r3.js">
+    <link rel="stylesheet" crossorigin href="/assets/client-CBlW_4jl.css">
+    <link rel="stylesheet" crossorigin href="/assets/recruitStudent-D5wYXNsj.css">
+  </head>
+
+  <body class="recruit-page">
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="/index.html" class="brand">
+          <img src="/assets/logo_kiwi-Dov6wizJ.png" alt="KIWI Logo" class="brand-logo" />
+          <span>ระบบจัดการสหกิจศึกษา</span>
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="/index.html">หน้าแรก</a></li>
+          <li><a href="/search_company.html">ค้นหาสถานประกอบการ</a></li>
+          <li class="active"><a href="/src/recruit_student/recruit_student.html" aria-current="page">ลงประกาศรับนักศึกษาสหกิจศึกษา</a></li>
+          <li>
+            <a href="https://sites.google.com/fitm.kmutnb.ac.th/it-coop" target="_blank" rel="noopener noreferrer">คู่มือ</a>
+          </li>
+        </ul>
+
+        <div class="auth-buttons">
+          <a href="/login.html" class="btn-login">เข้าสู่ระบบ</a>
+          <a href="/register.html" class="btn-register">สมัครสมาชิก</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="recruit-main">
+      <section class="recruit-hero" aria-labelledby="recruitTitle">
+        <p class="recruit-hero__eyebrow">KIWI FOR ORGANIZATIONS</p>
+        <h1 id="recruitTitle">ลงประกาศรับนักศึกษาสหกิจศึกษา</h1>
+        <p>กรอกข้อมูลสถานประกอบการและตำแหน่งที่เปิดรับ เพื่อเตรียมประกาศสำหรับเชื่อมต่อระบบในขั้นตอนถัดไป</p>
+      </section>
+
+      <form id="recruitForm" class="recruit-form" novalidate>
+        <section class="recruit-section" aria-labelledby="companySectionTitle">
+          <div class="recruit-section__heading">
+            <div>
+              <p class="recruit-section__eyebrow">COMPANY INFORMATION</p>
+              <h2 id="companySectionTitle">ข้อมูลสถานประกอบการ</h2>
+            </div>
+            <p><span aria-hidden="true">*</span> จำเป็นต้องกรอก</p>
+          </div>
+
+          <div class="recruit-fields recruit-fields--company">
+            <div class="recruit-field recruit-field--wide">
+              <label for="companyName">ชื่อสถานประกอบการ <span aria-hidden="true">*</span></label>
+              <input id="companyName" name="companyName" type="text" autocomplete="organization" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companyEmail">อีเมล <span aria-hidden="true">*</span></label>
+              <input id="companyEmail" name="companyEmail" type="email" autocomplete="email" placeholder="name@example.com" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companyPhone">เบอร์โทร <span aria-hidden="true">*</span></label>
+              <input id="companyPhone" name="companyPhone" type="tel" autocomplete="tel" placeholder="เช่น 02-123-4567" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="addressNo">บ้านเลขที่ <span aria-hidden="true">*</span></label>
+              <input id="addressNo" name="addressNo" type="text" autocomplete="address-line1" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companyMoo">หมู่</label>
+              <input id="companyMoo" name="companyMoo" type="text" inputmode="numeric" />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companySubdistrict">ตำบล / แขวง <span aria-hidden="true">*</span></label>
+              <input id="companySubdistrict" name="companySubdistrict" type="text" autocomplete="address-level3" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companyDistrict">อำเภอ / เขต <span aria-hidden="true">*</span></label>
+              <input id="companyDistrict" name="companyDistrict" type="text" autocomplete="address-level2" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+            <div class="recruit-field">
+              <label for="companyProvince">จังหวัด <span aria-hidden="true">*</span></label>
+              <input id="companyProvince" name="companyProvince" type="text" autocomplete="address-level1" required data-company-field />
+              <p class="recruit-field__error" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="recruit-section" aria-labelledby="jobSectionTitle">
+          <div class="recruit-section__heading recruit-section__heading--jobs">
+            <div>
+              <p class="recruit-section__eyebrow">JOB POSTINGS</p>
+              <h2 id="jobSectionTitle">ตำแหน่งงาน</h2>
+              <p class="recruit-section__description">เพิ่มตำแหน่งงานได้มากกว่าหนึ่งตำแหน่งภายใต้สถานประกอบการเดียวกัน</p>
+            </div>
+            <button class="recruit-add-job" id="addJobButton" type="button">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              เพิ่มตำแหน่งงาน
+            </button>
+          </div>
+
+          <div id="jobCards" class="recruit-job-cards" aria-live="polite"></div>
+        </section>
+
+        <section class="recruit-turnstile" aria-labelledby="turnstileTitle">
+          <div>
+            <strong id="turnstileTitle">การยืนยันความปลอดภัย</strong>
+            <p>กรุณายืนยันว่าคุณเป็นผู้ใช้งานจริงก่อนส่งข้อมูล</p>
+          </div>
+          <div id="turnstileContainer" class="recruit-turnstile__widget" aria-describedby="turnstileStatus"></div>
+          <p id="turnstileStatus" class="recruit-turnstile__status" role="status" aria-live="polite"></p>
+        </section>
+
+        <div class="recruit-form__actions">
+          <p>ข้อมูลจะเข้าสู่ขั้นตอนยืนยันอีเมลก่อนส่งให้เจ้าหน้าที่ตรวจสอบ</p>
+          <button id="recruitSubmitButton" class="recruit-submit" type="submit">
+            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+            ส่งข้อมูลสำหรับยืนยันอีเมล
+          </button>
+        </div>
+        <p id="recruitSubmissionStatus" class="recruit-submission-status" role="status" aria-live="polite" hidden></p>
+      </form>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-copyright"><p>© KIWI — Co-operative Education Management System</p></div>
+    </footer>
+
+    <script id="turnstileScript" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  </body>
+</html>

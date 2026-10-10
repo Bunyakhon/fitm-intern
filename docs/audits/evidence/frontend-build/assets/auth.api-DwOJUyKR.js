@@ -1,0 +1,1 @@
+import{t as e}from"./client-DPLsZUU1.js";function t(t){return e(`/api/auth/login`,{method:`POST`,body:t,auth:!1})}function n(t){return e(`/api/auth/register`,{method:`POST`,body:t,auth:!1})}function r(){return e(`/api/auth/me`,{method:`GET`})}export{t as n,n as r,r as t};

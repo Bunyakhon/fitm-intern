@@ -1,0 +1,1633 @@
+{
+  "javascript": [
+    {
+      "path": "backend/scripts/coopActivityBrowserScenarios.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/runLocalClassAdvisorAcceptance.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffAcceptanceProcess.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffBrowserEnvironment.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffBrowserEvaluation.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffBrowserFixtureDate.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffBrowserInput.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffCancellationFinalEvidence.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/supervisionBrowserScenarios.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/scripts/supervisionResultBrowserScenarios.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/app.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/database.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/env.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/nlp.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/oauth.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/recruitment.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/config/storage.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/auth.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/companyEvaluation.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/companyResponse.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/coopProjectAdvisor.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/coopRequest.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/jobMatching.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/jobSubmission.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/mentor.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/mentorVerification.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/roleWorkflow.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/staffAuth.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/studentProfile.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/teacher.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/controllers/teacherAuth.controller.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrate.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/001_create_companies.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/002_create_job_submissions.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/003_create_job_postings.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/005_create_company_access_tokens.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/007_create_department_staffs.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/008_add_resume_extraction.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/009_add_coop_request_company_job_links.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/010_cleanup_student_file_schema_drift.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/015_add_company_evaluations.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/016_add_coop_documents.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/017_add_company_responses.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/018_add_internship_logs.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/019_add_supervision_appointments.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/020_add_supervision_results.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/migrations/021_add_coop_activities.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/db/seedJobMatchingDemo.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/middlewares/auth.middleware.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/middlewares/recruitmentRateLimit.middleware.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/middlewares/teacherAuth.middleware.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/middlewares/upload.middleware.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/company.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/companyAccessToken.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/companyEvaluation.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/companyResponse.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/companyResponseHistory.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopActivity.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopActivityHistory.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopDocument.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopDocumentRevision.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopProject.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopProjectAdvisorRequest.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopRequest.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopRequestDeliveryMethod.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopRequestPrerequisiteCourse.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/coopRequestReview.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/departmentStaff.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/index.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/internshipDailyLog.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/internshipReviewToken.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/internshipWeek.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/internshipWeekEvent.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/jobPosting.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/jobPostingReview.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/jobPostingWorkMode.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/jobSubmission.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/mentor.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/mentorToken.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/student.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/studentFile.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/studentProfile.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionAppointment.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionEvent.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionImage.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionResult.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionResultRevision.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/supervisionToken.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/models/teacher.model.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/auth.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/coopActivities.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/coopRequest.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/internshipLogs.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/jobMatching.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/jobSubmission.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/mentor.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/mentorVerification.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/roleWorkflow.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/staffAuth.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/staffDocuments.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/studentCoop.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/studentProfile.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/supervision.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/routes/teacher.routes.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/seeders/createDepartmentStaff.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/seeders/devTeacherCredential.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/seeders/seedTeachers.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/seeders/setDepartmentHead.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/captcha.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/companyEvaluation.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/companyResponseRules.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/companyVerification.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/coopActivity.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/coopActivityRules.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/coopDocumentTemplate.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/coopPrerequisites.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/coopProjectAdvisor.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/internshipLog.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/internshipLogRules.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/jobSubmission.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/mentorToken.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/nlpMatching.client.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/recruitmentRecovery.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/resumeOcr.client.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/resumeText.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/roleWorkflow.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/staffAuth.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/staffDocuments.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/studentCoopProject.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/supervision.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/supervisionResult.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/supervisionResultRules.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/supervisionRules.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/services/teacherAuth.service.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/validators/jobSubmission.validator.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/src/validators/roleWorkflow.validator.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/companyEvaluation.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/companyEvaluationContext.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/companyEvaluationMigration.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/companyResponse.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopActivities.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopDirectWorkflow.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopPrerequisiteMigration.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopPrerequisites.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopProjectAdvisor.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopProjectAdvisorMigration.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopProjectMigration.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/coopRequestCompany.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/devTeacherCredential.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/helpers/staffAcceptanceProcessFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/internshipLogRules.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/internshipLogs.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/jobMatching.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/jobSubmission.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/jobSubmission.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/recruitmentLifecycle.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/recruitmentSecurity.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/resumeText.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/resumeUpload.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/roleAuth.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/roleWorkflow.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffAcceptanceProcess.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffAuth.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffBrowserEnvironment.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffBrowserEvaluation.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffBrowserFixtureDate.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffBrowserInput.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffCancellationFinalEvidence.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffCancellationStudentContract.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/staffDocuments.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/studentAdvisor.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/studentCoopProject.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/studentFileSchemaDrift.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/supervision.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/supervisionResultRules.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/supervisionResults.database.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "backend/test/supervisionRules.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/auth.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/client.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/coopActivities.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/coopRequest.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/departmentHead.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/internshipLogs.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/jobMatching.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/mentor.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/mentorVerification.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/recruitStudent.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/staffCoopRequests.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/staffDocuments.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/studentCoop.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/studentProfile.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/supervision.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/teacher.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/api/teacherProjectAdvisor.api.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/coopActivities.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/coopActivityView.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/departmentHead.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/departmentHeadLogin.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/index.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/internshipLogView.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/login.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/mentor.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/mentorInternshipReview.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/mentorSupervision.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/recruitStudent.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/recruitVerifyEmail.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/register.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/staffCoopRequests.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/staffDocuments.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/staffLogin.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/studentCompanyEvaluation.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/studentInternshipLog.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/studentSupervision.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/student_coop.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/supervisionResult.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/supervisionView.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/teacherCoop.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/teacherCoopRequests.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/teacherLogin.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/pages/teacherSupervision.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/src/ui/feedback.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/companyResponse.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/coopActivities.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/coopActivityView.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/departmentHead.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/helpers/staffCoopRequestsFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/helpers/staffDocumentsFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/helpers/studentCompanyEvaluationFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/helpers/studentCoopProjectFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/helpers/teacherCoopFixture.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/internshipLogView.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/staffCoopRequests.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/staffDocuments.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentAdvisor.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentCompanyEvaluation.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentCoopAcceptance.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentCoopPrerequisites.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentCoopProject.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentCoopSavedAcceptance.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/studentInternshipLog.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/supervision.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/supervisionResult.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/teacherCoop.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/test/teacherCoopRequests.test.js",
+      "exit_code": 0
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "exit_code": 0
+    }
+  ],
+  "python": [
+    {
+      "path": "nlp-service/app/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/v1/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/v1/chatbot.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/v1/job_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/v1/resume_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/api/v1/resume_ocr.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/core/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/core/config.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/core/logging.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/main.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/intent_classifier.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/chatbot/response_selector.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/common/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/common/preprocessing.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/feature_extraction.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/nlp/matching/similarity.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/schemas/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/schemas/chatbot.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/schemas/job_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/schemas/resume_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/services/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/services/chatbot_service.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/services/job_matching_service.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/services/matching_service.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/utils/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/app/utils/file_io.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/tests/__init__.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/tests/test_chatbot.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/tests/test_job_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/tests/test_resume_matching.py",
+      "status": "PASS"
+    },
+    {
+      "path": "nlp-service/tests/test_resume_ocr.py",
+      "status": "PASS"
+    }
+  ],
+  "missing_html_targets": [
+    {
+      "source": "frontend/index.html",
+      "target": "search_company.html"
+    },
+    {
+      "source": "frontend/index.html",
+      "target": "search_company.html"
+    },
+    {
+      "source": "frontend/src/recruit_student/recruit_student.html",
+      "target": "/search_company.html"
+    }
+  ],
+  "category_counts": {
+    ".codex/config.toml": 1,
+    "[root]": 6,
+    "backend/.dockerignore": 1,
+    "backend/.env.example": 1,
+    "backend/Dockerfile": 1,
+    "backend/package-lock.json": 1,
+    "backend/package.json": 1,
+    "backend/scripts": 15,
+    "backend/src/app.js": 1,
+    "backend/src/config": 6,
+    "backend/src/controllers": 14,
+    "backend/src/db": 24,
+    "backend/src/middlewares": 4,
+    "backend/src/models": 37,
+    "backend/src/routes": 15,
+    "backend/src/seeders": 4,
+    "backend/src/services": 27,
+    "backend/src/validators": 2,
+    "backend/test": 46,
+    "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md": 1,
+    "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md": 1,
+    "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md": 1,
+    "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md": 1,
+    "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md": 1,
+    "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md": 1,
+    "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md": 1,
+    "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md": 1,
+    "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md": 1,
+    "frontend/.dockerignore": 1,
+    "frontend/.env.example": 1,
+    "frontend/.env.staging.example": 1,
+    "frontend/Dockerfile": 1,
+    "frontend/department-head-login.html": 1,
+    "frontend/images": 1,
+    "frontend/index.html": 1,
+    "frontend/login.html": 1,
+    "frontend/package-lock.json": 1,
+    "frontend/package.json": 1,
+    "frontend/register.html": 1,
+    "frontend/src/api": 17,
+    "frontend/src/department_head": 1,
+    "frontend/src/department_staff": 1,
+    "frontend/src/mentor_coop": 1,
+    "frontend/src/pages": 26,
+    "frontend/src/recruit_student": 2,
+    "frontend/src/student_coop": 1,
+    "frontend/src/styles": 11,
+    "frontend/src/teacher_coop": 1,
+    "frontend/src/ui": 1,
+    "frontend/staff-login.html": 1,
+    "frontend/teacher-login.html": 1,
+    "frontend/test": 23,
+    "frontend/vite.config.js": 1,
+    "nlp-service/Dockerfile": 1,
+    "nlp-service/README.md": 1,
+    "nlp-service/app/__init__.py": 1,
+    "nlp-service/app/api": 6,
+    "nlp-service/app/core": 3,
+    "nlp-service/app/main.py": 1,
+    "nlp-service/app/nlp": 9,
+    "nlp-service/app/schemas": 4,
+    "nlp-service/app/services": 4,
+    "nlp-service/app/utils": 2,
+    "nlp-service/data": 7,
+    "nlp-service/requirements.txt": 1,
+    "nlp-service/tests": 5
+  },
+  "protected_files": {
+    ".env.example": "UNCHANGED",
+    ".gitignore": "UNCHANGED",
+    "deploy.sh": "UNCHANGED",
+    "docker-compose.yml": "UNCHANGED",
+    "HANDOFF_fitm-intern.md": "UNCHANGED",
+    "README.md": "UNCHANGED",
+    ".codex/config.toml": "UNCHANGED",
+    "backend/.dockerignore": "UNCHANGED",
+    "backend/.env.example": "UNCHANGED",
+    "backend/Dockerfile": "UNCHANGED",
+    "backend/package-lock.json": "UNCHANGED",
+    "backend/package.json": "UNCHANGED",
+    "backend/scripts/coopActivityBrowserScenarios.js": "UNCHANGED",
+    "backend/scripts/runDisposableStaffBrowserAcceptance.js": "UNCHANGED",
+    "backend/scripts/runLocalClassAdvisorAcceptance.js": "UNCHANGED",
+    "backend/scripts/runLocalDepartmentHeadAcceptance.js": "UNCHANGED",
+    "backend/scripts/runLocalStaffDocumentsAcceptance.js": "UNCHANGED",
+    "backend/scripts/runLocalTeacherAdvisorAcceptance.js": "UNCHANGED",
+    "backend/scripts/staffAcceptanceProcess.js": "UNCHANGED",
+    "backend/scripts/staffBrowserEnvironment.js": "UNCHANGED",
+    "backend/scripts/staffBrowserEvaluation.js": "UNCHANGED",
+    "backend/scripts/staffBrowserFixtureDate.js": "UNCHANGED",
+    "backend/scripts/staffBrowserInput.js": "UNCHANGED",
+    "backend/scripts/staffCancellationFinalEvidence.js": "UNCHANGED",
+    "backend/scripts/staffCoopCancellationBrowserScenarios.js": "UNCHANGED",
+    "backend/scripts/supervisionBrowserScenarios.js": "UNCHANGED",
+    "backend/scripts/supervisionResultBrowserScenarios.js": "UNCHANGED",
+    "backend/src/app.js": "UNCHANGED",
+    "backend/src/config/database.js": "UNCHANGED",
+    "backend/src/config/env.js": "UNCHANGED",
+    "backend/src/config/nlp.js": "UNCHANGED",
+    "backend/src/config/oauth.js": "UNCHANGED",
+    "backend/src/config/recruitment.js": "UNCHANGED",
+    "backend/src/config/storage.js": "UNCHANGED",
+    "backend/src/controllers/auth.controller.js": "UNCHANGED",
+    "backend/src/controllers/companyEvaluation.controller.js": "UNCHANGED",
+    "backend/src/controllers/companyResponse.controller.js": "UNCHANGED",
+    "backend/src/controllers/coopProjectAdvisor.controller.js": "UNCHANGED",
+    "backend/src/controllers/coopRequest.controller.js": "UNCHANGED",
+    "backend/src/controllers/jobMatching.controller.js": "UNCHANGED",
+    "backend/src/controllers/jobSubmission.controller.js": "UNCHANGED",
+    "backend/src/controllers/mentor.controller.js": "UNCHANGED",
+    "backend/src/controllers/mentorVerification.controller.js": "UNCHANGED",
+    "backend/src/controllers/roleWorkflow.controller.js": "UNCHANGED",
+    "backend/src/controllers/staffAuth.controller.js": "UNCHANGED",
+    "backend/src/controllers/studentProfile.controller.js": "UNCHANGED",
+    "backend/src/controllers/teacher.controller.js": "UNCHANGED",
+    "backend/src/controllers/teacherAuth.controller.js": "UNCHANGED",
+    "backend/src/db/migrate.js": "UNCHANGED",
+    "backend/src/db/seedJobMatchingDemo.js": "UNCHANGED",
+    "backend/src/db/migrations/001_create_companies.js": "UNCHANGED",
+    "backend/src/db/migrations/002_create_job_submissions.js": "UNCHANGED",
+    "backend/src/db/migrations/003_create_job_postings.js": "UNCHANGED",
+    "backend/src/db/migrations/004_create_job_posting_work_modes.js": "UNCHANGED",
+    "backend/src/db/migrations/005_create_company_access_tokens.js": "UNCHANGED",
+    "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js": "UNCHANGED",
+    "backend/src/db/migrations/007a_create_missing_base_tables.js": "UNCHANGED",
+    "backend/src/db/migrations/007_create_department_staffs.js": "UNCHANGED",
+    "backend/src/db/migrations/008_add_resume_extraction.js": "UNCHANGED",
+    "backend/src/db/migrations/009_add_coop_request_company_job_links.js": "UNCHANGED",
+    "backend/src/db/migrations/010_cleanup_student_file_schema_drift.js": "UNCHANGED",
+    "backend/src/db/migrations/011_add_role_workflow_reviews.js": "UNCHANGED",
+    "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js": "UNCHANGED",
+    "backend/src/db/migrations/013_add_coop_projects_and_current_files.js": "UNCHANGED",
+    "backend/src/db/migrations/014_add_coop_project_advisor_requests.js": "UNCHANGED",
+    "backend/src/db/migrations/015_add_company_evaluations.js": "UNCHANGED",
+    "backend/src/db/migrations/016_add_coop_documents.js": "UNCHANGED",
+    "backend/src/db/migrations/017_add_company_responses.js": "UNCHANGED",
+    "backend/src/db/migrations/018_add_internship_logs.js": "UNCHANGED",
+    "backend/src/db/migrations/019_add_supervision_appointments.js": "UNCHANGED",
+    "backend/src/db/migrations/020_add_supervision_results.js": "UNCHANGED",
+    "backend/src/db/migrations/021_add_coop_activities.js": "UNCHANGED",
+    "backend/src/middlewares/auth.middleware.js": "UNCHANGED",
+    "backend/src/middlewares/recruitmentRateLimit.middleware.js": "UNCHANGED",
+    "backend/src/middlewares/teacherAuth.middleware.js": "UNCHANGED",
+    "backend/src/middlewares/upload.middleware.js": "UNCHANGED",
+    "backend/src/models/company.model.js": "UNCHANGED",
+    "backend/src/models/companyAccessToken.model.js": "UNCHANGED",
+    "backend/src/models/companyEvaluation.model.js": "UNCHANGED",
+    "backend/src/models/companyResponse.model.js": "UNCHANGED",
+    "backend/src/models/companyResponseHistory.model.js": "UNCHANGED",
+    "backend/src/models/coopActivity.model.js": "UNCHANGED",
+    "backend/src/models/coopActivityHistory.model.js": "UNCHANGED",
+    "backend/src/models/coopDocument.model.js": "UNCHANGED",
+    "backend/src/models/coopDocumentRevision.model.js": "UNCHANGED",
+    "backend/src/models/coopProject.model.js": "UNCHANGED",
+    "backend/src/models/coopProjectAdvisorRequest.model.js": "UNCHANGED",
+    "backend/src/models/coopRequest.model.js": "UNCHANGED",
+    "backend/src/models/coopRequestDeliveryMethod.model.js": "UNCHANGED",
+    "backend/src/models/coopRequestPrerequisiteCourse.model.js": "UNCHANGED",
+    "backend/src/models/coopRequestReview.model.js": "UNCHANGED",
+    "backend/src/models/departmentStaff.model.js": "UNCHANGED",
+    "backend/src/models/index.js": "UNCHANGED",
+    "backend/src/models/internshipDailyLog.model.js": "UNCHANGED",
+    "backend/src/models/internshipReviewToken.model.js": "UNCHANGED",
+    "backend/src/models/internshipWeek.model.js": "UNCHANGED",
+    "backend/src/models/internshipWeekEvent.model.js": "UNCHANGED",
+    "backend/src/models/jobPosting.model.js": "UNCHANGED",
+    "backend/src/models/jobPostingReview.model.js": "UNCHANGED",
+    "backend/src/models/jobPostingWorkMode.model.js": "UNCHANGED",
+    "backend/src/models/jobSubmission.model.js": "UNCHANGED",
+    "backend/src/models/mentor.model.js": "UNCHANGED",
+    "backend/src/models/mentorToken.model.js": "UNCHANGED",
+    "backend/src/models/student.model.js": "UNCHANGED",
+    "backend/src/models/studentFile.model.js": "UNCHANGED",
+    "backend/src/models/studentProfile.model.js": "UNCHANGED",
+    "backend/src/models/supervisionAppointment.model.js": "UNCHANGED",
+    "backend/src/models/supervisionEvent.model.js": "UNCHANGED",
+    "backend/src/models/supervisionImage.model.js": "UNCHANGED",
+    "backend/src/models/supervisionResult.model.js": "UNCHANGED",
+    "backend/src/models/supervisionResultRevision.model.js": "UNCHANGED",
+    "backend/src/models/supervisionToken.model.js": "UNCHANGED",
+    "backend/src/models/teacher.model.js": "UNCHANGED",
+    "backend/src/routes/auth.routes.js": "UNCHANGED",
+    "backend/src/routes/coopActivities.routes.js": "UNCHANGED",
+    "backend/src/routes/coopRequest.routes.js": "UNCHANGED",
+    "backend/src/routes/internshipLogs.routes.js": "UNCHANGED",
+    "backend/src/routes/jobMatching.routes.js": "UNCHANGED",
+    "backend/src/routes/jobSubmission.routes.js": "UNCHANGED",
+    "backend/src/routes/mentor.routes.js": "UNCHANGED",
+    "backend/src/routes/mentorVerification.routes.js": "UNCHANGED",
+    "backend/src/routes/roleWorkflow.routes.js": "UNCHANGED",
+    "backend/src/routes/staffAuth.routes.js": "UNCHANGED",
+    "backend/src/routes/staffDocuments.routes.js": "UNCHANGED",
+    "backend/src/routes/studentCoop.routes.js": "UNCHANGED",
+    "backend/src/routes/studentProfile.routes.js": "UNCHANGED",
+    "backend/src/routes/supervision.routes.js": "UNCHANGED",
+    "backend/src/routes/teacher.routes.js": "UNCHANGED",
+    "backend/src/seeders/createDepartmentStaff.js": "UNCHANGED",
+    "backend/src/seeders/devTeacherCredential.js": "UNCHANGED",
+    "backend/src/seeders/seedTeachers.js": "UNCHANGED",
+    "backend/src/seeders/setDepartmentHead.js": "UNCHANGED",
+    "backend/src/services/captcha.service.js": "UNCHANGED",
+    "backend/src/services/companyEvaluation.service.js": "UNCHANGED",
+    "backend/src/services/companyResponseRules.js": "UNCHANGED",
+    "backend/src/services/companyVerification.service.js": "UNCHANGED",
+    "backend/src/services/coopActivity.service.js": "UNCHANGED",
+    "backend/src/services/coopActivityRules.js": "UNCHANGED",
+    "backend/src/services/coopDocumentTemplate.js": "UNCHANGED",
+    "backend/src/services/coopPrerequisites.js": "UNCHANGED",
+    "backend/src/services/coopProjectAdvisor.service.js": "UNCHANGED",
+    "backend/src/services/email.service.js": "UNCHANGED",
+    "backend/src/services/internshipLog.service.js": "UNCHANGED",
+    "backend/src/services/internshipLogRules.js": "UNCHANGED",
+    "backend/src/services/jobSubmission.service.js": "UNCHANGED",
+    "backend/src/services/mentorToken.service.js": "UNCHANGED",
+    "backend/src/services/nlpMatching.client.js": "UNCHANGED",
+    "backend/src/services/recruitmentRecovery.service.js": "UNCHANGED",
+    "backend/src/services/resumeOcr.client.js": "UNCHANGED",
+    "backend/src/services/resumeText.service.js": "UNCHANGED",
+    "backend/src/services/roleWorkflow.service.js": "UNCHANGED",
+    "backend/src/services/staffAuth.service.js": "UNCHANGED",
+    "backend/src/services/staffDocuments.service.js": "UNCHANGED",
+    "backend/src/services/studentCoopProject.service.js": "UNCHANGED",
+    "backend/src/services/supervision.service.js": "UNCHANGED",
+    "backend/src/services/supervisionResult.service.js": "UNCHANGED",
+    "backend/src/services/supervisionResultRules.js": "UNCHANGED",
+    "backend/src/services/supervisionRules.js": "UNCHANGED",
+    "backend/src/services/teacherAuth.service.js": "UNCHANGED",
+    "backend/src/validators/jobSubmission.validator.js": "UNCHANGED",
+    "backend/src/validators/roleWorkflow.validator.js": "UNCHANGED",
+    "backend/test/companyEvaluation.database.test.js": "UNCHANGED",
+    "backend/test/companyEvaluationContext.test.js": "UNCHANGED",
+    "backend/test/companyEvaluationMigration.test.js": "UNCHANGED",
+    "backend/test/companyResponse.test.js": "UNCHANGED",
+    "backend/test/coopActivities.database.test.js": "UNCHANGED",
+    "backend/test/coopDirectWorkflow.test.js": "UNCHANGED",
+    "backend/test/coopPrerequisiteMigration.test.js": "UNCHANGED",
+    "backend/test/coopPrerequisites.test.js": "UNCHANGED",
+    "backend/test/coopProjectAdvisor.database.test.js": "UNCHANGED",
+    "backend/test/coopProjectAdvisorMigration.test.js": "UNCHANGED",
+    "backend/test/coopProjectMigration.test.js": "UNCHANGED",
+    "backend/test/coopRequestCompany.test.js": "UNCHANGED",
+    "backend/test/devTeacherCredential.database.test.js": "UNCHANGED",
+    "backend/test/internshipLogRules.test.js": "UNCHANGED",
+    "backend/test/internshipLogs.database.test.js": "UNCHANGED",
+    "backend/test/jobMatching.test.js": "UNCHANGED",
+    "backend/test/jobSubmission.database.test.js": "UNCHANGED",
+    "backend/test/jobSubmission.test.js": "UNCHANGED",
+    "backend/test/recruitmentLifecycle.database.test.js": "UNCHANGED",
+    "backend/test/recruitmentSecurity.test.js": "UNCHANGED",
+    "backend/test/resumeText.test.js": "UNCHANGED",
+    "backend/test/resumeUpload.test.js": "UNCHANGED",
+    "backend/test/roleAuth.test.js": "UNCHANGED",
+    "backend/test/roleWorkflow.database.test.js": "UNCHANGED",
+    "backend/test/runIsolatedWorkflow.ps1": "UNCHANGED",
+    "backend/test/runStaffBrowserAcceptance.ps1": "UNCHANGED",
+    "backend/test/runStaffCancellationFinalAcceptance.ps1": "UNCHANGED",
+    "backend/test/runTeacherAdvisorAcceptance.ps1": "UNCHANGED",
+    "backend/test/staffAcceptanceProcess.test.js": "UNCHANGED",
+    "backend/test/staffAuth.test.js": "UNCHANGED",
+    "backend/test/staffBrowserEnvironment.test.js": "UNCHANGED",
+    "backend/test/staffBrowserEvaluation.test.js": "UNCHANGED",
+    "backend/test/staffBrowserFixtureDate.test.js": "UNCHANGED",
+    "backend/test/staffBrowserInput.test.js": "UNCHANGED",
+    "backend/test/staffCancellationFinalEvidence.test.js": "UNCHANGED",
+    "backend/test/staffCancellationStudentContract.test.js": "UNCHANGED",
+    "backend/test/staffDocuments.database.test.js": "UNCHANGED",
+    "backend/test/studentAdvisor.test.js": "UNCHANGED",
+    "backend/test/studentCoopProject.database.test.js": "UNCHANGED",
+    "backend/test/studentFileSchemaDrift.test.js": "UNCHANGED",
+    "backend/test/supervision.database.test.js": "UNCHANGED",
+    "backend/test/supervisionResultRules.test.js": "UNCHANGED",
+    "backend/test/supervisionResults.database.test.js": "UNCHANGED",
+    "backend/test/supervisionRules.test.js": "UNCHANGED",
+    "backend/test/fixtures/coopFaculty.json": "UNCHANGED",
+    "backend/test/helpers/staffAcceptanceProcessFixture.js": "UNCHANGED",
+    "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md": "UNCHANGED",
+    "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md": "UNCHANGED",
+    "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md": "UNCHANGED",
+    "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md": "UNCHANGED",
+    "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md": "UNCHANGED",
+    "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md": "UNCHANGED",
+    "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md": "UNCHANGED",
+    "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md": "UNCHANGED",
+    "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md": "UNCHANGED",
+    "frontend/.dockerignore": "UNCHANGED",
+    "frontend/.env.example": "UNCHANGED",
+    "frontend/.env.staging.example": "UNCHANGED",
+    "frontend/department-head-login.html": "UNCHANGED",
+    "frontend/Dockerfile": "UNCHANGED",
+    "frontend/index.html": "UNCHANGED",
+    "frontend/login.html": "UNCHANGED",
+    "frontend/package-lock.json": "UNCHANGED",
+    "frontend/package.json": "UNCHANGED",
+    "frontend/register.html": "UNCHANGED",
+    "frontend/staff-login.html": "UNCHANGED",
+    "frontend/teacher-login.html": "UNCHANGED",
+    "frontend/vite.config.js": "UNCHANGED",
+    "frontend/images/logo_kiwi.png": "UNCHANGED",
+    "frontend/src/api/auth.api.js": "UNCHANGED",
+    "frontend/src/api/client.js": "UNCHANGED",
+    "frontend/src/api/coopActivities.api.js": "UNCHANGED",
+    "frontend/src/api/coopRequest.api.js": "UNCHANGED",
+    "frontend/src/api/departmentHead.api.js": "UNCHANGED",
+    "frontend/src/api/internshipLogs.api.js": "UNCHANGED",
+    "frontend/src/api/jobMatching.api.js": "UNCHANGED",
+    "frontend/src/api/mentor.api.js": "UNCHANGED",
+    "frontend/src/api/mentorVerification.api.js": "UNCHANGED",
+    "frontend/src/api/recruitStudent.api.js": "UNCHANGED",
+    "frontend/src/api/staffCoopRequests.api.js": "UNCHANGED",
+    "frontend/src/api/staffDocuments.api.js": "UNCHANGED",
+    "frontend/src/api/studentCoop.api.js": "UNCHANGED",
+    "frontend/src/api/studentProfile.api.js": "UNCHANGED",
+    "frontend/src/api/supervision.api.js": "UNCHANGED",
+    "frontend/src/api/teacher.api.js": "UNCHANGED",
+    "frontend/src/api/teacherProjectAdvisor.api.js": "UNCHANGED",
+    "frontend/src/department_head/department_head.html": "UNCHANGED",
+    "frontend/src/department_staff/department_staff.html": "UNCHANGED",
+    "frontend/src/mentor_coop/mentor_verify_user.html": "UNCHANGED",
+    "frontend/src/pages/coopActivities.js": "UNCHANGED",
+    "frontend/src/pages/coopActivityView.js": "UNCHANGED",
+    "frontend/src/pages/departmentHead.js": "UNCHANGED",
+    "frontend/src/pages/departmentHeadLogin.js": "UNCHANGED",
+    "frontend/src/pages/index.js": "UNCHANGED",
+    "frontend/src/pages/internshipLogView.js": "UNCHANGED",
+    "frontend/src/pages/login.js": "UNCHANGED",
+    "frontend/src/pages/mentor.js": "UNCHANGED",
+    "frontend/src/pages/mentorInternshipReview.js": "UNCHANGED",
+    "frontend/src/pages/mentorSupervision.js": "UNCHANGED",
+    "frontend/src/pages/recruitStudent.js": "UNCHANGED",
+    "frontend/src/pages/recruitVerifyEmail.js": "UNCHANGED",
+    "frontend/src/pages/register.js": "UNCHANGED",
+    "frontend/src/pages/staffCoopRequests.js": "UNCHANGED",
+    "frontend/src/pages/staffDocuments.js": "UNCHANGED",
+    "frontend/src/pages/staffLogin.js": "UNCHANGED",
+    "frontend/src/pages/studentCompanyEvaluation.js": "UNCHANGED",
+    "frontend/src/pages/studentInternshipLog.js": "UNCHANGED",
+    "frontend/src/pages/studentSupervision.js": "UNCHANGED",
+    "frontend/src/pages/student_coop.js": "UNCHANGED",
+    "frontend/src/pages/supervisionResult.js": "UNCHANGED",
+    "frontend/src/pages/supervisionView.js": "UNCHANGED",
+    "frontend/src/pages/teacherCoop.js": "UNCHANGED",
+    "frontend/src/pages/teacherCoopRequests.js": "UNCHANGED",
+    "frontend/src/pages/teacherLogin.js": "UNCHANGED",
+    "frontend/src/pages/teacherSupervision.js": "UNCHANGED",
+    "frontend/src/recruit_student/recruit_student.html": "UNCHANGED",
+    "frontend/src/recruit_student/recruit_verify_email.html": "UNCHANGED",
+    "frontend/src/student_coop/student_coop.html": "UNCHANGED",
+    "frontend/src/styles/auth.css": "UNCHANGED",
+    "frontend/src/styles/coop_activities.css": "UNCHANGED",
+    "frontend/src/styles/index.css": "UNCHANGED",
+    "frontend/src/styles/internship_log.css": "UNCHANGED",
+    "frontend/src/styles/main.css": "UNCHANGED",
+    "frontend/src/styles/mentor.css": "UNCHANGED",
+    "frontend/src/styles/recruit.css": "UNCHANGED",
+    "frontend/src/styles/staff_documents.css": "UNCHANGED",
+    "frontend/src/styles/student_coop.css": "UNCHANGED",
+    "frontend/src/styles/supervision.css": "UNCHANGED",
+    "frontend/src/styles/teacher_coop.css": "UNCHANGED",
+    "frontend/src/teacher_coop/teacher_coop.html": "UNCHANGED",
+    "frontend/src/ui/feedback.js": "UNCHANGED",
+    "frontend/test/companyResponse.test.js": "UNCHANGED",
+    "frontend/test/coopActivities.test.js": "UNCHANGED",
+    "frontend/test/coopActivityView.test.js": "UNCHANGED",
+    "frontend/test/departmentHead.test.js": "UNCHANGED",
+    "frontend/test/internshipLogView.test.js": "UNCHANGED",
+    "frontend/test/staffCoopRequests.test.js": "UNCHANGED",
+    "frontend/test/staffDocuments.test.js": "UNCHANGED",
+    "frontend/test/studentAdvisor.test.js": "UNCHANGED",
+    "frontend/test/studentCompanyEvaluation.test.js": "UNCHANGED",
+    "frontend/test/studentCoopAcceptance.test.js": "UNCHANGED",
+    "frontend/test/studentCoopPrerequisites.test.js": "UNCHANGED",
+    "frontend/test/studentCoopProject.test.js": "UNCHANGED",
+    "frontend/test/studentCoopSavedAcceptance.test.js": "UNCHANGED",
+    "frontend/test/studentInternshipLog.test.js": "UNCHANGED",
+    "frontend/test/supervision.test.js": "UNCHANGED",
+    "frontend/test/supervisionResult.test.js": "UNCHANGED",
+    "frontend/test/teacherCoop.test.js": "UNCHANGED",
+    "frontend/test/teacherCoopRequests.test.js": "UNCHANGED",
+    "frontend/test/helpers/staffCoopRequestsFixture.js": "UNCHANGED",
+    "frontend/test/helpers/staffDocumentsFixture.js": "UNCHANGED",
+    "frontend/test/helpers/studentCompanyEvaluationFixture.js": "UNCHANGED",
+    "frontend/test/helpers/studentCoopProjectFixture.js": "UNCHANGED",
+    "frontend/test/helpers/teacherCoopFixture.js": "UNCHANGED",
+    "nlp-service/Dockerfile": "UNCHANGED",
+    "nlp-service/README.md": "UNCHANGED",
+    "nlp-service/requirements.txt": "UNCHANGED",
+    "nlp-service/app/main.py": "UNCHANGED",
+    "nlp-service/app/__init__.py": "UNCHANGED",
+    "nlp-service/app/api/__init__.py": "UNCHANGED",
+    "nlp-service/app/api/v1/chatbot.py": "UNCHANGED",
+    "nlp-service/app/api/v1/job_matching.py": "UNCHANGED",
+    "nlp-service/app/api/v1/resume_matching.py": "UNCHANGED",
+    "nlp-service/app/api/v1/resume_ocr.py": "UNCHANGED",
+    "nlp-service/app/api/v1/__init__.py": "UNCHANGED",
+    "nlp-service/app/core/config.py": "UNCHANGED",
+    "nlp-service/app/core/logging.py": "UNCHANGED",
+    "nlp-service/app/core/__init__.py": "UNCHANGED",
+    "nlp-service/app/nlp/__init__.py": "UNCHANGED",
+    "nlp-service/app/nlp/chatbot/intent_classifier.py": "UNCHANGED",
+    "nlp-service/app/nlp/chatbot/response_selector.py": "UNCHANGED",
+    "nlp-service/app/nlp/chatbot/__init__.py": "UNCHANGED",
+    "nlp-service/app/nlp/common/preprocessing.py": "UNCHANGED",
+    "nlp-service/app/nlp/common/__init__.py": "UNCHANGED",
+    "nlp-service/app/nlp/matching/feature_extraction.py": "UNCHANGED",
+    "nlp-service/app/nlp/matching/similarity.py": "UNCHANGED",
+    "nlp-service/app/nlp/matching/__init__.py": "UNCHANGED",
+    "nlp-service/app/schemas/chatbot.py": "UNCHANGED",
+    "nlp-service/app/schemas/job_matching.py": "UNCHANGED",
+    "nlp-service/app/schemas/resume_matching.py": "UNCHANGED",
+    "nlp-service/app/schemas/__init__.py": "UNCHANGED",
+    "nlp-service/app/services/chatbot_service.py": "UNCHANGED",
+    "nlp-service/app/services/job_matching_service.py": "UNCHANGED",
+    "nlp-service/app/services/matching_service.py": "UNCHANGED",
+    "nlp-service/app/services/__init__.py": "UNCHANGED",
+    "nlp-service/app/utils/file_io.py": "UNCHANGED",
+    "nlp-service/app/utils/__init__.py": "UNCHANGED",
+    "nlp-service/data/embeddings/.gitkeep": "UNCHANGED",
+    "nlp-service/data/models/.gitkeep": "UNCHANGED",
+    "nlp-service/data/models/chatbot/.gitkeep": "UNCHANGED",
+    "nlp-service/data/models/matching/.gitkeep": "UNCHANGED",
+    "nlp-service/data/processed/.gitkeep": "UNCHANGED",
+    "nlp-service/data/processed/chatbot/faq_seed.json": "UNCHANGED",
+    "nlp-service/data/raw/.gitkeep": "UNCHANGED",
+    "nlp-service/tests/test_chatbot.py": "UNCHANGED",
+    "nlp-service/tests/test_job_matching.py": "UNCHANGED",
+    "nlp-service/tests/test_resume_matching.py": "UNCHANGED",
+    "nlp-service/tests/test_resume_ocr.py": "UNCHANGED",
+    "nlp-service/tests/__init__.py": "UNCHANGED",
+    "backend/.env": "UNCHANGED",
+    "frontend/.env": "UNCHANGED",
+    "nlp-service/.env": "UNCHANGED"
+  },
+  "summary": {
+    "javascript_checked": 258,
+    "javascript_failed": 0,
+    "python_checked": 35,
+    "python_failed": 0,
+    "protected_checked": 363,
+    "protected_changed": 0
+  }
+}

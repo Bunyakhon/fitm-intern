@@ -1,0 +1,18 @@
+﻿[
+    {
+        "file":  "runIsolatedWorkflow.ps1",
+        "errors":  0
+    },
+    {
+        "file":  "runStaffBrowserAcceptance.ps1",
+        "errors":  0
+    },
+    {
+        "file":  "runStaffCancellationFinalAcceptance.ps1",
+        "errors":  0
+    },
+    {
+        "file":  "runTeacherAdvisorAcceptance.ps1",
+        "errors":  0
+    }
+]

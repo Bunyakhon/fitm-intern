@@ -129,7 +129,7 @@ export function mountStaffDocuments({ document, storage, location, me = getCurre
     const body = action === 'generate' ? { version: doc?.version } : { document_number: get('staffDocumentNumber').value.trim() || null, issue_date: get('staffIssueDate').value, signatory_name: get('staffSignatoryName').value.trim() || null, signatory_position: get('staffSignatoryPosition').value.trim() || null, notes: get('staffNotes').value.trim() || null, ...(doc ? { version: doc.version } : {}) };
     if (action !== 'generate' && !body.issue_date) { toast('กรุณาระบุวันที่หนังสือ', 'error'); return; }
     const operation = action === 'generate' ? action : doc ? 'edit' : 'create'; modalOpen = true; controls();
-    confirm({ title: operation === 'generate' ? 'สร้างฉบับตัวอย่างเอกสาร' : 'บันทึกร่างเอกสาร', message: 'ใช้ข้อมูลที่บันทึกไว้เพื่อสร้างฉบับตัวอย่าง ยังไม่ถือเป็นการออกหนังสืออย่างเป็นทางการ และไม่เปลี่ยนสถานะคำร้อง', confirmLabel: 'ยืนยัน', onClose: () => { modalOpen = false; controls(); }, onConfirm: async () => {
+    confirm({ returnFocus: button, fallbackFocus: () => get(button.id)?.disabled === false ? get(button.id) : get('staffRefresh'), title: operation === 'generate' ? 'สร้างฉบับตัวอย่างเอกสาร' : 'บันทึกร่างเอกสาร', message: 'ใช้ข้อมูลที่บันทึกไว้เพื่อสร้างฉบับตัวอย่าง ยังไม่ถือเป็นการออกหนังสืออย่างเป็นทางการ และไม่เปลี่ยนสถานะคำร้อง', confirmLabel: 'ยืนยัน', onClose: () => { modalOpen = false; controls(); }, onConfirm: async () => {
       if (!live()) return true;
       submitting = true; loading(button, true, 'กำลังบันทึก...'); controls();
       try {
@@ -162,7 +162,7 @@ export function mountStaffDocuments({ document, storage, location, me = getCurre
     const body = { status: get('staffCompanyResponseStatus').value, responded_at: get('staffCompanyRespondedAt').value, note: get('staffCompanyResponseNote').value.trim() || null, ...(correcting ? { version: response.version, correction_reason: get('staffCompanyCorrectionReason').value.trim() } : {}) };
     if (!body.responded_at || (correcting && !body.correction_reason)) { toast('กรุณาระบุวันที่ตอบกลับและเหตุผลแก้ไขให้ครบ', 'error'); return; }
     const button = get('staffCompanyResponseSave'); modalOpen = true; controls();
-    confirm({ title: correcting ? 'ยืนยันการแก้ไขผลตอบกลับ' : 'ยืนยันผลตอบกลับสถานประกอบการ', message: `${RESPONSE_STATUS[body.status] || '-'} · ${body.responded_at} การบันทึกนี้จะกำหนดสิทธิ์สร้างหนังสือส่งตัวจากข้อมูลที่เก็บในระบบ`, confirmLabel: 'ยืนยัน', onClose: () => { modalOpen = false; controls(); }, onConfirm: async () => {
+    confirm({ returnFocus: get('staffCompanyResponseSave'), fallbackFocus: () => get('staffCompanyResponseSave')?.disabled === false ? get('staffCompanyResponseSave') : get('staffRefresh'), title: correcting ? 'ยืนยันการแก้ไขผลตอบกลับ' : 'ยืนยันผลตอบกลับสถานประกอบการ', message: `${RESPONSE_STATUS[body.status] || '-'} · ${body.responded_at} การบันทึกนี้จะกำหนดสิทธิ์สร้างหนังสือส่งตัวจากข้อมูลที่เก็บในระบบ`, confirmLabel: 'ยืนยัน', onClose: () => { modalOpen = false; controls(); }, onConfirm: async () => {
       if (!live()) return true;
       submitting = true; loading(button, true, 'กำลังบันทึก...'); controls();
       try {

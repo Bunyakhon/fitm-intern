@@ -4,6 +4,32 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { staffFixture } from './helpers/staffDocumentsFixture.js';
 
+for (const dismissal of ['Back', 'Escape']) {
+  test(`Document modal ${dismissal} restores the save opener without writing`, async () => {
+    const f = staffFixture(); await f.app.ready; await f.app.openDetail('request-a');
+    const button = f.get('staffSave'); button.focus();
+    await f.get('staffDocumentForm').dispatch('submit');
+    assert.equal(button.disabled, true);
+    assert.equal(f.document.activeElement, f.modal().querySelector('.app-confirm-modal__confirm'));
+    if (dismissal === 'Back') await f.modal().querySelector('.app-confirm-modal__cancel').dispatch('click');
+    else await f.document.dispatch('keydown', { key: 'Escape' });
+    f.flush();
+    assert.equal(f.modal(), undefined);
+    assert.equal(button.disabled, false);
+    assert.equal(f.document.activeElement, button);
+    assert.equal(f.calls.filter(call => call.action).length, 0);
+  });
+  test(`Document generation modal ${dismissal} restores its own opener`, async () => {
+    const f = staffFixture(); await f.app.ready; await f.app.openDetail('request-a');
+    await f.get('staffDocumentForm').dispatch('submit'); await f.confirm(); f.flush();
+    const button = f.get('staffGenerate'); button.focus(); await button.dispatch('click');
+    if (dismissal === 'Back') await f.modal().querySelector('.app-confirm-modal__cancel').dispatch('click');
+    else await f.document.dispatch('keydown', { key: 'Escape' });
+    f.flush(); assert.equal(f.document.activeElement, button);
+    assert.equal(f.calls.filter(call => call.action === 'generate').length, 0);
+  });
+}
+
 test('Staff password login stores its separate session and clears password', async () => {
   const f = staffFixture({}, true); f.get('staffEmail').value = ' STAFF@Fixture.invalid '; f.get('staffPassword').value = 'input-from-test';
   await f.get('staffLoginForm').dispatch('submit'); assert.equal(f.storage.getItem('staffToken'), 'logged-in-staff'); assert.equal(f.storage.getItem('teacherToken'), 'teacher-untouched'); assert.equal(f.storage.getItem('token'), 'student-untouched'); assert.equal(f.get('staffPassword').value, ''); assert.match(f.redirects[0], /department_staff/);

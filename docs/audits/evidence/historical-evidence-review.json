@@ -1,0 +1,1063 @@
+{
+  "historicalOnly": true,
+  "finalRun": {
+    "runId": "feb7697070dd45d28096711142dd7830",
+    "status": "VERIFIED",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T17:36:33.1927644Z",
+    "finishedAt": "2026-10-09T17:57:28.3845820Z",
+    "stages": [
+      {
+        "id": "preflight",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "cancellation",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "documents",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "focused-sql",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "backend-full",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "frontend-regression",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "frontend-build",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "evidence-validation",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      {
+        "id": "cleanup-verification",
+        "status": "PASS",
+        "exitCode": 0
+      }
+    ],
+    "counts": {
+      "SKIP": 0,
+      "PASS": 9,
+      "FAIL": 0,
+      "BLOCKED": 0
+    },
+    "checks": [
+      {
+        "suite": "cancellation",
+        "readOnlyValidator": "PASS",
+        "pass": 28,
+        "fail": 0,
+        "skip": 0,
+        "browserProduct": "Chrome/154.0.8037.98",
+        "runId": "a54e7423361a48ff89c25c4dbbfd5d3c"
+      },
+      {
+        "suite": "documents",
+        "readOnlyValidator": "PASS",
+        "pass": 13,
+        "fail": 0,
+        "skip": 0,
+        "browserProduct": "Chrome/154.0.8037.98",
+        "runId": "e85af4c549d7442db6f76c8f271121f4"
+      },
+      {
+        "suite": "focused-sql",
+        "actualTap": {
+          "tests": 46,
+          "pass": 46,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "skippedTests": []
+        }
+      },
+      {
+        "suite": "backend-full",
+        "actualTap": {
+          "tests": 426,
+          "pass": 426,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "skippedTests": []
+        }
+      },
+      {
+        "suite": "frontend-regression",
+        "actualTap": {
+          "tests": 259,
+          "pass": 258,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 1,
+          "todo": 0,
+          "skippedTests": [
+            "Student Co-op prerequisite real browser runtime checks"
+          ]
+        }
+      }
+    ],
+    "cleanupRecordCount": 5,
+    "liveDockerCleanup": "NOT RECHECKED: session Docker access denied; historical cleanup stage PASS"
+  },
+  "historicalSummaries": [
+    {
+      "path": "logs/staff-cancellation-browser-471b2363726a40faa30fc1e5fdbdf549/summary.json",
+      "status": "FAIL",
+      "runId": "471b2363726a40faa30fc1e5fdbdf549",
+      "pass": 2,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T15:14:08.436Z",
+      "finishedAt": "2026-10-09T15:14:38.027Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-browser-4ee57f6f59b448de9d9cc45cab350b8b/summary.json",
+      "status": "FAIL",
+      "runId": "4ee57f6f59b448de9d9cc45cab350b8b",
+      "pass": 25,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T16:00:17.581Z",
+      "finishedAt": "2026-10-09T16:00:54.856Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "PASS"
+        },
+        {
+          "id": "E",
+          "status": "PASS"
+        },
+        {
+          "id": "F-G",
+          "status": "PASS"
+        },
+        {
+          "id": "C-submitted",
+          "status": "PASS"
+        },
+        {
+          "id": "C-staff_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-department_head_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-approved",
+          "status": "PASS"
+        },
+        {
+          "id": "C-document_issued",
+          "status": "PASS"
+        },
+        {
+          "id": "C-in_progress",
+          "status": "PASS"
+        },
+        {
+          "id": "C-rejected",
+          "status": "PASS"
+        },
+        {
+          "id": "C-cancelled",
+          "status": "PASS"
+        },
+        {
+          "id": "G-SQL",
+          "status": "PASS"
+        },
+        {
+          "id": "H-status",
+          "status": "PASS"
+        },
+        {
+          "id": "H-time",
+          "status": "PASS"
+        },
+        {
+          "id": "I-400",
+          "status": "PASS"
+        },
+        {
+          "id": "I-404",
+          "status": "PASS"
+        },
+        {
+          "id": "I-500",
+          "status": "PASS"
+        },
+        {
+          "id": "I-network",
+          "status": "PASS"
+        },
+        {
+          "id": "I-401",
+          "status": "PASS"
+        },
+        {
+          "id": "I-403",
+          "status": "PASS"
+        },
+        {
+          "id": "A-security",
+          "status": "PASS"
+        },
+        {
+          "id": "K",
+          "status": "PASS"
+        },
+        {
+          "id": "L",
+          "status": "PASS"
+        },
+        {
+          "id": "J",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-browser-63c79c804be8427fac68517efe408e73/summary.json",
+      "status": "FAIL",
+      "runId": "63c79c804be8427fac68517efe408e73",
+      "pass": 2,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T14:53:19.215Z",
+      "finishedAt": "2026-10-09T14:53:47.683Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-browser-e84753c608a648c8b2addf659011a359/summary.json",
+      "status": "FAIL",
+      "runId": "e84753c608a648c8b2addf659011a359",
+      "pass": 2,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T15:35:29.372Z",
+      "finishedAt": "2026-10-09T15:35:42.080Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/cancellation/summary.json",
+      "status": "PASS",
+      "runId": "14a9a962cd3c444b862b314c3249b659",
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T16:42:51.501Z",
+      "finishedAt": "2026-10-09T16:43:25.307Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "PASS"
+        },
+        {
+          "id": "E",
+          "status": "PASS"
+        },
+        {
+          "id": "F-G",
+          "status": "PASS"
+        },
+        {
+          "id": "C-advisor_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-submitted",
+          "status": "PASS"
+        },
+        {
+          "id": "C-staff_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-department_head_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-approved",
+          "status": "PASS"
+        },
+        {
+          "id": "C-document_issued",
+          "status": "PASS"
+        },
+        {
+          "id": "C-in_progress",
+          "status": "PASS"
+        },
+        {
+          "id": "C-rejected",
+          "status": "PASS"
+        },
+        {
+          "id": "C-cancelled",
+          "status": "PASS"
+        },
+        {
+          "id": "G-SQL",
+          "status": "PASS"
+        },
+        {
+          "id": "H-status",
+          "status": "PASS"
+        },
+        {
+          "id": "H-time",
+          "status": "PASS"
+        },
+        {
+          "id": "I-400",
+          "status": "PASS"
+        },
+        {
+          "id": "I-404",
+          "status": "PASS"
+        },
+        {
+          "id": "I-500",
+          "status": "PASS"
+        },
+        {
+          "id": "I-network",
+          "status": "PASS"
+        },
+        {
+          "id": "I-401",
+          "status": "PASS"
+        },
+        {
+          "id": "I-403",
+          "status": "PASS"
+        },
+        {
+          "id": "A-security",
+          "status": "PASS"
+        },
+        {
+          "id": "K",
+          "status": "PASS"
+        },
+        {
+          "id": "L",
+          "status": "PASS"
+        },
+        {
+          "id": "J",
+          "status": "PASS"
+        },
+        {
+          "id": "UI",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/documents/summary.json",
+      "status": "FAIL",
+      "runId": "718743c6121f43ba9db3d11571387ec4",
+      "pass": 1,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "steps": [
+        {
+          "id": "login",
+          "status": "PASS"
+        },
+        {
+          "id": "document-modal-focus",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/final-summary.json",
+      "status": "IMPLEMENTED / NEEDS VERIFICATION",
+      "runId": "6d835dc61fc248d7974b63fd4a2a598a",
+      "counts": {
+        "SKIP": 0,
+        "PASS": 2,
+        "FAIL": 2,
+        "BLOCKED": 5
+      },
+      "startedAt": "2026-10-09T16:42:35.1043688Z",
+      "finishedAt": "2026-10-09T16:43:57.2496817Z"
+    },
+    {
+      "path": "logs/staff-cancellation-final-a76f101314ab4cd283c5a1724b9f7e9e/cancellation/summary.json",
+      "status": "FAIL",
+      "runId": "7aae437416fb497182817bba3875fa16",
+      "pass": 24,
+      "fail": 1,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T17:16:39.589Z",
+      "finishedAt": "2026-10-09T17:17:09.851Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "PASS"
+        },
+        {
+          "id": "E",
+          "status": "PASS"
+        },
+        {
+          "id": "F-G",
+          "status": "PASS"
+        },
+        {
+          "id": "C-advisor_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-submitted",
+          "status": "PASS"
+        },
+        {
+          "id": "C-staff_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-department_head_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-approved",
+          "status": "PASS"
+        },
+        {
+          "id": "C-document_issued",
+          "status": "PASS"
+        },
+        {
+          "id": "C-in_progress",
+          "status": "PASS"
+        },
+        {
+          "id": "C-rejected",
+          "status": "PASS"
+        },
+        {
+          "id": "C-cancelled",
+          "status": "PASS"
+        },
+        {
+          "id": "G-SQL",
+          "status": "PASS"
+        },
+        {
+          "id": "H-status",
+          "status": "PASS"
+        },
+        {
+          "id": "H-time",
+          "status": "PASS"
+        },
+        {
+          "id": "I-400",
+          "status": "PASS"
+        },
+        {
+          "id": "I-404",
+          "status": "PASS"
+        },
+        {
+          "id": "I-500",
+          "status": "PASS"
+        },
+        {
+          "id": "I-network",
+          "status": "PASS"
+        },
+        {
+          "id": "I-401",
+          "status": "PASS"
+        },
+        {
+          "id": "I-403",
+          "status": "PASS"
+        },
+        {
+          "id": "A-security",
+          "status": "PASS"
+        },
+        {
+          "id": "K",
+          "status": "FAIL"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-a76f101314ab4cd283c5a1724b9f7e9e/final-summary.json",
+      "status": "IMPLEMENTED / NEEDS VERIFICATION",
+      "runId": "a76f101314ab4cd283c5a1724b9f7e9e",
+      "counts": {
+        "SKIP": 0,
+        "PASS": 2,
+        "FAIL": 1,
+        "BLOCKED": 6
+      },
+      "startedAt": "2026-10-09T17:16:26.8449794Z",
+      "finishedAt": "2026-10-09T17:17:12.5329703Z"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/cancellation/summary.json",
+      "status": "PASS",
+      "runId": "a54e7423361a48ff89c25c4dbbfd5d3c",
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "startedAt": "2026-10-09T17:36:46.880Z",
+      "finishedAt": "2026-10-09T17:37:21.689Z",
+      "steps": [
+        {
+          "id": "A",
+          "status": "PASS"
+        },
+        {
+          "id": "B",
+          "status": "PASS"
+        },
+        {
+          "id": "D",
+          "status": "PASS"
+        },
+        {
+          "id": "E",
+          "status": "PASS"
+        },
+        {
+          "id": "F-G",
+          "status": "PASS"
+        },
+        {
+          "id": "C-advisor_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-submitted",
+          "status": "PASS"
+        },
+        {
+          "id": "C-staff_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-department_head_review",
+          "status": "PASS"
+        },
+        {
+          "id": "C-approved",
+          "status": "PASS"
+        },
+        {
+          "id": "C-document_issued",
+          "status": "PASS"
+        },
+        {
+          "id": "C-in_progress",
+          "status": "PASS"
+        },
+        {
+          "id": "C-rejected",
+          "status": "PASS"
+        },
+        {
+          "id": "C-cancelled",
+          "status": "PASS"
+        },
+        {
+          "id": "G-SQL",
+          "status": "PASS"
+        },
+        {
+          "id": "H-status",
+          "status": "PASS"
+        },
+        {
+          "id": "H-time",
+          "status": "PASS"
+        },
+        {
+          "id": "I-400",
+          "status": "PASS"
+        },
+        {
+          "id": "I-404",
+          "status": "PASS"
+        },
+        {
+          "id": "I-500",
+          "status": "PASS"
+        },
+        {
+          "id": "I-network",
+          "status": "PASS"
+        },
+        {
+          "id": "I-401",
+          "status": "PASS"
+        },
+        {
+          "id": "I-403",
+          "status": "PASS"
+        },
+        {
+          "id": "A-security",
+          "status": "PASS"
+        },
+        {
+          "id": "K",
+          "status": "PASS"
+        },
+        {
+          "id": "L",
+          "status": "PASS"
+        },
+        {
+          "id": "J",
+          "status": "PASS"
+        },
+        {
+          "id": "UI",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/documents/summary.json",
+      "status": "PASS",
+      "runId": "e85af4c549d7442db6f76c8f271121f4",
+      "pass": 13,
+      "fail": 0,
+      "skip": 0,
+      "browserProduct": "Chrome/154.0.8037.98",
+      "steps": [
+        {
+          "id": "login",
+          "status": "PASS"
+        },
+        {
+          "id": "document-modal-focus",
+          "status": "PASS"
+        },
+        {
+          "id": "cooperation",
+          "status": "PASS"
+        },
+        {
+          "id": "response-modal-focus",
+          "status": "PASS"
+        },
+        {
+          "id": "response-validation",
+          "status": "PASS"
+        },
+        {
+          "id": "response-history",
+          "status": "PASS"
+        },
+        {
+          "id": "placement",
+          "status": "PASS"
+        },
+        {
+          "id": "document-controls",
+          "status": "PASS"
+        },
+        {
+          "id": "immutable-revisions",
+          "status": "PASS"
+        },
+        {
+          "id": "rejected-response",
+          "status": "PASS"
+        },
+        {
+          "id": "mobile",
+          "status": "PASS"
+        },
+        {
+          "id": "network-recovery",
+          "status": "PASS"
+        },
+        {
+          "id": "integrity",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/final-summary.json",
+      "status": "VERIFIED",
+      "runId": "feb7697070dd45d28096711142dd7830",
+      "counts": {
+        "SKIP": 0,
+        "PASS": 9,
+        "FAIL": 0,
+        "BLOCKED": 0
+      },
+      "startedAt": "2026-10-09T17:36:33.1927644Z",
+      "finishedAt": "2026-10-09T17:57:28.3845820Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "logs/activity-calendar-browser-artifacts-20261008/calendar-staff-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 950,
+      "sha256": "45ff0f60e554da5cf275a02b83942c7b3d102a54c8b716cf280b169ead1a0aa1"
+    },
+    {
+      "path": "logs/activity-calendar-browser-artifacts-20261008/calendar-staff-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 1312,
+      "sha256": "46a458cdb36a36070d99afed86e95aedc512d701e10caa626439dfcef81ece97"
+    },
+    {
+      "path": "logs/activity-calendar-browser-artifacts-20261008/calendar-student-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 1494,
+      "sha256": "230b419db3cabda4230ff5ac35f8ef879d9cc21436eefb930b18471430bcbfc9"
+    },
+    {
+      "path": "logs/company-response-browser-artifacts-20261008/staff-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 3533,
+      "sha256": "4d7e1011cb3e75de1065248774e72bc75f92dcf346ac0e4360952d57a726ac33"
+    },
+    {
+      "path": "logs/company-response-browser-artifacts-20261008/staff-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 3933,
+      "sha256": "7295c908d971a626ee3bda0f87e6465796414d982a8f4900f3a9a3b301b2c1cf"
+    },
+    {
+      "path": "logs/daily-log-browser-artifacts-20261008/mentor-week-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 1450,
+      "sha256": "5ef1d2e10f37d506bd7451e3ed33448764443bf0e5a85d7b230582e9ce9dba16"
+    },
+    {
+      "path": "logs/daily-log-browser-artifacts-20261008/student-daily-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 1154,
+      "sha256": "db6d35ac40e06925255dfed55bff7bcecbf864110667bf557681deb6bffdfa9e"
+    },
+    {
+      "path": "logs/daily-log-browser-artifacts-20261008/student-daily-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 1384,
+      "sha256": "8bba518fa7ffb638f507d27315f602f50e0426fb348116b42a07d09708d8bd31"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-471b2363726a40faa30fc1e5fdbdf549/failure-D.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2646,
+      "sha256": "0cc9ef23169810ac2b1bb66e6aaa42b908bdd6bd7129d8da0023e0d0c5cf8b2f"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-4ee57f6f59b448de9d9cc45cab350b8b/failure-J.png",
+      "validPNG": true,
+      "width": 1280,
+      "height": 958,
+      "sha256": "6d7c18b2c7b6e5fd84cb3433f57c949ddf9f033134fabee1adf91f8060c20c22"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-4ee57f6f59b448de9d9cc45cab350b8b/staff-cancelled-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2694,
+      "sha256": "357e7d5b20b72d105c25178c0574c6663b48dd1aba667604be9591c6dc562fd7"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-4ee57f6f59b448de9d9cc45cab350b8b/student-cancellation-desktop.png",
+      "validPNG": true,
+      "width": 1280,
+      "height": 958,
+      "sha256": "6d7c18b2c7b6e5fd84cb3433f57c949ddf9f033134fabee1adf91f8060c20c22"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-63c79c804be8427fac68517efe408e73/failure-D.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2646,
+      "sha256": "2a2902c43d5fe31a909325bafb8f01aaaab64930bdb4e179c6927101a221e8f6"
+    },
+    {
+      "path": "logs/staff-cancellation-browser-e84753c608a648c8b2addf659011a359/failure-D.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2646,
+      "sha256": "a4fc34e72855bf3957589753c1228a13ef8e49f59b0f2ab52ac54bfa14e9fe41"
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/cancellation/staff-cancellation-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 4153,
+      "sha256": "6b606fc2ab105f9d1a00140b68ca10ddf1b8d5cf2b1626e43dbd5af792ffabc8"
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/cancellation/staff-cancelled-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2694,
+      "sha256": "94e1b922c9889013efc06f6eff7b9843dc6abf97aabe4f16f98bb61cc68cafc7"
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/cancellation/student-cancellation-desktop.png",
+      "validPNG": true,
+      "width": 1280,
+      "height": 958,
+      "sha256": "9f9b8361044994cbdb4774a722a15629f54f636b553ffdc18cefb2e289fb43db"
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/cancellation/student-cancellation-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 913,
+      "sha256": "a15a5dba346834d618b9fbf9c5e87ea97af7e62d39364019bec482d8df47a51e"
+    },
+    {
+      "path": "logs/staff-cancellation-final-6d835dc61fc248d7974b63fd4a2a598a/documents/failure-document-modal-focus.png",
+      "validPNG": true,
+      "width": 1280,
+      "height": 2744,
+      "sha256": "25f5670fb98c694716ed7934cc64e6ba5ff4f41fb6e2bb0d114db168d5234de4"
+    },
+    {
+      "path": "logs/staff-cancellation-final-a76f101314ab4cd283c5a1724b9f7e9e/cancellation/failure-K.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 6209,
+      "sha256": "5851ae1dc1f3414ba2009d431ba6f0fbbf82f9ef69c3bccf16eccb371dc58ae5"
+    },
+    {
+      "path": "logs/staff-cancellation-final-a76f101314ab4cd283c5a1724b9f7e9e/cancellation/staff-cancelled-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2694,
+      "sha256": "895c4067350f735076aef83b3802ac2b9f507dcfffa934ffbc819c6ca143ba91"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/cancellation/staff-cancellation-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 4153,
+      "sha256": "b8ab63f57a501cd8587a6f17d40fd33245715c071f8e2b2f109a02255d39eb23"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/cancellation/staff-cancelled-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2694,
+      "sha256": "5a7ee6b75aa2112b2a03ad850e1d929f51817ed43bb8ace1c58e0e9556a8329c"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/cancellation/student-cancellation-desktop.png",
+      "validPNG": true,
+      "width": 1280,
+      "height": 958,
+      "sha256": "e1f5d4664f1e10074858c819cd23ffcd17e1b9f05dffde2e813fa6d2a60ade9a"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/cancellation/student-cancellation-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 913,
+      "sha256": "87e6b004a6824d2138ff191eeebee5f980c7ab5fbeb59654f6ec76864482138b"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/documents/staff-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 4133,
+      "sha256": "64b9e6f7437d277fd8b8d6b78cd52e07c562141aba5e4dd3910240196f439aa9"
+    },
+    {
+      "path": "logs/staff-cancellation-final-feb7697070dd45d28096711142dd7830/documents/staff-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 4794,
+      "sha256": "e252f550a6930bbe6c380da1b0abfa72c9d0362c2b27acbb0b7b6d98897b2499"
+    },
+    {
+      "path": "logs/supervision-browser-artifacts-20261008/mentor-supervision-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 875,
+      "sha256": "6dda74d59edb204aab95e988b6a93aba70f1a1b454b5fb30bba3d3f8e0e569c8"
+    },
+    {
+      "path": "logs/supervision-browser-artifacts-20261008/teacher-supervision-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 2892,
+      "sha256": "a525cc9ea0579b07f6b7e5a63b8dbe32c63b045fbfdb3197e4f8e51d873259a3"
+    },
+    {
+      "path": "logs/supervision-browser-artifacts-20261008/teacher-supervision-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 3928,
+      "sha256": "3c618cd6121643a8187134166635c4529f04edb58589fbda887a2d46a1c7f64c"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/mentor-supervision-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 875,
+      "sha256": "fea9b798539b0ce524b27dfcf73ea5968f16db2ea403f1ce0f538a1cfcab3a42"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/student-results-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 3737,
+      "sha256": "60aa5e5f5cce21167d41311cb7f06461f4c86749c995683b19e3172eb31549ae"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/teacher-result-draft-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 5951,
+      "sha256": "7ff11d994096fd07997f89d142eaec67974ff29e52b8b9f9c18b5afb9e5cbb4b"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/teacher-results-desktop.png",
+      "validPNG": true,
+      "width": 747,
+      "height": 5144,
+      "sha256": "1a4b14abb62ae876b7e611e88182bb007f03c51279ffaf024d0adb152c3c05ce"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/teacher-results-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 6064,
+      "sha256": "8fe1304cb20db5d873265e085283ae4ce9fd0a67c946c162c66076ab600f0161"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/teacher-supervision-desktop.png",
+      "validPNG": true,
+      "width": 1265,
+      "height": 3016,
+      "sha256": "c93efa39bb9f2960e6513935808017e39edc9c21f21fc66c2b49d90ff0f4d12d"
+    },
+    {
+      "path": "logs/supervision-results-browser-artifacts-20261008/teacher-supervision-mobile.png",
+      "validPNG": true,
+      "width": 390,
+      "height": 4052,
+      "sha256": "c79695ecea70324ab814bec4462579906ee296735ed85edffd266bb708bc4675"
+    }
+  ],
+  "unchangedHistoricalFiles": true
+}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>เข้าสู่ระบบหัวหน้าภาควิชา | KIWI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/departmentHeadLogin-C7ZcRrRi.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/client-DPLsZUU1.js">
+    <link rel="modulepreload" crossorigin href="/assets/feedback-CUQPlHFG.js">
+    <link rel="modulepreload" crossorigin href="/assets/teacherProjectAdvisor.api-CSEFIC3z.js">
+    <link rel="modulepreload" crossorigin href="/assets/teacherLogin-CkzqApbi.js">
+    <link rel="modulepreload" crossorigin href="/assets/departmentHead.api-3Qqnk5xX.js">
+    <link rel="stylesheet" crossorigin href="/assets/client-CBlW_4jl.css">
+    <link rel="stylesheet" crossorigin href="/assets/auth-CcCOMD7V.css">
+  </head>
+  <body class="login-page" data-auth-role="department_head">
+    <header class="navbar"><div class="nav-container">
+      <a href="/index.html" class="brand"><img src="/assets/logo_kiwi-Dov6wizJ.png" alt="KIWI" class="brand-logo" /><span>ระบบจัดการสหกิจศึกษา</span></a>
+      <a href="/teacher-login.html" class="btn-login">เข้าสู่ระบบอาจารย์</a>
+    </div></header>
+    <main class="auth-wrapper"><div class="auth-card">
+      <div class="auth-header"><h1>เข้าสู่ระบบหัวหน้าภาควิชา</h1><p>พิจารณาคำร้องสหกิจที่ผ่านอาจารย์ที่ปรึกษาประจำชั้นแล้ว</p></div>
+      <form class="auth-form" id="teacherLoginForm" aria-describedby="teacherLoginMessage">
+        <div class="form-group"><label for="teacherEmail">อีเมล</label><div class="input-icon-wrapper"><input id="teacherEmail" name="email" type="email" maxlength="254" placeholder="กรอกอีเมล" autocomplete="username" required /></div></div>
+        <div class="form-group"><label for="teacherPassword">รหัสผ่าน</label><div class="input-icon-wrapper"><input id="teacherPassword" name="password" type="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" required /></div></div>
+        <button class="btn-submit" type="submit">เข้าสู่ระบบ</button>
+        <p id="teacherLoginMessage" class="login-message" role="status" aria-live="polite"></p>
+      </form>
+    </div></main>
+  </body>
+</html>

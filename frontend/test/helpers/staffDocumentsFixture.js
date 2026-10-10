@@ -10,6 +10,24 @@ export function staffFixture(adapters = {}, login = false) {
   const helper = vm.createContext({ readFileSync, vm, assert, URL, console });
   vm.runInContext(prefix.replace(/const html = [^\n]+/, `const html = ${JSON.stringify(html)};`), helper);
   const document = helper.createDocument(), values = new Map([['staffToken', 'fixture-staff'], ['teacherToken', 'teacher-untouched'], ['token', 'student-untouched']]);
+  // Match native connection and loss of focus when a focused button is disabled.
+  const prototype = Object.getPrototypeOf(document);
+  Object.defineProperty(prototype, 'isConnected', { get() {
+    for (let node = this; node; node = node.parentElement) if (node === document) return true;
+    return false;
+  } });
+  Object.defineProperty(prototype, 'disabled', {
+    get() { return this._disabled === true; },
+    set(value) { this._disabled = !!value; if (value && document.activeElement === this) document.activeElement = document.body; },
+  });
+  for (const element of [document, ...document.descendants()]) {
+    const disabled = element.disabled; delete element.disabled; element.disabled = disabled;
+  }
+  prototype.focus = function () {
+    if (!this.isConnected || this.disabled) return;
+    for (let node = this; node; node = node.parentElement) if (node.hidden || node.inert) return;
+    document.activeElement = this;
+  };
   const storage = { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
   const calls = [], toasts = [], redirects = [], downloads = [], revoked = [], timers = []; let prints = 0, sequence = 0;
   const url = { createObjectURL: () => `blob:staff-${++sequence}`, revokeObjectURL: value => revoked.push(value) };

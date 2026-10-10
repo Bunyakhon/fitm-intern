@@ -25,6 +25,20 @@ function companyFixture(overrides = {}) {
 async function open(f) { await f.app.ready; await f.app.openDetail('request-a'); }
 async function respond(f, status = 'accepted') { f.get('staffCompanyResponseStatus').value = status; f.get('staffCompanyRespondedAt').value = '2026-01-01'; await f.get('staffCompanyResponseForm').dispatch('submit'); await f.confirm(); }
 
+for (const dismissal of ['Back', 'Escape']) {
+  test(`Company Response ${dismissal} restores its opener without saving history`, async () => {
+    const f = companyFixture(); await open(f); f.get('staffCompanyRespondedAt').value = '2026-01-01';
+    const button = f.get('staffCompanyResponseSave'); button.focus();
+    await f.get('staffCompanyResponseForm').dispatch('submit'); assert.equal(button.disabled, true);
+    assert.equal(f.document.activeElement, f.modal().querySelector('.app-confirm-modal__confirm'));
+    if (dismissal === 'Back') await f.modal().querySelector('.app-confirm-modal__cancel').dispatch('click');
+    else await f.document.dispatch('keydown', { key: 'Escape' });
+    f.flush(); assert.equal(f.modal(), undefined); assert.equal(button.disabled, false);
+    assert.equal(f.document.activeElement, button); assert.equal(f.history.length, 0);
+    assert.equal(f.calls.filter(call => call.response).length, 0);
+  });
+}
+
 test('Company acceptance uses shared confirmation, saves no actor IDs and enables server-authorized placement', async () => {
   const f = companyFixture(); await open(f); assert.equal(f.get('staffPlacementCreate').disabled, true); assert.equal(f.get('staffCompanyResponseSave').disabled, false);
   await respond(f); const saved = f.calls.find(call => call.response).response;

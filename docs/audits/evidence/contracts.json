@@ -1,0 +1,4581 @@
+{
+  "routeCount": 115,
+  "modelCount": 36,
+  "migrationCount": 22,
+  "routes": [
+    {
+      "method": "GET",
+      "route": "/",
+      "role": "Public",
+      "handler": "app inline API liveness",
+      "source": "backend/src/app.js",
+      "databaseCandidates": [],
+      "consumer": "Health probe",
+      "test": "Historical runners",
+      "status": "STATIC"
+    },
+    {
+      "method": "GET",
+      "route": "/health/db",
+      "role": "Public",
+      "handler": "sequelize.authenticate",
+      "source": "backend/src/app.js",
+      "databaseCandidates": [],
+      "consumer": "Health probe",
+      "test": "Historical runners",
+      "status": "STATIC; raw error.message exposure"
+    },
+    {
+      "method": "POST",
+      "route": "/api/auth/register",
+      "role": "Student / public login",
+      "handler": "inline handler",
+      "source": "backend/src/routes/auth.routes.js",
+      "databaseCandidates": [
+        "Student"
+      ],
+      "consumer": "auth.api.js",
+      "test": "No dedicated Student registration/login test found; historical Chrome password login only",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/auth/login",
+      "role": "Student / public login",
+      "handler": "inline handler",
+      "source": "backend/src/routes/auth.routes.js",
+      "databaseCandidates": [
+        "Student"
+      ],
+      "consumer": "auth.api.js",
+      "test": "No dedicated Student registration/login test found; historical Chrome password login only",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/auth/me",
+      "role": "Student / public login",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/auth.routes.js",
+      "databaseCandidates": [
+        "Student"
+      ],
+      "consumer": "auth.api.js",
+      "test": "No dedicated Student registration/login test found; historical Chrome password login only",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-profile/me",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, getStudentProfile",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/student-profile/me",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, upsertStudentProfile",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-profile",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, getStudentProfile",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-profile/profile-image",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, getProfileImage",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/student-profile/student-info",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, updateStudentInfo",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/student-profile/profile-image",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler, uploadProfileImage",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/student-profile/resume",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler, uploadResume",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/student-profile",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, upsertStudentProfile",
+      "source": "backend/src/routes/studentProfile.routes.js",
+      "databaseCandidates": [
+        "Student",
+        "StudentProfile"
+      ],
+      "consumer": "studentProfile.api.js",
+      "test": "backend/test/resumeUpload.test.js; frontend/test/studentAdvisor.test.js; backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/teachers",
+      "role": "Authenticated JWT: active directory",
+      "handler": "authenticateToken, getTeachers",
+      "source": "backend/src/routes/teacher.routes.js",
+      "databaseCandidates": [
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js",
+      "test": "backend/test/studentAdvisor.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/mentors/me",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/mentor.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "mentor.api.js",
+      "test": "backend/test/roleWorkflow.database.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/mentors",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/mentor.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "mentor.api.js",
+      "test": "backend/test/roleWorkflow.database.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/mentors/me",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/mentor.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "mentor.api.js",
+      "test": "backend/test/roleWorkflow.database.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "DELETE",
+      "route": "/api/mentors/me",
+      "role": "Student owner",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/mentor.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "mentor.api.js",
+      "test": "backend/test/roleWorkflow.database.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/mentor-verification/verify",
+      "role": "Public capability token",
+      "handler": "verifyMentorToken",
+      "source": "backend/src/routes/mentorVerification.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "MentorToken"
+      ],
+      "consumer": "mentorVerification.api.js",
+      "test": "Historical Daily/Supervision Chrome; roleWorkflow.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/mentor-verification/profile",
+      "role": "Public capability token",
+      "handler": "updateMentorProfile",
+      "source": "backend/src/routes/mentorVerification.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "MentorToken"
+      ],
+      "consumer": "mentorVerification.api.js",
+      "test": "Historical Daily/Supervision Chrome; roleWorkflow.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/mentor-verification/confirm",
+      "role": "Public capability token",
+      "handler": "confirmMentor",
+      "source": "backend/src/routes/mentorVerification.routes.js",
+      "databaseCandidates": [
+        "Mentor",
+        "MentorToken"
+      ],
+      "consumer": "mentorVerification.api.js",
+      "test": "Historical Daily/Supervision Chrome; roleWorkflow.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/companies/search",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/companies/duplicate-check",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/job-postings/:id",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/me",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/:id/company-response",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-requests/:id",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/coop-requests",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PATCH",
+      "route": "/api/coop-requests/:id/cancel",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopRequest.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CoopRequest",
+        "JobPosting",
+        "Student"
+      ],
+      "consumer": "coopRequest.api.js",
+      "test": "backend/test/coopDirectWorkflow.test.js; coopPrerequisites.test.js; coopRequestCompany.test.js; roleWorkflow.database.test.js; frontend/test/studentCoopAcceptance.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/job-submissions",
+      "role": "Public + CAPTCHA / email capability",
+      "handler": "requireRecruitmentSubmissionEnabled, inline handler, createJobSubmission",
+      "source": "backend/src/routes/jobSubmission.routes.js",
+      "databaseCandidates": [
+        "JobSubmission"
+      ],
+      "consumer": "recruitStudent.api.js",
+      "test": "backend/test/jobSubmission.test.js; recruitmentSecurity.test.js; recruitmentLifecycle.database.test.js; jobSubmission.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/job-submissions/verify-email",
+      "role": "Public + CAPTCHA / email capability",
+      "handler": "verifyJobSubmissionEmail",
+      "source": "backend/src/routes/jobSubmission.routes.js",
+      "databaseCandidates": [
+        "JobSubmission"
+      ],
+      "consumer": "recruitStudent.api.js",
+      "test": "backend/test/jobSubmission.test.js; recruitmentSecurity.test.js; recruitmentLifecycle.database.test.js; jobSubmission.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/job-submissions/verify-email",
+      "role": "Public + CAPTCHA / email capability",
+      "handler": "verifyJobSubmissionEmail",
+      "source": "backend/src/routes/jobSubmission.routes.js",
+      "databaseCandidates": [
+        "JobSubmission"
+      ],
+      "consumer": "recruitStudent.api.js",
+      "test": "backend/test/jobSubmission.test.js; recruitmentSecurity.test.js; recruitmentLifecycle.database.test.js; jobSubmission.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/job-submissions/resend-verification",
+      "role": "Public + CAPTCHA / email capability",
+      "handler": "requireRecruitmentSubmissionEnabled, inline handler, inline handler, resendJobSubmissionVerification",
+      "source": "backend/src/routes/jobSubmission.routes.js",
+      "databaseCandidates": [
+        "JobSubmission"
+      ],
+      "consumer": "recruitStudent.api.js",
+      "test": "backend/test/jobSubmission.test.js; recruitmentSecurity.test.js; recruitmentLifecycle.database.test.js; jobSubmission.database.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/auth/login",
+      "role": "Staff / public login",
+      "handler": "inline handler, loginDepartmentStaff",
+      "source": "backend/src/routes/staffAuth.routes.js",
+      "databaseCandidates": [
+        "DepartmentStaff"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffAuth.test.js; roleAuth.test.js; historical Staff Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/auth/me",
+      "role": "Staff / public login",
+      "handler": "authenticateToken, inline handler, inline handler",
+      "source": "backend/src/routes/staffAuth.routes.js",
+      "databaseCandidates": [
+        "DepartmentStaff"
+      ],
+      "consumer": "No production client found; current Staff client uses /api/staff/me",
+      "test": "backend/test/staffAuth.test.js; roleAuth.test.js; historical Staff Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/job-matches/me",
+      "role": "Student owner",
+      "handler": "authenticateToken, requireStudentActor, getMyJobMatches",
+      "source": "backend/src/routes/jobMatching.routes.js",
+      "databaseCandidates": [
+        "Student"
+      ],
+      "consumer": "jobMatching.api.js",
+      "test": "backend/test/jobMatching.test.js; nlp-service/tests/test_job_matching.py",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-coop/company-evaluation",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/student-coop/company-evaluation",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-coop/project-advisor-request",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/student-coop/project-advisor-request",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-coop/project",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/student-coop/project",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-coop/project-files",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/student-coop/project-book",
+      "role": "Student owner",
+      "handler": "inline handler, inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/student-coop/poster",
+      "role": "Student owner",
+      "handler": "inline handler, inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/student-coop/project-files/:id/preview",
+      "role": "Student owner",
+      "handler": "inline handler",
+      "source": "backend/src/routes/studentCoop.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyEvaluation",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "StudentFile",
+        "Teacher"
+      ],
+      "consumer": "studentCoop.api.js",
+      "test": "backend/test/studentCoopProject.database.test.js; coopProjectAdvisor.database.test.js; companyEvaluation.database.test.js; frontend/test/studentCoopProject.test.js",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/internship-logs/mentor/weeks",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/internship-logs/mentor/weeks/:id",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/internship-logs/mentor/weeks/:id/review",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/internship-logs/overview",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/internship-logs/days/:date",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/internship-logs/days/:date",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/internship-logs/days/:date",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/internship-logs/weeks/:date/submit",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/internship-logs/mentor-link",
+      "role": "Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/internshipLogs.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "InternshipDailyLog",
+        "InternshipReviewToken",
+        "InternshipWeek",
+        "InternshipWeekEvent",
+        "Mentor",
+        "Student"
+      ],
+      "consumer": "internshipLogs.api.js",
+      "test": "backend/test/internshipLogRules.test.js; internshipLogs.database.test.js; frontend/test/studentInternshipLog.test.js; historical Daily Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/mentor/appointment",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/supervision/mentor/confirm",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/student",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/student/appointments/:appointment/visits/:visit/result",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/student/appointments/:appointment/visits/:visit/result/images/:image",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "authenticateStudentToken, inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/teacher/students/:id/appointments/:appointment/visits/:visit/result",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/supervision/teacher/students/:id/appointments/:appointment/visits/:visit/result",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler, uploadImages, inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/supervision/teacher/students/:id/appointments/:appointment/visits/:visit/result/complete",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/teacher/students/:id/appointments/:appointment/visits/:visit/result/images/:image",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/teacher/students",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/supervision/teacher/students/:id",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/supervision/teacher/students/:id/visits/:visit",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/supervision/teacher/students/:id/visits/:visit",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/supervision/teacher/students/:id/appointments/:appointment/link",
+      "role": "Project Teacher / Student owner / Mentor capability",
+      "handler": "inline handler, inline handler",
+      "source": "backend/src/routes/supervision.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopRequest",
+        "Mentor",
+        "Student",
+        "SupervisionAppointment",
+        "SupervisionEvent",
+        "SupervisionImage",
+        "SupervisionResult",
+        "SupervisionResultRevision",
+        "SupervisionToken",
+        "Teacher"
+      ],
+      "consumer": "supervision.api.js",
+      "test": "backend/test/supervision.database.test.js; supervisionResults.database.test.js; supervisionRules.test.js; supervisionResultRules.test.js; frontend/test/supervision.test.js; supervisionResult.test.js; historical Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-activities/student",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-activities/student/:id",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-activities/staff",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/coop-activities/staff/:id",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/coop-activities/staff",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/coop-activities/staff/:id",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/coop-activities/staff/:id/cancel",
+      "role": "Active Staff / Student published-only",
+      "handler": "inline handler",
+      "source": "backend/src/routes/coopActivities.routes.js",
+      "databaseCandidates": [
+        "CoopActivity",
+        "CoopActivityHistory",
+        "DepartmentStaff",
+        "Student"
+      ],
+      "consumer": "coopActivities.api.js",
+      "test": "backend/test/coopActivities.database.test.js; frontend/test/coopActivities.test.js; historical activity Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id/company-response",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id/company-response/history",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/document-requests/:id/company-response",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/staff/document-requests/:id/company-response",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id/placement-eligibility",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/document-requests/:id/documents/:type",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PUT",
+      "route": "/api/staff/document-requests/:id/documents/:type",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/document-requests/:id/documents/:type/generate",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id/documents/:type/preview",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/document-requests/:id/documents/:type/download",
+      "role": "Active Staff; parent middleware",
+      "handler": "inline handler",
+      "source": "backend/src/routes/staffDocuments.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CompanyResponse",
+        "CompanyResponseHistory",
+        "CoopDocument",
+        "CoopDocumentRevision",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js",
+      "test": "backend/test/staffDocuments.database.test.js; companyResponse.test.js; frontend/test/staffDocuments.test.js; companyResponse.test.js; final Documents Chrome",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/me",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffDocuments.api.js → getCurrentStaff",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/coop-requests",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffCoopRequests.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/coop-requests/:id",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffCoopRequests.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/coop-requests/:id/cancel",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "staffCoopRequests.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/job-postings",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No production UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/staff/job-postings/:id",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No production UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/job-postings/:id/publish",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No production UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/staff/job-postings/:id/reject",
+      "role": "department_staff",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No production UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/teachers/auth/login",
+      "role": "teacher",
+      "handler": "inline handler, inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/teachers/me",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/teachers/project-advisor-requests",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/teachers/project-advisor-requests/:id/accept",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/teachers/project-advisor-requests/:id/reject",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/teachers/coop-requests",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/teachers/coop-requests/:id",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/teachers/coop-requests/:id/approve",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/teachers/coop-requests/:id/reject",
+      "role": "teacher",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "teacher.api.js / teacherProjectAdvisor.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/department-head/auth/login",
+      "role": "department_head",
+      "handler": "inline handler, inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/department-head/me",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/department-head/coop-requests",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/department-head/coop-requests/:id",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/department-head/coop-requests/:id/approve",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "POST",
+      "route": "/api/department-head/coop-requests/:id/reject",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PATCH",
+      "route": "/api/department-head/me",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No management UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "GET",
+      "route": "/api/department-head/teachers",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "departmentHead.api.js",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PATCH",
+      "route": "/api/department-head/teachers/:id",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No management UI consumer found",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    },
+    {
+      "method": "PATCH",
+      "route": "/api/department-head/students/:id/coop-advisor",
+      "role": "department_head",
+      "handler": "inline handler",
+      "source": "backend/src/routes/roleWorkflow.routes.js",
+      "databaseCandidates": [
+        "Company",
+        "CoopProject",
+        "CoopProjectAdvisorRequest",
+        "CoopRequest",
+        "CoopRequestDeliveryMethod",
+        "CoopRequestReview",
+        "DepartmentStaff",
+        "JobPosting",
+        "JobPostingReview",
+        "JobPostingWorkMode",
+        "JobSubmission",
+        "Student",
+        "Teacher"
+      ],
+      "consumer": "No production UI consumer; service intentionally returns 409",
+      "test": "backend/test/roleAuth.test.js; coopDirectWorkflow.test.js; roleWorkflow.database.test.js; frontend/test/staffCoopRequests.test.js / teacherCoopRequests.test.js / departmentHead.test.js (per role)",
+      "status": "REGISTERED / STATIC; runtime verification is feature-specific"
+    }
+  ],
+  "models": [
+    {
+      "name": "Company",
+      "table": "companies",
+      "source": "backend/src/db/migrations/001_create_companies.js",
+      "purpose": "backend/src/db/migrations/001_create_companies.js",
+      "relations": [
+        {
+          "type": "HasMany",
+          "target": "JobSubmission",
+          "foreignKey": "company_id",
+          "as": "jobSubmissions"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequest",
+          "foreignKey": "company_id",
+          "as": "coopRequests"
+        },
+        {
+          "type": "HasMany",
+          "target": "JobPosting",
+          "foreignKey": "company_id",
+          "as": "jobPostings"
+        },
+        {
+          "type": "HasMany",
+          "target": "CompanyAccessToken",
+          "foreignKey": "company_id",
+          "as": "accessTokens"
+        }
+      ],
+      "fields": [
+        "id",
+        "name",
+        "normalized_name",
+        "email",
+        "normalized_email",
+        "phone",
+        "address_no",
+        "moo",
+        "subdistrict",
+        "district",
+        "province",
+        "email_verified_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/001_create_companies.js",
+        "backend/src/db/migrations/002_create_job_submissions.js",
+        "backend/src/db/migrations/003_create_job_postings.js",
+        "backend/src/db/migrations/005_create_company_access_tokens.js",
+        "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js",
+        "backend/src/db/migrations/009_add_coop_request_company_job_links.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/staffBrowserFixtureDate.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/src/controllers/companyEvaluation.controller.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/controllers/jobSubmission.controller.js",
+        "backend/src/db/migrations/017_add_company_responses.js",
+        "backend/src/db/seedJobMatchingDemo.js",
+        "backend/src/services/companyEvaluation.service.js",
+        "backend/src/services/companyVerification.service.js",
+        "backend/src/services/jobSubmission.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/recruitmentSecurity.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffBrowserFixtureDate.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md",
+        "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md",
+        "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+        "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md",
+        "frontend/test/companyResponse.test.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/staffCoopRequestsFixture.js",
+        "frontend/test/helpers/staffDocumentsFixture.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/staffDocuments.test.js",
+        "frontend/test/studentCoopAcceptance.test.js",
+        "frontend/test/supervision.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/recruitmentSecurity.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffBrowserFixtureDate.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "frontend/test/companyResponse.test.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/staffCoopRequestsFixture.js",
+        "frontend/test/helpers/staffDocumentsFixture.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/staffDocuments.test.js",
+        "frontend/test/studentCoopAcceptance.test.js",
+        "frontend/test/supervision.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CompanyAccessToken",
+      "table": "company_access_tokens",
+      "source": "backend/src/db/migrations/005_create_company_access_tokens.js",
+      "purpose": "backend/src/db/migrations/005_create_company_access_tokens.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Company",
+          "foreignKey": "company_id",
+          "as": "company"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "JobSubmission",
+          "foreignKey": "job_submission_id",
+          "as": "jobSubmission"
+        }
+      ],
+      "fields": [
+        "id",
+        "company_id",
+        "job_submission_id",
+        "purpose",
+        "token_hash",
+        "expires_at",
+        "used_at",
+        "revoked_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/005_create_company_access_tokens.js",
+        "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/services/companyVerification.service.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CompanyEvaluation",
+      "table": "company_evaluations",
+      "source": "backend/src/db/migrations/015_add_company_evaluations.js",
+      "purpose": "backend/src/db/migrations/015_add_company_evaluations.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Mentor",
+          "foreignKey": "mentor_id",
+          "as": "mentor"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "mentor_id",
+        "q1_score",
+        "q2_score",
+        "q3_score",
+        "q4_score",
+        "q5_score",
+        "comment",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        {
+          "name": "company_evaluations_student_unique",
+          "unique": true,
+          "fields": [
+            "student_id"
+          ],
+          "type": "",
+          "parser": null
+        }
+      ],
+      "migrationReferences": [
+        "backend/src/db/migrations/015_add_company_evaluations.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/src/services/companyEvaluation.service.js",
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CompanyResponse",
+      "table": "company_responses",
+      "source": "backend/src/db/migrations/017_add_company_responses.js",
+      "purpose": "backend/src/db/migrations/017_add_company_responses.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "coop_request_id",
+          "as": "request"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "department_staff_id",
+          "as": "staff"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "CoopDocument",
+          "foreignKey": "cooperation_document_id",
+          "as": "cooperationDocument"
+        },
+        {
+          "type": "HasMany",
+          "target": "CompanyResponseHistory",
+          "foreignKey": "company_response_id",
+          "as": "history"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_request_id",
+        "status",
+        "responded_at",
+        "note",
+        "version",
+        "department_staff_id",
+        "cooperation_document_id",
+        "cooperation_version",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/017_add_company_responses.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/src/controllers/companyResponse.controller.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CompanyResponseHistory",
+      "table": "company_response_history",
+      "source": "backend/src/db/migrations/017_add_company_responses.js",
+      "purpose": "backend/src/db/migrations/017_add_company_responses.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CompanyResponse",
+          "foreignKey": "company_response_id",
+          "as": "response"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "department_staff_id",
+          "as": "staff"
+        }
+      ],
+      "fields": [
+        "id",
+        "company_response_id",
+        "status",
+        "responded_at",
+        "note",
+        "version",
+        "department_staff_id",
+        "cooperation_document_id",
+        "cooperation_version",
+        "action",
+        "correction_reason",
+        "createdAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/017_add_company_responses.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopActivity",
+      "table": "coop_activities",
+      "source": "backend/src/models/coopActivity.model.js",
+      "purpose": "backend/src/models/coopActivity.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "created_by",
+          "as": "creator"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "updated_by",
+          "as": "updater"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopActivityHistory",
+          "foreignKey": "activity_id",
+          "as": "history"
+        }
+      ],
+      "fields": [
+        "id",
+        "title",
+        "description",
+        "category",
+        "starts_at",
+        "ends_at",
+        "timezone",
+        "location",
+        "meeting_url",
+        "internal_notes",
+        "status",
+        "published_at",
+        "version",
+        "created_by",
+        "updated_by",
+        "creation_key",
+        "creation_hash",
+        "duplicate_key",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/021_add_coop_activities.js"
+      ],
+      "usedBy": [
+        "backend/scripts/coopActivityBrowserScenarios.js",
+        "backend/src/services/coopActivity.service.js",
+        "backend/test/coopActivities.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/coopActivities.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopActivityHistory",
+      "table": "coop_activity_history",
+      "source": "backend/src/models/coopActivityHistory.model.js",
+      "purpose": "backend/src/models/coopActivityHistory.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopActivity",
+          "foreignKey": "activity_id",
+          "as": "CoopActivity"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "staff_id",
+          "as": "DepartmentStaff"
+        }
+      ],
+      "fields": [
+        "id",
+        "activity_id",
+        "version",
+        "action",
+        "staff_id",
+        "actor_name",
+        "reason",
+        "snapshot",
+        "created_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/021_add_coop_activities.js"
+      ],
+      "usedBy": [
+        "backend/scripts/coopActivityBrowserScenarios.js",
+        "backend/src/services/coopActivity.service.js",
+        "backend/test/coopActivities.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/coopActivities.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopDocument",
+      "table": "coop_documents",
+      "source": "backend/src/db/migrations/016_add_coop_documents.js",
+      "purpose": "backend/src/db/migrations/016_add_coop_documents.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "coop_request_id",
+          "as": "request"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopDocumentRevision",
+          "foreignKey": "coop_document_id",
+          "as": "revisions"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_request_id",
+        "document_type",
+        "status",
+        "version",
+        "document_number",
+        "metadata",
+        "snapshot",
+        "template_version",
+        "rendered_html",
+        "content_sha256",
+        "generated_at",
+        "created_by",
+        "updated_by",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/016_add_coop_documents.js",
+        "backend/src/db/migrations/017_add_company_responses.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopDocumentRevision",
+      "table": "coop_document_revisions",
+      "source": "backend/src/db/migrations/016_add_coop_documents.js",
+      "purpose": "backend/src/db/migrations/016_add_coop_documents.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopDocument",
+          "foreignKey": "coop_document_id",
+          "as": "document"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "department_staff_id",
+          "as": "staff"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_document_id",
+        "version",
+        "action",
+        "status",
+        "department_staff_id",
+        "document_number",
+        "metadata",
+        "snapshot",
+        "template_version",
+        "rendered_html",
+        "content_sha256",
+        "createdAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/016_add_coop_documents.js",
+        "backend/src/db/migrations/017_add_company_responses.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/staffDocuments.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopProject",
+      "table": "coop_projects",
+      "source": "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+      "purpose": "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "topic",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/013_add_coop_projects_and_current_files.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/src/services/coopProjectAdvisor.service.js",
+        "backend/src/services/studentCoopProject.service.js",
+        "backend/test/studentCoopProject.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/studentCoopProject.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopProjectAdvisorRequest",
+      "table": "coop_project_advisor_requests",
+      "source": "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+      "purpose": "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "requested_advisor_teacher_id",
+          "as": "requestedTeacher"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "requested_advisor_teacher_id",
+        "status",
+        "requested_at",
+        "confirmed_at",
+        "rejected_at",
+        "superseded_at",
+        "rejection_reason",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/014_add_coop_project_advisor_requests.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+        "backend/src/services/coopProjectAdvisor.service.js",
+        "backend/test/coopProjectAdvisor.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/coopProjectAdvisor.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopRequest",
+      "table": "coop_requests",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "HasOne",
+          "target": "CompanyResponse",
+          "foreignKey": "coop_request_id",
+          "as": "companyResponse"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopDocument",
+          "foreignKey": "coop_request_id",
+          "as": "documents"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequestPrerequisiteCourse",
+          "foreignKey": "coop_request_id",
+          "as": "prerequisite_courses"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequestReview",
+          "foreignKey": "coop_request_id",
+          "as": "reviews"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Company",
+          "foreignKey": "company_id",
+          "as": "company"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "JobPosting",
+          "foreignKey": "job_posting_id",
+          "as": "jobPosting"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequestDeliveryMethod",
+          "foreignKey": "coop_request_id",
+          "as": "deliveryMethods"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "company_id",
+        "job_posting_id",
+        "company_name",
+        "company_province",
+        "letter_recipient_name",
+        "letter_recipient_position_department",
+        "company_address",
+        "work_start_date",
+        "work_end_date",
+        "status",
+        "submitted_at",
+        "cancelled_at",
+        "document_issued_at",
+        "started_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js",
+        "backend/src/db/migrations/009_add_coop_request_company_job_links.js",
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+        "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+        "backend/src/db/migrations/016_add_coop_documents.js",
+        "backend/src/db/migrations/017_add_company_responses.js",
+        "backend/src/db/migrations/019_add_supervision_appointments.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalClassAdvisorAcceptance.js",
+        "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/controllers/companyResponse.controller.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/services/companyEvaluation.service.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/src/services/supervision.service.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffCancellationStudentContract.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffCancellationStudentContract.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopRequestDeliveryMethod",
+      "table": "coop_request_delivery_methods",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "coop_request_id",
+          "as": "coopRequest"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_request_id",
+        "method",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        {
+          "unique": true,
+          "fields": [
+            "coop_request_id",
+            "method"
+          ],
+          "type": "",
+          "parser": null,
+          "name": "coop_request_delivery_methods_coop_request_id_method"
+        }
+      ],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopRequestPrerequisiteCourse",
+      "table": "coop_request_prerequisite_courses",
+      "source": "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+      "purpose": "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "coop_request_id",
+          "as": "request"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_request_id",
+        "program",
+        "course_code",
+        "course_name",
+        "english_name",
+        "status",
+        "grade",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        {
+          "name": "coop_prerequisites_request_code_unique",
+          "unique": true,
+          "fields": [
+            "coop_request_id",
+            "course_code"
+          ],
+          "type": "",
+          "parser": null
+        }
+      ],
+      "migrationReferences": [
+        "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/services/coopPrerequisites.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "CoopRequestReview",
+      "table": "coop_request_reviews",
+      "source": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "purpose": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "coop_request_id",
+          "as": "request"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "teacher_id",
+          "as": "teacher"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "department_staff_id",
+          "as": "staff"
+        }
+      ],
+      "fields": [
+        "id",
+        "coop_request_id",
+        "actor_role",
+        "teacher_id",
+        "student_id",
+        "department_staff_id",
+        "from_status",
+        "to_status",
+        "decision",
+        "reason",
+        "createdAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+        "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalClassAdvisorAcceptance.js",
+        "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "DepartmentStaff",
+      "table": "department_staffs",
+      "source": "backend/src/db/migrations/007_create_department_staffs.js",
+      "purpose": "backend/src/db/migrations/007_create_department_staffs.js",
+      "relations": [],
+      "fields": [
+        "id",
+        "first_name",
+        "last_name",
+        "email",
+        "password_hash",
+        "password",
+        "is_active",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007_create_department_staffs.js",
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+        "backend/src/db/migrations/016_add_coop_documents.js",
+        "backend/src/db/migrations/017_add_company_responses.js",
+        "backend/src/db/migrations/021_add_coop_activities.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/src/controllers/staffAuth.controller.js",
+        "backend/src/middlewares/auth.middleware.js",
+        "backend/src/routes/coopActivities.routes.js",
+        "backend/src/routes/roleWorkflow.routes.js",
+        "backend/src/seeders/createDepartmentStaff.js",
+        "backend/src/services/coopActivity.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffAuth.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffAuth.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "InternshipDailyLog",
+      "table": "internship_daily_logs",
+      "source": "backend/src/models/internshipDailyLog.model.js",
+      "purpose": "backend/src/models/internshipDailyLog.model.js",
+      "relations": [],
+      "fields": [
+        "id",
+        "student_id",
+        "log_date",
+        "kind",
+        "assigned_work",
+        "work_result",
+        "problems",
+        "solutions",
+        "notes",
+        "non_working_reason",
+        "version",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/018_add_internship_logs.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "InternshipReviewToken",
+      "table": "internship_review_tokens",
+      "source": "backend/src/models/internshipReviewToken.model.js",
+      "purpose": "backend/src/models/internshipReviewToken.model.js",
+      "relations": [],
+      "fields": [
+        "id",
+        "student_id",
+        "mentor_id",
+        "token_hash",
+        "verified_at",
+        "expires_at",
+        "revoked_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/018_add_internship_logs.js"
+      ],
+      "usedBy": [
+        "backend/src/services/internshipLog.service.js",
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "InternshipWeek",
+      "table": "internship_weeks",
+      "source": "backend/src/models/internshipWeek.model.js",
+      "purpose": "backend/src/models/internshipWeek.model.js",
+      "relations": [],
+      "fields": [
+        "id",
+        "student_id",
+        "mentor_id",
+        "week_start",
+        "week_end",
+        "status",
+        "version",
+        "snapshot",
+        "submitted_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/018_add_internship_logs.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "InternshipWeekEvent",
+      "table": "internship_week_events",
+      "source": "backend/src/models/internshipWeekEvent.model.js",
+      "purpose": "backend/src/models/internshipWeekEvent.model.js",
+      "relations": [],
+      "fields": [
+        "id",
+        "week_id",
+        "version",
+        "action",
+        "mentor_id",
+        "mentor_name",
+        "feedback",
+        "snapshot",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/018_add_internship_logs.js"
+      ],
+      "usedBy": [
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/internshipLogs.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "JobPosting",
+      "table": "job_postings",
+      "source": "backend/src/db/migrations/003_create_job_postings.js",
+      "purpose": "backend/src/db/migrations/003_create_job_postings.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Company",
+          "foreignKey": "company_id",
+          "as": "company"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequest",
+          "foreignKey": "job_posting_id",
+          "as": "coopRequests"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "JobSubmission",
+          "foreignKey": "submission_id",
+          "as": "submission"
+        },
+        {
+          "type": "HasMany",
+          "target": "JobPostingWorkMode",
+          "foreignKey": "job_posting_id",
+          "as": "workModes"
+        }
+      ],
+      "fields": [
+        "id",
+        "company_id",
+        "submission_id",
+        "title",
+        "category",
+        "description",
+        "quota",
+        "compensation_text",
+        "work_days_per_week",
+        "status",
+        "submitted_at",
+        "reviewed_at",
+        "published_at",
+        "withdrawn_at",
+        "expires_at",
+        "rejection_reason",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/003_create_job_postings.js",
+        "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+        "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js",
+        "backend/src/db/migrations/009_add_coop_request_company_job_links.js",
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/db/seedJobMatchingDemo.js",
+        "backend/src/services/companyVerification.service.js",
+        "backend/src/services/jobSubmission.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "nlp-service/app/schemas/resume_matching.py",
+        "nlp-service/app/services/matching_service.py"
+      ],
+      "testCoverage": [
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "JobPostingReview",
+      "table": "job_posting_reviews",
+      "source": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "purpose": "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "JobPosting",
+          "foreignKey": "job_posting_id",
+          "as": "jobPosting"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "DepartmentStaff",
+          "foreignKey": "department_staff_id",
+          "as": "staff"
+        }
+      ],
+      "fields": [
+        "id",
+        "job_posting_id",
+        "department_staff_id",
+        "from_status",
+        "to_status",
+        "decision",
+        "reason",
+        "createdAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js"
+      ],
+      "usedBy": [
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "JobPostingWorkMode",
+      "table": "job_posting_work_modes",
+      "source": "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+      "purpose": "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "JobPosting",
+          "foreignKey": "job_posting_id",
+          "as": "jobPosting"
+        }
+      ],
+      "fields": [
+        "id",
+        "job_posting_id",
+        "mode",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/004_create_job_posting_work_modes.js",
+        "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/db/seedJobMatchingDemo.js",
+        "backend/src/services/jobSubmission.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "JobSubmission",
+      "table": "job_submissions",
+      "source": "backend/src/db/migrations/002_create_job_submissions.js",
+      "purpose": "backend/src/db/migrations/002_create_job_submissions.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Company",
+          "foreignKey": "company_id",
+          "as": "company"
+        },
+        {
+          "type": "HasMany",
+          "target": "JobPosting",
+          "foreignKey": "submission_id",
+          "as": "jobPostings"
+        },
+        {
+          "type": "HasMany",
+          "target": "CompanyAccessToken",
+          "foreignKey": "job_submission_id",
+          "as": "verificationTokens"
+        }
+      ],
+      "fields": [
+        "id",
+        "company_id",
+        "submitted_email",
+        "normalized_submitted_email",
+        "verification_status",
+        "submitted_at",
+        "verified_at",
+        "expired_at",
+        "cancelled_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/002_create_job_submissions.js",
+        "backend/src/db/migrations/003_create_job_postings.js",
+        "backend/src/db/migrations/005_create_company_access_tokens.js",
+        "backend/src/db/migrations/006_add_company_job_indexes_and_checks.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/db/seedJobMatchingDemo.js",
+        "backend/src/services/companyVerification.service.js",
+        "backend/src/services/jobSubmission.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/jobSubmission.database.test.js",
+        "backend/test/jobSubmission.test.js",
+        "backend/test/recruitmentLifecycle.database.test.js",
+        "backend/test/roleWorkflow.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "Mentor",
+      "table": "mentors",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "HasMany",
+          "target": "MentorToken",
+          "foreignKey": "mentor_id",
+          "as": "verificationTokens"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "email",
+        "first_name",
+        "last_name",
+        "position",
+        "status",
+        "verified_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js",
+        "backend/src/db/migrations/015_add_company_evaluations.js",
+        "backend/src/db/migrations/018_add_internship_logs.js",
+        "backend/src/db/migrations/019_add_supervision_appointments.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/app.js",
+        "backend/src/controllers/mentor.controller.js",
+        "backend/src/controllers/mentorVerification.controller.js",
+        "backend/src/routes/mentorVerification.routes.js",
+        "backend/src/services/companyEvaluation.service.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/src/services/mentorToken.service.js",
+        "backend/src/services/supervision.service.js",
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "backend/test/supervisionRules.test.js",
+        "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "frontend/src/pages/student_coop.js",
+        "frontend/src/student_coop/student_coop.html",
+        "frontend/src/styles/student_coop.css",
+        "frontend/test/helpers/studentCoopProjectFixture.js",
+        "frontend/test/internshipLogView.test.js",
+        "frontend/test/studentCompanyEvaluation.test.js",
+        "frontend/test/supervision.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "backend/test/supervisionRules.test.js",
+        "frontend/test/helpers/studentCoopProjectFixture.js",
+        "frontend/test/internshipLogView.test.js",
+        "frontend/test/studentCompanyEvaluation.test.js",
+        "frontend/test/supervision.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "MentorToken",
+      "table": "mentor_tokens",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Mentor",
+          "foreignKey": "mentor_id",
+          "as": "mentor"
+        }
+      ],
+      "fields": [
+        "id",
+        "mentor_id",
+        "token_hash",
+        "expires_at",
+        "used_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/controllers/mentorVerification.controller.js",
+        "backend/src/services/mentorToken.service.js",
+        "backend/test/supervision.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervision.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "Student",
+      "table": "students",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "HasOne",
+          "target": "StudentProfile",
+          "foreignKey": "student_id",
+          "as": "profile"
+        },
+        {
+          "type": "HasMany",
+          "target": "StudentFile",
+          "foreignKey": "student_id",
+          "as": "files"
+        },
+        {
+          "type": "HasMany",
+          "target": "CoopRequest",
+          "foreignKey": "student_id",
+          "as": "coopRequests"
+        },
+        {
+          "type": "HasOne",
+          "target": "Mentor",
+          "foreignKey": "student_id",
+          "as": "mentor"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "advisor_teacher_id",
+          "as": "advisorTeacher"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "coop_advisor_teacher_id",
+          "as": "coopAdvisorTeacher"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "email",
+        "password_hash",
+        "password",
+        "first_name",
+        "last_name",
+        "major",
+        "year_level",
+        "gpa",
+        "profile_image",
+        "track",
+        "status",
+        "advisor_teacher_id",
+        "coop_advisor_teacher_id",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js",
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+        "backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js",
+        "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+        "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+        "backend/src/db/migrations/015_add_company_evaluations.js",
+        "backend/src/db/migrations/018_add_internship_logs.js",
+        "backend/src/db/migrations/019_add_supervision_appointments.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/scripts/coopActivityBrowserScenarios.js",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalClassAdvisorAcceptance.js",
+        "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+        "backend/scripts/staffCancellationFinalEvidence.js",
+        "backend/scripts/staffCoopCancellationBrowserScenarios.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/app.js",
+        "backend/src/controllers/auth.controller.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/controllers/mentor.controller.js",
+        "backend/src/controllers/mentorVerification.controller.js",
+        "backend/src/controllers/studentProfile.controller.js",
+        "backend/src/middlewares/auth.middleware.js",
+        "backend/src/routes/coopActivities.routes.js",
+        "backend/src/routes/coopRequest.routes.js",
+        "backend/src/routes/jobMatching.routes.js",
+        "backend/src/services/companyEvaluation.service.js",
+        "backend/src/services/coopPrerequisites.js",
+        "backend/src/services/coopProjectAdvisor.service.js",
+        "backend/src/services/internshipLog.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/src/services/studentCoopProject.service.js",
+        "backend/src/services/supervision.service.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopProjectAdvisor.database.test.js",
+        "backend/test/coopProjectMigration.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/resumeUpload.test.js",
+        "backend/test/roleAuth.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffCancellationFinalEvidence.test.js",
+        "backend/test/staffCancellationStudentContract.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentAdvisor.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/studentFileSchemaDrift.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md",
+        "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md",
+        "docs/DAILY_LOG_WEEKLY_MENTOR_ACCEPTANCE.md",
+        "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+        "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md",
+        "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md",
+        "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md",
+        "frontend/register.html",
+        "frontend/src/pages/login.js",
+        "frontend/src/pages/student_coop.js",
+        "frontend/src/styles/student_coop.css",
+        "frontend/test/companyResponse.test.js",
+        "frontend/test/coopActivities.test.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/staffCoopRequestsFixture.js",
+        "frontend/test/helpers/staffDocumentsFixture.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/staffCoopRequests.test.js",
+        "frontend/test/staffDocuments.test.js",
+        "frontend/test/studentAdvisor.test.js",
+        "frontend/test/studentCompanyEvaluation.test.js",
+        "frontend/test/studentCoopAcceptance.test.js",
+        "frontend/test/studentCoopPrerequisites.test.js",
+        "frontend/test/studentCoopProject.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js",
+        "frontend/test/studentInternshipLog.test.js",
+        "frontend/test/supervision.test.js",
+        "frontend/test/teacherCoop.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyEvaluation.database.test.js",
+        "backend/test/companyEvaluationContext.test.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopPrerequisites.test.js",
+        "backend/test/coopProjectAdvisor.database.test.js",
+        "backend/test/coopProjectMigration.test.js",
+        "backend/test/coopRequestCompany.test.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/resumeUpload.test.js",
+        "backend/test/roleAuth.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/staffCancellationFinalEvidence.test.js",
+        "backend/test/staffCancellationStudentContract.test.js",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentAdvisor.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/studentFileSchemaDrift.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "frontend/test/companyResponse.test.js",
+        "frontend/test/coopActivities.test.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/staffCoopRequestsFixture.js",
+        "frontend/test/helpers/staffDocumentsFixture.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/staffCoopRequests.test.js",
+        "frontend/test/staffDocuments.test.js",
+        "frontend/test/studentAdvisor.test.js",
+        "frontend/test/studentCompanyEvaluation.test.js",
+        "frontend/test/studentCoopAcceptance.test.js",
+        "frontend/test/studentCoopPrerequisites.test.js",
+        "frontend/test/studentCoopProject.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js",
+        "frontend/test/studentInternshipLog.test.js",
+        "frontend/test/supervision.test.js",
+        "frontend/test/teacherCoop.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "StudentFile",
+      "table": "student_files",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "file_type",
+        "original_name",
+        "storage_path",
+        "mime_type",
+        "file_size",
+        "extracted_text",
+        "extraction_method",
+        "extraction_status",
+        "extracted_at",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        {
+          "name": "student_files_one_resume_per_student",
+          "unique": true,
+          "fields": [
+            "student_id"
+          ],
+          "where": {
+            "file_type": "resume"
+          },
+          "type": "",
+          "parser": null
+        }
+      ],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js",
+        "backend/src/db/migrations/008_add_resume_extraction.js",
+        "backend/src/db/migrations/010_cleanup_student_file_schema_drift.js",
+        "backend/src/db/migrations/013_add_coop_projects_and_current_files.js",
+        "backend/src/db/migrations/016_add_coop_documents.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalClassAdvisorAcceptance.js",
+        "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/controllers/studentProfile.controller.js",
+        "backend/src/services/studentCoopProject.service.js",
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/resumeUpload.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/studentFileSchemaDrift.test.js",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md"
+      ],
+      "testCoverage": [
+        "backend/test/internshipLogs.database.test.js",
+        "backend/test/resumeUpload.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/studentFileSchemaDrift.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "StudentProfile",
+      "table": "student_profiles",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "prefix",
+        "birth_date",
+        "height_cm",
+        "weight_kg",
+        "nationality",
+        "ethnicity",
+        "religion",
+        "blood_type",
+        "medical_conditions",
+        "allergies",
+        "special_abilities",
+        "related_skills",
+        "hometown_address",
+        "hometown_phone",
+        "current_address",
+        "current_phone",
+        "father_name",
+        "father_age",
+        "father_occupation",
+        "mother_name",
+        "mother_age",
+        "mother_occupation",
+        "parent_contact_address",
+        "parent_phone",
+        "emergency_contact_name",
+        "emergency_contact_relation",
+        "emergency_contact_address",
+        "emergency_contact_phone",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "backend/src/app.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/controllers/jobMatching.controller.js",
+        "backend/src/controllers/studentProfile.controller.js",
+        "frontend/src/pages/student_coop.js"
+      ],
+      "testCoverage": [],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionAppointment",
+      "table": "supervision_appointments",
+      "source": "backend/src/models/supervisionAppointment.model.js",
+      "purpose": "backend/src/models/supervisionAppointment.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "Student",
+          "foreignKey": "student_id",
+          "as": "student"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "CoopRequest",
+          "foreignKey": "request_id",
+          "as": "request"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "teacher_id",
+          "as": "teacher"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Mentor",
+          "foreignKey": "mentor_id",
+          "as": "mentor"
+        },
+        {
+          "type": "HasMany",
+          "target": "SupervisionEvent",
+          "foreignKey": "appointment_id",
+          "as": "events"
+        },
+        {
+          "type": "HasOne",
+          "target": "SupervisionResult",
+          "foreignKey": "appointment_id",
+          "as": "result"
+        },
+        {
+          "type": "HasMany",
+          "target": "SupervisionImage",
+          "foreignKey": "appointment_id",
+          "as": "images"
+        }
+      ],
+      "fields": [
+        "id",
+        "student_id",
+        "request_id",
+        "teacher_id",
+        "mentor_id",
+        "visit_number",
+        "scheduled_at",
+        "timezone",
+        "status",
+        "version",
+        "snapshot",
+        "notes",
+        "confirmed_at",
+        "created_at",
+        "updated_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/019_add_supervision_appointments.js",
+        "backend/src/db/migrations/020_add_supervision_results.js"
+      ],
+      "usedBy": [
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/src/services/supervision.service.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionEvent",
+      "table": "supervision_events",
+      "source": "backend/src/models/supervisionEvent.model.js",
+      "purpose": "backend/src/models/supervisionEvent.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "SupervisionAppointment",
+          "foreignKey": "appointment_id",
+          "as": "SupervisionAppointment"
+        }
+      ],
+      "fields": [
+        "id",
+        "appointment_id",
+        "version",
+        "action",
+        "actor_name",
+        "teacher_id",
+        "reason",
+        "snapshot",
+        "created_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/019_add_supervision_appointments.js"
+      ],
+      "usedBy": [
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/src/services/supervision.service.js",
+        "backend/test/supervision.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervision.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionImage",
+      "table": "supervision_images",
+      "source": "backend/src/models/supervisionImage.model.js",
+      "purpose": "backend/src/models/supervisionImage.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "SupervisionAppointment",
+          "foreignKey": "appointment_id",
+          "as": "SupervisionAppointment"
+        }
+      ],
+      "fields": [
+        "id",
+        "appointment_id",
+        "original_name",
+        "storage_path",
+        "mime_type",
+        "file_size",
+        "created_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/020_add_supervision_results.js"
+      ],
+      "usedBy": [
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionResult",
+      "table": "supervision_results",
+      "source": "backend/src/models/supervisionResult.model.js",
+      "purpose": "backend/src/models/supervisionResult.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "SupervisionAppointment",
+          "foreignKey": "appointment_id",
+          "as": "SupervisionAppointment"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "author_id",
+          "as": "Teacher"
+        },
+        {
+          "type": "HasMany",
+          "target": "SupervisionResultRevision",
+          "foreignKey": "result_id",
+          "as": "SupervisionResultRevisions"
+        }
+      ],
+      "fields": [
+        "id",
+        "appointment_id",
+        "appointment_version",
+        "author_id",
+        "status",
+        "version",
+        "visited_on",
+        "summary",
+        "issues",
+        "recommendations",
+        "image_1_id",
+        "image_2_id",
+        "snapshot",
+        "completed_at",
+        "created_at",
+        "updated_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/020_add_supervision_results.js"
+      ],
+      "usedBy": [
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/services/supervision.service.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionResultRevision",
+      "table": "supervision_result_revisions",
+      "source": "backend/src/models/supervisionResultRevision.model.js",
+      "purpose": "backend/src/models/supervisionResultRevision.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "SupervisionResult",
+          "foreignKey": "result_id",
+          "as": "SupervisionResult"
+        },
+        {
+          "type": "BelongsTo",
+          "target": "Teacher",
+          "foreignKey": "actor_id",
+          "as": "Teacher"
+        }
+      ],
+      "fields": [
+        "id",
+        "result_id",
+        "version",
+        "actor_id",
+        "actor_name",
+        "snapshot",
+        "created_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/020_add_supervision_results.js"
+      ],
+      "usedBy": [
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervisionResults.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "SupervisionToken",
+      "table": "supervision_tokens",
+      "source": "backend/src/models/supervisionToken.model.js",
+      "purpose": "backend/src/models/supervisionToken.model.js",
+      "relations": [
+        {
+          "type": "BelongsTo",
+          "target": "SupervisionAppointment",
+          "foreignKey": "appointment_id",
+          "as": "SupervisionAppointment"
+        }
+      ],
+      "fields": [
+        "id",
+        "appointment_id",
+        "version",
+        "token_hash",
+        "expires_at",
+        "revoked_at",
+        "consumed_at",
+        "created_at"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/019_add_supervision_appointments.js"
+      ],
+      "usedBy": [
+        "backend/src/services/supervision.service.js",
+        "backend/test/supervision.database.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/supervision.database.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    },
+    {
+      "name": "Teacher",
+      "table": "teachers",
+      "source": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "purpose": "backend/src/db/migrations/007a_create_missing_base_tables.js",
+      "relations": [
+        {
+          "type": "HasMany",
+          "target": "Student",
+          "foreignKey": "advisor_teacher_id",
+          "as": "advisorStudents"
+        },
+        {
+          "type": "HasMany",
+          "target": "Student",
+          "foreignKey": "coop_advisor_teacher_id",
+          "as": "coopAdvisorStudents"
+        }
+      ],
+      "fields": [
+        "id",
+        "email",
+        "password_hash",
+        "password",
+        "academic_title",
+        "first_name",
+        "last_name",
+        "department",
+        "major",
+        "position",
+        "is_department_head",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "migrationReferences": [
+        "backend/src/db/migrations/007a_create_missing_base_tables.js",
+        "backend/src/db/migrations/011_add_role_workflow_reviews.js",
+        "backend/src/db/migrations/014_add_coop_project_advisor_requests.js",
+        "backend/src/db/migrations/019_add_supervision_appointments.js",
+        "backend/src/db/migrations/020_add_supervision_results.js"
+      ],
+      "usedBy": [
+        "HANDOFF_fitm-intern.md",
+        "README.md",
+        "backend/scripts/runDisposableStaffBrowserAcceptance.js",
+        "backend/scripts/runLocalClassAdvisorAcceptance.js",
+        "backend/scripts/runLocalDepartmentHeadAcceptance.js",
+        "backend/scripts/runLocalStaffDocumentsAcceptance.js",
+        "backend/scripts/runLocalTeacherAdvisorAcceptance.js",
+        "backend/scripts/supervisionBrowserScenarios.js",
+        "backend/scripts/supervisionResultBrowserScenarios.js",
+        "backend/src/app.js",
+        "backend/src/controllers/coopRequest.controller.js",
+        "backend/src/controllers/studentProfile.controller.js",
+        "backend/src/controllers/teacher.controller.js",
+        "backend/src/controllers/teacherAuth.controller.js",
+        "backend/src/middlewares/teacherAuth.middleware.js",
+        "backend/src/routes/roleWorkflow.routes.js",
+        "backend/src/routes/supervision.routes.js",
+        "backend/src/seeders/devTeacherCredential.js",
+        "backend/src/seeders/seedTeachers.js",
+        "backend/src/seeders/setDepartmentHead.js",
+        "backend/src/services/coopProjectAdvisor.service.js",
+        "backend/src/services/roleWorkflow.service.js",
+        "backend/src/services/staffDocuments.service.js",
+        "backend/src/services/studentCoopProject.service.js",
+        "backend/src/services/supervision.service.js",
+        "backend/src/services/supervisionResult.service.js",
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopProjectAdvisor.database.test.js",
+        "backend/test/devTeacherCredential.database.test.js",
+        "backend/test/roleAuth.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/runTeacherAdvisorAcceptance.ps1",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentAdvisor.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "docs/COMPANY_RESPONSE_PLACEMENT_ACCEPTANCE.md",
+        "docs/COMPANY_RESPONSE_POSTGRES_BROWSER_VERIFICATION.md",
+        "docs/DEPARTMENT_HEAD_COOP_REQUEST_MANUAL_ACCEPTANCE.md",
+        "docs/NEXT_DAY_DEVELOPMENT_REVIEW.md",
+        "docs/STAFF_COOP_CANCELLATION_ACCEPTANCE.md",
+        "docs/STAFF_DOCUMENT_PROCESSING_ACCEPTANCE.md",
+        "docs/TEACHER_CLASS_ADVISOR_MANUAL_ACCEPTANCE.md",
+        "docs/TEACHER_PROJECT_ADVISOR_MANUAL_ACCEPTANCE.md",
+        "frontend/src/pages/teacherCoop.js",
+        "frontend/src/pages/teacherCoopRequests.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/studentAdvisor.test.js",
+        "frontend/test/studentCoopProject.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js",
+        "frontend/test/teacherCoop.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "testCoverage": [
+        "backend/test/companyResponse.test.js",
+        "backend/test/coopActivities.database.test.js",
+        "backend/test/coopDirectWorkflow.test.js",
+        "backend/test/coopProjectAdvisor.database.test.js",
+        "backend/test/devTeacherCredential.database.test.js",
+        "backend/test/roleAuth.test.js",
+        "backend/test/roleWorkflow.database.test.js",
+        "backend/test/runTeacherAdvisorAcceptance.ps1",
+        "backend/test/staffDocuments.database.test.js",
+        "backend/test/studentAdvisor.test.js",
+        "backend/test/studentCoopProject.database.test.js",
+        "backend/test/supervision.database.test.js",
+        "backend/test/supervisionResults.database.test.js",
+        "frontend/test/departmentHead.test.js",
+        "frontend/test/helpers/teacherCoopFixture.js",
+        "frontend/test/studentAdvisor.test.js",
+        "frontend/test/studentCoopProject.test.js",
+        "frontend/test/studentCoopSavedAcceptance.test.js",
+        "frontend/test/teacherCoop.test.js",
+        "frontend/test/teacherCoopRequests.test.js"
+      ],
+      "issues": "Primary database apply state UNKNOWN; relation/model checks do not inspect live physical schema"
+    }
+  ]
+}

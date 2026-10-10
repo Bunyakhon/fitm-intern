@@ -130,11 +130,14 @@ export function showConfirmModal({
   closeOnBackdrop = false,
   reasonLabel = "",
   reasonMaxLength = 2000,
+  returnFocus,
+  fallbackFocus,
   onClose,
   onConfirm,
 }) {
   const root = getFeedbackRoot();
-  const previousFocus = document.activeElement;
+  // Callers that disable the opener before mounting must pass it explicitly.
+  const previousFocus = returnFocus ?? document.activeElement;
   const modal = document.createElement("div");
 
   modal.className = "app-confirm-overlay";
@@ -191,7 +194,17 @@ export function showConfirmModal({
     onClose?.();
     window.setTimeout(() => {
       modal.remove();
-      previousFocus?.focus?.();
+      for (const target of [previousFocus, fallbackFocus]) {
+        const element = typeof target === "function" ? target() : target;
+        if (!element?.isConnected || element.disabled) continue;
+        let hidden = false;
+        for (let ancestor = element; ancestor; ancestor = ancestor.parentElement) {
+          if (ancestor.hidden || ancestor.inert) { hidden = true; break; }
+        }
+        if (hidden) continue;
+        element.focus?.();
+        if (document.activeElement === element) break;
+      }
     }, 180);
   }
 
@@ -246,4 +259,5 @@ export function showConfirmModal({
       errorMessage.textContent = error.message || "ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง";
     }
   });
+  return close;
 }
