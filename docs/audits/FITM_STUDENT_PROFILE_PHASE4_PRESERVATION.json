@@ -1,0 +1,16 @@
+{
+  "baseline_file_count": 509,
+  "changed": [
+    "backend/src/routes/studentProfile.routes.js",
+    "backend/src/services/studentProfileAggregate.service.js",
+    "backend/src/services/studentProfileFiles.service.js",
+    "frontend/src/api/studentProfile.api.js",
+    "frontend/src/pages/studentProfileWorkspace.js",
+    "frontend/src/pages/student_coop.js",
+    "frontend/src/student_coop/student_coop.html",
+    "frontend/src/styles/student_profile.css",
+    "nlp-service/app/main.py"
+  ],
+  "missing": [],
+  "preserved": 500
+}

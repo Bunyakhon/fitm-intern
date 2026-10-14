@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scope": "GET only",
+  "results": [
+    {
+      "endpoint": "/health/db",
+      "httpStatus": 200,
+      "status": "ok",
+      "cors": "http://localhost:5173"
+    },
+    {
+      "endpoint": "/api/auth/google/config",
+      "httpStatus": 200,
+      "enabled": false,
+      "cors": "http://localhost:5173"
+    }
+  ]
+}

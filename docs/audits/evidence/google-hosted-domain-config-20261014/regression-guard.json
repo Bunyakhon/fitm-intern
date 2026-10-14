@@ -1,0 +1,8 @@
+{
+  "optionalIntegrationEnabled": false,
+  "DB_HOST": "127.0.0.1",
+  "DB_PORT": "1",
+  "PGOPTIONS": "-c default_transaction_read_only=on",
+  "credentials": "synthetic, not reported",
+  "scope": "Child regression only; no Development database connection"
+}

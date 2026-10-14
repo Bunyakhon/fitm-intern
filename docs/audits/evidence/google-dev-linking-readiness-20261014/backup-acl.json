@@ -1,0 +1,12 @@
+﻿{
+    "inheritanceProtected":  true,
+    "status":  "PASS",
+    "archiveInheritsRestrictedDirectory":  true,
+    "allowedPrincipals":  [
+                              "Current Windows user",
+                              "SYSTEM",
+                              "Administrators"
+                          ],
+    "outsideRepository":  true,
+    "actualArchiveAclVerified":  true
+}

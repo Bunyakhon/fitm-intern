@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "concurrent_ocr_jobs": 2,
+  "third_admission_probe": {
+    "status": 503,
+    "method": null,
+    "detail": "PDF_PROCESSOR_BUSY"
+  },
+  "completed_jobs": [
+    {
+      "status": 200,
+      "method": "ocr",
+      "detail": null
+    },
+    {
+      "status": 200,
+      "method": "ocr",
+      "detail": null
+    }
+  ],
+  "wall_seconds": 3.3425227179998274,
+  "sample_interval_seconds": 0.05,
+  "sample_count": 67,
+  "container_baseline_memory_bytes": 728395776,
+  "container_peak_observed_memory_bytes": 1071394816,
+  "container_cpu_seconds": 12.385279,
+  "container_cpu_percent_one_core": 371.1384060726746,
+  "measurement_scope": "entire NLP container cgroup; includes existing application and OCR processes; sampled peak, not exact instantaneous maximum",
+  "temporary_directories_cleaned": true
+}

@@ -1,0 +1,10 @@
+﻿{
+    "scope":  "Synthetic RSA tokens and HTTP security tests; no Google provider or Database",
+    "exitCode":  0,
+    "tests":  18,
+    "pass":  18,
+    "fail":  0,
+    "failures":  [
+
+                 ]
+}

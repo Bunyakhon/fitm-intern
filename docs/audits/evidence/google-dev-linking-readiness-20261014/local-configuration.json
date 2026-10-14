@@ -1,0 +1,11 @@
+{
+  "GOOGLE_HOSTED_DOMAIN_POLICY": "required",
+  "GOOGLE_ALLOWED_HOSTED_DOMAINS": "email.kmutnb.ac.th",
+  "GOOGLE_ALLOWED_EMAIL_DOMAINS": "kmutnb.ac.th,email.kmutnb.ac.th",
+  "GOOGLE_LOGIN_ENABLED": "false",
+  "GOOGLE_ACCOUNT_LINKING_ENABLED": "false",
+  "clientIdConfigured": true,
+  "clientIdsMatch": true,
+  "FRONTEND_URL": "http://localhost:5173",
+  "VITE_API_URL": "http://localhost:5000"
+}

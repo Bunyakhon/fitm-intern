@@ -1,0 +1,187 @@
+﻿{
+    "at":  "2026-10-11T13:58:24.6848583Z",
+    "manifest":  "C:\\Users\\suran\\.codex\\backups\\fitm-intern\\google-oauth-026\\development-20261011T135810Z-8bb878de\\026-6ea1a38c427a4eb5.dump.manifest.json",
+    "restore":  {
+                    "verified":  true,
+                    "target":  {
+                                   "database":  "fitm_026_restore_dfd4007767ffec4b",
+                                   "databaseOid":  "16384",
+                                   "systemIdentifier":  "7695409298819301417",
+                                   "address":  "172.17.0.2/32",
+                                   "port":  5432,
+                                   "user":  "postgres",
+                                   "version":  160015
+                               },
+                    "backupSha256":  "a08abe2d5a5014bf31f0a885f3307c87a2040010e3df0bb34b25d2d89a7198f1",
+                    "rows":  {
+                                 "companies":  {
+                                                   "count":  "12",
+                                                   "digest":  "d9711fd89f70f8733a42ae1befdf37ea"
+                                               },
+                                 "company_access_tokens":  {
+                                                               "count":  "3",
+                                                               "digest":  "5e281cadd4744181ee2541e6cef5d62a"
+                                                           },
+                                 "company_evaluations":  {
+                                                             "count":  "1",
+                                                             "digest":  "1d62541f20cad49a820acbebc0b712cd"
+                                                         },
+                                 "company_response_history":  {
+                                                                  "count":  "0",
+                                                                  "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                              },
+                                 "company_responses":  {
+                                                           "count":  "0",
+                                                           "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                       },
+                                 "coop_document_revisions":  {
+                                                                 "count":  "0",
+                                                                 "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                             },
+                                 "coop_documents":  {
+                                                        "count":  "0",
+                                                        "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                    },
+                                 "coop_project_advisor_requests":  {
+                                                                       "count":  "3",
+                                                                       "digest":  "5df65729a45a04c074d9c7db40fb9cba"
+                                                                   },
+                                 "coop_projects":  {
+                                                       "count":  "1",
+                                                       "digest":  "bf37eab34e8c4540d395859f27bc7aee"
+                                                   },
+                                 "coop_request_delivery_methods":  {
+                                                                       "count":  "6",
+                                                                       "digest":  "4aed0c140b508dcb39639c3a897e4299"
+                                                                   },
+                                 "coop_request_prerequisite_courses":  {
+                                                                           "count":  "5",
+                                                                           "digest":  "428bfdd95360b3954806d296d5055d5c"
+                                                                       },
+                                 "coop_request_reviews":  {
+                                                              "count":  "2",
+                                                              "digest":  "644d87b2e4f7bab4af71881700425c71"
+                                                          },
+                                 "coop_requests":  {
+                                                       "count":  "2",
+                                                       "digest":  "474b2c2efd9d3574d5cc8a7ae03f8877"
+                                                   },
+                                 "department_staffs":  {
+                                                           "count":  "0",
+                                                           "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                       },
+                                 "internship_daily_logs":  {
+                                                               "count":  "0",
+                                                               "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                           },
+                                 "internship_review_tokens":  {
+                                                                  "count":  "0",
+                                                                  "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                              },
+                                 "internship_week_events":  {
+                                                                "count":  "0",
+                                                                "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                            },
+                                 "internship_weeks":  {
+                                                          "count":  "0",
+                                                          "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                      },
+                                 "job_posting_reviews":  {
+                                                             "count":  "0",
+                                                             "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                         },
+                                 "job_posting_work_modes":  {
+                                                                "count":  "32",
+                                                                "digest":  "b79cd7a5974be1f4b3ffef16dcef5b71"
+                                                            },
+                                 "job_postings":  {
+                                                      "count":  "22",
+                                                      "digest":  "edba66a9408af59b3321fd9ffd2615c5"
+                                                  },
+                                 "job_submissions":  {
+                                                         "count":  "12",
+                                                         "digest":  "1bc184798673d06217176cdb37a34a88"
+                                                     },
+                                 "mentor_tokens":  {
+                                                       "count":  "18",
+                                                       "digest":  "1d05a4b82446b1af983763ac8af3281a"
+                                                   },
+                                 "mentors":  {
+                                                 "count":  "2",
+                                                 "digest":  "52d4bf7bf790792f2c1f2cee41ed40dc"
+                                             },
+                                 "student_addresses":  {
+                                                           "count":  "0",
+                                                           "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                       },
+                                 "student_education_records":  {
+                                                                   "count":  "0",
+                                                                   "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                               },
+                                 "student_files":  {
+                                                       "count":  "3",
+                                                       "digest":  "84f327da5eb846a10769c9a34ea141fd"
+                                                   },
+                                 "student_profiles":  {
+                                                          "count":  "2",
+                                                          "digest":  "516b929b318ed260f22f9fac8496034b"
+                                                      },
+                                 "student_skills":  {
+                                                        "count":  "0",
+                                                        "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                    },
+                                 "student_training_records":  {
+                                                                  "count":  "0",
+                                                                  "digest":  "d41d8cd98f00b204e9800998ecf8427e"
+                                                              },
+                                 "students":  {
+                                                  "count":  "4",
+                                                  "digest":  "d1112cc768183ea0be3520a01a45cb2e"
+                                              },
+                                 "teachers":  {
+                                                  "count":  "23",
+                                                  "digest":  "600a82f7708a59e15cdcd6406e34f35f"
+                                              }
+                             },
+                    "ledger":  [
+                                   "001_create_companies.js",
+                                   "002_create_job_submissions.js",
+                                   "003_create_job_postings.js",
+                                   "004_create_job_posting_work_modes.js",
+                                   "005_create_company_access_tokens.js",
+                                   "006_add_company_job_indexes_and_checks.js",
+                                   "007_create_department_staffs.js",
+                                   "007a_create_missing_base_tables.js",
+                                   "008_add_resume_extraction.js",
+                                   "009_add_coop_request_company_job_links.js",
+                                   "010_cleanup_student_file_schema_drift.js",
+                                   "011_add_role_workflow_reviews.js",
+                                   "012_coop_prerequisites_and_direct_review.js",
+                                   "013_add_coop_projects_and_current_files.js",
+                                   "014_add_coop_project_advisor_requests.js",
+                                   "015_add_company_evaluations.js",
+                                   "016_add_coop_documents.js",
+                                   "017_add_company_responses.js",
+                                   "018_add_internship_logs.js",
+                                   "022_prepare_student_profile_scalars.js",
+                                   "023_prepare_student_profile_relations.js",
+                                   "024_prepare_student_profile_file_types.js",
+                                   "025_prepare_student_profile_document_metadata.js"
+                               ],
+                    "existingSchemaHash":  "3b2c7225316fcc9274374d94ad56cfd60ad06a5292f2d5df90c2f9d2ac98afa8",
+                    "schemaVerification":  {
+                                               "verified":  true,
+                                               "method":  "catalog-and-server-reparsed-checks",
+                                               "sourceHash":  "cc8aaf629d2efe68e273dc3da7cc88e3366f1618abcd4f76ee2e38c74ab2b85d",
+                                               "restoredHash":  "3b2c7225316fcc9274374d94ad56cfd60ad06a5292f2d5df90c2f9d2ac98afa8"
+                                           }
+                },
+    "targetHash":  "027cea2ec9b9c25535d6b2d7790ea886c5e073097fbedc0828507611f9c4bd7d",
+    "manifestHash":  "80ebebb84f443ff5aedeb17ede1bb971143f273e476f3886d03c8eccb7105121",
+    "result":  "PASS",
+    "archive":  {
+                    "path":  "C:\\Users\\suran\\.codex\\backups\\fitm-intern\\google-oauth-026\\development-20261011T135810Z-8bb878de\\026-6ea1a38c427a4eb5.dump",
+                    "sha256":  "a08abe2d5a5014bf31f0a885f3307c87a2040010e3df0bb34b25d2d89a7198f1",
+                    "bytes":  135941
+                }
+}

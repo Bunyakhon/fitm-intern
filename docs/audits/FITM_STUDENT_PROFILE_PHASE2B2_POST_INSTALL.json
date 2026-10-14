@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-10-10T17:20:40.904Z",
+  "database": "intern_system",
+  "read_only": true,
+  "all_28_legacy_table_checksums_unchanged": true,
+  "original_45_check_properties_and_definitions_unchanged": true,
+  "schema_matches_install_evidence": true,
+  "new_relation_counts": {
+    "student_addresses": 0,
+    "student_education_records": 0,
+    "student_training_records": 0,
+    "student_skills": 0
+  },
+  "sequelize": {
+    "live_models_defined": 36,
+    "existing_and_prepared_zero_row_queries": "PASS",
+    "prepared_association_query": "PASS",
+    "live_registration_changed": false
+  },
+  "sequences": 0,
+  "identity_columns": 0,
+  "temporary_databases_and_roles_remaining": 0,
+  "backend_database_health": 200,
+  "unauthorized_profile_status": 401
+}

@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "before": {
+    "trackedModified": 32,
+    "untrackedFiles": 290
+  },
+  "afterExcludingNewAuditEvidence": {
+    "trackedModified": 32,
+    "untrackedFiles": 290
+  },
+  "afterIncludingNewAuditEvidence": {
+    "trackedModified": 32,
+    "untrackedFiles": 327
+  },
+  "preexistingFilesChecked": 722,
+  "changedPreexistingFiles": [],
+  "missingPreexistingFiles": [],
+  "newAuditFiles": 37
+}

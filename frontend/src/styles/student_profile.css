@@ -1,0 +1,61 @@
+/* Scoped additions: the dashboard, project and Resume layouts stay unchanged. */
+#panel-profile { min-width: 0; }
+#panel-profile .profile-tabs { gap: 4px; scrollbar-width: thin; }
+#panel-profile .profile-tab { flex: 1 0 auto; white-space: nowrap; }
+#panel-profile .profile-workspace-notice { padding: 12px 16px; margin-top: 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--primary-soft); color: var(--primary-dark); font-size: .83rem; line-height: 1.8; }
+#panel-profile .profile-entry { min-width: 0; border-top: 3px solid var(--primary); }
+#panel-profile .profile-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; margin: 20px 0; }
+#panel-profile .profile-entry-grid .form-group { min-width: 0; }
+#panel-profile .profile-entry-grid .form-group[hidden] { display: none; }
+#panel-profile .profile-entry input, #panel-profile .profile-entry textarea, #panel-profile .profile-entry select,
+#panel-profile .profile-document-card input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); color: var(--text); font: inherit; }
+#panel-profile .profile-entry textarea { resize: vertical; }
+#panel-profile .profile-entry label, #panel-profile .profile-document-card label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 600; }
+#panel-profile .profile-entry input:focus-visible, #panel-profile .profile-entry select:focus-visible, #panel-profile .profile-entry textarea:focus-visible,
+#panel-profile .profile-document-card input:focus-visible, #panel-profile button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+#panel-profile .profile-entry-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+#panel-profile .profile-entry .message { margin-top: 12px; overflow-wrap: anywhere; }
+#panel-profile .profile-record-section { margin-top: 26px; }
+#panel-profile .profile-record-list { display: grid; gap: 16px; }
+#panel-profile .profile-record-list .info-card { margin-top: 0; }
+#panel-profile .profile-record-section .profile-section-header { margin-bottom: 14px; }
+#panel-profile .profile-empty-state { padding: 20px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); background: var(--white); line-height: 1.8; }
+#panel-profile .profile-danger { color: #b42318; border-color: #fecdca; }
+#panel-profile .profile-difference { padding: 16px; margin-bottom: 16px; background: #fff9ee; border: 1px solid #fedf89; border-radius: 10px; }
+#panel-profile .profile-difference[hidden], #panel-profile .profile-entry button[hidden], #panel-profile .profile-empty-state[hidden] { display: none; }
+#panel-profile .profile-difference-grid { display: grid; gap: 14px; margin-top: 12px; overflow-wrap: anywhere; }
+#panel-profile .profile-difference-grid dt { font-weight: 600; }
+#panel-profile .profile-difference-grid dd { margin-top: 5px; white-space: pre-wrap; }
+#panel-profile #profileDocumentCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+#panel-profile .profile-document-card { margin-top: 0; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+#panel-profile .profile-document-row { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); margin-bottom: 12px; }
+#panel-profile .profile-document-meta { display: grid; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+#panel-profile .profile-document-meta small { color: var(--muted); line-height: 1.6; }
+#panel-profile .profile-document-card .card-title { margin: 0; }
+#panel-profile .profile-document-upload { display: grid; gap: 12px; }
+#panel-profile .profile-document-card .card-title i { color: var(--primary); margin-right: 8px; }
+#panel-profile .profile-entry button, #panel-profile .profile-document-card button { min-height: 44px; }
+#panel-profile #profileStructuredAddresses { margin-top: 20px; }
+#panel-profile .profile-pdf-import { border-top: 3px solid var(--primary); }
+#panel-profile #profilePdfBody { margin-top: 20px; }
+#panel-profile #profilePdfBody[hidden] { display: none; }
+#panel-profile #profilePdfBody label { display: block; font-weight: 600; font-size: .88rem; margin: 12px 0 6px; }
+#panel-profile #profilePdfBody input, #panel-profile #profilePdfBody select, #panel-profile #profilePdfBody textarea { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--white); color: var(--text); }
+#panel-profile #profilePdfBody input:disabled, #panel-profile #profilePdfBody select:disabled { background: var(--bg); color: var(--muted); }
+#panel-profile #profilePdfPreview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 22px 0; min-width: 0; }
+#panel-profile #profilePdfPreview > h3, #panel-profile #profilePdfPreview > p, #panel-profile #profilePdfPreview > ul, #panel-profile #profilePdfPreview > fieldset { grid-column: 1 / -1; }
+#panel-profile .profile-pdf-field, #panel-profile .profile-pdf-record { padding: 16px; border: 1px solid var(--border); border-radius: 10px; min-width: 0; background: var(--bg); overflow-wrap: anywhere; }
+#panel-profile .profile-pdf-record legend { font-weight: 700; padding: 0 6px; }
+#panel-profile .profile-pdf-current { color: var(--primary-dark); font-size: .85rem; line-height: 1.7; white-space: pre-wrap; }
+#panel-profile .profile-pdf-warnings { padding-left: 22px; font-size: .85rem; line-height: 1.8; }
+#panel-profile .profile-pdf-import .message, #panel-profile #profilePdfHistory { overflow-wrap: anywhere; }
+#panel-profile .profile-pdf-import button { min-height: 44px; }
+@media (max-width: 900px) {
+  #panel-profile .profile-entry-grid, #panel-profile #profileDocumentCards, #panel-profile #profilePdfPreview { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  #panel-profile .profile-entry, #panel-profile .profile-document-card { padding: 18px 14px; }
+  #panel-profile .profile-entry-actions { flex-direction: column; align-items: stretch; }
+  #panel-profile .profile-entry-actions button, #panel-profile .profile-record-section .profile-section-header button { width: 100%; }
+  #panel-profile .profile-tab { font-size: .82rem; }
+}

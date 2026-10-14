@@ -434,3 +434,9 @@
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.google-login { margin: 20px 0; min-width: 0; }
+.google-login__button { display: flex; justify-content: center; overflow: hidden; }
+.google-login__link label { display: block; margin: 12px 0; }
+.google-login__link input { display: block; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+.google-login__link p { font-size: 0.9rem; }
+.google-login__retry, .google-login__cancel { padding: 8px 12px; margin-top: 8px; border-radius: 8px; cursor: pointer; }

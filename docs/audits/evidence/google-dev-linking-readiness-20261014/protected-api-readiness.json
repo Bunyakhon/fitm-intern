@@ -1,0 +1,20 @@
+{
+  "scope": "Anonymous GET only; no JWT issued or supplied",
+  "results": [
+    {
+      "endpoint": "/api/auth/me",
+      "httpStatus": 401,
+      "anonymousDenied": true
+    },
+    {
+      "endpoint": "/api/teachers/auth/me",
+      "httpStatus": 401,
+      "anonymousDenied": true
+    },
+    {
+      "endpoint": "/api/staff/auth/me",
+      "httpStatus": 401,
+      "anonymousDenied": true
+    }
+  ]
+}

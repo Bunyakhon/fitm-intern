@@ -1,0 +1,31 @@
+{
+  "git": {
+    "status": "PASS",
+    "before": {
+      "trackedModified": 32,
+      "untrackedFiles": 290
+    },
+    "afterExcludingNewAuditEvidence": {
+      "trackedModified": 32,
+      "untrackedFiles": 290
+    },
+    "afterIncludingNewAuditEvidence": {
+      "trackedModified": 32,
+      "untrackedFiles": 327
+    },
+    "preexistingFilesChecked": 722,
+    "changedPreexistingFiles": [],
+    "missingPreexistingFiles": [],
+    "newAuditFiles": 37
+  },
+  "configuration": {
+    "databaseNameUnchanged": true,
+    "DB_HOST": "postgres",
+    "hostedPolicy": "required",
+    "hostedDomainsConfirmed": false,
+    "flagsOff": true,
+    "rootPasswordMatchesBackend": true
+  },
+  "artifactSensitiveValueScan": "PASS",
+  "leakFiles": []
+}

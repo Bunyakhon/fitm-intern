@@ -1,0 +1,111 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-10-10T18:48:20.154Z",
+  "database": "intern_system",
+  "read_only": true,
+  "schema_matches_phase2b2_installation": true,
+  "metadata_sha256": "635c6050d74f89511d9698cd32e8a81423b1a50d652f88fe1cc8380686601a6f",
+  "all_28_legacy_table_counts_and_checksums_unchanged": true,
+  "migration_executions": 0,
+  "ledger": [
+    "001_create_companies.js",
+    "002_create_job_submissions.js",
+    "003_create_job_postings.js",
+    "004_create_job_posting_work_modes.js",
+    "005_create_company_access_tokens.js",
+    "006_add_company_job_indexes_and_checks.js",
+    "007_create_department_staffs.js",
+    "007a_create_missing_base_tables.js",
+    "008_add_resume_extraction.js",
+    "009_add_coop_request_company_job_links.js",
+    "010_cleanup_student_file_schema_drift.js",
+    "011_add_role_workflow_reviews.js",
+    "012_coop_prerequisites_and_direct_review.js",
+    "013_add_coop_projects_and_current_files.js",
+    "014_add_coop_project_advisor_requests.js",
+    "015_add_company_evaluations.js",
+    "016_add_coop_documents.js",
+    "017_add_company_responses.js",
+    "018_add_internship_logs.js",
+    "022_prepare_student_profile_scalars.js",
+    "023_prepare_student_profile_relations.js",
+    "024_prepare_student_profile_file_types.js",
+    "025_prepare_student_profile_document_metadata.js"
+  ],
+  "pending": [
+    "019_add_supervision_appointments.js",
+    "020_add_supervision_results.js",
+    "021_add_coop_activities.js"
+  ],
+  "totals": {
+    "tables": 33,
+    "columns": 398,
+    "constraints": 169,
+    "indexes": 83,
+    "enums": 32,
+    "triggers": 5,
+    "ledger": 23
+  },
+  "record_counts": {
+    "companies": "12",
+    "company_access_tokens": "3",
+    "company_evaluations": "1",
+    "company_response_history": "0",
+    "company_responses": "0",
+    "coop_document_revisions": "0",
+    "coop_documents": "0",
+    "coop_project_advisor_requests": "3",
+    "coop_projects": "1",
+    "coop_request_delivery_methods": "6",
+    "coop_request_prerequisite_courses": "5",
+    "coop_request_reviews": "2",
+    "coop_requests": "2",
+    "department_staffs": "0",
+    "internship_daily_logs": "0",
+    "internship_review_tokens": "0",
+    "internship_week_events": "0",
+    "internship_weeks": "0",
+    "job_posting_reviews": "0",
+    "job_posting_work_modes": "32",
+    "job_postings": "22",
+    "job_submissions": "12",
+    "mentor_tokens": "18",
+    "mentors": "2",
+    "student_addresses": "0",
+    "student_education_records": "0",
+    "student_files": "3",
+    "student_profiles": "2",
+    "student_skills": "0",
+    "student_training_records": "0",
+    "students": "4",
+    "teachers": "23"
+  },
+  "prepared_source_sha256": {
+    "backend/src/db/prepared/student-profile-phase2a/schema.js": "61be401ceac008051ed2cda4556c435697fdef134afd3885c53c429abf2e730f",
+    "backend/src/db/prepared/student-profile-phase2a/models.js": "b54051ebae0c4ef86848615ce030b7292e48f59c7c6c8a32b8619dcc2bda9849",
+    "backend/src/db/prepared/student-profile-phase2a/migrationSupport.js": "7227b01f08d8311c3d4bb735dafd08a0d1bd1c997eb35b80aa0f8bb53d16ef37",
+    "backend/src/db/prepared/student-profile-phase2a/migrations/022_prepare_student_profile_scalars.js": "43b365f79afd159fd1f58107f3878e0253e7a6938fdba76120abc59f1a5da3cc",
+    "backend/src/db/prepared/student-profile-phase2a/migrations/023_prepare_student_profile_relations.js": "ef5d58a92383f815badeae45d3cc2ff5a8fe010b44cdd51e068ae2ddb401dbe7",
+    "backend/src/db/prepared/student-profile-phase2a/migrations/024_prepare_student_profile_file_types.js": "84ca326b1e6d3a957b811ba29d90a2468c337dc20b39ad0111eccb81c20cbef8",
+    "backend/src/db/prepared/student-profile-phase2a/migrations/025_prepare_student_profile_document_metadata.js": "3f8cbef8c5b7c74804321f272e48af51da3429b4c5669ff89366b00f39ccb6ea"
+  },
+  "retained_synthetic_databases": [
+    {
+      "database": "fitm_profile_3a_01bac169b8bd7c8117e163ccb42b2a13",
+      "role": "fitm_p3a_01bac169b8bd7c8117e163ccb42b2a13",
+      "login_enabled": false
+    },
+    {
+      "database": "fitm_profile_3a_2e0c4614068e45b2d0f5a9d7dd07e5e3",
+      "role": "fitm_p3a_2e0c4614068e45b2d0f5a9d7dd07e5e3",
+      "login_enabled": false
+    },
+    {
+      "database": "fitm_profile_3a_5e5f6ed0ee990bb046f95d7969444a4e",
+      "role": "fitm_p3a_5e5f6ed0ee990bb046f95d7969444a4e",
+      "login_enabled": false
+    }
+  ],
+  "database_drop_reset_truncate": false,
+  "real_account_writes": false
+}

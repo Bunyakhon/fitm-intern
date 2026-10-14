@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "fullConfigValidation": "PASS",
+  "disabledConfig": {
+    "enabled": false
+  },
+  "validationScope": "Detached function arguments and synthetic RSA tokens only; no live flags, Database or Provider",
+  "policy": "required",
+  "hostedDomains": [
+    "email.kmutnb.ac.th"
+  ],
+  "allowedEmailDomains": [
+    "kmutnb.ac.th",
+    "email.kmutnb.ac.th"
+  ],
+  "roleDomains": {
+    "student": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "teacher": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "department_head": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "department_staff": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ]
+  },
+  "cases": [
+    {
+      "name": "verified student email and hosted domain",
+      "status": "PASS",
+      "expectedOutcome": "ACCEPT"
+    },
+    {
+      "name": "existing second email domain retained",
+      "status": "PASS",
+      "expectedOutcome": "ACCEPT"
+    },
+    {
+      "name": "case normalization retained",
+      "status": "PASS",
+      "expectedOutcome": "ACCEPT"
+    },
+    {
+      "name": "gmail rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_DOMAIN"
+    },
+    {
+      "name": "email suffix spoof rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_DOMAIN"
+    },
+    {
+      "name": "unlisted subdomain rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_DOMAIN"
+    },
+    {
+      "name": "unverified hosted domain rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_HOSTED_DOMAIN"
+    },
+    {
+      "name": "missing hosted domain rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_HOSTED_DOMAIN"
+    },
+    {
+      "name": "hosted suffix spoof rejected",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_HOSTED_DOMAIN"
+    },
+    {
+      "name": "email_verified must be true",
+      "status": "PASS",
+      "expectedOutcome": "GOOGLE_IDENTITY"
+    }
+  ],
+  "tokenVerificationBeforeIdentityPolicy": true
+}

@@ -1,0 +1,165 @@
+﻿ M HANDOFF_fitm-intern.md
+ M README.md
+ M backend/.env.example
+ M backend/src/config/oauth.js
+ M backend/src/config/storage.js
+ M backend/src/controllers/auth.controller.js
+ M backend/src/controllers/studentProfile.controller.js
+ M backend/src/db/migrate.js
+ M backend/src/middlewares/upload.middleware.js
+ M backend/src/models/index.js
+ M backend/src/routes/auth.routes.js
+ M backend/src/routes/studentProfile.routes.js
+ M backend/test/studentAdvisor.test.js
+ M frontend/department-head-login.html
+ M frontend/login.html
+ M frontend/src/api/client.js
+ M frontend/src/api/studentProfile.api.js
+ M frontend/src/pages/index.js
+ M frontend/src/pages/login.js
+ M frontend/src/pages/staffLogin.js
+ M frontend/src/pages/studentInternshipLog.js
+ M frontend/src/pages/studentSupervision.js
+ M frontend/src/pages/student_coop.js
+ M frontend/src/student_coop/student_coop.html
+ M frontend/src/styles/auth.css
+ M frontend/src/styles/internship_log.css
+ M frontend/src/styles/student_coop.css
+ M frontend/staff-login.html
+ M frontend/teacher-login.html
+ M frontend/test/studentAdvisor.test.js
+ M frontend/test/studentInternshipLog.test.js
+ M nlp-service/app/main.py
+?? backend/scripts/auditStudentProfilePhase2A.js
+?? backend/scripts/installStudentProfilePhase2B2.js
+?? backend/scripts/lib/
+?? backend/scripts/prepareStudentProfilePhase2AReference.js
+?? backend/scripts/runGoogleOAuthIntegration.js
+?? backend/scripts/runStudentProfilePhase3AIntegration.js
+?? backend/scripts/runStudentProfilePhase3BIntegration.js
+?? backend/scripts/runStudentProfilePhase4Integration.js
+?? backend/scripts/runStudentProfilePhase4NlpTests.js
+?? backend/scripts/runStudentProfilePhase5Capacity.js
+?? backend/scripts/runStudentProfilePhase5Checks.js
+?? backend/scripts/runStudentProfilePhase5Integration.js
+?? backend/scripts/runStudentProfilePhase5Nlp.js
+?? backend/scripts/verifyGoogleLoginBrowser.js
+?? backend/scripts/verifyStudentProfileBrowser.js
+?? backend/scripts/verifyStudentProfilePhase2B2.js
+?? backend/scripts/verifyStudentProfilePhase5.js
+?? backend/scripts/verifyStudentProfileRestore.js
+?? backend/src/controllers/googleAuth.controller.js
+?? backend/src/controllers/studentProfileAggregate.controller.js
+?? backend/src/controllers/studentProfilePdfImport.controller.js
+?? backend/src/db/prepared/
+?? backend/src/db/studentProfileMigrationDiscovery.js
+?? backend/src/models/googleAuthRequest.model.js
+?? backend/src/models/googleIdentity.model.js
+?? backend/src/models/registerStudentProfileAggregate.js
+?? backend/src/routes/googleAuth.routes.js
+?? backend/src/services/googleAuth.service.js
+?? backend/src/services/googleToken.service.js
+?? backend/src/services/studentProfileAggregate.service.js
+?? backend/src/services/studentProfileFiles.service.js
+?? backend/src/services/studentProfileIntegrity.js
+?? backend/src/services/studentProfilePdf.client.js
+?? backend/src/services/studentProfilePdfImport.service.js
+?? backend/src/services/studentProfileValidation.js
+?? backend/test/googleAuth.test.js
+?? backend/test/googleAuthPostgres.test.js
+?? backend/test/googleToken.test.js
+?? backend/test/helpers/studentProfileIntegrityFixture.js
+?? backend/test/helpers/studentProfilePhase2B1Postgres.js
+?? backend/test/studentProfileAggregatePostgres.test.js
+?? backend/test/studentProfileIntegrity.test.js
+?? backend/test/studentProfilePdfImport.test.js
+?? backend/test/studentProfilePhase2APreparation.test.js
+?? backend/test/studentProfilePhase2B1Postgres.test.js
+?? backend/test/studentProfilePhase2B2.test.js
+?? backend/test/studentProfilePhase3BBrowser.test.js
+?? backend/test/studentProfilePhase4Browser.test.js
+?? backend/test/studentProfilePhase5Browser.test.js
+?? backend/test/studentProfileRestoreVerification.test.js
+?? backend/test/studentProfileValidation.test.js
+?? docs/audits/FITM_AUTH_PHASE2_REMEMBER_ME.md
+?? docs/audits/FITM_FEATURE_STATUS_MATRIX_2026-10-10.md
+?? docs/audits/FITM_FULL_FEATURE_INVENTORY_2026-10-10.md
+?? docs/audits/FITM_GAP_AND_PRIORITY_REPORT_2026-10-10.md
+?? docs/audits/FITM_GOOGLE_OAUTH_ALL_ROLES_IMPLEMENTATION.md
+?? docs/audits/FITM_GOOGLE_OAUTH_BACKEND_TESTS.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_BUILD.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_DATABASE_READONLY.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_FRONTEND_TESTS.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_GIT_AFTER.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_GIT_BEFORE.txt
+?? docs/audits/FITM_GOOGLE_OAUTH_POSTGRES_TESTS.txt
+?? docs/audits/FITM_MANUAL_TEST_CHECKLIST_2026-10-10.md
+?? docs/audits/FITM_MANUAL_WORKFLOW_UXUI_2026-10-10.md
+?? docs/audits/FITM_STUDENT_PROFILE_DATABASE_DESIGN.md
+?? docs/audits/FITM_STUDENT_PROFILE_FIELD_MAPPING.md
+?? docs/audits/FITM_STUDENT_PROFILE_MISSING_FIELDS.md
+?? docs/audits/FITM_STUDENT_PROFILE_PDF_FIELD_INVENTORY.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE1_IMPLEMENTATION.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2A_FIELD_COVERAGE.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2A_PREPARATION.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2A_SCHEMA_SNAPSHOT.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2B1_POSTGRES_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2B1_PREFLIGHT.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2B2_INSTALLATION.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2B2_POST_INSTALL.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE2B2_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3A_DATABASE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3A_IMPLEMENTATION.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3A_POSTGRES_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3B_BROWSER_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3B_CHECK_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3B_DATABASE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE3B_IMPLEMENTATION.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_BACKEND_TEST_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_BROWSER_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_BUILD_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_DATABASE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_FRONTEND_TEST_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_NLP_TEST_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_PDF_IMPORT.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_PRESERVATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_PROCESSOR_CONNECTIVITY.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_SYNTAX_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE4_TEMPLATE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_BROWSER_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_CAPACITY_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_CHECK_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_DATABASE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_NLP_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_SYNTAX_RESULTS.json
+?? docs/audits/FITM_STUDENT_PROFILE_PHASE5_TEMPLATE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_RESTORE_VERIFICATION.json
+?? docs/audits/FITM_STUDENT_PROFILE_UXUI_PLAN.md
+?? docs/audits/evidence/google-oauth/
+?? docs/audits/evidence/student-profile-phase3b/
+?? docs/audits/evidence/student-profile-phase4/
+?? docs/audits/evidence/student-profile-phase5/
+?? docs/requirements/
+?? frontend/src/api/googleAuth.api.js
+?? frontend/src/auth/
+?? frontend/src/pages/googleLogin.js
+?? frontend/src/pages/studentProfileDraft.js
+?? frontend/src/pages/studentProfilePdfDraft.js
+?? frontend/src/pages/studentProfilePdfImport.js
+?? frontend/src/pages/studentProfileWorkspace.js
+?? frontend/src/pages/studentProfileWorkspaceDraft.js
+?? frontend/src/styles/student_profile.css
+?? frontend/test/googleLogin.test.js
+?? frontend/test/studentProfileAggregateCompatibility.test.js
+?? frontend/test/studentProfileIntegrity.test.js
+?? frontend/test/studentProfilePdfImport.test.js
+?? frontend/test/studentProfilePhase5Security.test.js
+?? frontend/test/studentProfileWorkspace.test.js
+?? frontend/test/studentRememberMe.test.js
+?? nlp-service/app/api/v1/profile_pdf.py
+?? nlp-service/app/services/profile_pdf.py
+?? nlp-service/tests/profile_pdf_fixtures.py
+?? nlp-service/tests/profile_phase5_fixtures.py
+?? nlp-service/tests/test_profile_pdf.py
+?? nlp-service/tests/test_profile_phase5.py

@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-11T13:55:58.202Z",
+  "target": {
+    "database": "intern_system",
+    "read_only": "on"
+  },
+  "featureFlags": {
+    "GOOGLE_LOGIN_ENABLED": "unset-disabled",
+    "GOOGLE_ACCOUNT_LINKING_ENABLED": "unset-disabled"
+  },
+  "otherActiveTransactions": [],
+  "strongOrAdvisoryLocks": [],
+  "result": "PASS"
+}

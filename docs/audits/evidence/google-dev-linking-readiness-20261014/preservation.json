@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "preexistingSourceFilesChecked": 842,
+  "environmentFilesChecked": 3,
+  "changedPreexistingFiles": [],
+  "missingPreexistingFiles": [],
+  "before": {
+    "trackedModified": 32,
+    "untrackedFiles": 410
+  },
+  "after": {
+    "trackedModified": 32,
+    "untrackedFiles": 451
+  },
+  "newAuditFiles": 41,
+  "priorGitStatusPreserved": true,
+  "flags": {
+    "login": "false",
+    "linking": "false"
+  },
+  "hostedDomain": "email.kmutnb.ac.th",
+  "artifactScan": "PASS",
+  "leakFiles": []
+}

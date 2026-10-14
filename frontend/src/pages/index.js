@@ -1,4 +1,5 @@
 import { getCurrentStudent } from "../api/auth.api.js";
+import { getStudentToken, clearStudentSession, updateStoredStudent, subscribeStudentSession } from "../auth/studentAuthStorage.js";
 
 console.log("KIWI index page loaded");
 
@@ -9,7 +10,7 @@ console.log("KIWI index page loaded");
 const navAuth = document.getElementById("navAuth");
 
 async function checkAuth() {
-  const token = localStorage.getItem("token");
+  const token = getStudentToken();
 
   // ไม่มี token = ยังไม่ได้ Login
   if (!token) {
@@ -21,18 +22,12 @@ async function checkAuth() {
     const result = await getCurrentStudent();
 
     // อัปเดตข้อมูล student ล่าสุดจาก Backend
-    localStorage.setItem(
-      "student",
-      JSON.stringify(result.data)
-    );
+    if (getStudentToken() !== token) { showGuestNavbar(); return; }
+    updateStoredStudent(result.data, token);
 
     showStudentNavbar(result.data);
   } catch (error) {
-    console.error("AUTH CHECK ERROR:", error);
-
-    // Token หมดอายุ / Token ผิด
-    localStorage.removeItem("token");
-    localStorage.removeItem("student");
+    if ([401, 403, 404].includes(error.status)) clearStudentSession({ expectedToken: token });
 
     showGuestNavbar();
   }
@@ -86,14 +81,14 @@ function showStudentNavbar(student) {
 // ==============================
 
 function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("student");
+  clearStudentSession();
 
   window.location.href = "/index.html";
 }
 
 // ตรวจ Login ตอนเปิดหน้า
 checkAuth();
+subscribeStudentSession(showGuestNavbar);
 
 // ==============================
 // Search

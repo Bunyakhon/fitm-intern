@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/src/styles/auth.css" />
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
-  <body class="login-page">
+  <body class="login-page" data-auth-role="teacher">
     <header class="navbar"><div class="nav-container">
       <a href="/index.html" class="brand"><img src="/images/logo_kiwi.png" alt="KIWI" class="brand-logo" /><span>ระบบจัดการสหกิจศึกษา</span></a>
       <a href="/login.html" class="btn-login">เข้าสู่ระบบนักศึกษา</a>
@@ -21,8 +21,10 @@
         <button class="btn-submit" type="submit">เข้าสู่ระบบ</button>
         <p id="teacherLoginMessage" class="login-message" role="status" aria-live="polite"></p>
       </form>
+      <section id="googleLogin" class="google-login" aria-label="เข้าสู่ระบบด้วย Google"></section>
       <p class="auth-footer"><a href="/department-head-login.html">เข้าสู่ระบบสำหรับหัวหน้าภาควิชา</a></p>
     </div></main>
     <script type="module" src="/src/pages/teacherLogin.js"></script>
+    <script type="module" src="/src/pages/googleLogin.js"></script>
   </body>
 </html>

@@ -42,6 +42,7 @@ const getStudentStoragePaths = (studentId) => {
     root: studentRoot,
     profile: path.join(studentRoot, "profile"),
     resume: path.join(studentRoot, "resume"),
+    profileDocuments: path.join(studentRoot, "profile-documents"),
     coop: path.join(studentRoot, "coop"),
     posters: path.join(studentRoot, "coop", "posters"),
     projectBooks: path.join(studentRoot, "coop", "project-books"),

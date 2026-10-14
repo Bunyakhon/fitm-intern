@@ -1,0 +1,210 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_3b_db852d8e331a6f45e14483494f03a46c",
+  "role": "fitm_p3b_db852d8e331a6f45e14483494f03a46c",
+  "marker": "fitm.student_profile.phase3b:db852d8e331a6f45e14483494f03a46c:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "c671f398fc71e4306c2f116f60fda0f829d4fa1cbe01cd3126b1e947d5481da2",
+  "tests": {
+    "pass": 8,
+    "fail": 4,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "five tabs/default/ARIA, keyboard navigation and no GET on switching",
+        "status": "PASS"
+      },
+      {
+        "name": "personal/family drafts survive tab changes and private health stays intact",
+        "status": "PASS"
+      },
+      {
+        "name": "structured addresses and confirmed copy preserve leading zeroes and legacy text",
+        "status": "PASS"
+      },
+      {
+        "name": "education  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "training  create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 1176.9375,
+            "top": 481.734375,
+            "width": 220.0625,
+            "height": 37
+          },
+          "point": {
+            "x": 1286.96875,
+            "y": 500.234375
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control is obscured"
+        }
+      },
+      {
+        "name": "skills computer create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 1250.125,
+            "top": 481.53125,
+            "width": 146.875,
+            "height": 37
+          },
+          "point": {
+            "x": 1323.5625,
+            "y": 500.03125
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control is obscured"
+        }
+      },
+      {
+        "name": "skills language create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "409 in second browser tab preserves draft, shows differences and requires explicit review",
+        "status": "PASS"
+      },
+      {
+        "name": "428 UI retains draft and offers explicit reload without invented revision",
+        "status": "PASS"
+      },
+      {
+        "name": "private document upload/label/download contract/removal uses If-Match and no public URL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 1006.296875,
+            "top": 263,
+            "width": 204.609375,
+            "height": 48
+          },
+          "point": {
+            "x": 1108.6015625,
+            "y": 287
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control is obscured"
+        }
+      },
+      {
+        "name": "read-only account, blocked fields and unchanged sidebar/calendar/resume",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 1214.90625,
+            "top": 263,
+            "width": 175.09375,
+            "height": 48
+          },
+          "point": {
+            "x": 1302.453125,
+            "y": 287
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control is obscured"
+        }
+      },
+      {
+        "name": "real responsive geometry/screenshots at 1440/1366/768/390 with all five tabs",
+        "status": "PASS"
+      }
+    ],
+    "screenshots": [
+      "docs/audits/evidence/student-profile-phase3b/1440-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-education.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-account.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-education.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-account.png",
+      "docs/audits/evidence/student-profile-phase3b/768-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/768-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/768-education.png",
+      "docs/audits/evidence/student-profile-phase3b/768-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/768-account.png",
+      "docs/audits/evidence/student-profile-phase3b/390-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/390-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/390-education.png",
+      "docs/audits/evidence/student-profile-phase3b/390-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/390-account.png"
+    ],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-10T19:26:58.793Z"
+}

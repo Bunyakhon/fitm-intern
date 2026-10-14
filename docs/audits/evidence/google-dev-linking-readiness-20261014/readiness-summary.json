@@ -1,0 +1,23 @@
+{
+  "databasePreservation": "PASS",
+  "executedMigrationCount": 24,
+  "migration026Executed": true,
+  "pending019to021": true,
+  "sourceConstraintValidation": "PASS via inspect/state; no DDL or migration runner",
+  "mappingRows": 0,
+  "authRequestRows": 0,
+  "studentCandidates": 4,
+  "studentWithExistingProfile": 2,
+  "selectedStudentAccount": null,
+  "ownershipStatus": "User reports an existing account and successful password login; current Backend ownership verification NOT TESTED",
+  "hostedDomainProof": {
+    "at": "2026-10-11T16:56:52.862Z",
+    "tokenVerification": "PASS",
+    "nonceValidation": "PASS",
+    "emailVerified": true,
+    "hd": "email.kmutnb.ac.th",
+    "scope": "Historical real provider diagnostic for tested Student; not Application E2E"
+  },
+  "backupRestoreTest": "NOT TESTED",
+  "productionReady": false
+}

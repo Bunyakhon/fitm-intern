@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-11T14:06:55.940Z",
+  "result": "PASS",
+  "postRegressionMatchesPostInstallation": true,
+  "oldRowsAndSchemaMatchPreInstallation": true,
+  "existingTables": 32,
+  "ledger": 24,
+  "state": "INSTALLED",
+  "sourceHashesVerified": 12,
+  "tests": {
+    "tests": 289,
+    "pass": 265,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 24,
+    "todo": 0
+  }
+}

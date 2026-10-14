@@ -13,15 +13,15 @@ exports.registerStudent = async (req, res) => {
       last_name,
       email,
       password,
-    } = req.body;
+    } = req.body || {};
 
     // ตรวจข้อมูลที่จำเป็น
     if (
-      !student_id ||
-      !first_name ||
-      !last_name ||
-      !email ||
-      !password
+      !req.body || Array.isArray(req.body) ||
+      Object.keys(req.body).some(key => !["student_id", "first_name", "last_name", "email", "password"].includes(key)) ||
+      [student_id, first_name, last_name, email, password].some(value => typeof value !== "string" || !value.trim()) ||
+      student_id.length > 255 || first_name.length > 255 || last_name.length > 255 || email.length > 254 ||
+      password.length < 8 || Buffer.byteLength(password, "utf8") > 72
     ) {
       return res.status(400).json({
         success: false,
@@ -75,14 +75,12 @@ exports.registerStudent = async (req, res) => {
       data: student,
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
 
     // Sequelize validation
     if (error.name === "SequelizeValidationError") {
       return res.status(400).json({
         success: false,
         message:
-          error.errors?.[0]?.message ||
           "ข้อมูลสมัครสมาชิกไม่ถูกต้อง",
       });
     }
@@ -92,7 +90,6 @@ exports.registerStudent = async (req, res) => {
       return res.status(409).json({
         success: false,
         message:
-          error.errors?.[0]?.message ||
           "ข้อมูลนี้มีอยู่ในระบบแล้ว",
       });
     }
@@ -110,10 +107,14 @@ exports.registerStudent = async (req, res) => {
 
 exports.loginStudent = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     // ตรวจข้อมูล
-    if (!email || !password) {
+    // Legacy Student passwords may exceed bcrypt's 72-byte input. Keep existing
+    // login comparison compatible; new registrations above reject truncation.
+    if (!req.body || Array.isArray(req.body) || Object.keys(req.body).some(key => !["email", "password"].includes(key)) ||
+      typeof email !== "string" || !email.trim() || email.length > 254 ||
+      typeof password !== "string" || !password || password.length > 100) {
       return res.status(400).json({
         success: false,
         message: "กรุณากรอกอีเมลและรหัสผ่าน",
@@ -170,7 +171,6 @@ exports.loginStudent = async (req, res) => {
       data: student,
     });
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
 
     return res.status(500).json({
       success: false,
@@ -195,7 +195,6 @@ exports.getCurrentStudent = async (req, res) => {
       data: student,
     });
   } catch (error) {
-    console.error("GET CURRENT STUDENT ERROR:", error);
 
     return res.status(500).json({
       success: false,

@@ -1,0 +1,29 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_5_25b9ea81803fa3f005d26163f422019b",
+  "role": "fitm_p5_25b9ea81803fa3f005d26163f422019b",
+  "marker": "fitm.student_profile.phase5:25b9ea81803fa3f005d26163f422019b:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "ac43d55423279f4fa897145ab8fffb157ce1418839541288cbd62bdc34bb04c9",
+  "tests": {
+    "pass": 0,
+    "fail": 0,
+    "skipped": 0,
+    "cases": [],
+    "screenshots": [],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true,
+    "authentication": "production password login against synthetic PostgreSQL account; browser UI login tested separately; Google OAuth NOT TESTED"
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-11T05:41:35.101Z"
+}

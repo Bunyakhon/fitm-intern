@@ -1,0 +1,1761 @@
+{
+  "inspected_at": "2026-10-10T15:26:17.711Z",
+  "transaction_read_only": "on",
+  "server_version_num": "160015",
+  "personal_rows_read": false,
+  "all_tables": [
+    "companies",
+    "company_access_tokens",
+    "company_evaluations",
+    "company_response_history",
+    "company_responses",
+    "coop_document_revisions",
+    "coop_documents",
+    "coop_project_advisor_requests",
+    "coop_projects",
+    "coop_request_delivery_methods",
+    "coop_request_prerequisite_courses",
+    "coop_request_reviews",
+    "coop_requests",
+    "department_staffs",
+    "internship_daily_logs",
+    "internship_review_tokens",
+    "internship_week_events",
+    "internship_weeks",
+    "job_posting_reviews",
+    "job_posting_work_modes",
+    "job_postings",
+    "job_submissions",
+    "mentor_tokens",
+    "mentors",
+    "sequelize_meta",
+    "student_files",
+    "student_profiles",
+    "students",
+    "teachers"
+  ],
+  "columns": [
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "coop_document_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "version",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "action",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 16,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 16,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "department_staff_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "document_number",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 80,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "metadata",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "snapshot",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "template_version",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 40,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "rendered_html",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "content_sha256",
+      "data_type": "character",
+      "udt_name": "bpchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 64,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "CURRENT_TIMESTAMP",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "coop_request_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "document_type",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 24,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 16,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "version",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "document_number",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 80,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "metadata",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "snapshot",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "template_version",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 40,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "rendered_html",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "content_sha256",
+      "data_type": "character",
+      "udt_name": "bpchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 64,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "generated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "updated_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "CURRENT_TIMESTAMP",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_documents",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "CURRENT_TIMESTAMP",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "from_status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 32,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "to_status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 32,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "decision",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 16,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "reason",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 2000,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "CURRENT_TIMESTAMP",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "coop_request_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "actor_role",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 32,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "teacher_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "department_staff_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "company_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "company_province",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 100,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "letter_recipient_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "letter_recipient_position_department",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "company_address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "work_start_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "work_end_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "udt_name": "enum_coop_requests_status",
+      "is_nullable": "NO",
+      "column_default": "'submitted'::enum_coop_requests_status",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "submitted_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": "CURRENT_TIMESTAMP",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "cancelled_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "document_issued_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "started_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "company_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "coop_requests",
+      "column_name": "job_posting_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "file_type",
+      "data_type": "USER-DEFINED",
+      "udt_name": "enum_student_files_file_type",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "original_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "storage_path",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "mime_type",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "file_size",
+      "data_type": "bigint",
+      "udt_name": "int8",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 64,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "extracted_text",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "extraction_method",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 20,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "extraction_status",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 20,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_files",
+      "column_name": "extracted_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "student_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "birth_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "height_cm",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 5,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "weight_kg",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 5,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "nationality",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "ethnicity",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "religion",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "blood_type",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "medical_conditions",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "allergies",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "special_abilities",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "related_skills",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "hometown_address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "hometown_phone",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "current_address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "current_phone",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "father_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "father_age",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "father_occupation",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "mother_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "mother_age",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "mother_occupation",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "parent_contact_address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "parent_phone",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "emergency_contact_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "emergency_contact_relation",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "emergency_contact_address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "emergency_contact_phone",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "student_profiles",
+      "column_name": "prefix",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "student_id",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "email",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "password_hash",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "first_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "last_name",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "major",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "year_level",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0
+    },
+    {
+      "table_name": "students",
+      "column_name": "gpa",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 3,
+      "numeric_scale": 2
+    },
+    {
+      "table_name": "students",
+      "column_name": "track",
+      "data_type": "USER-DEFINED",
+      "udt_name": "enum_students_track",
+      "is_nullable": "NO",
+      "column_default": "'co_op'::enum_students_track",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "udt_name": "enum_students_status",
+      "is_nullable": "NO",
+      "column_default": "'pending'::enum_students_status",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "advisor_teacher_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "coop_advisor_teacher_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null
+    },
+    {
+      "table_name": "students",
+      "column_name": "profile_image",
+      "data_type": "character varying",
+      "udt_name": "varchar",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": 255,
+      "numeric_precision": null,
+      "numeric_scale": null
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_action_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((version >= 1) AND ((action)::text = ANY ((ARRAY['create'::character varying, 'edit'::character varying, 'generate'::character varying, 'regenerate'::character varying])::text[]))))"
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_coop_document_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (coop_document_id) REFERENCES coop_documents(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_department_staff_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (department_staff_id) REFERENCES department_staffs(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_state_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((((status)::text = 'draft'::text) AND ((action)::text = ANY ((ARRAY['create'::character varying, 'edit'::character varying])::text[])) AND (rendered_html IS NULL) AND (content_sha256 IS NULL)) OR (((status)::text = 'generated'::text) AND ((action)::text = ANY ((ARRAY['generate'::character varying, 'regenerate'::character varying])::text[])) AND (rendered_html IS NOT NULL) AND (content_sha256 IS NOT NULL) AND (content_sha256 ~ '^[0-9a-f]{64}$'::text))))"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_coop_request_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (coop_request_id) REFERENCES coop_requests(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_created_by_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES department_staffs(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_json_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((jsonb_typeof(metadata) = 'object'::text) AND (jsonb_typeof(snapshot) = 'object'::text)))"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_number_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((document_number IS NULL) OR (((document_number)::text = btrim((document_number)::text)) AND ((length((document_number)::text) >= 1) AND (length((document_number)::text) <= 80)))))"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_state_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((((status)::text = 'draft'::text) AND (generated_at IS NULL) AND (rendered_html IS NULL) AND (content_sha256 IS NULL)) OR (((status)::text = 'generated'::text) AND (generated_at IS NOT NULL) AND (rendered_html IS NOT NULL) AND (length(rendered_html) > 0) AND (content_sha256 IS NOT NULL) AND (content_sha256 ~ '^[0-9a-f]{64}$'::text))))"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_type_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((document_type)::text = ANY ((ARRAY['cooperation'::character varying, 'placement'::character varying])::text[])))"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_updated_by_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (updated_by) REFERENCES department_staffs(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_version_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK ((version >= 1))"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_coop_request_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (coop_request_id) REFERENCES coop_requests(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_department_staff_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (department_staff_id) REFERENCES department_staffs(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_student_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_teacher_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_reviews_actor_check",
+      "type": "c",
+      "validated": true,
+      "definition": "CHECK (((((actor_role)::text = 'student'::text) AND (student_id IS NOT NULL) AND (teacher_id IS NULL) AND (department_staff_id IS NULL)) OR (((actor_role)::text = 'department_staff'::text) AND (department_staff_id IS NOT NULL) AND (teacher_id IS NULL) AND (student_id IS NULL)) OR (((actor_role)::text = ANY ((ARRAY['teacher'::character varying, 'department_head'::character varying])::text[])) AND (teacher_id IS NOT NULL) AND (department_staff_id IS NULL) AND (student_id IS NULL))))"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_reviews_reason_check",
+      "type": "c",
+      "validated": false,
+      "definition": "CHECK ((((decision)::text <> ALL ((ARRAY['reject'::character varying, 'cancel'::character varying])::text[])) OR ((reason IS NOT NULL) AND (length(TRIM(BOTH FROM reason)) > 0)))) NOT VALID"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_reviews_transition_check",
+      "type": "c",
+      "validated": false,
+      "definition": "CHECK (((((actor_role)::text = 'student'::text) AND ((decision)::text = 'submit'::text) AND ((from_status)::text = 'new'::text) AND ((to_status)::text = 'advisor_review'::text)) OR (((actor_role)::text = ANY ((ARRAY['student'::character varying, 'department_staff'::character varying])::text[])) AND ((decision)::text = 'cancel'::text) AND ((from_status)::text = ANY ((ARRAY['submitted'::character varying, 'advisor_review'::character varying, 'staff_review'::character varying, 'department_head_review'::character varying])::text[])) AND ((to_status)::text = 'cancelled'::text)) OR (((actor_role)::text = 'teacher'::text) AND ((from_status)::text = ANY ((ARRAY['submitted'::character varying, 'advisor_review'::character varying])::text[])) AND ((((decision)::text = 'approve'::text) AND ((to_status)::text = 'department_head_review'::text)) OR (((decision)::text = 'reject'::text) AND ((to_status)::text = 'rejected'::text)))) OR (((actor_role)::text = 'department_head'::text) AND ((from_status)::text = 'department_head_review'::text) AND ((((decision)::text = 'approve'::text) AND ((to_status)::text = 'approved'::text)) OR (((decision)::text = 'reject'::text) AND ((to_status)::text = 'rejected'::text)))))) NOT VALID"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_company_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (company_id) REFERENCES companies(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_job_posting_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (job_posting_id) REFERENCES job_postings(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_student_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_storage_path_key",
+      "type": "u",
+      "validated": true,
+      "definition": "UNIQUE (storage_path)"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_student_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "student_profiles",
+      "name": "student_profiles_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "student_profiles",
+      "name": "student_profiles_student_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE CASCADE"
+    },
+    {
+      "table_name": "student_profiles",
+      "name": "student_profiles_student_id_key",
+      "type": "u",
+      "validated": true,
+      "definition": "UNIQUE (student_id)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_advisor_teacher_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (advisor_teacher_id) REFERENCES teachers(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "students",
+      "name": "students_coop_advisor_teacher_id_fkey",
+      "type": "f",
+      "validated": true,
+      "definition": "FOREIGN KEY (coop_advisor_teacher_id) REFERENCES teachers(id) ON UPDATE CASCADE ON DELETE SET NULL"
+    },
+    {
+      "table_name": "students",
+      "name": "students_email_key",
+      "type": "u",
+      "validated": true,
+      "definition": "UNIQUE (email)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_pkey",
+      "type": "p",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_student_id_key",
+      "type": "u",
+      "validated": true,
+      "definition": "UNIQUE (student_id)"
+    }
+  ],
+  "indexes": [
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_pkey",
+      "definition": "CREATE UNIQUE INDEX coop_document_revisions_pkey ON public.coop_document_revisions USING btree (id)"
+    },
+    {
+      "table_name": "coop_document_revisions",
+      "name": "coop_document_revisions_version_unique",
+      "definition": "CREATE UNIQUE INDEX coop_document_revisions_version_unique ON public.coop_document_revisions USING btree (coop_document_id, version)"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_number_unique",
+      "definition": "CREATE UNIQUE INDEX coop_documents_number_unique ON public.coop_documents USING btree (document_number)"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_pkey",
+      "definition": "CREATE UNIQUE INDEX coop_documents_pkey ON public.coop_documents USING btree (id)"
+    },
+    {
+      "table_name": "coop_documents",
+      "name": "coop_documents_request_type_unique",
+      "definition": "CREATE UNIQUE INDEX coop_documents_request_type_unique ON public.coop_documents USING btree (coop_request_id, document_type)"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_request_reviews_pkey",
+      "definition": "CREATE UNIQUE INDEX coop_request_reviews_pkey ON public.coop_request_reviews USING btree (id)"
+    },
+    {
+      "table_name": "coop_request_reviews",
+      "name": "coop_reviews_request_time_idx",
+      "definition": "CREATE INDEX coop_reviews_request_time_idx ON public.coop_request_reviews USING btree (coop_request_id, created_at)"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_company_id_idx",
+      "definition": "CREATE INDEX coop_requests_company_id_idx ON public.coop_requests USING btree (company_id)"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_job_posting_id_idx",
+      "definition": "CREATE INDEX coop_requests_job_posting_id_idx ON public.coop_requests USING btree (job_posting_id)"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_pkey",
+      "definition": "CREATE UNIQUE INDEX coop_requests_pkey ON public.coop_requests USING btree (id)"
+    },
+    {
+      "table_name": "coop_requests",
+      "name": "coop_requests_review_queue_idx",
+      "definition": "CREATE INDEX coop_requests_review_queue_idx ON public.coop_requests USING btree (status, submitted_at)"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_current_coop_project_unique",
+      "definition": "CREATE UNIQUE INDEX student_files_current_coop_project_unique ON public.student_files USING btree (student_id, file_type) WHERE (file_type = ANY (ARRAY['coop_project_book'::enum_student_files_file_type, 'coop_poster'::enum_student_files_file_type]))"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_one_resume_per_student",
+      "definition": "CREATE UNIQUE INDEX student_files_one_resume_per_student ON public.student_files USING btree (student_id) WHERE (file_type = 'resume'::enum_student_files_file_type)"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_pkey",
+      "definition": "CREATE UNIQUE INDEX student_files_pkey ON public.student_files USING btree (id)"
+    },
+    {
+      "table_name": "student_files",
+      "name": "student_files_storage_path_key",
+      "definition": "CREATE UNIQUE INDEX student_files_storage_path_key ON public.student_files USING btree (storage_path)"
+    },
+    {
+      "table_name": "student_profiles",
+      "name": "student_profiles_pkey",
+      "definition": "CREATE UNIQUE INDEX student_profiles_pkey ON public.student_profiles USING btree (id)"
+    },
+    {
+      "table_name": "student_profiles",
+      "name": "student_profiles_student_id_key",
+      "definition": "CREATE UNIQUE INDEX student_profiles_student_id_key ON public.student_profiles USING btree (student_id)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_class_advisor_idx",
+      "definition": "CREATE INDEX students_class_advisor_idx ON public.students USING btree (advisor_teacher_id)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_email_key",
+      "definition": "CREATE UNIQUE INDEX students_email_key ON public.students USING btree (email)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_pkey",
+      "definition": "CREATE UNIQUE INDEX students_pkey ON public.students USING btree (id)"
+    },
+    {
+      "table_name": "students",
+      "name": "students_student_id_key",
+      "definition": "CREATE UNIQUE INDEX students_student_id_key ON public.students USING btree (student_id)"
+    }
+  ],
+  "enums": [
+    {
+      "name": "enum_student_files_file_type",
+      "value": "coop_poster"
+    },
+    {
+      "name": "enum_student_files_file_type",
+      "value": "coop_project_book"
+    },
+    {
+      "name": "enum_student_files_file_type",
+      "value": "coop_practice_log_book"
+    },
+    {
+      "name": "enum_student_files_file_type",
+      "value": "resume"
+    }
+  ],
+  "triggers": [],
+  "executed_migrations": [
+    "001_create_companies.js",
+    "002_create_job_submissions.js",
+    "003_create_job_postings.js",
+    "004_create_job_posting_work_modes.js",
+    "005_create_company_access_tokens.js",
+    "006_add_company_job_indexes_and_checks.js",
+    "007_create_department_staffs.js",
+    "007a_create_missing_base_tables.js",
+    "008_add_resume_extraction.js",
+    "009_add_coop_request_company_job_links.js",
+    "010_cleanup_student_file_schema_drift.js",
+    "011_add_role_workflow_reviews.js",
+    "012_coop_prerequisites_and_direct_review.js",
+    "013_add_coop_projects_and_current_files.js",
+    "014_add_coop_project_advisor_requests.js",
+    "015_add_company_evaluations.js",
+    "016_add_coop_documents.js",
+    "017_add_company_responses.js",
+    "018_add_internship_logs.js"
+  ],
+  "pending_migrations": [
+    "019_add_supervision_appointments.js",
+    "020_add_supervision_results.js",
+    "021_add_coop_activities.js"
+  ]
+}

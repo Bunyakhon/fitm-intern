@@ -65,6 +65,12 @@ dist/
 build/
 frontend/dist/
 
+# Disposable Vite output; keep adjacent audit results and security evidence.
+/docs/audits/evidence/google-oauth-hd-diagnostic/build-check/
+
+# Regenerated pytest cache; tests and fixtures remain versioned.
+/nlp-service/.pytest_cache/
+
 # ===== Secrets / Keys =====
 *.pem
 *.key

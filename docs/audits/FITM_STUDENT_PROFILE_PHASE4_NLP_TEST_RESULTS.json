@@ -1,0 +1,6 @@
+{
+  "command": "existing NLP tests + synthetic profile PDF parser tests in isolated temporary test directory",
+  "exit_code": 0,
+  "output": "2026-10-10 21:00:21,407 | INFO     | app.main | Training chatbot intent classifier from /app/data/processed/chatbot/faq_seed.json\n2026-10-10 21:00:21,443 | INFO     | app.main | nlp-service ready.\n.........................                                                [100%]\n=============================== warnings summary ===============================\n../usr/local/lib/python3.11/site-packages/_pytest/config/__init__.py:1277\n  /usr/local/lib/python3.11/site-packages/_pytest/config/__init__.py:1277: PytestAssertRewriteWarning: Module already imported so cannot be rewritten: anyio\n    self._mark_plugins_for_rewrite(hook)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n25 passed, 1 warning in 6.70s\n",
+  "error": ""
+}

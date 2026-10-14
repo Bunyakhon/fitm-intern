@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "javascript": [
+    {
+      "name": "backend/scripts/runStudentProfilePhase5Integration.js",
+      "status": "PASS"
+    },
+    {
+      "name": "backend/scripts/runStudentProfilePhase5Nlp.js",
+      "status": "PASS"
+    },
+    {
+      "name": "backend/scripts/runStudentProfilePhase5Checks.js",
+      "status": "PASS"
+    },
+    {
+      "name": "backend/scripts/runStudentProfilePhase5Capacity.js",
+      "status": "PASS"
+    },
+    {
+      "name": "backend/scripts/verifyStudentProfilePhase5.js",
+      "status": "PASS"
+    },
+    {
+      "name": "backend/test/studentProfilePhase5Browser.test.js",
+      "status": "PASS"
+    },
+    {
+      "name": "frontend/src/pages/student_coop.js",
+      "status": "PASS"
+    },
+    {
+      "name": "frontend/test/studentProfilePhase5Security.test.js",
+      "status": "PASS"
+    },
+    {
+      "name": "frontend/test/studentProfileIntegrity.test.js",
+      "status": "PASS"
+    },
+    {
+      "name": "frontend/test/studentProfileAggregateCompatibility.test.js",
+      "status": "PASS"
+    }
+  ],
+  "python": [
+    "nlp-service/app/services/profile_pdf.py",
+    "nlp-service/tests/profile_phase5_fixtures.py",
+    "nlp-service/tests/test_profile_phase5.py"
+  ],
+  "diff_check": "PASS in CHECK_RESULTS",
+  "frontend_vite": "8.2.2",
+  "finished_at": "2026-10-11T06:08:43.236Z"
+}

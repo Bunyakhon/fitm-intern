@@ -1,0 +1,98 @@
+{
+  "status": "PASS",
+  "database": "fitm_profile_3b_6f2de1a0a570002b4c543917f323ce17",
+  "role": "fitm_p3b_6f2de1a0a570002b4c543917f323ce17",
+  "marker": "fitm.student_profile.phase3b:6f2de1a0a570002b4c543917f323ce17:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "dba7b1834c428a70113d5f75f6c90c500ff55ac10d5772e465dffa1ae237db06",
+  "tests": {
+    "pass": 12,
+    "fail": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "five tabs/default/ARIA, keyboard navigation and no GET on switching",
+        "status": "PASS"
+      },
+      {
+        "name": "personal/family drafts survive tab changes and private health stays intact",
+        "status": "PASS"
+      },
+      {
+        "name": "structured addresses and confirmed copy preserve leading zeroes and legacy text",
+        "status": "PASS"
+      },
+      {
+        "name": "education  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "training  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills computer create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills language create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "409 in second browser tab preserves draft, shows differences and requires explicit review",
+        "status": "PASS"
+      },
+      {
+        "name": "428 UI retains draft and offers explicit reload without invented revision",
+        "status": "PASS"
+      },
+      {
+        "name": "private document upload/label/download contract/removal uses If-Match and no public URL",
+        "status": "PASS"
+      },
+      {
+        "name": "read-only account, blocked fields and unchanged sidebar/calendar/resume",
+        "status": "PASS"
+      },
+      {
+        "name": "real responsive geometry/screenshots at 1440/1366/768/390 with all five tabs",
+        "status": "PASS"
+      }
+    ],
+    "screenshots": [
+      "docs/audits/evidence/student-profile-phase3b/1440-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-education.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/1440-account.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-education.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/1366-account.png",
+      "docs/audits/evidence/student-profile-phase3b/768-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/768-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/768-education.png",
+      "docs/audits/evidence/student-profile-phase3b/768-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/768-account.png",
+      "docs/audits/evidence/student-profile-phase3b/390-personal.png",
+      "docs/audits/evidence/student-profile-phase3b/390-contact.png",
+      "docs/audits/evidence/student-profile-phase3b/390-education.png",
+      "docs/audits/evidence/student-profile-phase3b/390-documents.png",
+      "docs/audits/evidence/student-profile-phase3b/390-account.png"
+    ],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-10T19:28:44.823Z"
+}

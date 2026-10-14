@@ -1,0 +1,70 @@
+{
+  "status": "PASS",
+  "scope": "Detached configuration object and mock claims only; no process/file/container flag changes",
+  "disabledConfig": {
+    "enabled": false
+  },
+  "policy": "required",
+  "hostedDomains": [
+    "email.kmutnb.ac.th"
+  ],
+  "emailDomains": [
+    "kmutnb.ac.th",
+    "email.kmutnb.ac.th"
+  ],
+  "roleDomains": {
+    "student": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "teacher": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "department_head": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ],
+    "department_staff": [
+      "kmutnb.ac.th",
+      "email.kmutnb.ac.th"
+    ]
+  },
+  "cases": [
+    {
+      "name": "allowed student",
+      "status": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "name": "existing global email domain",
+      "status": "PASS",
+      "expected": "PASS"
+    },
+    {
+      "name": "unverified hosted domain",
+      "status": "PASS",
+      "expected": "GOOGLE_HOSTED_DOMAIN"
+    },
+    {
+      "name": "missing hosted domain",
+      "status": "PASS",
+      "expected": "GOOGLE_HOSTED_DOMAIN"
+    },
+    {
+      "name": "gmail",
+      "status": "PASS",
+      "expected": "GOOGLE_DOMAIN"
+    },
+    {
+      "name": "suffix spoof",
+      "status": "PASS",
+      "expected": "GOOGLE_DOMAIN"
+    },
+    {
+      "name": "email not verified",
+      "status": "PASS",
+      "expected": "GOOGLE_IDENTITY"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { loginStudent } from "../api/auth.api.js";
 import { setButtonLoading, showToast } from "../ui/feedback.js";
+import { saveStudentSession } from "../auth/studentAuthStorage.js";
 
 console.log("KIWI login page loaded");
 
@@ -7,9 +8,9 @@ const loginForm = document.getElementById("loginForm");
 const loginEmail = document.getElementById("loginEmail");
 const loginPassword = document.getElementById("loginPassword");
 const togglePassword = document.getElementById("togglePassword");
-const googleLoginBtn = document.getElementById("googleLoginBtn");
 const loginMessage = document.getElementById("loginMessage");
 const capsLockNotice = document.getElementById("capsLockNotice");
+const rememberMe = document.getElementById("rememberMe");
 
 const loginSubmitBtn = loginForm.querySelector('button[type="submit"]');
 let isSubmitting = false;
@@ -60,6 +61,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   const email = loginEmail.value.trim().toLowerCase();
   const password = loginPassword.value;
+  const remember = rememberMe.checked;
 
   setLoginMessage("");
 
@@ -72,6 +74,7 @@ loginForm.addEventListener("submit", async (event) => {
   loginSubmitBtn.disabled = true;
   isSubmitting = true;
   loginForm.setAttribute("aria-busy", "true");
+  rememberMe.disabled = true;
 
   loginSubmitBtn.innerHTML = `
     <i class="fa-solid fa-spinner fa-spin"></i>
@@ -80,6 +83,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   setButtonLoading(loginSubmitBtn, true, "กำลังเข้าสู่ระบบ...", "เข้าสู่ระบบ");
 
+  let loggedIn = false;
   try {
     const result = await loginStudent({
       email,
@@ -91,20 +95,9 @@ loginForm.addEventListener("submit", async (event) => {
       throw new Error("ไม่พบ Token จากระบบ");
     }
 
-    // ==============================
-    // เก็บ JWT
-    // ==============================
-
-    localStorage.setItem("token", result.token);
-
-    // ==============================
-    // เก็บข้อมูล Student
-    // ==============================
-
-    localStorage.setItem(
-      "student",
-      JSON.stringify(result.data)
-    );
+    saveStudentSession({ token: result.token, student: result.data, remember });
+    loggedIn = true;
+    loginPassword.value = "";
 
     setLoginMessage(result.message || "เข้าสู่ระบบสำเร็จ", "success");
 
@@ -115,27 +108,21 @@ loginForm.addEventListener("submit", async (event) => {
       window.location.href = "/src/student_coop/student_coop.html";
     }, 1000);
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error("LOGIN ERROR:", { status: error.status ?? null });
     showToast(error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ", "error");
 
     setLoginMessage(error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ", "error");
   } finally {
-    isSubmitting = false;
+    // Keep the guard until navigation after success, including the toast delay.
+    isSubmitting = loggedIn;
     loginForm.setAttribute("aria-busy", "false");
+    rememberMe.disabled = false;
     setButtonLoading(loginSubmitBtn, false, "กำลังเข้าสู่ระบบ...", "เข้าสู่ระบบ");
-    loginSubmitBtn.disabled = false;
+    loginSubmitBtn.disabled = loggedIn;
 
     loginSubmitBtn.innerHTML = `
       <i class="fa-solid fa-right-to-bracket"></i>
       <span>เข้าสู่ระบบ</span>
     `;
   }
-});
-
-// ==============================
-// Google Login
-// ==============================
-
-googleLoginBtn.addEventListener("click", () => {
-  setLoginMessage("Google Login จะเชื่อมต่อ Google OAuth ภายหลัง");
 });

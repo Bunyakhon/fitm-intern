@@ -1,0 +1,137 @@
+{
+  "at": "2026-10-11T13:26:58.226Z",
+  "result": "PASS",
+  "scope": "026_DISPOSABLE_INSTALLATION_READINESS",
+  "developmentInstallation": "NOT_RUN_AWAITING_APPROVAL",
+  "developmentBackupRestore": "NOT_TESTED",
+  "sourceHash": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061",
+  "sourceHashes": {
+    "backend/src/db/googleOAuth026.js": "f60bb33c09ab50f766d9229203f4b8d455a12c1601bbfe5b20c098906c18a71a",
+    "backend/src/db/readOnlyMigrationStorage.js": "e65397760a72aaef1486679b02cfcc7eec74ca903c8b24145e0fe650cd8df282",
+    "backend/src/db/studentProfileMigrationDiscovery.js": "607f2daa72ba594c22255b13b81fc6a2a53f36fe1249e6a558076c75efffe8b5",
+    "backend/src/db/migrate.js": "d31c692b8e2a6a23097affff4d3d9d81f5ce3cf9bd462ddc36007b42794a0611",
+    "backend/src/db/prepared/google-oauth/026_google_identity_mapping.js": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061",
+    "backend/scripts/installGoogleOAuth026.js": "4ae056d2290be68683f6d47bd9b43215060f09817b7005aaa09afd336a32b8e7",
+    "backend/scripts/backupGoogleOAuth026.js": "17d6f53d7ea2992cb6496d0933e49d3bd2cf96726b0b4df23101b37d7dbfefba",
+    "backend/scripts/lib/googleOAuth026Backup.js": "7a0bd72a7cbfe2f5dff9ddd7502773dc907b2a8c33abed9ffa6ab6d96856bb25",
+    "backend/scripts/runGoogleOAuth026Readiness.js": "95680ee14bf4a763da3ac360c42cbd3c5900e141affe4789df9785c389a70abc",
+    "backend/test/googleOAuth026.test.js": "1e8e186fa9c872d0337fd46605e5ce2dfc2cf2841cb2e2eef7b9c9b219b4a586",
+    "backend/test/googleOAuth026Postgres.test.js": "ff25c71381a7240747aa5ef543c93980b190c480fb3fa0010b1125ec29143101",
+    "backend/test/googleAuthPostgres.test.js": "9f0b881131710904bd99944006ecd03e03e2c2b553a1dd0e01031d5dbc9c315a"
+  },
+  "evidenceHashes": {
+    "postgres.json": "346852e733b28c2c58de30b87b846240da0034ae6d5896d886f11aa911a8a9ee",
+    "postgres-tests.txt": "51c2252cf3696069321780c079c9067577bfdf2354db43f5f1361d8ded6b865a",
+    "oauth-postgres-tests.txt": "6cf2abf432e08a58ac7a08f72964fb50156b5c2ae836de4945e6eb34497d1050",
+    "backend-tests.txt": "ab98470fc78c03815c1670d6b9c40db3c754070daa01e42efbff5e950bfcee0c",
+    "development-final.json": "29f4706db13d01b08cf3272e59595b1ae79dc8cf17ba5416657337e05cccc550",
+    "development-preservation.json": "acb05f0bb6840066131afca0e52181b26b5711942c68900a66b1c1d49da3dc0d",
+    "git-preservation.json": "c9abd806932e6e3d7b9ca30b96d2a30f08aff93e66c9217f13ef569c15c9efb9",
+    "cleanup.json": "742059b830a30e87b45c6a1ea47ce272f5552dc24b9652dec28192346a7aedad"
+  },
+  "tests": {
+    "readiness": {
+      "total": 14,
+      "pass": 14,
+      "fail": 0,
+      "skip": 0
+    },
+    "oauthPostgres": {
+      "total": 15,
+      "pass": 15,
+      "fail": 0,
+      "skip": 0
+    },
+    "backend": {
+      "total": 289,
+      "pass": 265,
+      "fail": 0,
+      "skip": 24
+    }
+  },
+  "development": {
+    "at": "2026-10-11T13:25:19.417Z",
+    "result": "PASS",
+    "mode": "READ_ONLY_CONNECTIONS",
+    "state": "UNINSTALLED",
+    "tableCount": 32,
+    "ledgerCount": 23,
+    "googleTablesPresent": [],
+    "targetUnchanged": true,
+    "allPublicTableRowsUnchanged": true,
+    "ledgerUnchanged": true,
+    "originalTableCatalogFieldsUnchanged": true,
+    "sourceHash": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061",
+    "targetHash": "027cea2ec9b9c25535d6b2d7790ea886c5e073097fbedc0828507611f9c4bd7d"
+  },
+  "git": {
+    "unchangedOriginalFiles": 662,
+    "unexpectedChanges": [],
+    "originalFiles": 668,
+    "pending019To021SourcesUnchanged": true,
+    "at": "2026-10-11T13:26:57.0926342Z",
+    "deletedOriginalFiles": [],
+    "after": {
+      "untracked": 261,
+      "entries": 293,
+      "modified": 32
+    },
+    "changedOriginalFiles": [
+      "backend/src/db/prepared/google-oauth/README.md",
+      "backend/src/db/prepared/google-oauth/026_google_identity_mapping.js",
+      "backend/src/db/migrate.js",
+      "docs/audits/FITM_GOOGLE_OAUTH_ALL_ROLES_IMPLEMENTATION.md",
+      "backend/src/db/studentProfileMigrationDiscovery.js",
+      "backend/test/googleAuthPostgres.test.js"
+    ],
+    "before": {
+      "untracked": 236,
+      "entries": 268,
+      "modified": 32
+    },
+    "result": "PASS",
+    "studentProfileAndWorkflowSourcesUnchanged": true
+  },
+  "backup": {
+    "sha256": "37ed7537a5f31a821dcfd86cffcfb670745376cec0b0374da95a86785ba0022c",
+    "bytes": 119907,
+    "source": {
+      "database": "fitm_026_restore_062c2f154212147d",
+      "databaseOid": "16384",
+      "systemIdentifier": "7695399120119750690",
+      "address": "172.17.0.2/32",
+      "port": 5432,
+      "user": "postgres",
+      "version": 160015
+    },
+    "restored": {
+      "database": "fitm_026_restore_03f25885a68d39ed",
+      "databaseOid": "16384",
+      "systemIdentifier": "7695399151989440546",
+      "address": "172.17.0.3/32",
+      "port": 5432,
+      "user": "postgres",
+      "version": 160015
+    },
+    "schemaVerification": {
+      "verified": true,
+      "method": "catalog-and-server-reparsed-checks",
+      "sourceHash": "59aae53af551a1620f84e48988e31d387bc2c8f644b73e36ba01b1c8ea286a03",
+      "restoredHash": "89913073d61a90fbb83e7d203404dfd37485f36be504ef929b817fff8422274c"
+    }
+  },
+  "recovery": {
+    "state": "LEDGER_RECOVERED",
+    "backupSha256": "e0a3d3f42d0b3801704acd728bd7d1693c2eb2ce0934ff17286d038034d04c38",
+    "manifestHash": "dded907fa0a13a7335cfb5c3a327a165b9fe478e044394d7e3f6f9bd7325b0a9",
+    "restoredTarget": {
+      "database": "fitm_026_restore_acfec263222add4d",
+      "databaseOid": "16384",
+      "systemIdentifier": "7695399201639075874",
+      "address": "172.17.0.3/32",
+      "port": 5432,
+      "user": "postgres",
+      "version": 160015
+    }
+  }
+}

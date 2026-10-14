@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <title>FITM-INTERN — Google Workspace Diagnostic</title>
+  <style>body{font:16px system-ui;background:#f1f5f9;color:#172554;margin:0}main{max-width:680px;margin:40px auto;padding:28px;background:white;border-radius:16px}button,select{font:inherit;padding:10px;margin:8px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8fafc;padding:16px}#google-button{min-height:44px}p{line-height:1.7}@media(max-width:720px){main{margin:16px;padding:20px}}</style>
+</head>
+<body><main>
+  <h1>ตรวจ Google Workspace</h1>
+  <p>ใช้บัญชีนักศึกษาของคุณเพื่อยืนยัน Hosted Domain กับ FITM-INTERN-DEV การตรวจนี้ไม่เข้าสู่ระบบ FITM-INTERN และไม่ผูกบัญชี</p>
+  <p>เลือกบัญชีและกรอกรหัสผ่านเฉพาะในหน้าของ Google ด้วยตนเอง</p>
+  <button id="prepare" type="button">เตรียม Sign in with Google</button>
+  <div id="google-button"></div>
+  <p id="message" role="status" aria-live="polite">Diagnostic ใช้งานได้เฉพาะ localhost ใน Development</p>
+  <pre id="result" hidden></pre>
+  <details><summary>Google แสดงข้อผิดพลาดและไม่มีผล Verification</summary>
+    <p>เลือกเฉพาะรหัสที่เห็นบนหน้าของ Google ไม่ต้องส่งอีเมล ภาพหน้าจอ หรือ Token</p>
+    <select id="error-code"><option value="org_internal">org_internal</option><option value="access_denied">access_denied</option><option value="invalid_client">invalid_client</option><option value="origin_mismatch">origin_mismatch</option><option value="other">ข้อผิดพลาดอื่น</option></select>
+    <button id="report-error" type="button">รายงานข้อผิดพลาดและจบการตรวจ</button>
+  </details>
+  <button id="cancel" type="button">ยกเลิกและปิด Diagnostic</button>
+</main>
+<script type="module">
+const api='http://127.0.0.1:5001';
+const message=document.getElementById('message'),result=document.getElementById('result'),button=document.getElementById('prepare'),container=document.getElementById('google-button');
+let challenge=null,provider=null,expiryTimer,busy=false,finished=false;
+function clear(){if(challenge){challenge.nonce=null;challenge.requestToken=null;challenge.requestId=null;}challenge=null;clearTimeout(expiryTimer);container.replaceChildren();}
+async function request(path,body){const response=await fetch(api+path,{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw Object.assign(new Error('Diagnostic request failed'),{code:value.code});return value;}
+function show(value){finished=true;clear();result.hidden=false;result.textContent=JSON.stringify(value,null,2);button.disabled=true;document.getElementById('report-error').disabled=true;document.getElementById('cancel').disabled=true;message.textContent='ตรวจเสร็จแล้ว Diagnostic Server จะปิดอัตโนมัติ';}
+async function loadProvider(){if(window.google?.accounts?.id)return window.google.accounts.id;if(!provider)provider=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.onload=()=>window.google?.accounts?.id?resolve(window.google.accounts.id):reject(new Error('Provider unavailable'));script.onerror=()=>reject(new Error('Provider unavailable'));document.head.append(script);});return provider;}
+button.addEventListener('click',async()=>{
+  if(busy||finished)return;busy=true;button.disabled=true;clear();message.textContent='กำลังเตรียมคำขอตรวจ...';
+  try{
+    if(location.origin!=='http://localhost:5173')throw new Error('Development origin required');
+    challenge=await request('/challenge',{});const current=challenge;const google=await loadProvider();
+    google.initialize({client_id:current.clientId,nonce:current.nonce,ux_mode:'popup',auto_select:false,
+      callback:async response=>{
+        if(finished||busy||challenge!==current){response.credential=null;return;}
+        busy=true;button.disabled=true;clearTimeout(expiryTimer);message.textContent='Backend กำลังตรวจ Token และ Nonce...';
+        let credential=response.credential;response.credential=null;
+        try{const outcome=await request('/verify',{credential,requestId:current.requestId,requestToken:current.requestToken});show(outcome);}
+        catch(error){clear();message.textContent='การตรวจไม่ผ่าน: '+(['NONCE_MISMATCH','CHALLENGE_INVALID','TOKEN_VERIFICATION_FAILED'].includes(error.code)?error.code:'DIAGNOSTIC_UNAVAILABLE')+' — เตรียมคำขอใหม่หรือยกเลิก';button.disabled=false;}
+        finally{credential=null;current.requestToken=null;current.nonce=null;busy=false;}
+      }});
+    google.renderButton(container,{type:'standard',theme:'outline',size:'large',text:'signin_with'});
+    expiryTimer=setTimeout(()=>{clear();message.textContent='Challenge หมดอายุ กรุณาเตรียมคำขอใหม่';button.disabled=false;},Math.max(0,current.expiresAt-Date.now()));
+    message.textContent='กด Sign in with Google แล้วเลือกบัญชีนักศึกษาของคุณ';
+  }catch{clear();message.textContent='Diagnostic หรือ Google Provider ยังไม่พร้อม กรุณาแจ้ง Codex';}
+  finally{busy=false;button.disabled=false;}
+});
+document.getElementById('report-error').addEventListener('click',async()=>{if(busy||finished)return;try{show(await request('/provider-error',{code:document.getElementById('error-code').value}));}catch{message.textContent='Diagnostic ปิดแล้วหรือไม่สามารถติดต่อได้';}});
+document.getElementById('cancel').addEventListener('click',async()=>{if(finished)return;try{show(await request('/cancel',{}));}catch{clear();message.textContent='Diagnostic ปิดแล้วหรือไม่สามารถติดต่อได้';}});
+window.addEventListener('pagehide',()=>{clear();});
+</script></body></html>

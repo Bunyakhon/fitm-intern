@@ -1,0 +1,47 @@
+﻿[
+    {
+        "container":  "intern_backend",
+        "ports":  {
+                      "5000/tcp":  [
+                                       {
+                                           "HostIp":  "0.0.0.0",
+                                           "HostPort":  "5000"
+                                       },
+                                       {
+                                           "HostIp":  "::",
+                                           "HostPort":  "5000"
+                                       }
+                                   ]
+                  }
+    },
+    {
+        "container":  "intern_frontend",
+        "ports":  {
+                      "5173/tcp":  [
+                                       {
+                                           "HostIp":  "0.0.0.0",
+                                           "HostPort":  "5173"
+                                       },
+                                       {
+                                           "HostIp":  "::",
+                                           "HostPort":  "5173"
+                                       }
+                                   ]
+                  }
+    },
+    {
+        "container":  "intern_postgres",
+        "ports":  {
+                      "5432/tcp":  [
+                                       {
+                                           "HostIp":  "0.0.0.0",
+                                           "HostPort":  "5432"
+                                       },
+                                       {
+                                           "HostIp":  "::",
+                                           "HostPort":  "5432"
+                                       }
+                                   ]
+                  }
+    }
+]

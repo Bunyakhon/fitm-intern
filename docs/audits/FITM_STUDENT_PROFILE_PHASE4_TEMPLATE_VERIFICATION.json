@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "method": "ocr",
+  "page_count": 4,
+  "acroform_widgets": 0,
+  "candidate_keys": [
+    "student.major",
+    "student.department",
+    "student.faculty"
+  ],
+  "record_counts": {
+    "addresses": 0,
+    "education": 0,
+    "training": 0,
+    "skills": 3
+  },
+  "student_id_present": true,
+  "student_id_unreadable": false,
+  "warnings": [
+    "BLOCKED_ID_SIGNATURE_WORKFLOW_NOT_IMPORTED",
+    "LICENSE_CHECKBOX_REVIEW_REQUIRED",
+    "MILITARY_CHECKBOX_REVIEW_REQUIRED",
+    "OCR_VALUES_REQUIRE_REVIEW",
+    "SKILL_RATING_REVIEW_REQUIRED"
+  ],
+  "personal_values_printed": false,
+  "profile_or_storage_writes": false
+}

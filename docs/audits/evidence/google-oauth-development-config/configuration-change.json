@@ -1,0 +1,8 @@
+{
+  "DB_HOST": "already postgres on disk; runtime container requires refresh",
+  "GOOGLE_HOSTED_DOMAIN_POLICY": "absent -> required (same effective policy)",
+  "rootPOSTGRES_PASSWORD": "set to verified existing PostgreSQL password; redacted",
+  "preservedExistingBackendVariables": true,
+  "hostedDomains": "not added: hd is unconfirmed",
+  "flags": "false/false unchanged"
+}

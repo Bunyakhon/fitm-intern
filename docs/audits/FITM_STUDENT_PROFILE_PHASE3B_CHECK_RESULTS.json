@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "phase": "3B",
+  "checked_on_local_date": "2026-10-11",
+  "frontend": {
+    "tests": 296,
+    "pass": 294,
+    "fail": 0,
+    "skipped": 2,
+    "command": "node --test test/*.test.js",
+    "exit_code": 0,
+    "output": "✔ Actual Coop adapter uses separate Teacher bearer and sends reason without identity (5.8706ms)\r\n✔ Revoking Class session prevents an in-flight Project list from restoring private rows (58.52ms)\r\nℹ tests 296\r\nℹ suites 0\r\nℹ pass 294\r\nℹ fail 0\r\nℹ cancelled 0\r\nℹ skipped 2\r\nℹ todo 0\r\nℹ duration_ms 9550.9165\r\n"
+  },
+  "backend": {
+    "tests": 259,
+    "pass": 239,
+    "fail": 0,
+    "skipped": 20,
+    "command": "node --test",
+    "opt_in_database_tests_disabled": true,
+    "exit_code": 0,
+    "output": "✔ Umzug explicit names install only 022-025 in order while 019-021 remain pending (65.1897ms)\r\n✔ partial installation is visible to the ordinary CLI and never auto-activates the remaining prepared files (16.2365ms)\r\n﹣ Phase 3B full dashboard Edge browser and production profile API on isolated PostgreSQL (2.1902ms) # SKIP\r\n✔ CHECK tree comparison ignores only source offsets and retains semantic fields (2.7528ms)\r\n✔ catalog comparison allows representation differences only with a proven equivalent CHECK (35.5875ms)\r\n✔ recovery detail checks detect types/defaults/collation, functions, triggers, sequence state and privilege drift (16.2627ms)\r\n✔ integer profile fields reject unsafe, fractional and coerced JSON values (10.5271ms)\r\n✔ safe integers still respect PostgreSQL column bounds and draft nullability (30.1831ms)\r\n﹣ Supervision scheduling: guarded disposable PostgreSQL and production HTTP (5.2886ms) # SKIP\r\n✔ result draft accepts incomplete descriptive data and multipart versions (28.7169ms)\r\n✔ result rejects invented identity/rubric fields, stale-shaped version and invalid date (3.0697ms)\r\n✔ result images require agreement of extension, MIME, signature and actual size (6.6199ms)\r\n﹣ Supervision results: guarded PostgreSQL/private storage/production HTTP (1.8663ms) # SKIP\r\n✔ Bangkok schedule converts explicit local time to UTC (4.3292ms)\r\n✔ impossible dates, time, past and absent mentor check rejected (2.3918ms)\r\n✔ actor identities, status and unknown fields cannot enter appointment input (2.4949ms)\r\n✔ substitute requires complete personal information and reason (2.1154ms)\r\n✔ input objects, UUIDs and length limits are validated (6.6176ms)\r\nℹ tests 259\r\nℹ suites 0\r\nℹ pass 239\r\nℹ fail 0\r\nℹ cancelled 0\r\nℹ skipped 20\r\nℹ todo 0\r\nℹ duration_ms 14650.4515\r\n"
+  },
+  "build": {
+    "command": "npm.cmd run build",
+    "exit_code": 0,
+    "output": "dist/assets/departmentStaff-Cer0dtUX.js                32.05 kB │ gzip:  8.01 kB\r\ndist/assets/client-DPLsZUU1.js                         48.92 kB │ gzip: 18.55 kB\r\ndist/assets/studentCoop-BGQTwzhP.js                   144.57 kB │ gzip: 36.16 kB\r\n\r\n✓ built in 1.34s\r\n"
+  },
+  "syntax": {
+    "javascript_files": 8,
+    "html_parser": "PASS",
+    "unique_html_ids": 349,
+    "git_diff_check": "PASS"
+  },
+  "preservation": {
+    "baseline_file_count": 420,
+    "preexisting_files_changed": [
+      "frontend/src/api/studentProfile.api.js",
+      "frontend/src/pages/studentProfileDraft.js",
+      "frontend/src/pages/student_coop.js",
+      "frontend/src/student_coop/student_coop.html"
+    ],
+    "preexisting_files_removed": [],
+    "preexisting_backend_sources_scripts_tests_unchanged": true,
+    "preexisting_other_frontend_sources_tests_styles_unchanged": true,
+    "prior_audit_reports_unchanged": true
+  },
+  "browser_result": "FITM_STUDENT_PROFILE_PHASE3B_BROWSER_RESULTS.json",
+  "database_result": "FITM_STUDENT_PROFILE_PHASE3B_DATABASE_VERIFICATION.json",
+  "real_student_writes": false,
+  "migration_executions": 0,
+  "commit_push": false
+}

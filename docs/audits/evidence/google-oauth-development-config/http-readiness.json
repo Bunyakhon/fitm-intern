@@ -1,0 +1,47 @@
+{
+  "scope": "GET only; no login, challenge, linking or database writes",
+  "results": [
+    {
+      "endpoint": "/health/db",
+      "httpStatus": 200,
+      "status": "ok",
+      "cors": "http://localhost:5173",
+      "credentials": "true"
+    },
+    {
+      "endpoint": "/api/auth/google/config",
+      "httpStatus": 200,
+      "enabled": false,
+      "cors": "http://localhost:5173",
+      "credentials": "true"
+    },
+    {
+      "page": "login.html",
+      "httpStatus": 200,
+      "passwordForm": true,
+      "googleLoginRoot": true,
+      "googleScript": true
+    },
+    {
+      "page": "teacher-login.html",
+      "httpStatus": 200,
+      "passwordForm": true,
+      "googleLoginRoot": true,
+      "googleScript": true
+    },
+    {
+      "page": "department-head-login.html",
+      "httpStatus": 200,
+      "passwordForm": true,
+      "googleLoginRoot": true,
+      "googleScript": true
+    },
+    {
+      "page": "staff-login.html",
+      "httpStatus": 200,
+      "passwordForm": true,
+      "googleLoginRoot": true,
+      "googleScript": true
+    }
+  ]
+}

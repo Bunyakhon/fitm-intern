@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "output": "{\"status\":\"PASS\",\"internal_host\":\"nlp-service\",\"method\":\"pdf_text\",\"candidate_count\":11,\"sql_or_file_writes\":false}\n",
+  "error": ""
+}

@@ -26,6 +26,8 @@ fs.readdirSync(__dirname)
     db[model.name] = model;
   });
 
+require('./registerStudentProfileAggregate').registerStudentProfileAggregate(db, sequelize);
+
 // เรียก associate() ของทุก model หลังจากโหลดครบแล้ว
 // (ต้องโหลดครบก่อน เพราะ associate ต้อง reference model อื่นที่อาจยังไม่ถูก define ถ้าทำพร้อมกัน)
 Object.keys(db).forEach((modelName) => {

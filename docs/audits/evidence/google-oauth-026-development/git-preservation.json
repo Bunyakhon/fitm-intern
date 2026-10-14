@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-11T14:09:40.497Z",
+  "result": "PASS",
+  "originalFilesVerified": 695,
+  "changedOriginalFiles": [],
+  "deletedOriginalFiles": [],
+  "allOriginalGitEntriesPreserved": true,
+  "before": {
+    "entries": 293,
+    "trackedChanges": 32,
+    "untracked": 261
+  },
+  "after": {
+    "entries": 322,
+    "trackedChanges": 32,
+    "untracked": 290
+  },
+  "newEntries": [
+    "?? docs/audits/FITM_GOOGLE_OAUTH_026_DEVELOPMENT_INSTALLATION.md",
+    "?? docs/audits/evidence/google-oauth-026-development/activity-before.json",
+    "?? docs/audits/evidence/google-oauth-026-development/backup-acl.json",
+    "?? docs/audits/evidence/google-oauth-026-development/backup-evidence.json",
+    "?? docs/audits/evidence/google-oauth-026-development/backup-location.json",
+    "?? docs/audits/evidence/google-oauth-026-development/baseline-comparison.json",
+    "?? docs/audits/evidence/google-oauth-026-development/cleanup.json",
+    "?? docs/audits/evidence/google-oauth-026-development/final-integrity.json",
+    "?? docs/audits/evidence/google-oauth-026-development/final-postflight.json",
+    "?? docs/audits/evidence/google-oauth-026-development/final-runtime-check.json",
+    "?? docs/audits/evidence/google-oauth-026-development/git-after.txt",
+    "?? docs/audits/evidence/google-oauth-026-development/git-before.txt",
+    "?? docs/audits/evidence/google-oauth-026-development/git-preservation.json",
+    "?? docs/audits/evidence/google-oauth-026-development/google-empty-check.json",
+    "?? docs/audits/evidence/google-oauth-026-development/immediate-preinstall-guard.json",
+    "?? docs/audits/evidence/google-oauth-026-development/installation.json",
+    "?? docs/audits/evidence/google-oauth-026-development/maintenance-after.json",
+    "?? docs/audits/evidence/google-oauth-026-development/maintenance-before.json",
+    "?? docs/audits/evidence/google-oauth-026-development/postflight.json",
+    "?? docs/audits/evidence/google-oauth-026-development/preflight.json",
+    "?? docs/audits/evidence/google-oauth-026-development/process-check.json",
+    "?? docs/audits/evidence/google-oauth-026-development/regression-environment.json",
+    "?? docs/audits/evidence/google-oauth-026-development/regression-tests.txt",
+    "?? docs/audits/evidence/google-oauth-026-development/result.json",
+    "?? docs/audits/evidence/google-oauth-026-development/runtime-flags-after.json",
+    "?? docs/audits/evidence/google-oauth-026-development/runtime-flags-before.json",
+    "?? docs/audits/evidence/google-oauth-026-development/source-before.json",
+    "?? docs/audits/evidence/google-oauth-026-development/status-after.txt",
+    "?? docs/audits/evidence/google-oauth-026-development/verification.json"
+  ]
+}

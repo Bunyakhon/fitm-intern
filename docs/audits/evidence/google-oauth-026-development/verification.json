@@ -1,0 +1,475 @@
+{
+  "at": "2026-10-11T14:01:42.629Z",
+  "result": "PASS",
+  "state": "INSTALLED",
+  "sourceHash": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061",
+  "targetHash": "027cea2ec9b9c25535d6b2d7790ea886c5e073097fbedc0828507611f9c4bd7d",
+  "ledgerBefore": 23,
+  "ledgerAfter": 24,
+  "onlyLedgerAddition": "026_google_identity_mapping.js",
+  "pending": [
+    "019_add_supervision_appointments.js",
+    "020_add_supervision_results.js",
+    "021_add_coop_activities.js"
+  ],
+  "existingDataTables": 32,
+  "allExistingTablesAndDataUnchanged": true,
+  "oldSchemaIncludingProfilesAndRelationshipsUnchanged": true,
+  "existingSchemaHash": "cc8aaf629d2efe68e273dc3da7cc88e3366f1618abcd4f76ee2e38c74ab2b85d",
+  "googleSchema": {
+    "tables": [
+      {
+        "name": "google_auth_requests",
+        "kind": "r",
+        "owner": "postgres",
+        "rls": false,
+        "force_rls": false,
+        "options": null,
+        "acl": []
+      },
+      {
+        "name": "google_identities",
+        "kind": "r",
+        "owner": "postgres",
+        "rls": false,
+        "force_rls": false,
+        "options": null,
+        "acl": []
+      }
+    ],
+    "columns": [
+      {
+        "table": "google_auth_requests",
+        "name": "id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "secret_hash",
+        "type": "character varying(64)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "nonce_hash",
+        "type": "character varying(64)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "role",
+        "type": "character varying(32)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "purpose",
+        "type": "character varying(16)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "consumed_at",
+        "type": "timestamp with time zone",
+        "nullable": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "subject",
+        "type": "character varying(255)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_identities",
+        "name": "actor_type",
+        "type": "character varying(32)",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": "default",
+        "collation_schema": "pg_catalog",
+        "deterministic": true
+      },
+      {
+        "table": "google_identities",
+        "name": "student_id",
+        "type": "uuid",
+        "nullable": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "teacher_id",
+        "type": "uuid",
+        "nullable": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "staff_id",
+        "type": "uuid",
+        "nullable": true,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      },
+      {
+        "table": "google_identities",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "identity": "",
+        "generated": "",
+        "collation": null,
+        "collation_schema": null,
+        "deterministic": null
+      }
+    ],
+    "constraints": [
+      {
+        "table": "google_auth_requests",
+        "name": "google_auth_requests_pkey",
+        "type": "p",
+        "valid": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "expression": null,
+        "columns": [
+          "id"
+        ],
+        "ref_schema": null,
+        "ref_table": null,
+        "ref_columns": [],
+        "update_action": " ",
+        "delete_action": " ",
+        "match_type": " "
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identities_pkey",
+        "type": "p",
+        "valid": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "expression": null,
+        "columns": [
+          "id"
+        ],
+        "ref_schema": null,
+        "ref_table": null,
+        "ref_columns": [],
+        "update_action": " ",
+        "delete_action": " ",
+        "match_type": " "
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identities_staff_id_fkey",
+        "type": "f",
+        "valid": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (staff_id) REFERENCES department_staffs(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "expression": null,
+        "columns": [
+          "staff_id"
+        ],
+        "ref_schema": "public",
+        "ref_table": "department_staffs",
+        "ref_columns": [
+          "id"
+        ],
+        "update_action": "c",
+        "delete_action": "c",
+        "match_type": "s"
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identities_student_id_fkey",
+        "type": "f",
+        "valid": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "expression": null,
+        "columns": [
+          "student_id"
+        ],
+        "ref_schema": "public",
+        "ref_table": "students",
+        "ref_columns": [
+          "id"
+        ],
+        "update_action": "c",
+        "delete_action": "c",
+        "match_type": "s"
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identities_teacher_id_fkey",
+        "type": "f",
+        "valid": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "expression": null,
+        "columns": [
+          "teacher_id"
+        ],
+        "ref_schema": "public",
+        "ref_table": "teachers",
+        "ref_columns": [
+          "id"
+        ],
+        "update_action": "c",
+        "delete_action": "c",
+        "match_type": "s"
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identity_actor_check",
+        "type": "c",
+        "valid": true,
+        "deferrable": false,
+        "definition": "CHECK (((((actor_type)::text = 'student'::text) AND (student_id IS NOT NULL) AND (teacher_id IS NULL) AND (staff_id IS NULL)) OR (((actor_type)::text = 'teacher'::text) AND (teacher_id IS NOT NULL) AND (student_id IS NULL) AND (staff_id IS NULL)) OR (((actor_type)::text = 'department_staff'::text) AND (staff_id IS NOT NULL) AND (student_id IS NULL) AND (teacher_id IS NULL))))",
+        "expression": "((((actor_type)::text = 'student'::text) AND (student_id IS NOT NULL) AND (teacher_id IS NULL) AND (staff_id IS NULL)) OR (((actor_type)::text = 'teacher'::text) AND (teacher_id IS NOT NULL) AND (student_id IS NULL) AND (staff_id IS NULL)) OR (((actor_type)::text = 'department_staff'::text) AND (staff_id IS NOT NULL) AND (student_id IS NULL) AND (teacher_id IS NULL)))",
+        "columns": [
+          "actor_type",
+          "student_id",
+          "teacher_id",
+          "staff_id"
+        ],
+        "ref_schema": null,
+        "ref_table": null,
+        "ref_columns": [],
+        "update_action": " ",
+        "delete_action": " ",
+        "match_type": " "
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identity_subject_check",
+        "type": "c",
+        "valid": true,
+        "deferrable": false,
+        "definition": "CHECK ((length((subject)::text) > 0))",
+        "expression": "(length((subject)::text) > 0)",
+        "columns": [
+          "subject"
+        ],
+        "ref_schema": null,
+        "ref_table": null,
+        "ref_columns": [],
+        "update_action": " ",
+        "delete_action": " ",
+        "match_type": " "
+      }
+    ],
+    "indexes": [
+      {
+        "table": "google_auth_requests",
+        "name": "google_auth_requests_pkey",
+        "unique": true,
+        "primary": true,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_auth_requests_pkey ON public.google_auth_requests USING btree (id)",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "table": "google_auth_requests",
+        "name": "google_request_expiry",
+        "unique": false,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE INDEX google_request_expiry ON public.google_auth_requests USING btree (expires_at)",
+        "columns": [
+          "expires_at"
+        ]
+      },
+      {
+        "table": "google_identities",
+        "name": "google_identities_pkey",
+        "unique": true,
+        "primary": true,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_identities_pkey ON public.google_identities USING btree (id)",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "table": "google_identities",
+        "name": "google_staff_id_unique",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_staff_id_unique ON public.google_identities USING btree (staff_id)",
+        "columns": [
+          "staff_id"
+        ]
+      },
+      {
+        "table": "google_identities",
+        "name": "google_student_id_unique",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_student_id_unique ON public.google_identities USING btree (student_id)",
+        "columns": [
+          "student_id"
+        ]
+      },
+      {
+        "table": "google_identities",
+        "name": "google_subject_actor_unique",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_subject_actor_unique ON public.google_identities USING btree (subject, actor_type)",
+        "columns": [
+          "subject",
+          "actor_type"
+        ]
+      },
+      {
+        "table": "google_identities",
+        "name": "google_teacher_id_unique",
+        "unique": true,
+        "primary": false,
+        "valid": true,
+        "ready": true,
+        "no_include": true,
+        "method": "btree",
+        "predicate": null,
+        "expression": null,
+        "definition": "CREATE UNIQUE INDEX google_teacher_id_unique ON public.google_identities USING btree (teacher_id)",
+        "columns": [
+          "teacher_id"
+        ]
+      }
+    ]
+  }
+}

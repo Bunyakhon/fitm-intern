@@ -1,0 +1,10 @@
+{
+  "changedConfigKeys": [
+    "GOOGLE_ALLOWED_HOSTED_DOMAINS"
+  ],
+  "GOOGLE_HOSTED_DOMAIN_POLICY": "required",
+  "GOOGLE_ALLOWED_HOSTED_DOMAINS": "email.kmutnb.ac.th",
+  "GOOGLE_ALLOWED_EMAIL_DOMAINS": "kmutnb.ac.th,email.kmutnb.ac.th",
+  "allOtherVariablesPreserved": true,
+  "flags": "false/false"
+}

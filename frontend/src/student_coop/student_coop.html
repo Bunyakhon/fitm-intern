@@ -18,6 +18,7 @@
 
     <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/student_coop.css" />
+    <link rel="stylesheet" href="/src/styles/student_profile.css" />
     <link rel="stylesheet" href="/src/styles/internship_log.css" />
     <link rel="stylesheet" href="/src/styles/supervision.css" />
   <link rel="stylesheet" href="/src/styles/coop_activities.css" /></head>
@@ -77,7 +78,8 @@
           <small>ระบบสหกิจศึกษา</small>
         </div>
 
-        <nav class="sidebar-menu"><button type="button" class="sidebar-item" data-target="panel-activities"><span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span><span class="sidebar-text">ปฏิทินกิจกรรม</span></button>
+        <!-- To restore the student calendar, remove hidden from its menu and panel. -->
+        <nav class="sidebar-menu"><button type="button" class="sidebar-item" data-target="panel-activities" hidden><span class="sidebar-icon"><i class="fa-solid fa-calendar-days"></i></span><span class="sidebar-text">ปฏิทินกิจกรรม</span></button>
           <button
             type="button"
             class="sidebar-item active"
@@ -126,14 +128,6 @@
             <span class="sidebar-text"> คำร้องสหกิจศึกษา </span>
           </button>
 
-          <button type="button" class="sidebar-item" data-target="panel-daily">
-            <span class="sidebar-icon">
-              <i class="fa-solid fa-calendar-check"></i>
-            </span>
-
-            <span class="sidebar-text"> บันทึกการปฏิบัติงาน </span>
-          </button>
-
           <button type="button" class="sidebar-item" data-target="panel-coop">
             <span class="sidebar-icon">
               <i class="fa-solid fa-graduation-cap"></i>
@@ -142,16 +136,12 @@
             <span class="sidebar-text"> โครงการสหกิจศึกษา </span>
           </button>
 
-          <button
-            type="button"
-            class="sidebar-item"
-            data-target="panel-report-upload"
-          >
+          <button type="button" class="sidebar-item" data-target="panel-daily">
             <span class="sidebar-icon">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <i class="fa-solid fa-calendar-check"></i>
             </span>
 
-            <span class="sidebar-text"> อัปโหลดโครงการ </span>
+            <span class="sidebar-text"> บันทึกการปฏิบัติงาน </span>
           </button>
 
           <button type="button" class="sidebar-item" data-target="panel-mentor">
@@ -196,7 +186,7 @@
          Content
          ============================== -->
 
-      <main class="dashboard-content"><section id="panel-activities" class="content-panel"><div id="activityCalendar"></div></section>
+      <main class="dashboard-content"><section id="panel-activities" class="content-panel" hidden><div id="activityCalendar"></div></section>
         <!-- ==============================
            Overview
            ============================== -->
@@ -282,8 +272,25 @@
         <section class="content-panel" id="panel-profile">
           <div class="panel-header">
             <h2>ประวัตินักศึกษา</h2>
-            <p>ข้อมูลประวัตินักศึกษาจากระบบ</p>
+            <p>จัดการข้อมูลของคุณ เพื่อเตรียมความพร้อมสำหรับสหกิจศึกษา</p>
           </div>
+
+          <section class="info-card profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading">
+            <div class="profile-section-header"><h3 id="profilePdfHeading"><i class="fa-solid fa-file-import" aria-hidden="true"></i> เลือกวิธีกรอกประวัติ</h3></div>
+            <p class="profile-tab-help">กรอกเองใน 5 แท็บ หรือนำข้อมูลจาก TGDE-COOP–02 มาตรวจและแก้ไขก่อนบันทึก ข้อมูลทั้งสองวิธีอยู่ในประวัติชุดเดียวกัน</p>
+            <div class="profile-entry-actions"><button id="profilePdfChooseManual" type="button" class="btn-primary">กรอกข้อมูลด้วยตัวเอง</button><button id="profilePdfChooseImport" type="button" class="btn-secondary" aria-controls="profilePdfBody">นำเข้าจาก Profile PDF</button></div>
+            <div id="profilePdfBody" hidden>
+              <label for="profilePdfFile">Profile PDF แบบ TGDE-COOP–02</label>
+              <input id="profilePdfFile" type="file" accept="application/pdf,.pdf" />
+              <p class="profile-tab-help">PDF ไม่เกิน 10MB และ 4 หน้า · อ่านข้อความหรือ OCR ไทย/อังกฤษภายในระบบ · ไม่รองรับไฟล์เข้ารหัสหรือมีรหัสผ่าน</p>
+              <button id="profilePdfExtract" type="button" class="btn-secondary" disabled>อ่าน PDF และดู Preview</button>
+              <div id="profilePdfPreview" aria-live="polite"></div>
+              <p class="profile-tab-help">ยังไม่มีการบันทึกอัตโนมัติ ฟิลด์ที่ไม่เลือกหรือ PDF ไม่มีค่าจะคงเดิม หลังยืนยันจะเก็บต้นฉบับในพื้นที่ส่วนตัว</p>
+              <div class="profile-entry-actions"><button id="profilePdfSave" type="button" class="btn-primary" disabled>ยืนยันข้อมูลที่เลือกและเก็บต้นฉบับ</button><button id="profilePdfReview" type="button" class="btn-secondary" hidden>ตรวจข้อมูลล่าสุด / เปรียบเทียบใหม่</button><button id="profilePdfVerify" type="button" class="btn-secondary" hidden>ตรวจสถานะการบันทึก</button><button id="profilePdfCancel" type="button" class="btn-secondary">ยกเลิกนำเข้า</button></div>
+            </div>
+            <p id="profilePdfMessage" class="message" role="status" aria-live="polite"></p>
+            <div id="profilePdfHistory"></div>
+          </section>
 
           <p
             class="message profile-load-message"
@@ -291,6 +298,20 @@
             role="status"
             aria-live="polite"
           ></p>
+
+          <div class="profile-tabs" id="studentProfileTabs" role="tablist" aria-label="หมวดข้อมูลประวัตินักศึกษา">
+            <button type="button" class="profile-tab" id="profilePersonalTab" role="tab" aria-selected="true" aria-controls="profilePersonalPanel" tabindex="0"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
+            <button type="button" class="profile-tab" id="profileContactTab" role="tab" aria-selected="false" aria-controls="profileContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
+            <button type="button" class="profile-tab" id="profileEducationTab" role="tab" aria-selected="false" aria-controls="profileEducationPanel" tabindex="-1"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>การศึกษา / ทักษะ</span></button>
+            <button type="button" class="profile-tab" id="profileDocumentsTab" role="tab" aria-selected="false" aria-controls="profileDocumentsPanel" tabindex="-1"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>เอกสารประกอบ</span></button>
+            <button type="button" class="profile-tab" id="profileAccountTab" role="tab" aria-selected="false" aria-controls="profileAccountPanel" tabindex="-1"><i class="fa-solid fa-user-gear" aria-hidden="true"></i><span>บัญชีผู้ใช้</span></button>
+          </div>
+
+          <div class="profile-workspace-notice" role="note">ข้อมูลที่ยังไม่บันทึกจะคงอยู่ระหว่างเปลี่ยนแท็บ กรุณาบันทึกก่อนรีเฟรชหรือปิดหน้า ขณะนี้ไม่มีการบันทึกอัตโนมัติ</div>
+          <div id="profileWorkspaceStatus" class="message" role="status" aria-live="polite"></div>
+          <button id="profileWorkspaceReload" class="btn-secondary" type="button">โหลดข้อมูลล่าสุด</button>
+
+          <div id="profilePersonalPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profilePersonalTab" tabindex="0">
 
           <!-- ==============================
        Profile Header
@@ -385,7 +406,7 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="studentGpaInput">GPA</label>
+                  <label for="studentGpaInput">GPA สะสม</label>
                   <input
                     type="number"
                     id="studentGpaInput"
@@ -433,6 +454,9 @@
               </div>
             </form>
           </div>
+
+          <div id="profileAcademicExtras"></div>
+          <div id="profilePersonalExtras"></div>
 
           <!-- ==============================
        ข้อมูลส่วนตัว
@@ -520,10 +544,20 @@
        ข้อมูลที่อยู่
        ============================== -->
 
+          </div>
+
+          <div id="profileContactPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileContactTab" tabindex="0" hidden>
+            <div id="profileStructuredAddresses"></div>
+            <div id="profileFamilyExtras"></div>
+            <div class="profile-section-header">
+              <div><h3>ติดต่อ / ครอบครัว / ฉุกเฉิน</h3><p>ข้อมูลการติดต่อและบุคคลที่สามารถติดต่อได้ของนักศึกษา</p></div>
+              <button type="button" class="btn-primary" id="btnEditProfileContacts"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขข้อมูลติดต่อ</button>
+            </div>
+
           <div class="info-card">
             <div class="card-title">
               <i class="fa-solid fa-location-dot"></i>
-              ข้อมูลที่อยู่
+              ข้อมูลการติดต่อ
             </div>
 
             <div class="info-grid">
@@ -546,12 +580,17 @@
                 <span>โทรศัพท์ปัจจุบัน</span>
                 <strong id="profileCurrentPhone"> - </strong>
               </div>
+              <div class="info-item"><span>อีเมลติดต่อ (ข้อมูลบัญชี อ่านอย่างเดียว)</span><strong id="profileContactEmail">-</strong></div>
             </div>
           </div>
 
           <!-- ==============================
        ข้อมูลบิดา
        ============================== -->
+
+          <section class="profile-family-section" aria-labelledby="profileFamilyTitle">
+            <h3 id="profileFamilyTitle" class="card-title"><i class="fa-solid fa-people-roof" aria-hidden="true"></i> ข้อมูลครอบครัว</h3>
+            <div class="profile-family-grid">
 
           <div class="info-card">
             <div class="card-title">
@@ -632,6 +671,9 @@
        บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน
        ============================== -->
 
+            </div>
+          </section>
+
           <div class="info-card">
             <div class="card-title">
               <i class="fa-solid fa-phone-volume"></i>
@@ -659,6 +701,33 @@
                 <strong id="profileEmergencyPhone"> - </strong>
               </div>
             </div>
+          </div>
+          </div>
+
+          <div id="profileEducationPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileEducationTab" tabindex="0" hidden>
+            <div class="profile-section-header"><div><h3>การศึกษา / ทักษะ</h3><p>เพิ่มประวัติได้หลายรายการ เลือกระดับความสามารถตามข้อมูลของคุณ</p></div></div>
+            <div id="profileEducationRecords"></div>
+            <div id="profileTrainingRecords"></div>
+            <div id="profileComputerSkills"></div>
+            <div id="profileLanguageSkills"></div>
+            <section class="info-card"><h3 class="card-title">ความสามารถและทักษะเดิม</h3><p class="profile-tab-help">ข้อความที่เคยบันทึกยังคงอยู่ และแยกจากรายการทักษะด้านบน</p><div class="info-grid"><div class="info-item"><span>ความสามารถพิเศษ</span><strong id="profileLegacyAbilities">-</strong></div><div class="info-item"><span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span><strong id="profileLegacySkills">-</strong></div></div><button type="button" id="profileEditLegacySkills" class="btn-secondary">แก้ไขข้อความทักษะเดิม</button></section>
+          </div>
+          <div id="profileDocumentsPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileDocumentsTab" tabindex="0" hidden>
+            <div class="profile-section-header"><div><h3>เอกสารประกอบ</h3><p>เก็บเอกสารส่วนตัวและดาวน์โหลดได้เฉพาะบัญชีของคุณ</p></div></div>
+            <div id="profileDocumentCards"></div>
+            <p class="profile-workspace-notice">การรับรองข้อมูลและลายเซ็นยังไม่เปิดใช้งาน อยู่ระหว่างยืนยันข้อกำหนด การอัปโหลดเอกสารไม่ได้หมายถึงการรับรองสำเนา</p>
+          </div>
+          <div id="profileAccountPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileAccountTab" tabindex="0" hidden>
+            <section class="info-card" aria-labelledby="profileAccountTitle">
+              <h3 class="card-title" id="profileAccountTitle"><i class="fa-solid fa-user-gear" aria-hidden="true"></i> บัญชีผู้ใช้</h3>
+              <p class="profile-tab-help">ข้อมูลบัญชีจากระบบ อีเมลและรหัสนักศึกษาเป็นข้อมูลอ่านอย่างเดียว</p>
+              <div class="info-grid">
+                <div class="info-item"><span>ชื่อ-นามสกุลเจ้าของบัญชี</span><strong id="profileAccountName">-</strong></div>
+                <div class="info-item"><span>รหัสนักศึกษา</span><strong id="profileAccountStudentId">-</strong></div>
+                <div class="info-item"><span>อีเมลที่ใช้เข้าสู่ระบบ</span><strong id="profileAccountEmail">-</strong></div>
+                <div class="info-item"><span>วิธีเข้าสู่ระบบ</span><strong>อีเมลและรหัสผ่าน</strong></div>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -826,40 +895,85 @@
            ============================== -->
 
         <section class="content-panel" id="panel-daily">
-          <div class="panel-header">
-            <h2>บันทึกการปฏิบัติงาน</h2>
-
-            <p>บันทึกการปฏิบัติงานของนักศึกษาสหกิจศึกษา</p>
+          <div class="panel-header daily-header">
+            <span class="daily-header-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+            <div>
+              <h2>บันทึกการปฏิบัติงาน</h2>
+              <p>บันทึกการปฏิบัติงานของนักศึกษาสหกิจศึกษา</p>
+            </div>
+            <span class="daily-header-caption"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> บันทึกทุกวัน · ส่งทุกสัปดาห์</span>
           </div>
 
-          <div class="internship-toolbar">
-            <label>เลือกวันที่เพื่อดูสัปดาห์หรือประวัติ <input type="date" id="dailyWeekDate" /></label>
-            <button type="button" class="btn-secondary" id="dailyReload">โหลดใหม่</button>
-            <button type="button" class="btn-primary" id="submitDailyWeek" disabled>ส่งบันทึกประจำสัปดาห์ให้พี่เลี้ยง</button>
-            <button type="button" class="btn-secondary" id="dailyResendLink">ส่งลิงก์ตรวจให้พี่เลี้ยงอีกครั้ง</button>
+          <div class="section-card internship-toolbar" aria-label="เลือกสัปดาห์และส่งบันทึก">
+            <div class="daily-date-control">
+              <label for="dailyWeekDate">เลือกวันที่เพื่อดูสัปดาห์หรือประวัติ</label>
+              <div class="daily-date-actions">
+                <input type="date" id="dailyWeekDate" aria-describedby="dailyWeekSummary" />
+                <button type="button" class="btn-secondary" id="dailyReload"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> โหลดใหม่</button>
+              </div>
+            </div>
+            <div class="daily-submit-actions">
+              <button type="button" class="btn-primary" id="submitDailyWeek" aria-describedby="dailyActionHelp" disabled><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ส่งบันทึกประจำสัปดาห์ให้พี่เลี้ยง</button>
+              <button type="button" class="btn-secondary" id="dailyResendLink" aria-describedby="dailyMentorHint" disabled><i class="fa-solid fa-link" aria-hidden="true"></i> ส่งลิงก์ตรวจให้พี่เลี้ยงอีกครั้ง</button>
+            </div>
+            <p id="dailyActionHelp" class="daily-action-help">กำลังตรวจสอบข้อมูลสำหรับการส่งบันทึก</p>
           </div>
-          <p id="dailyWeekSummary"></p>
-          <p>บันทึกทุกวัน ส่งครั้งละสัปดาห์จันทร์–อาทิตย์ ตามเวลาไทย วันที่ไม่ได้ปฏิบัติงานให้ระบุเหตุผล</p>
+
+          <aside class="daily-guide" aria-labelledby="dailyGuideTitle">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <div><h3 id="dailyGuideTitle">คำแนะนำการบันทึกและส่งงาน</h3><p>นักศึกษาควรบันทึกการปฏิบัติงานทุกวัน และส่งบันทึกประจำสัปดาห์ในช่วงวันจันทร์–วันอาทิตย์ ตามเวลาไทย หากไม่ได้ปฏิบัติงานในวันใด ให้ระบุเหตุผลให้ชัดเจน</p></div>
+          </aside>
+
+          <div class="daily-summary-grid" aria-label="สรุปสัปดาห์ที่เลือก">
+            <article class="section-card daily-summary-card">
+              <span class="daily-summary-icon" aria-hidden="true"><i class="fa-solid fa-calendar-week"></i></span>
+              <h3>สัปดาห์ที่เลือก</h3><p id="dailyWeekSummary" class="daily-summary-value">กำลังโหลด…</p><p class="daily-summary-hint">วันจันทร์–วันอาทิตย์ · เวลาไทย</p>
+            </article>
+            <article class="section-card daily-summary-card">
+              <span class="daily-summary-icon daily-icon-green" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+              <h3>สถานะการส่ง</h3><p id="dailySubmissionStatus" class="daily-summary-value">กำลังโหลด…</p><p id="dailyCompletion" class="daily-summary-hint">กำลังตรวจสอบบันทึก</p>
+            </article>
+            <article class="section-card daily-summary-card">
+              <span class="daily-summary-icon daily-icon-purple" aria-hidden="true"><i class="fa-solid fa-user-tie"></i></span>
+              <h3>ข้อมูลพี่เลี้ยง</h3><p id="dailyMentorName" class="daily-summary-value">กำลังโหลด…</p><p id="dailyMentorHint" class="daily-summary-hint">กำลังตรวจสอบข้อมูลพี่เลี้ยง</p>
+            </article>
+            <article class="section-card daily-summary-card">
+              <span class="daily-summary-icon daily-icon-orange" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
+              <h3>อัปเดตล่าสุด</h3><p id="dailyLastUpdated" class="daily-summary-value">กำลังโหลด…</p><p id="dailyUpdatedHint" class="daily-summary-hint">จากข้อมูลบันทึกและการตรวจ</p>
+            </article>
+          </div>
           <p id="dailyStatus" class="internship-status" role="status" aria-live="polite"></p>
 
-          <div class="table-wrapper">
+          <section class="section-card daily-records" aria-labelledby="dailyRecordsTitle">
+            <div class="section-card-header">
+              <div><h3 id="dailyRecordsTitle"><i class="fa-solid fa-list-check" aria-hidden="true"></i> รายการบันทึกประจำวัน</h3><p>บันทึกงานในแต่ละวันของสัปดาห์ที่เลือก และติดตามสถานะการตรวจจากพี่เลี้ยง</p></div>
+              <button type="button" class="btn-secondary" id="dailyAddLog" disabled><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มบันทึกประจำวัน</button>
+            </div>
+            <div id="dailyEmpty" class="empty-state" hidden>
+              <i class="fa-solid fa-file-circle-plus daily-empty-icon" aria-hidden="true"></i>
+              <h4 id="dailyEmptyTitle">ยังไม่มีบันทึกการปฏิบัติงานในสัปดาห์นี้</h4>
+              <p id="dailyEmptyDescription">เมื่อมีบันทึกการปฏิบัติงาน รายการจะแสดงที่นี่ เลือกวันที่ด้านล่างเพื่อเริ่มบันทึก</p>
+            </div>
+            <div class="table-wrapper" id="dailyTableWrapper" tabindex="0" role="region" aria-label="ตารางบันทึกประจำวัน เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด">
             <table class="data-table">
+              <caption class="daily-sr-only">บันทึกประจำวันในสัปดาห์ที่เลือก</caption>
               <thead>
                 <tr>
-                  <th>วันที่</th>
-                  <th>งานที่ปฏิบัติ</th>
-                  <th>สถานะ</th>
-                  <th>การดำเนินการ</th>
+                  <th scope="col">วันที่</th>
+                  <th scope="col">งานที่ปฏิบัติ</th>
+                  <th scope="col">สถานะ</th>
+                  <th scope="col">การดำเนินการ</th>
                 </tr>
               </thead>
 
               <tbody id="dailyLogTableBody">
                 <tr class="empty-table-row">
-                  <td colspan="4">ยังไม่มีบันทึกการปฏิบัติงาน</td>
+                  <td colspan="4">กำลังโหลดบันทึกการปฏิบัติงาน…</td>
                 </tr>
               </tbody>
             </table>
-          </div>
+            </div>
+          </section>
           <section id="dailyEditor" class="internship-editor" hidden aria-labelledby="dailyEditorTitle">
             <h3 id="dailyEditorTitle">บันทึกการปฏิบัติงาน</h3>
             <p id="dailyEntryDate"></p>
@@ -880,8 +994,10 @@
               <button type="submit" class="btn-primary" id="saveDailyLogBtn">บันทึกประจำวัน</button>
             </form>
           </section>
-          <h3>ประวัติการส่งและข้อเสนอแนะจากผู้ดูแล</h3>
-          <div id="dailyHistory"></div>
+          <section class="section-card daily-history-card" aria-labelledby="dailyHistoryTitle">
+            <div class="section-card-header"><div><h3 id="dailyHistoryTitle"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ประวัติการส่งและข้อเสนอแนะจากผู้ดูแล</h3><p>ติดตามการส่งและผลการตรวจของสัปดาห์ที่เลือก</p></div></div>
+            <div id="dailyHistory"></div>
+          </section>
         </section>
 
         <!-- ==============================
@@ -892,13 +1008,13 @@
           <div class="panel-header">
             <h2>โครงการสหกิจศึกษา</h2>
 
-            <p>จัดการข้อมูลโครงการสหกิจศึกษา</p>
+            <p>จัดการข้อมูลโครงการสหกิจศึกษา อัปโหลดรูปเล่มและโปสเตอร์ในหน้าเดียว</p>
           </div>
 
-          <div class="section-card coop-project-card">
+          <section class="section-card coop-project-card" aria-labelledby="coopProjectInfoTitle">
             <div class="section-card-header">
               <div>
-                <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> ข้อมูลโครงการ</h3>
+                <h3 id="coopProjectInfoTitle"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> ข้อมูลโครงการสหกิจศึกษา</h3>
                 <p>บันทึกหัวข้อโครงการและส่งคำขอให้อาจารย์ที่ปรึกษายืนยัน</p>
               </div>
             </div>
@@ -934,21 +1050,16 @@
 
               <p class="message" id="projectMessage" role="status"></p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- ==============================
-           Report Upload
-           ============================== -->
-
-        <section class="content-panel" id="panel-report-upload">
-          <div class="panel-header">
-            <h2>อัปโหลดโครงการ</h2>
-
-            <p>อัปโหลดเล่มโครงการและโปสเตอร์</p>
-          </div>
-
-          <div class="section-card project-upload-card">
+          <!-- Retain the upload section ID for existing anchors and navigation callers. -->
+          <section id="panel-report-upload" class="section-card project-upload-card" aria-labelledby="coopProjectUploadTitle">
+            <div class="section-card-header">
+              <div>
+                <h3 id="coopProjectUploadTitle"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปโหลดโครงการ</h3>
+                <p>อัปโหลดรูปเล่มและโปสเตอร์ เปิดดูไฟล์ปัจจุบัน หรือเลือกไฟล์ใหม่เพื่อเปลี่ยนไฟล์เดิม</p>
+              </div>
+            </div>
             <div class="project-upload-grid">
               <div class="form-group project-file-card">
                 <label for="projectBookFile"><i class="fa-solid fa-book" aria-hidden="true"></i> เล่มโครงการ</label>
@@ -985,7 +1096,7 @@
 
               <p class="message" id="projectUploadMessage" role="status"></p>
             </div>
-          </div>
+          </section>
         </section>
 
         <!-- ==============================
@@ -1277,16 +1388,16 @@
      ============================== -->
 
     <div class="modal-overlay" id="profileEditModal" aria-hidden="true">
-      <div class="modal-box profile-edit-modal">
+      <div class="modal-box profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
         <!-- Header -->
         <div class="modal-header">
           <div>
-            <h3>
+            <h3 id="profileEditModalTitle">
               <i class="fa-solid fa-user-pen"></i>
               แก้ไขประวัตินักศึกษา
             </h3>
 
-            <p>แก้ไขข้อมูลส่วนตัวของนักศึกษาสหกิจศึกษา</p>
+            <p>แก้ไขข้อมูลแต่ละหมวด แล้วบันทึกประวัติทั้งหมดพร้อมกัน</p>
           </div>
 
           <button
@@ -1302,6 +1413,12 @@
         <!-- Body -->
         <div class="modal-body">
           <form id="profileEditForm">
+            <div class="profile-tabs" id="studentProfileEditTabs" role="tablist" aria-label="หมวดข้อมูลที่แก้ไข">
+              <button type="button" class="profile-tab" id="profileEditPersonalTab" role="tab" aria-selected="true" aria-controls="profileEditPersonalPanel" tabindex="0"><i class="fa-solid fa-user" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
+              <button type="button" class="profile-tab" id="profileEditContactTab" role="tab" aria-selected="false" aria-controls="profileEditContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
+            </div>
+            <p class="profile-tab-help">สลับหมวดได้โดยข้อมูลที่แก้ไขยังอยู่ ปุ่มบันทึกข้อมูลจะบันทึกทั้งสองหมวด</p>
+            <div id="profileEditPersonalPanel" class="profile-edit-tab-panel" role="tabpanel" aria-labelledby="profileEditPersonalTab" tabindex="0">
             <div
               class="profile-form-section profile-image-form-section"
               id="profileImageEditorSection"
@@ -1514,6 +1631,9 @@
             <!-- ==============================
              ข้อมูลที่อยู่
              ============================== -->
+
+            </div>
+            <div id="profileEditContactPanel" class="profile-edit-tab-panel" role="tabpanel" aria-labelledby="profileEditContactTab" tabindex="0" hidden>
 
             <div class="profile-form-section">
               <div class="profile-form-title">
@@ -1777,7 +1897,8 @@
               </div>
             </div>
 
-            <p class="message" id="profileEditMessage"></p>
+            </div>
+            <p class="message" id="profileEditMessage" role="status" aria-live="polite"></p>
           </form>
         </div>
 
@@ -1791,6 +1912,9 @@
           <button type="button" class="btn-primary" id="saveProfileBtn">
             <i class="fa-solid fa-floppy-disk"></i>
             บันทึกข้อมูล
+          </button>
+          <button type="button" class="btn-secondary" id="reloadProfileConflictBtn" hidden>
+            ทิ้งการแก้ไขและโหลดข้อมูลล่าสุด
           </button>
         </div>
       </div>

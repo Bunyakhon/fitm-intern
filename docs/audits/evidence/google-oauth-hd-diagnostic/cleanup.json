@@ -1,0 +1,7 @@
+﻿{
+    "scope":  "Only explicitly started googleOAuthDiagnostic.js process; no Application/Docker processes touched",
+    "challengeReferencesClearedOnCompletion":  true,
+    "port5001Listening":  false,
+    "diagnosticProcessesFound":  1,
+    "diagnosticProcessesRemaining":  0
+}

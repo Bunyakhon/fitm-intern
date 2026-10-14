@@ -1,0 +1,10 @@
+﻿{
+    "at":  "2026-10-11T14:03:46.9624119Z",
+    "optionalIntegrationEnabled":  false,
+    "DB_PORT":  "1",
+    "PGOPTIONS":  "-c default_transaction_read_only=on",
+    "DB_HOST":  "127.0.0.1",
+    "scope":  "Child regression process only; no Development connection",
+    "DB_NAME":  "fitm_026_regression_no_database",
+    "result":  "GUARDED"
+}

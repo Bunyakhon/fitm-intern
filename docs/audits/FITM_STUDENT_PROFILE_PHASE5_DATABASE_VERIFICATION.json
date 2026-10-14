@@ -1,0 +1,137 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-10-11T06:08:38.723Z",
+  "read_only": true,
+  "migration_executions": 0,
+  "metadata_sha256": "635c6050d74f89511d9698cd32e8a81423b1a50d652f88fe1cc8380686601a6f",
+  "ledger": [
+    "001_create_companies.js",
+    "002_create_job_submissions.js",
+    "003_create_job_postings.js",
+    "004_create_job_posting_work_modes.js",
+    "005_create_company_access_tokens.js",
+    "006_add_company_job_indexes_and_checks.js",
+    "007_create_department_staffs.js",
+    "007a_create_missing_base_tables.js",
+    "008_add_resume_extraction.js",
+    "009_add_coop_request_company_job_links.js",
+    "010_cleanup_student_file_schema_drift.js",
+    "011_add_role_workflow_reviews.js",
+    "012_coop_prerequisites_and_direct_review.js",
+    "013_add_coop_projects_and_current_files.js",
+    "014_add_coop_project_advisor_requests.js",
+    "015_add_company_evaluations.js",
+    "016_add_coop_documents.js",
+    "017_add_company_responses.js",
+    "018_add_internship_logs.js",
+    "022_prepare_student_profile_scalars.js",
+    "023_prepare_student_profile_relations.js",
+    "024_prepare_student_profile_file_types.js",
+    "025_prepare_student_profile_document_metadata.js"
+  ],
+  "totals": {
+    "tables": 33,
+    "columns": 398,
+    "constraints": 169,
+    "indexes": 83,
+    "triggers": 5
+  },
+  "all_28_legacy_table_counts_checksums_unchanged": true,
+  "development_counts": {
+    "companies": "12",
+    "company_access_tokens": "3",
+    "company_evaluations": "1",
+    "company_response_history": "0",
+    "company_responses": "0",
+    "coop_document_revisions": "0",
+    "coop_documents": "0",
+    "coop_project_advisor_requests": "3",
+    "coop_projects": "1",
+    "coop_request_delivery_methods": "6",
+    "coop_request_prerequisite_courses": "5",
+    "coop_request_reviews": "2",
+    "coop_requests": "2",
+    "department_staffs": "0",
+    "internship_daily_logs": "0",
+    "internship_review_tokens": "0",
+    "internship_week_events": "0",
+    "internship_weeks": "0",
+    "job_posting_reviews": "0",
+    "job_posting_work_modes": "32",
+    "job_postings": "22",
+    "job_submissions": "12",
+    "mentor_tokens": "18",
+    "mentors": "2",
+    "student_addresses": "0",
+    "student_education_records": "0",
+    "student_files": "3",
+    "student_profiles": "2",
+    "student_skills": "0",
+    "student_training_records": "0",
+    "students": "4",
+    "teachers": "23"
+  },
+  "synthetic_roles": [
+    {
+      "name": "fitm_p5_1c57303390e13834f76b14f9bbba4013",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_25b9ea81803fa3f005d26163f422019b",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_52ef315bb7ff927b012b1df7c99a52d8",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_696b490ac954b88a3ef97c291c4dd190",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_91e07b6b1f59c00a71787f2357220cff",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_c00d45efd243be26d115e826c709d349",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_cf677ab92ab575a20d1509f9ace07271",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_e2f4c001a704db13abbafd7a5771b2dc",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_e55dda1a2722c73ed845724d0ffb88c0",
+      "login_disabled": true,
+      "password_null": true
+    },
+    {
+      "name": "fitm_p5_f3635b01fcbf5f84afba1ab72eec0ffa",
+      "login_disabled": true,
+      "password_null": true
+    }
+  ],
+  "source_preservation": {
+    "baseline_files": 541,
+    "changed": [
+      "frontend/src/pages/student_coop.js",
+      "frontend/test/studentProfileAggregateCompatibility.test.js",
+      "frontend/test/studentProfileIntegrity.test.js",
+      "nlp-service/app/services/profile_pdf.py"
+    ],
+    "missing": [],
+    "other_files_unchanged": 537
+  }
+}

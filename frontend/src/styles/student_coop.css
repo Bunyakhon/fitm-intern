@@ -330,6 +330,12 @@ a {
   display: block;
 }
 
+/* Keep the student calendar hidden even when sidebar/panel display rules apply. */
+.sidebar-item[data-target="panel-activities"][hidden],
+#panel-activities[hidden] {
+  display: none !important;
+}
+
 .panel-header {
   position: relative;
   margin-bottom: 20px;
@@ -1526,6 +1532,117 @@ a {
 /* ==============================
    Student information editor
    ============================== */
+
+/* Profile submenus share the dashboard palette and keep every field mounted. */
+#panel-profile .profile-tabs,
+#profileEditModal .profile-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  margin-top: 18px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+#panel-profile .profile-tab,
+#profileEditModal .profile-tab {
+  display: inline-flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 16px;
+  min-height: 48px;
+  border-radius: 10px;
+  background: transparent;
+  color: #475467;
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+  transition: background .18s ease, color .18s ease;
+}
+
+#panel-profile .profile-tab:hover,
+#profileEditModal .profile-tab:hover {
+  background: #f5f8fc;
+  color: var(--primary);
+}
+
+#panel-profile .profile-tab[aria-selected="true"],
+#profileEditModal .profile-tab[aria-selected="true"] {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+#panel-profile .profile-tab:focus-visible,
+#profileEditModal .profile-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+#panel-profile .profile-tab-panel,
+#profileEditModal .profile-edit-tab-panel { min-width: 0; }
+
+#panel-profile .profile-tab-panel[hidden],
+#profileEditModal .profile-edit-tab-panel[hidden] { display: none !important; }
+#profileEditModal #reloadProfileConflictBtn[hidden] { display: none !important; }
+
+#panel-profile .profile-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+#panel-profile .profile-section-header h3 { font-size: 1rem; }
+#panel-profile .profile-section-header p,
+#panel-profile .profile-tab-help,
+#profileEditModal .profile-tab-help {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.8;
+}
+
+#panel-profile .profile-family-section { margin-top: 24px; }
+#panel-profile .profile-family-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+#panel-profile .profile-family-grid .info-card { margin-top: 0; min-width: 0; }
+#panel-profile .profile-family-grid .info-card:last-child { grid-column: 1 / -1; }
+#panel-profile .profile-family-grid .info-grid { grid-template-columns: minmax(0, 1fr); }
+#panel-profile .info-item strong { overflow-wrap: anywhere; white-space: pre-wrap; }
+#profileEditModal .profile-tabs { margin-top: 0; }
+
+@media (max-width: 900px) {
+  #panel-profile .profile-tab,
+  #profileEditModal .profile-tab { padding: 12px 10px; font-size: .8rem; }
+  #panel-profile .profile-family-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  #panel-profile .profile-tab,
+  #profileEditModal .profile-tab { flex: 1 0 auto; padding: 11px 14px; white-space: nowrap; }
+  #panel-profile .student-info-form-grid,
+  #profileEditModal .profile-form-grid { grid-template-columns: minmax(0, 1fr); }
+  #panel-profile .profile-section-header .btn-primary { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #panel-profile .profile-tab,
+  #profileEditModal .profile-tab { transition: none; }
+}
 
 .student-info-form {
   margin-top: 16px;
@@ -3324,9 +3441,17 @@ textarea::placeholder {
   }
 }
 
-/* Project and project uploads: keep layout changes within these two panels. */
+/* Combined project panel: retain the nested upload section's existing styles. */
+#panel-coop .section-card-header h3 {
+  line-height: 1.6;
+}
+
+#panel-coop .section-card-header p {
+  line-height: 1.8;
+}
+
 #panel-coop .coop-project-card,
-#panel-report-upload .project-upload-card {
+#panel-report-upload.project-upload-card {
   display: grid;
   gap: 24px;
   padding: 24px;
@@ -3522,7 +3647,7 @@ textarea::placeholder {
 
 @media (max-width: 600px) {
   #panel-coop .coop-project-card,
-  #panel-report-upload .project-upload-card {
+  #panel-report-upload.project-upload-card {
     padding: 16px;
     gap: 20px;
   }

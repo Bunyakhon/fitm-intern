@@ -1,0 +1,14 @@
+{
+  "name": "linking-guards-tests",
+  "status": "PASS",
+  "exitCode": 0,
+  "tests": 12,
+  "suites": 0,
+  "pass": 12,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "todo": 0,
+  "failures": [],
+  "scope": "Unit/mock regression only; optional PostgreSQL/browser integrations disabled; database socket guarded at port 1"
+}

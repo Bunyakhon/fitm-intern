@@ -1,0 +1,16 @@
+﻿{
+    "result":  "PASS",
+    "files":  [
+                  {
+                      "result":  "PASS",
+                      "file":  "C:\\Users\\suran\\.codex\\backups\\fitm-intern\\google-oauth-026\\development-20261011T135810Z-8bb878de\\026-6ea1a38c427a4eb5.dump",
+                      "access":  "Current user and SYSTEM only"
+                  },
+                  {
+                      "result":  "PASS",
+                      "file":  "C:\\Users\\suran\\.codex\\backups\\fitm-intern\\google-oauth-026\\development-20261011T135810Z-8bb878de\\026-6ea1a38c427a4eb5.dump.manifest.json",
+                      "access":  "Current user and SYSTEM only"
+                  }
+              ],
+    "at":  "2026-10-11T14:04:01.8180474Z"
+}

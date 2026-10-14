@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "sha256": "7e0279a7479fbf163bdda40dd2dbca1cf514bfd00153bf9d27da7ddc6bea11f8",
+  "pages": 4,
+  "page_sizes": [
+    [
+      595.2,
+      841.8
+    ],
+    [
+      595.2,
+      841.8
+    ],
+    [
+      595.2,
+      841.8
+    ],
+    [
+      595.2,
+      841.8
+    ]
+  ],
+  "template_code_present": true,
+  "verified_official_geometry": true,
+  "form_widget_count": 0,
+  "personal_values_printed": false,
+  "profile_storage_database_writes": false,
+  "masked_extraction_after_parser_fix": {
+    "method": "ocr",
+    "page_count": 4,
+    "error": null,
+    "candidate_keys": [
+      "student.major",
+      "student.department",
+      "student.faculty"
+    ],
+    "record_counts": {
+      "addresses": 1,
+      "education": 0,
+      "training": 0,
+      "skills": 3
+    },
+    "student_id_present": true,
+    "warnings": [
+      "BLOCKED_ID_SIGNATURE_WORKFLOW_NOT_IMPORTED",
+      "LICENSE_CHECKBOX_REVIEW_REQUIRED",
+      "MILITARY_CHECKBOX_REVIEW_REQUIRED",
+      "OCR_VALUES_REQUIRE_REVIEW",
+      "SKILL_RATING_REVIEW_REQUIRED",
+      "STUDENT_ID_UNREADABLE"
+    ],
+    "personal_values_printed": false,
+    "profile_storage_database_writes": false
+  }
+}

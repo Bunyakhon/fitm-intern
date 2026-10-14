@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-11T13:25:19.417Z",
+  "result": "PASS",
+  "mode": "READ_ONLY_CONNECTIONS",
+  "state": "UNINSTALLED",
+  "tableCount": 32,
+  "ledgerCount": 23,
+  "googleTablesPresent": [],
+  "targetUnchanged": true,
+  "allPublicTableRowsUnchanged": true,
+  "ledgerUnchanged": true,
+  "originalTableCatalogFieldsUnchanged": true,
+  "sourceHash": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061",
+  "targetHash": "027cea2ec9b9c25535d6b2d7790ea886c5e073097fbedc0828507611f9c4bd7d"
+}

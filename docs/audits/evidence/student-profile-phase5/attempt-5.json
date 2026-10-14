@@ -1,0 +1,154 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_5_e55dda1a2722c73ed845724d0ffb88c0",
+  "role": "fitm_p5_e55dda1a2722c73ed845724d0ffb88c0",
+  "marker": "fitm.student_profile.phase5:e55dda1a2722c73ed845724d0ffb88c0:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "98526932ab0187a28ad4802f4c5de974ac6b569384cdfdef87b8744f27496b8d",
+  "tests": {
+    "pass": 17,
+    "fail": 1,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "real password Login UI redirects to full dashboard using server-issued session",
+        "status": "PASS"
+      },
+      {
+        "name": "five tabs/default/ARIA, keyboard navigation and no GET on switching",
+        "status": "PASS"
+      },
+      {
+        "name": "personal/family drafts survive tab changes and private health stays intact",
+        "status": "PASS"
+      },
+      {
+        "name": "structured addresses and confirmed copy preserve leading zeroes and legacy text",
+        "status": "PASS"
+      },
+      {
+        "name": "education  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "training  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills computer create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills language create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "409 in second browser tab preserves draft, shows differences and requires explicit review",
+        "status": "PASS"
+      },
+      {
+        "name": "428 UI retains draft and offers explicit reload without invented revision",
+        "status": "PASS"
+      },
+      {
+        "name": "private document upload/label/download contract/removal uses If-Match and no public URL",
+        "status": "PASS"
+      },
+      {
+        "name": "all five document types upload through the UI, with supporting label and private ownership",
+        "status": "PASS"
+      },
+      {
+        "name": "stale GET and typing during committed PUT cannot overwrite a newer draft",
+        "status": "PASS"
+      },
+      {
+        "name": "license absence requires confirmation and explicit nulls rather than silent deletion",
+        "status": "PASS"
+      },
+      {
+        "name": "mount is idempotent and cancelling sidebar departure keeps the draft",
+        "status": "PASS"
+      },
+      {
+        "name": "read-only account, blocked fields and unchanged sidebar/calendar/resume",
+        "status": "PASS"
+      },
+      {
+        "name": "real responsive geometry/screenshots at 1440/1366/768/390 with all five tabs",
+        "status": "PASS"
+      },
+      {
+        "name": "existing photo UI upload uses aggregate revision and private authenticated image read",
+        "status": "FAIL",
+        "reason": "Mouse control has no layout box",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 0,
+            "top": 0,
+            "width": 0,
+            "height": 0
+          },
+          "point": {
+            "x": 0,
+            "y": 0
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control has no layout box"
+        }
+      }
+    ],
+    "screenshots": [
+      "docs/audits/evidence/student-profile-phase5/1440-personal.png",
+      "docs/audits/evidence/student-profile-phase5/1440-contact.png",
+      "docs/audits/evidence/student-profile-phase5/1440-education.png",
+      "docs/audits/evidence/student-profile-phase5/1440-documents.png",
+      "docs/audits/evidence/student-profile-phase5/1440-account.png",
+      "docs/audits/evidence/student-profile-phase5/1366-personal.png",
+      "docs/audits/evidence/student-profile-phase5/1366-contact.png",
+      "docs/audits/evidence/student-profile-phase5/1366-education.png",
+      "docs/audits/evidence/student-profile-phase5/1366-documents.png",
+      "docs/audits/evidence/student-profile-phase5/1366-account.png",
+      "docs/audits/evidence/student-profile-phase5/768-personal.png",
+      "docs/audits/evidence/student-profile-phase5/768-contact.png",
+      "docs/audits/evidence/student-profile-phase5/768-education.png",
+      "docs/audits/evidence/student-profile-phase5/768-documents.png",
+      "docs/audits/evidence/student-profile-phase5/768-account.png",
+      "docs/audits/evidence/student-profile-phase5/390-personal.png",
+      "docs/audits/evidence/student-profile-phase5/390-contact.png",
+      "docs/audits/evidence/student-profile-phase5/390-education.png",
+      "docs/audits/evidence/student-profile-phase5/390-documents.png",
+      "docs/audits/evidence/student-profile-phase5/390-account.png"
+    ],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true,
+    "authentication": "production password login against synthetic PostgreSQL account; browser UI login tested separately; Google OAuth NOT TESTED",
+    "harness_error": {
+      "message": "Stop after a failed dependent case\n\n1 !== 0\n"
+    }
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-11T05:50:48.439Z"
+}

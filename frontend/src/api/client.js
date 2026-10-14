@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getStudentToken } from "../auth/studentAuthStorage.js";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -14,11 +15,12 @@ api.interceptors.request.use((config) => {
     return config;
   }
 
-  const token = localStorage.getItem("token");
   const headers = config.headers;
 
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
+  if (!headers.has("Authorization")) {
+    const token = getStudentToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    config.studentSessionToken = token;
   }
 
   return config;
@@ -43,6 +45,15 @@ function normalizeError(error) {
   const retryAfter = response?.headers?.["retry-after"];
   if (retryAfter != null) normalized.retryAfter = retryAfter;
   return normalized;
+}
+
+function sessionChanged(config) {
+  return config && Object.hasOwn(config, "studentSessionToken") && config.studentSessionToken !== getStudentToken();
+}
+function sessionChangedError() {
+  return Object.assign(new Error("สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่"), {
+    status: 409, data: { code: "STUDENT_SESSION_CHANGED" },
+  });
 }
 
 export async function apiRequest(path, options = {}) {
@@ -71,10 +82,16 @@ export async function apiRequest(path, options = {}) {
       auth,
     });
 
+    if (sessionChanged(response.config)) throw sessionChangedError();
+
     return returnResponse
       ? { status: response.status, data: response.data, headers: response.headers }
       : response.data;
   } catch (error) {
+    // A delayed success/401 from an old account must not render that account or
+    // clear a newer login. Explicit Teacher/Head/Staff requests are unaffected.
+    if (sessionChanged(error.config)) throw sessionChangedError();
+    if (error.data?.code === "STUDENT_SESSION_CHANGED") throw error;
     throw normalizeError(error);
   }
 }

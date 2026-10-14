@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "preexistingSourceFilesChecked": 759,
+  "environmentFilesChecked": 3,
+  "changedPreexistingFiles": [],
+  "missingPreexistingFiles": [],
+  "before": {
+    "trackedModified": 32,
+    "untrackedFiles": 327
+  },
+  "after": {
+    "trackedModified": 32,
+    "untrackedFiles": 394
+  },
+  "newFiles": 67,
+  "priorGitStatusPreserved": true,
+  "flags": {
+    "GOOGLE_LOGIN_ENABLED": "false",
+    "GOOGLE_ACCOUNT_LINKING_ENABLED": "false"
+  },
+  "hostedAllowlist": "ABSENT_UNCHANGED",
+  "artifactScan": "PASS",
+  "leakFiles": []
+}

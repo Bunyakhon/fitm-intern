@@ -1,0 +1,38 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_5_c00d45efd243be26d115e826c709d349",
+  "role": "fitm_p5_c00d45efd243be26d115e826c709d349",
+  "marker": "fitm.student_profile.phase5:c00d45efd243be26d115e826c709d349:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "add1bf8b254d5bed41df6ea8e69b8f90af2d3201498d8b60413c69bb216bac62",
+  "tests": {
+    "pass": 0,
+    "fail": 1,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "Environment/bootstrap",
+        "status": "FAIL",
+        "reason": "Unexpected token 'C', \"Could not \"... is not valid JSON"
+      }
+    ],
+    "screenshots": [],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true,
+    "authentication": "production password login against synthetic PostgreSQL account; browser UI login tested separately; Google OAuth NOT TESTED",
+    "harness_error": {
+      "message": "Unexpected token 'C', \"Could not \"... is not valid JSON"
+    }
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-11T05:42:19.591Z"
+}

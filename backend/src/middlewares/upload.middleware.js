@@ -37,7 +37,7 @@ const createSingleFileUpload = (directoryName, mimeExtensions, fileSize, { stora
   storage: createStorage(directoryName, mimeExtensions, storageConfig?.ensureStudentStorage),
   limits: { fileSize },
   fileFilter: (req, file, callback) => {
-    if (!mimeExtensions[file.mimetype]) {
+    if (!Object.hasOwn(mimeExtensions, file.mimetype)) {
       return callback(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
     }
 

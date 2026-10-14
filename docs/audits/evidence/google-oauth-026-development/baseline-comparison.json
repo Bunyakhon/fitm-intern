@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-11T13:55:53.804Z",
+  "result": "PASS",
+  "exactReadinessBaselineMatch": true,
+  "ledgerCount": 23,
+  "existingDataTables": 32,
+  "googleTablesPresent": [],
+  "targetHash": "027cea2ec9b9c25535d6b2d7790ea886c5e073097fbedc0828507611f9c4bd7d",
+  "sourceHash": "f5dd964e3a2f6757fc0a879a058d015f50535d20efb1ef82153a35e806368061"
+}

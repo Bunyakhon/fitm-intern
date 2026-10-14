@@ -1,0 +1,148 @@
+{
+  "status": "PASS",
+  "database": "fitm_profile_3a_5e5f6ed0ee990bb046f95d7969444a4e",
+  "role": "fitm_p3a_5e5f6ed0ee990bb046f95d7969444a4e",
+  "marker": "fitm.student_profile.phase3a:5e5f6ed0ee990bb046f95d7969444a4e:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "c6fcd6fdf5578e3fd1ed37ce2c60de8840f3b29ed4847a82fda8f906436e3c98",
+  "tests": {
+    "pass": 31,
+    "fail": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "personal scalars and explicit clears preserve legacy health/family/text",
+        "status": "PASS"
+      },
+      {
+        "name": "registered/current addresses are separate and draft fields remain optional",
+        "status": "PASS"
+      },
+      {
+        "name": "education create uses stable owned IDs and multiple records per level",
+        "status": "PASS"
+      },
+      {
+        "name": "education partial update and explicit null do not replace other columns",
+        "status": "PASS"
+      },
+      {
+        "name": "education delete removes only the explicitly named owned row",
+        "status": "PASS"
+      },
+      {
+        "name": "training create/update/delete preserves period text and other records",
+        "status": "PASS"
+      },
+      {
+        "name": "skills create/update/delete supports both categories and nullable proficiency",
+        "status": "PASS"
+      },
+      {
+        "name": "read-after-save and / alias expose the same consistent revision",
+        "status": "PASS"
+      },
+      {
+        "name": "428 missing precondition and malformed If-Match produce no writes",
+        "status": "PASS"
+      },
+      {
+        "name": "409 stale token includes current owner snapshot and changes nothing",
+        "status": "PASS"
+      },
+      {
+        "name": "concurrent clients across academic and child endpoints serialize without lost updates",
+        "status": "PASS"
+      },
+      {
+        "name": "first-create profile race is serialized on the Student owner",
+        "status": "PASS"
+      },
+      {
+        "name": "aggregate transaction rolls back scalar/child/counter when a later ownership check fails",
+        "status": "PASS"
+      },
+      {
+        "name": "database unique failure rolls back all earlier aggregate writes",
+        "status": "PASS"
+      },
+      {
+        "name": "ownership rejects foreign IDs and mass assignment without changing either student",
+        "status": "PASS"
+      },
+      {
+        "name": "no-op payloads/empty child arrays preserve revision and all existing rows",
+        "status": "PASS"
+      },
+      {
+        "name": "calendar/leap-year/GPA/enums/conditional fields enforce the real schema and allow drafts",
+        "status": "PASS"
+      },
+      {
+        "name": "private document upload versions are server-managed and prior bytes are retained",
+        "status": "PASS"
+      },
+      {
+        "name": "document ownership, metadata editing and removal preserve stored versions",
+        "status": "PASS"
+      },
+      {
+        "name": "upload validates bytes/extensions/count/body and stale failures remove only staged bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "photo upload participates in aggregate If-Match and invalidates stale scalar writes",
+        "status": "PASS"
+      },
+      {
+        "name": "Resume and project file metadata are outside profile aggregate",
+        "status": "PASS"
+      },
+      {
+        "name": "sensitive private attributes never leak through owner DTO or legacy role model includes",
+        "status": "PASS"
+      },
+      {
+        "name": "aggregate counter remains exact beyond JavaScript safe integer",
+        "status": "PASS"
+      },
+      {
+        "name": "GET waits for the owner lock and returns the fully committed snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "unsafe JSON integers are rejected without scalar/child/revision changes",
+        "status": "PASS"
+      },
+      {
+        "name": "upload transaction failure rolls back old-current/new-version/counter and removes staged bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "rejected COMMIT rolls back document/photo references and removes staged bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "lost COMMIT acknowledgement retains durable document/photo metadata and bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "photo removal clears only the reference and retains previously committed bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "atomic successful aggregate save changes only specified scalar and child fields",
+        "status": "PASS"
+      }
+    ]
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-10T18:46:36.825Z"
+}

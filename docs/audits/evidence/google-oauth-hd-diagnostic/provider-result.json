@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-11T16:56:52.862Z",
+  "internalAudience": "PASS",
+  "internalAudienceBasis": "VERIFIED_TOKEN_FOR_CURRENT_CLIENT_WITH_USER_CONFIRMED_INTERNAL_SETTING",
+  "tokenIssued": true,
+  "tokenVerification": "PASS",
+  "signature": "PASS",
+  "issuer": "PASS",
+  "audience": "PASS",
+  "azp": "PASS",
+  "expiration": "PASS",
+  "issuedAt": "PASS",
+  "nonceValidation": "PASS",
+  "emailVerified": true,
+  "studentDomainMatch": true,
+  "subjectPresent": true,
+  "hdPresent": true,
+  "hd": "email.kmutnb.ac.th",
+  "hostedDomainReadiness": "CONFIRMED_FOR_TESTED_STUDENT_ACCOUNT",
+  "flags": "false/false",
+  "databaseAccess": "NONE"
+}

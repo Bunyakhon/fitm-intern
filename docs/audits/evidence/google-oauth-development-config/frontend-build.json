@@ -1,0 +1,7 @@
+{
+  "name": "frontend-build",
+  "status": "PASS",
+  "exitCode": 0,
+  "largeChunkWarning": false,
+  "scope": "Production build into new audit artifact directory; existing dist preserved"
+}

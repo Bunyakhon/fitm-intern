@@ -1,0 +1,87 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_3b_920a65c4cdf31e20686d80d442cc40d8",
+  "role": "fitm_p3b_920a65c4cdf31e20686d80d442cc40d8",
+  "marker": "fitm.student_profile.phase3b:920a65c4cdf31e20686d80d442cc40d8:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "85bf03fa780ed1967df059607a9cb4ef7af0258a40d10898ff49f5beac29e0f0",
+  "tests": {
+    "pass": 2,
+    "fail": 10,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "five tabs/default/ARIA, keyboard navigation and no GET on switching",
+        "status": "PASS"
+      },
+      {
+        "name": "personal/family drafts survive tab changes and private health stays intact",
+        "status": "PASS"
+      },
+      {
+        "name": "structured addresses and confirmed copy preserve leading zeroes and legacy text",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "education  create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "training  create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "skills computer create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "skills language create/update/delete through full page and PostgreSQL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "409 in second browser tab preserves draft, shows differences and requires explicit review",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "428 UI retains draft and offers explicit reload without invented revision",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "private document upload/label/download contract/removal uses If-Match and no public URL",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "read-only account, blocked fields and unchanged sidebar/calendar/resume",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      },
+      {
+        "name": "real responsive geometry/screenshots at 1440/1366/768/390 with all five tabs",
+        "status": "FAIL",
+        "reason": "Mouse control is obscured"
+      }
+    ],
+    "screenshots": [],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge headless",
+    "synthetic_only": true
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-10T19:17:06.578Z"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "frontend-tests",
+  "status": "PASS",
+  "exitCode": 0,
+  "tests": 370,
+  "suites": 0,
+  "pass": 368,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 2,
+  "todo": 0,
+  "failures": [],
+  "scope": "Unit/mock regression only; optional PostgreSQL/browser integrations disabled; database socket guarded at port 1"
+}

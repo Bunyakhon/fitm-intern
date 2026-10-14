@@ -1,15 +1,16 @@
 const path = require("path");
 const { Umzug, SequelizeStorage } = require("umzug");
 const sequelize = require("../config/database");
+const { withStudentProfileMigrations } = require("./studentProfileMigrationDiscovery");
 
-const umzug = new Umzug({
-  migrations: {
+function createRunner(command) { return new Umzug({
+  migrations: withStudentProfileMigrations(sequelize, {
     glob: ["*.js", { cwd: path.join(__dirname, "migrations") }],
-  },
+  }),
   context: sequelize.getQueryInterface(),
-  storage: new SequelizeStorage({ sequelize, tableName: "sequelize_meta" }),
+  storage: command === "status" ? require("./readOnlyMigrationStorage")(sequelize) : new SequelizeStorage({ sequelize, tableName: "sequelize_meta" }),
   logger: console,
-});
+}); }
 
 async function printMigrations(label, migrations) {
   console.log(`${label}: ${migrations.length}`);
@@ -18,6 +19,10 @@ async function printMigrations(label, migrations) {
 
 async function main() {
   const command = process.argv[2] || "up";
+  if (!["up", "down", "status"].includes(command) || process.argv.length > 3)
+    throw new Error("Usage: node src/db/migrate.js [up|down|status]; use installGoogleOAuth026.js for 026");
+  if (command === "status") sequelize.addHook("afterConnect", connection => connection.query("SET default_transaction_read_only=on"));
+  const umzug = createRunner(command);
   await sequelize.authenticate();
 
   if (command === "up") {

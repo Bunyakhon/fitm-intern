@@ -1,0 +1,242 @@
+{
+  "status": "PASS",
+  "database": {
+    "target": {
+      "database": "intern_system",
+      "username": "postgres",
+      "read_only": "on"
+    },
+    "ledger": [
+      "001_create_companies.js",
+      "002_create_job_submissions.js",
+      "003_create_job_postings.js",
+      "004_create_job_posting_work_modes.js",
+      "005_create_company_access_tokens.js",
+      "006_add_company_job_indexes_and_checks.js",
+      "007_create_department_staffs.js",
+      "007a_create_missing_base_tables.js",
+      "008_add_resume_extraction.js",
+      "009_add_coop_request_company_job_links.js",
+      "010_cleanup_student_file_schema_drift.js",
+      "011_add_role_workflow_reviews.js",
+      "012_coop_prerequisites_and_direct_review.js",
+      "013_add_coop_projects_and_current_files.js",
+      "014_add_coop_project_advisor_requests.js",
+      "015_add_company_evaluations.js",
+      "016_add_coop_documents.js",
+      "017_add_company_responses.js",
+      "018_add_internship_logs.js",
+      "022_prepare_student_profile_scalars.js",
+      "023_prepare_student_profile_relations.js",
+      "024_prepare_student_profile_file_types.js",
+      "025_prepare_student_profile_document_metadata.js",
+      "026_google_identity_mapping.js"
+    ],
+    "data": {
+      "companies": {
+        "count": 12,
+        "digest": "b9f70d9f74ba1349a5620b64d9f02730"
+      },
+      "company_access_tokens": {
+        "count": 3,
+        "digest": "2586c964b0924f6a8cd9bd3e36c729d1"
+      },
+      "company_evaluations": {
+        "count": 1,
+        "digest": "733d1245603e4d351be6251e99e9509e"
+      },
+      "company_response_history": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "company_responses": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "coop_document_revisions": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "coop_documents": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "coop_project_advisor_requests": {
+        "count": 3,
+        "digest": "a4e6670a89136656358bd49a4cf4fa0e"
+      },
+      "coop_projects": {
+        "count": 1,
+        "digest": "28aedf22e683023d83da3430aeb8a73b"
+      },
+      "coop_request_delivery_methods": {
+        "count": 6,
+        "digest": "52b4831e5f761e7cdc30923a98d71fda"
+      },
+      "coop_request_prerequisite_courses": {
+        "count": 5,
+        "digest": "789f6b6b78bc7fb24f3f3bd821a87b29"
+      },
+      "coop_request_reviews": {
+        "count": 2,
+        "digest": "217a79dbcb8d72e0e218adf938d0777e"
+      },
+      "coop_requests": {
+        "count": 2,
+        "digest": "c4bc85252e4ae1a976b2fa109a0bb93a"
+      },
+      "department_staffs": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "google_auth_requests": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "google_identities": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "internship_daily_logs": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "internship_review_tokens": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "internship_week_events": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "internship_weeks": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "job_posting_reviews": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "job_posting_work_modes": {
+        "count": 32,
+        "digest": "c5a24e669bfba5e7cb4f11d6d34acb31"
+      },
+      "job_postings": {
+        "count": 22,
+        "digest": "3901eada0ce61cc7e3475bf5acc501a7"
+      },
+      "job_submissions": {
+        "count": 12,
+        "digest": "cd8c9e807a684b5ec703cb00822565bd"
+      },
+      "mentor_tokens": {
+        "count": 18,
+        "digest": "881ea51fa39742a3bf124708e226b671"
+      },
+      "mentors": {
+        "count": 2,
+        "digest": "ff4f99e3818c3f9c7b72890a912e1779"
+      },
+      "sequelize_meta": {
+        "count": 24,
+        "digest": "0d81fb6c11472d3d47fb6fb9263727b8"
+      },
+      "student_addresses": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "student_education_records": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "student_files": {
+        "count": 3,
+        "digest": "42d7a0db1ed67ebffd4197c6b778a2f0"
+      },
+      "student_profiles": {
+        "count": 2,
+        "digest": "8a95b308ff17132ce1ac6bb2cd333bea"
+      },
+      "student_skills": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "student_training_records": {
+        "count": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "students": {
+        "count": 4,
+        "digest": "0891f2107080712d97d659f8645981b5"
+      },
+      "teachers": {
+        "count": 23,
+        "digest": "64dc6adbe4dbe5f1c2a320f88acd9c36"
+      }
+    },
+    "schemaDigest": "6523f7c2363b86730423718915578ccf1b8d09ee418a9fbfd1f604e39879ebc1",
+    "accounts": {
+      "student": 4,
+      "teacher": 1,
+      "department_head": 0,
+      "department_staff": 0
+    }
+  },
+  "containers": {
+    "intern_postgres": {
+      "id": "11abde30a945e30fa7d352061892381a46ab50ef355fb329f014aa876de7d416",
+      "startedAt": "2026-10-14T10:56:12.823414756Z",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "fitm-intern_postgres_data",
+          "destination": "/var/lib/postgresql/data"
+        }
+      ]
+    },
+    "intern_backend": {
+      "id": "9508014d5e5657804d7930e9eedfcf99216db51936d28d147776c4fcf75c0450",
+      "startedAt": "2026-10-14T11:02:27.07607756Z",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "fitm-intern_intern_storage",
+          "destination": "/app/storage"
+        },
+        {
+          "type": "bind",
+          "destination": "/app"
+        },
+        {
+          "type": "volume",
+          "name": "b9bf165b98eee35baa66cace574919c4ad1a522b9aba41396a10634399493df5",
+          "destination": "/app/node_modules"
+        }
+      ]
+    },
+    "intern_frontend": {
+      "id": "7292559e8d2b23b34617348ecd6e748260d4975d2bcd68abc8e19043bbedf68a",
+      "startedAt": "2026-10-14T10:56:12.827297813Z",
+      "mounts": [
+        {
+          "type": "bind",
+          "destination": "/app"
+        },
+        {
+          "type": "volume",
+          "name": "140c223ce687b1b203bc9a52b8f16f81cf2cec0143f67708014b578725cd0647",
+          "destination": "/app/node_modules"
+        }
+      ]
+    }
+  },
+  "backendFileMatchesContainer": true,
+  "configuration": {
+    "GOOGLE_HOSTED_DOMAIN_POLICY": "required",
+    "GOOGLE_ALLOWED_HOSTED_DOMAINS": "email.kmutnb.ac.th",
+    "GOOGLE_ALLOWED_EMAIL_DOMAINS": "kmutnb.ac.th,email.kmutnb.ac.th",
+    "GOOGLE_LOGIN_ENABLED": "false",
+    "GOOGLE_ACCOUNT_LINKING_ENABLED": "false"
+  },
+  "preservation": "PASS: schema, ledger, all table counts/digests, PostgreSQL/Frontend and all mounts unchanged"
+}

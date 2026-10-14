@@ -1,0 +1,284 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_5_696b490ac954b88a3ef97c291c4dd190",
+  "role": "fitm_p5_696b490ac954b88a3ef97c291c4dd190",
+  "marker": "fitm.student_profile.phase5:696b490ac954b88a3ef97c291c4dd190:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "19a5eb7bb22015978d1f9770198fa7f51801cd0e444efba64c43bd8cbd721144",
+  "tests": {
+    "pass": 40,
+    "fail": 3,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "real password Login UI redirects to full dashboard using server-issued session",
+        "status": "PASS"
+      },
+      {
+        "name": "five tabs/default/ARIA, keyboard navigation and no GET on switching",
+        "status": "PASS"
+      },
+      {
+        "name": "personal/family drafts survive tab changes and private health stays intact",
+        "status": "PASS"
+      },
+      {
+        "name": "structured addresses and confirmed copy preserve leading zeroes and legacy text",
+        "status": "PASS"
+      },
+      {
+        "name": "education  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "training  create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills computer create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "skills language create/update/delete through full page and PostgreSQL",
+        "status": "PASS"
+      },
+      {
+        "name": "409 in second browser tab preserves draft, shows differences and requires explicit review",
+        "status": "PASS"
+      },
+      {
+        "name": "428 UI retains draft and offers explicit reload without invented revision",
+        "status": "PASS"
+      },
+      {
+        "name": "private document upload/label/download contract/removal uses If-Match and no public URL",
+        "status": "PASS"
+      },
+      {
+        "name": "all five document types upload through the UI, with supporting label and private ownership",
+        "status": "PASS"
+      },
+      {
+        "name": "stale GET and typing during committed PUT cannot overwrite a newer draft",
+        "status": "PASS"
+      },
+      {
+        "name": "license absence requires confirmation and explicit nulls rather than silent deletion",
+        "status": "PASS"
+      },
+      {
+        "name": "mount is idempotent and cancelling sidebar departure keeps the draft",
+        "status": "PASS"
+      },
+      {
+        "name": "read-only account, blocked fields and unchanged sidebar/calendar/resume",
+        "status": "PASS"
+      },
+      {
+        "name": "real responsive geometry/screenshots at 1440/1366/768/390 with all five tabs",
+        "status": "PASS"
+      },
+      {
+        "name": "existing photo UI upload uses aggregate revision and private authenticated image read",
+        "status": "PASS"
+      },
+      {
+        "name": "text/AcroForm/checkbox/multiple education preview is strictly read-only",
+        "status": "PASS"
+      },
+      {
+        "name": "428 happens before upload, wrong file and forbidden fields leave data intact",
+        "status": "PASS"
+      },
+      {
+        "name": "PDF owner mismatch, unsupported/encrypted/corrupt/active/pages/extension/MIME are rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "oversized PDF, filename traversal, multipart duplicates and identity mass assignment reject before writes",
+        "status": "PASS"
+      },
+      {
+        "name": "actual local English and Thai scanned PDF OCR produces reviewable values, no writes",
+        "status": "PASS"
+      },
+      {
+        "name": "browser keep/skip defaults and cancellation never persist or erase manual drafts",
+        "status": "PASS"
+      },
+      {
+        "name": "confirmed browser import writes selected fields/children and original PDF once, retaining legacy data/draft",
+        "status": "PASS"
+      },
+      {
+        "name": "409 from second client preserves import edits until explicit review and reconfirmation",
+        "status": "PASS"
+      },
+      {
+        "name": "duplicate child create rolls back file/data; partial child update preserves omitted values",
+        "status": "PASS"
+      },
+      {
+        "name": "transaction failure after profile/child writes rolls back SQL/version/revision and removes staged bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "lost response after actual COMMIT is recovered through status without another POST or duplicate document",
+        "status": "PASS"
+      },
+      {
+        "name": "parallel commits row lock permits one; same receipt replay does not increment revision or add files",
+        "status": "PASS"
+      },
+      {
+        "name": "PDF receipt/history/download enforce second student ownership and private no-store",
+        "status": "PASS"
+      },
+      {
+        "name": "incomplete PDF changes never clear missing fields; explicit editable null is supported",
+        "status": "PASS"
+      },
+      {
+        "name": "browser import preview wraps at 1440/1366/768/390 and cancellation leaves manual five tabs operational",
+        "status": "PASS"
+      },
+      {
+        "name": "blank/incomplete synthetic PDF yields no inferred deletions or ghost child records",
+        "status": "PASS"
+      },
+      {
+        "name": "actual unsupported PDF and conflicting identity are blocked; malformed extracted values remain editable",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit AcroForm checked license is read without inventing details",
+        "status": "PASS"
+      },
+      {
+        "name": "staging ENOSPC failure cannot write profile/child/file metadata or change revision",
+        "status": "PASS"
+      },
+      {
+        "name": "two different receipts at one revision conflict; winner data and document remain intact",
+        "status": "PASS"
+      },
+      {
+        "name": "status waits for an in-flight SQL writer and returns one consistent committed snapshot",
+        "status": "PASS"
+      },
+      {
+        "name": "native F5 after changing Profile tab reads saved data without another write",
+        "status": "PASS"
+      },
+      {
+        "name": "unsaved memory draft is lost only after confirmed browser reload, saved PostgreSQL data stays intact",
+        "status": "FAIL",
+        "reason": "Mouse control has no layout box",
+        "diagnostic": {
+          "operation": "mouse-target-geometry",
+          "selector": "[selector omitted]",
+          "exists": true,
+          "connected": true,
+          "disabled": false,
+          "rect": {
+            "left": 0,
+            "top": 0,
+            "width": 0,
+            "height": 0
+          },
+          "point": {
+            "x": 0,
+            "y": 0
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "inViewport": true,
+          "hitExists": true,
+          "hitIsTarget": false,
+          "pageHasFocus": true,
+          "type": "Error",
+          "message": "Mouse control has no layout box"
+        }
+      },
+      {
+        "name": "same browser document reloads saved manual/PDF data, native F5 shortcut and hard reload measured separately",
+        "status": "FAIL",
+        "reason": "Stop after a failed dependent case\n\n1 !== 0\n"
+      },
+      {
+        "name": "fresh browser page reads imported PostgreSQL data, then ordinary manual entry still saves",
+        "status": "FAIL",
+        "reason": "Stop after a failed dependent case\n\n2 !== 0\n"
+      }
+    ],
+    "screenshots": [
+      "docs/audits/evidence/student-profile-phase5/1440-personal.png",
+      "docs/audits/evidence/student-profile-phase5/1440-contact.png",
+      "docs/audits/evidence/student-profile-phase5/1440-education.png",
+      "docs/audits/evidence/student-profile-phase5/1440-documents.png",
+      "docs/audits/evidence/student-profile-phase5/1440-account.png",
+      "docs/audits/evidence/student-profile-phase5/1366-personal.png",
+      "docs/audits/evidence/student-profile-phase5/1366-contact.png",
+      "docs/audits/evidence/student-profile-phase5/1366-education.png",
+      "docs/audits/evidence/student-profile-phase5/1366-documents.png",
+      "docs/audits/evidence/student-profile-phase5/1366-account.png",
+      "docs/audits/evidence/student-profile-phase5/768-personal.png",
+      "docs/audits/evidence/student-profile-phase5/768-contact.png",
+      "docs/audits/evidence/student-profile-phase5/768-education.png",
+      "docs/audits/evidence/student-profile-phase5/768-documents.png",
+      "docs/audits/evidence/student-profile-phase5/768-account.png",
+      "docs/audits/evidence/student-profile-phase5/390-personal.png",
+      "docs/audits/evidence/student-profile-phase5/390-contact.png",
+      "docs/audits/evidence/student-profile-phase5/390-education.png",
+      "docs/audits/evidence/student-profile-phase5/390-documents.png",
+      "docs/audits/evidence/student-profile-phase5/390-account.png",
+      "docs/audits/evidence/student-profile-phase5/1440-pdf-preview.png",
+      "docs/audits/evidence/student-profile-phase5/1366-pdf-preview.png",
+      "docs/audits/evidence/student-profile-phase5/768-pdf-preview.png",
+      "docs/audits/evidence/student-profile-phase5/390-pdf-preview.png"
+    ],
+    "runtime_errors": [],
+    "api_source": "production routes/controllers/Sequelize",
+    "browser": "Microsoft Edge real Windows window positioned outside desktop; CDP forms and Win32 F5",
+    "synthetic_only": true,
+    "authentication": "production password login against synthetic PostgreSQL account; browser UI login tested separately; Google OAuth NOT TESTED",
+    "pdf_e2e_seconds": 1.3074035000000004,
+    "pdf_e2e_started": 61144.5656,
+    "reload": [
+      {
+        "method": "Win32 F5 messages to QA-owned Edge window",
+        "status": "PASS"
+      },
+      {
+        "method": "Browser reload ignoreCache=false",
+        "navigation_type": "reload",
+        "status": "PASS"
+      },
+      {
+        "method": "Browser reload ignoreCache=true",
+        "navigation_type": "reload",
+        "status": "PASS"
+      },
+      {
+        "method": "Win32 F5 after selecting documents tab",
+        "navigation_type": "reload",
+        "status": "PASS"
+      }
+    ],
+    "native_f5_target_windows": 2,
+    "harness_error": {
+      "message": "Stop after a failed dependent case\n\n3 !== 0\n"
+    }
+  },
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-11T05:59:56.988Z"
+}

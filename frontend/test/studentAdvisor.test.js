@@ -64,6 +64,7 @@ function createPage({ advisorId = CURRENT_ID, directory = { teachers } } = {}) {
   let directoryResult = directory;
   const context = {
     currentStudent: student,
+    studentInfoRevision: '"fixture-1"', studentProfileRevision: '"fixture-1"', studentInfoForm: {},
     isStudentInfoSaving: false,
     isTeacherDirectoryLoaded: false,
     hasAdvisorSelectionChanged: false,
@@ -73,6 +74,7 @@ function createPage({ advisorId = CURRENT_ID, directory = { teachers } } = {}) {
     studentCoopAdvisorInput: {}, studentInfoMessage: {},
     document: { createElement: () => ({ value: "", textContent: "", disabled: false }), getElementById: () => ({}) },
     localStorage: { getItem: () => "in-memory-fixture" },
+    getStudentToken: () => "in-memory-fixture",
     console: { error() {} },
     formatTeacherName: (teacher) => `${teacher.first_name} ${teacher.last_name}`,
     getStudentCode: (record) => record.student_id,
@@ -80,9 +82,11 @@ function createPage({ advisorId = CURRENT_ID, directory = { teachers } } = {}) {
       if (directoryResult instanceof Error) throw directoryResult;
       return directoryResult;
     },
-    updateStudentInfo: async (payload) => {
+    updateStudentInfo: async (payload, revision) => {
+      assert.equal(revision, context.studentInfoRevision);
       payloads.push(JSON.parse(JSON.stringify(payload)));
       Object.assign(student, payload); // Controlled persistence fake; omission preserves fields.
+      return { student: { ...student }, profile_revision: '"fixture-saved"' };
     },
     loadStudentProfile: async () => {
       context.populateStudentInfoForm(student);
@@ -92,10 +96,10 @@ function createPage({ advisorId = CURRENT_ID, directory = { teachers } } = {}) {
     setStudentInfoButtonState() {}, clearAuthentication() {}, redirectToLogin() {},
   };
   vm.createContext(context);
-  vm.runInContext(profileCode + saveCode, context);
+  vm.runInContext(sourceBetween("function captureStudentInfoDraft(", "function formatTeacherName(") + profileCode + saveCode, context);
   context.populateStudentInfoForm(student);
   return {
-    student, advisorInput, majorInput, payloads,
+    student, advisorInput, majorInput, payloads, yearInput: context.studentYearLevelInput,
     load: () => context.loadTeachers(),
     save: () => context.saveStudentInfo({ preventDefault() {} }),
     setDirectory: (result) => { directoryResult = result; },
@@ -109,7 +113,7 @@ test("existing advisor with directory success and no change remains unchanged", 
   page.majorInput.value = "IT";
   await page.save();
   assert.equal(page.student.advisor_teacher_id, CURRENT_ID);
-  assert.equal(Object.hasOwn(page.payloads[0], "advisor_teacher_id"), false);
+  assert.equal(page.payloads.length, 0, "unchanged form produces no request");
 });
 
 test("directory failure preserves the displayed existing advisor and unrelated saves omit the advisor", async () => {
@@ -154,11 +158,11 @@ test("Student without an advisor stays unassigned and can explicitly select a Te
   await page.load();
   assert.equal(page.advisorInput.value, ""); // Never select the first Teacher automatically.
   await page.save();
-  assert.equal(Object.hasOwn(page.payloads[0], "advisor_teacher_id"), false);
+  assert.equal(page.payloads.length, 0);
   assert.equal(page.student.advisor_teacher_id, null);
   page.advisorInput.choose(OTHER_ID);
   await page.save();
-  assert.equal(page.payloads[1].advisor_teacher_id, OTHER_ID);
+  assert.equal(page.payloads[0].advisor_teacher_id, OTHER_ID);
   assert.equal(page.student.advisor_teacher_id, OTHER_ID);
 });
 
@@ -166,6 +170,7 @@ test("a persisted advisor absent from the active directory remains displayed and
   const page = createPage({ directory: { teachers: [teachers[1]] } });
   await page.load();
   assert.equal(page.advisorInput.value, CURRENT_ID);
+  page.yearInput.value = "4";
   await page.save();
   assert.equal(Object.hasOwn(page.payloads[0], "advisor_teacher_id"), false);
   assert.equal(page.student.advisor_teacher_id, CURRENT_ID);
@@ -176,6 +181,7 @@ test("malformed directory response cannot enable an accidental clear", async () 
   await page.load();
   assert.equal(page.advisorInput.disabled, true);
   assert.equal(page.advisorInput.value, CURRENT_ID);
+  page.yearInput.value = "4";
   await page.save();
   assert.equal(Object.hasOwn(page.payloads[0], "advisor_teacher_id"), false);
   assert.equal(page.student.advisor_teacher_id, CURRENT_ID);
@@ -184,6 +190,7 @@ test("malformed directory response cannot enable an accidental clear", async () 
 test("Student without an advisor can save unrelated fields after a directory failure", async () => {
   const page = createPage({ advisorId: null, directory: new Error("Directory unavailable") });
   await page.load();
+  page.yearInput.value = "4";
   await page.save();
   assert.equal(Object.hasOwn(page.payloads[0], "advisor_teacher_id"), false);
   assert.equal(page.student.advisor_teacher_id, null);

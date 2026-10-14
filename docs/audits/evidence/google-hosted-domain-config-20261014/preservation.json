@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "preexistingSourceFilesChecked": 827,
+  "changedPreexistingFiles": [],
+  "missingPreexistingFiles": [],
+  "rootAndFrontendEnvPreserved": true,
+  "backendEnvChangedOnlyApprovedKeys": true,
+  "changedBackendKeys": [
+    "GOOGLE_ALLOWED_HOSTED_DOMAINS"
+  ],
+  "flags": {
+    "login": "false",
+    "linking": "false"
+  },
+  "before": {
+    "trackedModified": 32,
+    "untrackedFiles": 395
+  },
+  "after": {
+    "trackedModified": 32,
+    "untrackedFiles": 409
+  },
+  "newAuditFiles": 14,
+  "previousGitStatusPreserved": true,
+  "artifactScan": "PASS",
+  "leakFiles": []
+}

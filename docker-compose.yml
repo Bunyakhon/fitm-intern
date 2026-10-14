@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: intern_system
 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -34,7 +34,7 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: "False"
 
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
 
     volumes:
       - pgadmin_data:/var/lib/pgadmin
@@ -56,7 +56,7 @@ services:
       - ./backend/.env
 
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
 
     volumes:
       - ./backend:/app
@@ -87,7 +87,7 @@ services:
       CHOKIDAR_USEPOLLING: "true"
 
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
 
     volumes:
       - ./frontend:/app
@@ -111,7 +111,7 @@ services:
       PORT: 8000
 
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
     volumes:
       - ./nlp-service/app:/app/app

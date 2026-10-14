@@ -1,7 +1,11 @@
 import { mountCoopActivities } from "./coopActivities.js";
 import { initStudentInternshipLog } from "./studentInternshipLog.js";
 import { initStudentSupervision } from "./studentSupervision.js";
+import { StudentProfileDraft, readProfileInputs, writeProfileInputs, PROFILE_INPUTS } from "./studentProfileDraft.js";
+import { mountStudentProfileWorkspace } from "./studentProfileWorkspace.js";
+import { mountStudentProfilePdfImport } from "./studentProfilePdfImport.js";
 import { getCurrentStudent } from "../api/auth.api.js";
+import { getStudentToken, clearStudentSession, updateStoredStudent, subscribeStudentSession } from "../auth/studentAuthStorage.js";
 import { getMyJobMatches } from "../api/jobMatching.api.js";
 import {
   getMyStudentProfile,
@@ -185,8 +189,14 @@ const profileEmergencyPhone =
 // ==============================
 
 let currentStudentProfile = null;
+let studentProfileRevision = null;
+let studentInfoRevision = null;
+let hasLoadedStudentProfile = false;
+let studentProfileDraft = null;
+let studentProfileLoadSequence = 0;
 let currentStudent = null;
 let selectedProfileImageFile = null;
+let selectedProfileImageRevision = null;
 let profileImageObjectUrl = null;
 
 const btnEditProfile =
@@ -240,7 +250,8 @@ let isStudentProfileSaving = false;
 // ==============================
 
 async function checkAuthentication() {
-  const token = localStorage.getItem("token");
+  const token = getStudentToken();
+  let authenticated = false;
 
   if (!token) {
     redirectToLogin();
@@ -249,6 +260,7 @@ async function checkAuthentication() {
 
   try {
     const result = await getCurrentStudent();
+    if (getStudentToken() !== token) { handleStudentSessionChange(); return; }
 
     if (!result.data) {
       throw new Error(
@@ -272,10 +284,8 @@ async function checkAuthentication() {
       return;
     }
 
-    localStorage.setItem(
-      "student",
-      JSON.stringify(student)
-    );
+    updateStoredStudent(student, token);
+    authenticated = true;
 
     // แสดงข้อมูลจาก students
     renderStudent(student);
@@ -285,14 +295,15 @@ async function checkAuthentication() {
     await loadTeachers(studentProfile?.advisor_teacher_id);
     await loadStudentCoopProjectSections();
   } catch (error) {
-    console.error(
-      "AUTH CHECK ERROR:",
-      error
-    );
-
-    clearAuthentication();
-
-    redirectToLogin();
+    if (getStudentToken() !== token) { handleStudentSessionChange(); return; }
+    if (error.status === 401 || (!authenticated && [403, 404].includes(error.status))) {
+      clearStudentSession({ expectedToken: token });
+      redirectToLogin();
+      return;
+    }
+    // Offline/timeout/5xx cannot prove the session invalid. Keep credentials and
+    // drafts; do not render the cached account before backend verification.
+    showActionModal({ title: authenticated ? "ยังโหลดข้อมูลไม่ครบ" : "ยังตรวจสอบการเข้าสู่ระบบไม่ได้", message: "การเชื่อมต่อขัดข้อง กรุณาลองอีกครั้ง", actionLabel: "ลองอีกครั้ง", onAction: checkAuthentication });
   }
 }
 
@@ -301,11 +312,13 @@ async function checkAuthentication() {
 // ==============================
 
 async function loadStudentProfile() {
+  const loadSequence = typeof studentProfileLoadSequence === "number" ? ++studentProfileLoadSequence : null;
   setProfileLoading(true);
   showMessage(profileLoadMessage, "กำลังโหลดข้อมูลประวัตินักศึกษา...", "loading");
 
   try {
     const result = await getMyStudentProfile();
+    if (loadSequence !== null && loadSequence !== studentProfileLoadSequence) return null;
 
     if (!result.student) {
       throw new Error(
@@ -313,17 +326,29 @@ async function loadStudentProfile() {
       );
     }
 
+    // Capture against the previous snapshot before renderStudent changes it.
+    const academicDraft = typeof captureStudentInfoDraft === "function" ? captureStudentInfoDraft() : null;
     // แสดงข้อมูลพื้นฐานจาก students อีกครั้ง
     renderStudent(result.student);
 
+    // Capture at response time so edits made during the request are also retained.
     currentStudent = result.student;
     syncCoopPrerequisiteProgram();
     populateStudentInfoForm(result.student);
-    await loadProfileImage(Boolean(result.student.profile_image));
+    if (typeof restoreStudentInfoDraft === "function") restoreStudentInfoDraft(academicDraft);
 
     // เก็บข้อมูล student_profiles ปัจจุบัน
     currentStudentProfile =
       result.student.profile || null;
+    studentProfileRevision = result.profile_revision || null;
+    if (typeof studentInfoRevision !== "undefined" && !academicDraft) studentInfoRevision = studentProfileRevision;
+    hasLoadedStudentProfile = Boolean(studentProfileRevision);
+    if (typeof profileWorkspace !== "undefined") profileWorkspace?.acceptSnapshot(result);
+    if (typeof studentProfileDraft !== "undefined" && studentProfileDraft
+      && !studentProfileDraft.hasChanges(readProfileInputs(document))) {
+      fillProfileEditForm(currentStudentProfile);
+      studentProfileDraft = new StudentProfileDraft(readProfileInputs(document), studentProfileRevision);
+    }
 
     // Re-render once the profile is available so its prefix is included in the name.
     renderStudent(currentStudent);
@@ -339,14 +364,17 @@ async function loadStudentProfile() {
       showMessage(profileLoadMessage, "ยังไม่มีรายละเอียดประวัติเพิ่มเติม", "info");
     }
 
+    await loadProfileImage(Boolean(result.student.profile_image));
+
     return result.student;
   } catch (error) {
     console.error(
       "LOAD STUDENT PROFILE ERROR:",
-      error
+      profileRequestDiagnostic(error)
     );
 
-    currentStudentProfile = null;
+    if (loadSequence !== null && loadSequence !== studentProfileLoadSequence) return null;
+    // A failed refresh must not turn an existing profile/draft into an empty form.
 
     if (error.status === 401) {
       clearAuthentication();
@@ -362,7 +390,7 @@ async function loadStudentProfile() {
 
     return null;
   } finally {
-    setProfileLoading(false);
+    if (loadSequence === null || loadSequence === studentProfileLoadSequence) setProfileLoading(false);
   }
 }
 
@@ -370,6 +398,112 @@ function setProfileLoading(isLoading) {
   profilePanel?.classList.toggle("is-loading", isLoading);
   profilePanel?.classList.toggle("is-ready", !isLoading);
   profilePanel?.setAttribute("aria-busy", String(isLoading));
+  // Empty startup controls are not a draft. Enable academic entry only after
+  // the first aggregate snapshot supplied the revision used by its write API.
+  for (const input of [studentMajorInput, studentYearLevelInput, studentGpaInput]) {
+    if (input) input.disabled = !hasLoadedStudentProfile;
+  }
+  const academicSave = document.getElementById("saveStudentInfoBtn");
+  if (academicSave) academicSave.disabled = !hasLoadedStudentProfile || isStudentInfoSaving;
+}
+
+// Profile tabs only change visibility; inputs remain mounted and APIs are not reloaded.
+const profileTabControllers = new WeakMap();
+function initProfileTabs(tablist, defaultTabId) {
+  if (!tablist) return null;
+  if (profileTabControllers.has(tablist)) return profileTabControllers.get(tablist);
+  const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+  const controller = {
+    activeId: defaultTabId,
+    select(id, focus = false) {
+      const selected = tabs.find(tab => tab.id === id);
+      if (!selected) return;
+      controller.activeId = id;
+      for (const tab of tabs) {
+        const active = tab === selected;
+        tab.setAttribute("aria-selected", String(active));
+        tab.setAttribute("tabindex", active ? "0" : "-1");
+        tab.classList.toggle("is-active", active);
+        const content = document.getElementById(tab.getAttribute("aria-controls"));
+        if (content) content.hidden = !active;
+      }
+      if (focus) selected.focus();
+      if (focus) selected.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    },
+  };
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => controller.select(tab.id));
+    tab.addEventListener("keydown", event => {
+      const index = tabs.indexOf(tab);
+      const next = event.key === "ArrowRight" ? (index + 1) % tabs.length
+        : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length
+        : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null;
+      if (next === null) return;
+      event.preventDefault(); controller.select(tabs[next].id, true);
+    });
+  }
+  profileTabControllers.set(tablist, controller);
+  controller.select(defaultTabId);
+  return controller;
+}
+const studentProfileTabs = initProfileTabs(document.getElementById("studentProfileTabs"), "profilePersonalTab");
+const studentProfileEditTabs = initProfileTabs(document.getElementById("studentProfileEditTabs"), "profileEditPersonalTab");
+let profilePdfImport = null;
+const profileWorkspace = typeof mountStudentProfileWorkspace === "function" ? mountStudentProfileWorkspace({
+  document, reload: loadStudentProfile,
+  externalBusy: () => isStudentProfileSaving || isStudentInfoSaving || isProfileImageUploading || profilePdfImport?.busy,
+  onSnapshot: result => profilePdfImport?.acceptSnapshot(result),
+  onUnauthorized: () => { clearAuthentication(); redirectToLogin(); },
+  onCommit: applyProfileWorkspaceCommit,
+}) : null;
+profilePdfImport = typeof mountStudentProfilePdfImport === "function" ? mountStudentProfilePdfImport({
+  document, getSnapshot: () => profileWorkspace?.snapshot,
+  externalBusy: () => isStudentProfileSaving || isStudentInfoSaving || isProfileImageUploading || profileWorkspace?.busy,
+  onUnauthorized: () => { clearAuthentication(); redirectToLogin(); },
+  onCommit: (result, revision) => { profileWorkspace?.acceptSnapshot(result, { ownRevision: revision }); applyProfileWorkspaceCommit(result, revision); },
+}) : null;
+function applyProfileWorkspaceCommit(result, previousRevision) {
+  ++studentProfileLoadSequence;
+  setProfileLoading(false);
+  clearMessage(profileLoadMessage);
+  const academicDraft = captureStudentInfoDraft();
+  const modalRaw = studentProfileDraft ? readProfileInputs(document) : null;
+  const modalBaseline = studentProfileDraft ? { ...studentProfileDraft.baseline } : null;
+  currentStudent = result.student; currentStudentProfile = result.profile;
+  studentProfileRevision = result.profile_revision; hasLoadedStudentProfile = true;
+  populateStudentInfoForm(currentStudent); restoreStudentInfoDraft(academicDraft);
+  if (studentInfoRevision === previousRevision) studentInfoRevision = result.profile_revision;
+  if (studentProfileDraft && studentProfileDraft.revision === previousRevision) {
+    fillProfileEditForm(currentStudentProfile);
+    const merged = studentProfileDraft.acceptSaved(readProfileInputs(document), result.profile_revision, modalBaseline, modalRaw);
+    writeProfileInputs(document, merged);
+    setInputValue("editAge", merged.birth_date ? calculateAge(merged.birth_date) : "");
+  }
+  if (selectedProfileImageRevision === previousRevision) selectedProfileImageRevision = result.profile_revision;
+  renderStudent(currentStudent); renderStudentProfile(currentStudentProfile); syncCoopPrerequisiteProgram();
+}
+document.querySelector('.sidebar-item[data-target="panel-profile"]')?.addEventListener("click", () => studentProfileTabs?.select("profilePersonalTab"));
+document.getElementById("profileEditLegacySkills")?.addEventListener("click", () => { openProfileEditModal(); studentProfileEditTabs?.select("profileEditPersonalTab"); document.getElementById("editRelatedSkills")?.focus(); });
+
+function captureStudentInfoDraft() {
+  if (!currentStudent || !studentInfoForm || (typeof hasLoadedStudentProfile !== "undefined" && !hasLoadedStudentProfile)) return null;
+  const draft = { major: studentMajorInput.value, year: studentYearLevelInput.value, gpa: studentGpaInput.value, advisor: studentAdvisorInput.value, advisorChanged: hasAdvisorSelectionChanged };
+  draft.changedFields = [];
+  if (draft.major !== (currentStudent.major || "")) draft.changedFields.push("major");
+  if (draft.year !== String(currentStudent.year_level ?? "")) draft.changedFields.push("year");
+  if ((draft.gpa.trim() ? Number(draft.gpa) : null) !== (currentStudent.gpa == null ? null : Number(currentStudent.gpa))) draft.changedFields.push("gpa");
+  if (draft.advisorChanged) draft.changedFields.push("advisor");
+  return draft.changedFields.length ? draft : null;
+}
+
+function restoreStudentInfoDraft(draft) {
+  if (!draft) return;
+  const changed = new Set(draft.changedFields || ["major", "year", "gpa", "advisor"]);
+  if (changed.has("major")) setInputElementValue(studentMajorInput, draft.major);
+  if (changed.has("year")) setInputElementValue(studentYearLevelInput, draft.year);
+  if (changed.has("gpa")) setInputElementValue(studentGpaInput, draft.gpa);
+  if (changed.has("advisor")) setInputElementValue(studentAdvisorInput, draft.advisor);
+  hasAdvisorSelectionChanged = draft.advisorChanged;
 }
 
 // ==============================
@@ -568,7 +702,15 @@ function showProfileImagePreview(objectUrl) {
   }
 }
 
+function profileRequestDiagnostic(error) {
+  // Conflict errors contain a full private snapshot in .data. Never log it,
+  // the message, the request/response, or an Error object with custom properties.
+  const status = error?.status;
+  return { status: Number.isInteger(status) && status >= 100 && status <= 599 ? status : null };
+}
+
 async function loadProfileImage(hasProfileImage) {
+  if (selectedProfileImageFile) return; // Refresh must preserve the selected preview and its snapshot.
   if (!hasProfileImage) {
     resetProfileImagePreview();
     return;
@@ -578,7 +720,7 @@ async function loadProfileImage(hasProfileImage) {
     const image = await getStudentProfileImage();
     showProfileImagePreview(URL.createObjectURL(image));
   } catch (error) {
-    console.error("LOAD PROFILE IMAGE ERROR:", error);
+    console.error("LOAD PROFILE IMAGE ERROR:", profileRequestDiagnostic(error));
 
     if (error.status === 401) {
       clearAuthentication();
@@ -602,11 +744,11 @@ function setStudentInfoButtonState(button, isLoading, loadingLabel, defaultLabel
 }
 
 async function uploadSelectedProfileImage() {
-  if (isProfileImageUploading || isStudentProfileSaving) {
+  if (isProfileImageUploading || isStudentProfileSaving || (typeof isStudentInfoSaving !== "undefined" && isStudentInfoSaving) || (typeof profileWorkspace !== "undefined" && profileWorkspace?.busy) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.busy)) {
     return;
   }
 
-  const token = localStorage.getItem("token");
+  const token = getStudentToken();
   if (!token) {
     redirectToLogin();
     return;
@@ -620,6 +762,7 @@ async function uploadSelectedProfileImage() {
   const formData = new FormData();
   formData.append("profile_image", selectedProfileImageFile);
   isProfileImageUploading = true;
+  if (typeof studentProfileLoadSequence === "number") ++studentProfileLoadSequence;
   clearMessage(profileImageMessage);
   profileImageInput.disabled = true;
   setStudentInfoButtonState(
@@ -630,9 +773,12 @@ async function uploadSelectedProfileImage() {
   );
 
   try {
-    const result = await uploadStudentProfileImage(formData);
+    const result = await uploadStudentProfileImage(formData, selectedProfileImageRevision);
+    if (typeof profileWorkspace !== "undefined") profileWorkspace?.acceptSnapshot(result, { ownRevision: selectedProfileImageRevision });
+    studentProfileRevision = result.profile_revision;
 
     selectedProfileImageFile = null;
+    selectedProfileImageRevision = null;
     if (profileImageInput) {
       profileImageInput.value = "";
     }
@@ -644,7 +790,7 @@ async function uploadSelectedProfileImage() {
     showMessage(profileImageMessage, "อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
     showToast("อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
   } catch (error) {
-    console.error("UPLOAD PROFILE IMAGE ERROR:", error);
+    console.error("UPLOAD PROFILE IMAGE ERROR:", profileRequestDiagnostic(error));
 
     if (error.status === 401) {
       clearAuthentication();
@@ -653,6 +799,18 @@ async function uploadSelectedProfileImage() {
     }
 
     showMessage(profileImageMessage, error.message || "ไม่สามารถอัปโหลดรูปโปรไฟล์ได้", "error");
+    if (error.status === 409) {
+      showConfirmModal({
+        title: "ตรวจสอบประวัติล่าสุดก่อนอัปโหลดรูป",
+        message: "ข้อมูลเปลี่ยนจากหน้าต่างอื่น รูปที่เลือกยังอยู่ ต้องการโหลดข้อมูลล่าสุดและใช้รูปนี้ในการอัปโหลดครั้งถัดไปหรือไม่?",
+        confirmLabel: "โหลดล่าสุดและเก็บรูปที่เลือก",
+        onConfirm: async () => {
+          const latest = await loadStudentProfile();
+          if (!latest || !studentProfileRevision) throw new Error("โหลดไม่สำเร็จ รูปที่เลือกยังอยู่");
+          selectedProfileImageRevision = studentProfileRevision;
+        },
+      });
+    }
   } finally {
     isProfileImageUploading = false;
     profileImageInput.disabled = false;
@@ -667,55 +825,73 @@ async function uploadSelectedProfileImage() {
 
 async function saveStudentInfo(event) {
   event.preventDefault();
-  if (isStudentInfoSaving) {
+  if (isStudentInfoSaving || (typeof isStudentProfileSaving !== "undefined" && isStudentProfileSaving) || (typeof isProfileImageUploading !== "undefined" && isProfileImageUploading) || (typeof profileWorkspace !== "undefined" && profileWorkspace?.busy) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.busy)) {
     return;
   }
 
-  const token = localStorage.getItem("token");
+  const token = getStudentToken();
   if (!token) {
     redirectToLogin();
     return;
   }
 
   const major = studentMajorInput?.value.trim() || "";
-  const yearLevel = Number(studentYearLevelInput?.value);
+  const yearLevel = studentYearLevelInput?.value ? Number(studentYearLevelInput.value) : null;
   const gpaValue = studentGpaInput?.value.trim() || "";
-  const gpa = Number(gpaValue);
+  const gpa = gpaValue ? Number(gpaValue) : null;
 
   clearMessage(studentInfoMessage);
-  if (!major || !Number.isInteger(yearLevel) || yearLevel < 1 || yearLevel > 4) {
+  if (yearLevel !== null && (!Number.isSafeInteger(yearLevel) || yearLevel < 1 || yearLevel > 4)) {
     showMessage(studentInfoMessage, "กรุณากรอกสาขาและชั้นปีให้ถูกต้อง", "error");
     return;
   }
-  if (!gpaValue || !Number.isFinite(gpa) || gpa < 0 || gpa > 4) {
+  if (gpa !== null && (!/^\d(?:\.\d{1,2})?$/.test(gpaValue) || gpa < 0 || gpa > 4)) {
     showMessage(studentInfoMessage, "GPA ต้องอยู่ระหว่าง 0.00 ถึง 4.00", "error");
     return;
   }
 
-  const payload = {
-    major,
+  const candidate = {
+    major: major || null,
     year_level: yearLevel,
     gpa,
   };
+  const payload = Object.fromEntries(Object.entries(candidate).filter(([key, value]) =>
+    key === "gpa" ? (currentStudent?.[key] == null ? null : Number(currentStudent[key])) !== value : (currentStudent?.[key] ?? null) !== value));
   // Omitted fields are preserved by the backend; only user changes update the advisor.
   if (isTeacherDirectoryLoaded && hasAdvisorSelectionChanged) {
     payload.advisor_teacher_id = studentAdvisorInput.value || null;
+  }
+  if (!Object.keys(payload).length) {
+    showMessage(studentInfoMessage, "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info");
+    return;
   }
 
   const defaultButtonLabel = '<i class="fa-solid fa-floppy-disk"></i>บันทึกข้อมูลนักศึกษา';
   const saveStudentInfoBtn = document.getElementById("saveStudentInfoBtn");
   isStudentInfoSaving = true;
+  if (typeof studentProfileLoadSequence === "number") ++studentProfileLoadSequence;
   setStudentInfoButtonState(saveStudentInfoBtn, true, "กำลังบันทึก...", defaultButtonLabel);
 
   try {
-    await updateStudentInfo(payload);
+    const result = await updateStudentInfo(payload, studentInfoRevision);
+    if (typeof profileWorkspace !== "undefined") profileWorkspace?.acceptSnapshot(result, { ownRevision: studentInfoRevision });
+    if (!result.profile_revision || !result.student) throw new Error("ไม่สามารถยืนยันผลบันทึกได้ กรุณาโหลดข้อมูลล่าสุด");
+    const remainingDraft = captureStudentInfoDraft();
+    currentStudent = result.student;
+    populateStudentInfoForm(currentStudent);
+    restoreStudentInfoDraft(remainingDraft);
+    hasAdvisorSelectionChanged = (studentAdvisorInput.value || null) !== (currentStudent.advisor_teacher_id || null);
+    studentInfoRevision = result.profile_revision;
+    studentProfileRevision = result.profile_revision;
 
     const student = await loadStudentProfile();
+    const pendingAcademic = captureStudentInfoDraft();
     await loadTeachers(student?.advisor_teacher_id);
+    restoreStudentInfoDraft(pendingAcademic);
     showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
     showToast("บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
   } catch (error) {
-    console.error("SAVE STUDENT INFO ERROR:", error);
+    console.error("SAVE STUDENT INFO ERROR:", profileRequestDiagnostic(error));
 
     if (error.status === 401) {
       clearAuthentication();
@@ -724,6 +900,19 @@ async function saveStudentInfo(event) {
     }
 
     showMessage(studentInfoMessage, error.message || "ไม่สามารถบันทึกข้อมูลนักศึกษาได้", "error");
+    if (error.status === 409) {
+      showConfirmModal({
+        title: "โหลดข้อมูลนักศึกษาล่าสุด",
+        message: "ข้อมูลเปลี่ยนจากหน้าต่างอื่น การแก้ไขของคุณยังอยู่ ต้องการทิ้งการแก้ไขข้อมูลการศึกษาและโหลดล่าสุดหรือไม่?",
+        confirmLabel: "ทิ้งการแก้ไขและโหลดล่าสุด",
+        onConfirm: async () => {
+          const latest = await loadStudentProfile();
+          if (!latest || !studentProfileRevision) throw new Error("โหลดไม่สำเร็จ การแก้ไขเดิมยังอยู่");
+          populateStudentInfoForm(latest);
+          studentInfoRevision = studentProfileRevision;
+        },
+      });
+    }
   } finally {
     isStudentInfoSaving = false;
     setStudentInfoButtonState(saveStudentInfoBtn, false, "", defaultButtonLabel);
@@ -736,12 +925,14 @@ profileImageInput?.addEventListener("change", () => {
 
   if (!file) {
     selectedProfileImageFile = null;
+    selectedProfileImageRevision = null;
     uploadProfileImageBtn.disabled = true;
     return;
   }
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
     profileImageInput.value = "";
     selectedProfileImageFile = null;
+    selectedProfileImageRevision = null;
     uploadProfileImageBtn.disabled = true;
     showMessage(profileImageMessage, "รองรับเฉพาะ JPG, PNG และ WEBP", "error");
     return;
@@ -749,12 +940,14 @@ profileImageInput?.addEventListener("change", () => {
   if (file.size > 5 * 1024 * 1024) {
     profileImageInput.value = "";
     selectedProfileImageFile = null;
+    selectedProfileImageRevision = null;
     uploadProfileImageBtn.disabled = true;
     showMessage(profileImageMessage, "ขนาดรูปต้องไม่เกิน 5 MB", "error");
     return;
   }
 
   selectedProfileImageFile = file;
+  selectedProfileImageRevision = studentProfileRevision;
   showProfileImagePreview(URL.createObjectURL(file));
   uploadProfileImageBtn.disabled = false;
 });
@@ -823,6 +1016,12 @@ function renderStudent(student) {
     profileEmail,
     email
   );
+
+  // Reuse the existing profile response and render only public account fields.
+  setText(document.getElementById("profileAccountName"), fullName);
+  setText(document.getElementById("profileAccountStudentId"), studentId);
+  setText(document.getElementById("profileAccountEmail"), email);
+  setText(document.getElementById("profileContactEmail"), email);
 
   // Profile details
   setText(
@@ -1131,9 +1330,16 @@ function openProfileEditModal() {
     return;
   }
 
-  fillProfileEditForm(
-    currentStudentProfile
-  );
+  if (!hasLoadedStudentProfile || !studentProfileRevision) {
+    showMessage(profileLoadMessage, "กรุณาโหลดข้อมูลประวัติให้สำเร็จก่อนแก้ไข", "error");
+    return;
+  }
+  if (!studentProfileDraft) {
+    fillProfileEditForm(currentStudentProfile);
+    studentProfileDraft = new StudentProfileDraft(readProfileInputs(document), studentProfileRevision);
+  }
+
+  studentProfileEditTabs?.select(studentProfileTabs?.activeId === "profileContactTab" ? "profileEditContactTab" : "profileEditPersonalTab");
 
   clearMessage(
     profileEditMessage
@@ -1150,6 +1356,8 @@ function openProfileEditModal() {
 
   document.body.style.overflow =
     "hidden";
+
+  document.getElementById(studentProfileEditTabs?.activeId)?.focus();
 }
 
 function closeProfileModal() {
@@ -1171,6 +1379,7 @@ function closeProfileModal() {
 
 function openProfileImageEditor() {
   openProfileEditModal();
+  studentProfileEditTabs?.select("profileEditPersonalTab");
 
   window.setTimeout(() => {
     profileImageEditorSection?.scrollIntoView({
@@ -1349,260 +1558,131 @@ function setInputValue(
     value ?? "";
 }
 
-function getInputValue(id) {
-  const element =
-    document.getElementById(id);
-
-  if (!element) {
-    return "";
-  }
-
-  return element.value.trim();
+function applySavedStudentProfile(result, sentRaw) {
+  if (typeof profileWorkspace !== "undefined") profileWorkspace?.acceptSnapshot(result, { ownRevision: studentProfileDraft?.revision });
+  const currentRaw = readProfileInputs(document);
+  currentStudentProfile = result.profile || null;
+  studentProfileRevision = result.profile_revision;
+  if (currentStudent) currentStudent.profile = currentStudentProfile;
+  fillProfileEditForm(currentStudentProfile);
+  const merged = studentProfileDraft.acceptSaved(
+    readProfileInputs(document), studentProfileRevision, sentRaw, currentRaw,
+  );
+  writeProfileInputs(document, merged);
+  setInputValue("editAge", merged.birth_date ? calculateAge(merged.birth_date) : "");
+  renderStudentProfile(currentStudentProfile);
+  if (currentStudent) renderStudent(currentStudent);
 }
 
-function getNullableText(id) {
-  const value =
-    getInputValue(id);
-
-  return value === ""
-    ? null
-    : value;
+let studentProfileConflict = false;
+const reloadProfileConflictBtn = document.getElementById("reloadProfileConflictBtn");
+function reloadStudentProfileAfterConflict() {
+  if (isStudentProfileSaving || isProfileImageUploading) return;
+  showConfirmModal({
+    title: "โหลดประวัติล่าสุด",
+    message: "การแก้ไขที่ยังไม่บันทึกในทั้งสองหมวดจะถูกทิ้ง และใช้ข้อมูลล่าสุดจากระบบ ต้องการดำเนินการต่อหรือไม่?",
+    confirmLabel: "ทิ้งการแก้ไขและโหลดล่าสุด",
+    returnFocus: reloadProfileConflictBtn,
+    onConfirm: async () => {
+      const discardedRaw = readProfileInputs(document);
+      const latest = await loadStudentProfile();
+      if (!latest || !studentProfileRevision) throw new Error("โหลดข้อมูลไม่สำเร็จ การแก้ไขเดิมยังคงอยู่");
+      applySavedStudentProfile({ profile: currentStudentProfile, profile_revision: studentProfileRevision }, discardedRaw);
+      studentProfileConflict = false;
+      reloadProfileConflictBtn.hidden = true;
+      showMessage(profileEditMessage, "โหลดข้อมูลล่าสุดแล้ว กรุณาตรวจสอบก่อนแก้ไข", "info");
+    },
+  });
 }
-
-function getNumberValue(id) {
-  const value =
-    getInputValue(id);
-
-  if (value === "") {
-    return null;
-  }
-
-  const number = Number(value);
-
-  return Number.isNaN(number)
-    ? null
-    : number;
-}
+reloadProfileConflictBtn?.addEventListener("click", reloadStudentProfileAfterConflict);
 
 async function saveStudentProfile() {
-  if (isStudentProfileSaving || isProfileImageUploading) {
+  if (isStudentProfileSaving || isProfileImageUploading || (typeof isStudentInfoSaving !== "undefined" && isStudentInfoSaving) || (typeof profileWorkspace !== "undefined" && profileWorkspace?.busy) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.busy)) return;
+  if (!getStudentToken()) { redirectToLogin(); return; }
+  if (!hasLoadedStudentProfile || !studentProfileDraft?.revision) {
+    showMessage(profileEditMessage, "กรุณาโหลดข้อมูลประวัติให้สำเร็จก่อนบันทึก", "error");
     return;
   }
-
-  const token =
-    localStorage.getItem("token");
-
-  if (!token) {
-    redirectToLogin();
+  if (studentProfileConflict) {
+    showMessage(profileEditMessage, "ข้อมูลมีการเปลี่ยนแปลงจากหน้าต่างอื่น การแก้ไขของคุณยังอยู่ กรุณาโหลดข้อมูลล่าสุดก่อนบันทึก", "error");
     return;
   }
-
-  clearMessage(
-    profileEditMessage
-  );
-
-  const payload = {
-    prefix:
-      getNullableText(
-        "editPrefix"
-      ),
-
-    birth_date:
-      getNullableText(
-        "editBirthDate"
-      ),
-
-    height_cm:
-      getNumberValue(
-        "editHeight"
-      ),
-
-    weight_kg:
-      getNumberValue(
-        "editWeight"
-      ),
-
-    nationality:
-      getNullableText(
-        "editNationality"
-      ),
-
-    ethnicity:
-      getNullableText(
-        "editEthnicity"
-      ),
-
-    religion:
-      getNullableText(
-        "editReligion"
-      ),
-
-    blood_type:
-      getNullableText(
-        "editBloodType"
-      ),
-
-    medical_conditions:
-      getNullableText(
-        "editMedicalConditions"
-      ),
-
-    allergies:
-      getNullableText(
-        "editAllergies"
-      ),
-
-    special_abilities:
-      getNullableText(
-        "editSpecialAbilities"
-      ),
-
-    related_skills:
-      getNullableText(
-        "editRelatedSkills"
-      ),
-
-    hometown_address:
-      getNullableText(
-        "editHometownAddress"
-      ),
-
-    hometown_phone:
-      getNullableText(
-        "editHometownPhone"
-      ),
-
-    current_address:
-      getNullableText(
-        "editCurrentAddress"
-      ),
-
-    current_phone:
-      getNullableText(
-        "editCurrentPhone"
-      ),
-
-    father_name:
-      getNullableText(
-        "editFatherName"
-      ),
-
-    father_age:
-      getNumberValue(
-        "editFatherAge"
-      ),
-
-    father_occupation:
-      getNullableText(
-        "editFatherOccupation"
-      ),
-
-    mother_name:
-      getNullableText(
-        "editMotherName"
-      ),
-
-    mother_age:
-      getNumberValue(
-        "editMotherAge"
-      ),
-
-    mother_occupation:
-      getNullableText(
-        "editMotherOccupation"
-      ),
-
-    parent_contact_address:
-      getNullableText(
-        "editParentAddress"
-      ),
-
-    parent_phone:
-      getNullableText(
-        "editParentPhone"
-      ),
-
-    emergency_contact_name:
-      getNullableText(
-        "editEmergencyName"
-      ),
-
-    emergency_contact_relation:
-      getNullableText(
-        "editEmergencyRelation"
-      ),
-
-    emergency_contact_address:
-      getNullableText(
-        "editEmergencyAddress"
-      ),
-
-    emergency_contact_phone:
-      getNullableText(
-        "editEmergencyPhone"
-      ),
-  };
-
+  clearMessage(profileEditMessage);
+  let sentRaw, payload;
+  try {
+    for (const id of Object.values(PROFILE_INPUTS)) {
+      const input = document.getElementById(id);
+      if (input?.validity?.badInput) {
+        input.focus();
+        throw new Error("กรุณาระบุวันที่หรือตัวเลขให้ครบถ้วนและถูกต้อง");
+      }
+    }
+    sentRaw = readProfileInputs(document);
+    payload = studentProfileDraft.patch(sentRaw);
+  } catch (error) {
+    showMessage(profileEditMessage, error.message, "error");
+    return;
+  }
+  if (!Object.keys(payload).length) {
+    showMessage(profileEditMessage, "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info");
+    return;
+  }
+  const revision = studentProfileDraft.revision;
   isStudentProfileSaving = true;
-
+  // A GET started before this write must not replace the committed response.
+  ++studentProfileLoadSequence;
+  setProfileLoading(false);
   try {
     if (saveProfileBtn) {
       saveProfileBtn.disabled = true;
-
-      saveProfileBtn.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        กำลังบันทึก...
-      `;
+      saveProfileBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...`;
     }
-
-    await updateMyStudentProfile(payload);
-
-    // โหลดข้อมูลจริงจาก Database ใหม่
-    await loadStudentProfile();
-
-    showMessage(
-      profileEditMessage,
-      "บันทึกข้อมูลเรียบร้อยแล้ว",
-      "success"
-    );
-
+    const result = await updateMyStudentProfile(payload, revision);
+    if (!result.profile_revision || !Object.hasOwn(result, "profile")) {
+      throw new Error("ไม่สามารถยืนยันผลบันทึกได้ กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง");
+    }
+    applySavedStudentProfile(result, sentRaw);
+    const refreshed = await loadStudentProfile();
+    showMessage(profileEditMessage, refreshed
+      ? "บันทึกข้อมูลเรียบร้อยแล้ว"
+      : "บันทึกสำเร็จ แต่โหลดข้อมูลซ้ำไม่สำเร็จ แสดงข้อมูลที่ระบบยืนยันจากการบันทึก", refreshed ? "success" : "info");
     showToast("บันทึกข้อมูลประวัติเรียบร้อยแล้ว", "success");
-
-    setTimeout(
-      () => {
-        closeProfileModal();
-      },
-      500
-    );
+    if (refreshed) {
+      setTimeout(() => {
+        if (!isStudentProfileSaving && !studentProfileDraft.hasChanges(readProfileInputs(document))) closeProfileModal();
+      }, 500);
+    }
   } catch (error) {
-    console.error(
-      "SAVE STUDENT PROFILE ERROR:",
-      error
-    );
-
-    showMessage(
-      profileEditMessage,
-      error.message ||
-        "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
-      "error"
-    );
+    if (error.status === 401) { clearAuthentication(); redirectToLogin(); return; }
+    if (error.status === 409) {
+      studentProfileConflict = true;
+      if (reloadProfileConflictBtn) reloadProfileConflictBtn.hidden = false;
+    }
+    showMessage(profileEditMessage, error.status === 409
+      ? `${error.message} การแก้ไขของคุณยังคงอยู่ หากต้องการใช้ข้อมูลล่าสุด ให้เลือกทิ้งการแก้ไขและโหลดใหม่`
+      : error.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
   } finally {
     isStudentProfileSaving = false;
     if (saveProfileBtn) {
       saveProfileBtn.disabled = false;
-
-      saveProfileBtn.innerHTML = `
-        <i class="fa-solid fa-floppy-disk"></i>
-        บันทึกข้อมูล
-      `;
+      saveProfileBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล`;
     }
   }
 }
+
+window.addEventListener("beforeunload", event => {
+  if (studentProfileDraft?.hasChanges(readProfileInputs(document)) || captureStudentInfoDraft() || selectedProfileImageFile || (typeof profileWorkspace !== "undefined" && profileWorkspace?.hasChanges()) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.hasChanges())) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
 
 btnEditProfile?.addEventListener(
   "click",
   openProfileEditModal
 );
+
+document.getElementById("btnEditProfileContacts")?.addEventListener("click", () => { openProfileEditModal(); studentProfileEditTabs?.select("profileEditContactTab"); });
 
 profileAvatarButton?.addEventListener("click", openProfileImageEditor);
 
@@ -1687,7 +1767,14 @@ function translateStatus(status) {
 // Logout
 // ==============================
 
+function hasUnsavedStudentProfile() {
+  return Boolean(studentProfileDraft?.hasChanges(readProfileInputs(document)) || captureStudentInfoDraft() || selectedProfileImageFile || profileWorkspace?.hasChanges() || profilePdfImport?.hasChanges());
+}
 function logout() {
+  if (hasUnsavedStudentProfile()) {
+    showConfirmModal({ title: "ออกจากระบบโดยยังไม่บันทึก?", message: "ข้อมูลประวัติที่ยังไม่บันทึกจะหายเมื่อออกจากระบบ", confirmLabel: "ออกจากระบบ", onConfirm: () => { clearAuthentication(); redirectToLogin(); } });
+    return;
+  }
   clearAuthentication();
 
   window.location.href =
@@ -1695,9 +1782,13 @@ function logout() {
 }
 
 function clearAuthentication() {
-  localStorage.removeItem("token");
+  clearStudentSession();
+}
 
-  localStorage.removeItem("student");
+function handleStudentSessionChange() {
+  if (hasUnsavedStudentProfile()) {
+    showActionModal({ title: "สถานะเข้าสู่ระบบเปลี่ยนแล้ว", message: "กรุณาเก็บข้อมูลที่ยังไม่บันทึกก่อนกลับไปเข้าสู่ระบบ ข้อมูลในหน้านี้จะไม่ถูกส่งไปยังบัญชีอื่น", actionLabel: "ไปหน้าเข้าสู่ระบบ", onAction: redirectToLogin });
+  } else redirectToLogin();
 }
 
 function redirectToLogin() {
@@ -1725,6 +1816,8 @@ const contentPanels =
   );
 
 function activateDashboardPanel(targetId) {
+  // The former upload destination now opens the combined project panel.
+  if (targetId === "panel-report-upload") targetId = "panel-coop";
   sidebarItems.forEach((item) => item.classList.toggle("active", item.dataset.target === targetId));
   contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
   if (targetId === "panel-mentor") loadMentor();
@@ -1737,6 +1830,12 @@ function activateDashboardPanel(targetId) {
 
 sidebarItems.forEach(
   (item) => {
+    item.addEventListener("click", event => {
+      const targetId = item.dataset.target;
+      if (!targetId || targetId === "panel-profile" || !document.getElementById("panel-profile")?.classList.contains("active") || !hasUnsavedStudentProfile()) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      showConfirmModal({ title: "ออกจากหน้าประวัติ?", message: "Draft ยังอยู่เมื่อกลับมาในหน้านี้ แต่จะหายหากรีเฟรชหรือปิดหน้า กรุณาบันทึกก่อนออกจากระบบ", confirmLabel: "ไปยังเมนูที่เลือก", onConfirm: () => activateDashboardPanel(targetId) });
+    }, true);
     item.addEventListener(
       "click",
       () => {
@@ -3795,10 +3894,17 @@ document.addEventListener(
   "DOMContentLoaded",
   () => {
     renderMentor();
+    subscribeStudentSession(handleStudentSessionChange);
     checkAuthentication();
 
     initStudentInternshipLog();
     initStudentSupervision();
-    mountCoopActivities({ document, container: document.getElementById("activityCalendar") });
+    const activityPanel = document.getElementById("panel-activities");
+    if (activityPanel && !activityPanel.hidden) {
+      mountCoopActivities({ document, container: document.getElementById("activityCalendar"), storage: { getItem: key => key === "token" ? getStudentToken() : null } });
+    }
   }
 );
+
+// Browser history may restore the existing document without DOMContentLoaded.
+window.addEventListener("pageshow", event => { if (event.persisted) checkAuthentication(); });

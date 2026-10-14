@@ -1,0 +1,13 @@
+﻿{
+    "postgresRecreated":  false,
+    "rootPOSTGRES_PASSWORD":  "SET_REDACTED",
+    "frontendRecreated":  false,
+    "backendDBHost":  "postgres",
+    "backendPort":  "5000",
+    "loginFlag":  "false",
+    "composePasswordMatchesBackend":  true,
+    "backendRecreated":  true,
+    "frontendPort":  "5173",
+    "status":  "PASS",
+    "linkingFlag":  "false"
+}

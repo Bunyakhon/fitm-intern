@@ -1,0 +1,17 @@
+{
+  "status": "FAIL",
+  "database": "fitm_profile_5_91e07b6b1f59c00a71787f2357220cff",
+  "role": "fitm_p5_91e07b6b1f59c00a71787f2357220cff",
+  "marker": "fitm.student_profile.phase5:91e07b6b1f59c00a71787f2357220cff:synthetic-only",
+  "source_database": "intern_system",
+  "source_read_only": true,
+  "migration_executions": 0,
+  "database_drop_reset_truncate": false,
+  "real_rows_copied": false,
+  "schema_clone_restore": "PASS",
+  "schema_archive_sha256": "a1b25bf6456eae56d61c84334eaba19d9b33bba15b91c37abb0aacdaa856f8d3",
+  "synthetic_database_retained": true,
+  "test_role_login_disabled": true,
+  "development_schema_ledger_all_32_table_data_unchanged": true,
+  "finished_at": "2026-10-11T05:48:44.070Z"
+}

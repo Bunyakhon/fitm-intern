@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-11T14:00:04.707Z",
+  "result": "PASS",
+  "target": {
+    "database": "intern_system",
+    "read_only": "on"
+  },
+  "otherActiveTransactions": [],
+  "strongOrAdvisoryLocks": [],
+  "sourceChecks": 12,
+  "featureFlagsOff": true
+}

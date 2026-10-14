@@ -1,0 +1,28 @@
+{
+  "unchangedOriginalFiles": 662,
+  "unexpectedChanges": [],
+  "originalFiles": 668,
+  "pending019To021SourcesUnchanged": true,
+  "at": "2026-10-11T13:26:57.0926342Z",
+  "deletedOriginalFiles": [],
+  "after": {
+    "untracked": 261,
+    "entries": 293,
+    "modified": 32
+  },
+  "changedOriginalFiles": [
+    "backend/src/db/prepared/google-oauth/README.md",
+    "backend/src/db/prepared/google-oauth/026_google_identity_mapping.js",
+    "backend/src/db/migrate.js",
+    "docs/audits/FITM_GOOGLE_OAUTH_ALL_ROLES_IMPLEMENTATION.md",
+    "backend/src/db/studentProfileMigrationDiscovery.js",
+    "backend/test/googleAuthPostgres.test.js"
+  ],
+  "before": {
+    "untracked": 236,
+    "entries": 268,
+    "modified": 32
+  },
+  "result": "PASS",
+  "studentProfileAndWorkflowSourcesUnchanged": true
+}

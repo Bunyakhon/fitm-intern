@@ -7,7 +7,7 @@ export function mountStaffLogin({ document, storage, location, login = loginStaf
     event.preventDefault(); if (busy) return;
     const email = get('staffEmail').value.trim().toLowerCase(), password = get('staffPassword').value;
     if (!email || !password) { get('staffLoginMessage').textContent = 'กรุณากรอกอีเมลและรหัสผ่าน'; return; }
-    busy = true; get('staffLoginMessage').textContent = ''; loading(button, true, 'กำลังเข้าสู่ระบบ...', 'เข้าสู่ระบบ');
+    busy = true; form.setAttribute('aria-busy', 'true'); get('staffLoginMessage').textContent = ''; loading(button, true, 'กำลังเข้าสู่ระบบ...', 'เข้าสู่ระบบ');
     try {
       const result = await login({ email, password });
       if (!result.token || result.staff?.is_active !== true) throw Error('Invalid Staff profile');
@@ -15,7 +15,7 @@ export function mountStaffLogin({ document, storage, location, login = loginStaf
     } catch (error) {
       get('staffLoginMessage').textContent = error.status === 401 ? 'อีเมลหรือรหัสผ่านเจ้าหน้าที่ไม่ถูกต้อง' : error.status === 429 ? 'เข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่' : 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่';
       toast(get('staffLoginMessage').textContent, 'error');
-    } finally { busy = false; get('staffPassword').value = ''; loading(button, false, 'กำลังเข้าสู่ระบบ...', 'เข้าสู่ระบบ'); }
+    } finally { busy = false; form.setAttribute('aria-busy', 'false'); get('staffPassword').value = ''; loading(button, false, 'กำลังเข้าสู่ระบบ...', 'เข้าสู่ระบบ'); }
   });
 }
 if (typeof document !== 'undefined') mountStaffLogin({ document, storage: sessionStorage, location: window.location });

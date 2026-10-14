@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-14",
+  "provider": "MOCKED — not Google provider E2E",
+  "database": "none",
+  "cases": [
+    {
+      "role": "student",
+      "width": 1440,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "student",
+      "width": 390,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "teacher",
+      "width": 1440,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "teacher",
+      "width": 390,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "department_head",
+      "width": 1440,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "department_head",
+      "width": 390,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "department_staff",
+      "width": 1440,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "role": "department_staff",
+      "width": 390,
+      "status": "PASS",
+      "native_click": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "scenario": "disabled Google preserves password form",
+      "status": "PASS"
+    }
+  ],
+  "runtime_errors": [],
+  "status": "PASS — mocked UI only"
+}

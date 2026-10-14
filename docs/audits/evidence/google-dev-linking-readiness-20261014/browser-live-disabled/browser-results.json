@@ -1,0 +1,75 @@
+{
+  "scope": "Live Development browser, Google flags disabled; GET only; no credentials submitted",
+  "provider": "NOT TESTED",
+  "cases": [
+    {
+      "role": "student",
+      "width": 1440,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "student",
+      "width": 390,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "teacher",
+      "width": 1440,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "teacher",
+      "width": 390,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "department_head",
+      "width": 1440,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "department_head",
+      "width": 390,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "department_staff",
+      "width": 1440,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "role": "department_staff",
+      "width": 390,
+      "status": "PASS",
+      "passwordFormEnabled": true,
+      "googleDisabledMessage": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "errors": [],
+  "mutationsBlocked": 0,
+  "googleProviderRequests": 0,
+  "stage": "department_staff 390",
+  "status": "PASS"
+}
