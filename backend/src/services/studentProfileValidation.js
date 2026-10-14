@@ -1,5 +1,5 @@
 const { PROFILE_FIELDS, isCalendarDate, todayInBangkok } = require("./studentProfileIntegrity");
-const specs = require("../db/prepared/student-profile-phase2a/schema");
+const specs = require("../models/studentProfileAggregate.schema");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRIVATE_PROFILE_FIELDS = ["national_id_ciphertext", "national_id_key_version"];
 const EXTRA_PROFILE_FIELDS = Object.keys(specs.extensions.student_profiles.columns).filter(key => !PRIVATE_PROFILE_FIELDS.includes(key));

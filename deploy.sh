@@ -66,8 +66,8 @@ if [ "$DB_STATUS" != "healthy" ]; then
 fi
 
 echo
-echo "[5/8] Run database migrations..."
-docker compose run --rm --no-deps backend npm run db:migrate
+echo "[5/8] Database schema must be provisioned separately."
+echo "This deploy script does not initialize, reset, or alter the database."
 
 echo
 echo "[6/8] Start application services..."
@@ -77,8 +77,8 @@ docker compose up -d \
   postgres nlp-service backend frontend
 
 echo
-echo "[7/8] Check migration status..."
-docker compose run --rm --no-deps backend npm run db:migrate:status
+echo "[7/8] Check model table/column availability (read only)..."
+docker compose exec -T backend node -e 'const { sequelize } = require("./src/models"); (async () => { await sequelize.authenticate(); for (const model of Object.values(sequelize.models)) await model.findAll({ limit: 0 }); console.log("Model projections available"); })().catch(error => { console.error(error.message); process.exitCode = 1; }).finally(() => sequelize.close());'
 
 echo
 echo "[8/8] Health checks..."

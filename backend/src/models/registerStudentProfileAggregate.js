@@ -1,6 +1,6 @@
-// Register only the schema already installed by 022-025. Never sync or migrate.
-const { extensionAttributes, defineRelationModels, associateRelations, preparedFileIndexes } = require("../db/prepared/student-profile-phase2a/models");
-const { extensions } = require("../db/prepared/student-profile-phase2a/schema");
+// Register the current Student Profile schema. No connection or DDL on import.
+const { extensionAttributes, defineRelationModels, associateRelations, preparedFileIndexes } = require("./studentProfileAggregate.factories");
+const { extensions } = require("./studentProfileAggregate.schema");
 function registerStudentProfileAggregate(models, sequelize) {
   for (const name of ["Student", "StudentProfile", "StudentFile"]) {
     const model = models[name];

@@ -1,6 +1,6 @@
 // Explicit factories only: never import the live models/index.js or database config.
 const { DataTypes, literal, Op } = require("sequelize");
-const { extensions, tables, existingFileTypes, newFileTypes } = require("./schema");
+const { extensions, tables, existingFileTypes, newFileTypes } = require("./studentProfileAggregate.schema");
 function attribute(spec) {
   const types = {
     varchar: () => DataTypes.STRING(spec.length), char: () => DataTypes.CHAR(spec.length),
@@ -21,7 +21,7 @@ function attribute(spec) {
 }
 const attributes = spec => Object.fromEntries(Object.entries(spec.columns).map(([key, value]) => [key, attribute(value)]));
 function extensionAttributes(tableName) {
-  if (!extensions[tableName]) throw new Error("UNKNOWN_PREPARED_EXTENSION");
+  if (!extensions[tableName]) throw new Error("UNKNOWN_PROFILE_EXTENSION");
   const result = attributes(extensions[tableName]);
   if (tableName === "student_files") result.file_type = {
     type: DataTypes.ENUM(...existingFileTypes, ...newFileTypes), allowNull: false,
@@ -54,8 +54,8 @@ function defineRelationModels(sequelize) {
         },
       },
       indexes: [
-        ...(spec.unique || []).map(fields => ({ unique: true, fields })),
-        ...(spec.indexes || []).map(fields => ({ fields })),
+        ...(spec.unique || []).map((fields, index) => ({ name: `${tableName}_unique_${index}`, unique: true, fields })),
+        ...(spec.indexes || []).map((fields, index) => ({ name: `${tableName}_owner_${index}`, fields })),
       ],
     });
   }

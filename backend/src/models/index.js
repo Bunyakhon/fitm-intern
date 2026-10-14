@@ -36,6 +36,8 @@ Object.keys(db).forEach((modelName) => {
   }
 });
 
+require('./schemaIntegrity').registerSchemaIntegrity(sequelize);
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 

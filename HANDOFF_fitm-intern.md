@@ -1,5 +1,291 @@
 # FITM-INTERN PROJECT HANDOFF
 
+## CURRENT HANDOFF — Model-driven Development Database — 2026-10-14
+
+วันที่อ้างอิง: **14 ตุลาคม 2026 (Asia/Bangkok)**. งานนี้ supersede สถานะ Database/migration/test commands ด้านล่าง; feature acceptance อื่นที่ไม่ได้รันใหม่ยังเป็นประวัติ.
+
+| รายการ | สถานะ / หลักฐาน |
+| --- | --- |
+| Database schema | **PASS** — PostgreSQL 16.15 / local Compose / intern_system / public; 42 ตาราง, 503 คอลัมน์ |
+| Model-driven initialization | **PASS** — db:init รันซ้ำผ่าน, ใช้ Models/associations และ PostgreSQL integrity objects; ไม่มี Umzug |
+| Empty-schema verification | **PASS** — public ไม่มี application tables/ENUM/functions จริงก่อนสร้าง; สร้าง 42 ตาราง, ตรวจ schema แล้ว rollback |
+| Schema objects | ฐานจริง 234 constraints / 112 indexes / 11 functions / 13 triggers; blank 230 constraints / 112 indexes / 13 triggers. UNIQUE บางส่วนใช้ model unique index แทน constraint เดิม มี enforcement เทียบเท่า |
+| Tables added | **8** — supervision_appointments/events/tokens/images/results/result_revisions และ coop_activities/history ที่เดิมรอ 019–021 |
+| Migration cleanup | **PASS** — source 27 ไฟล์ (001–026 รวม 007a), เครื่องมือ/helpers ของ workflow เดิม 14; ledger sequelize_meta ถูกลบ |
+| Test cleanup | **PASS** — suites 89 ไฟล์ (57 Backend / 25 Frontend / 6 NLP / 1 extra CJS), runners/validators 38, support/fixtures 13; ลบ NLP test bytecode |
+| Reset/data | **PASS — ไม่มี committed reset**. ทดสอบ drop/recreate เฉพาะใน transaction ที่ rollback. จำนวนแถวของ 34 ตารางเดิมตรงก่อนเริ่ม; Students 4 / Teachers 23 / Staff 0 คงเดิม. ไม่สร้างผู้ใช้หรือ seed เอง |
+| Backend | **PASS** — restart จาก source หลัง cleanup, connect, 42 model projections limit=0, / และ /health/db 200; syntax 49 ไฟล์ผ่าน |
+| Frontend | **PASS** — HTTP 200 และ Vite 8.2.2 build 133 modules; sandbox build ครั้งแรกถูกจำกัด subprocess แล้ว retry สำเร็จ |
+| NLP | **PASS** — /health 200, import app และ classifier load/train startup; ไม่มี functional NLP E2E ใหม่ |
+| Docker | **PASS ในขอบเขต smoke** — 5 services Up; PostgreSQL healthy; pgAdmin HTTP 200. ไม่ลบ PostgreSQL container หรือ volumes และไม่ rebuild images |
+| Auth smoke | **PASS ในขอบเขต input/guards** — Student /me และ Profile /me 401; input ว่าง Student/Staff login 400, Teacher login 401; ไม่ใช้บัญชีจริง |
+| Google OAuth | **Schema PASS** — mapping/auth requests/checks/unique indexes/FKs ครบ; Login/linking flags ยัง false. Provider E2E **NOT TESTED** |
+| Student Profile | **Schema/imports PASS** — scalar fields, 4 child models, revision/file metadata/current indexes/supersedes owner FK ครบ. Functional acceptance รอบนี้ **NOT TESTED**; ประวัติ ACCEPTED WITH LIMITATIONS คงเดิม |
+| Full regression / Production | **NOT TESTED** — automated suites ถูกลบตามคำขอ; ไม่มี coverage เหลือ ไม่ยกระดับ Production readiness |
+
+### แหล่งกำหนด schema และคำสั่งปัจจุบัน
+
+Stack: Vite 8.2.2/Tailwind 4.3.3/Axios 1.19.0; Express 5.2.1/Sequelize 6.37.8/pg/JWT/bcrypt; PostgreSQL 16; Python 3.11/FastAPI 0.115.0/PyMuPDF/Tesseract/PyThaiNLP/scikit-learn. Runtime container Node 20.20.2. Umzug/pytest/httpx ออกจาก dependency declarations; local backend lockfile อัปเดต แต่ .gitignore ยัง ignore lockfiles เดิม.
+
+Models และ associations คือ source of truth หลัก. ย้าย Profile schema/factories มา models และปรับ service imports. schemaIntegrity.js เติม references/indexes/defaults/NOT NULL ที่เดิม Models สร้างไม่ครบ; postgresIntegrity.js รักษา CHECKs/composite FKs/history triggers/functions เดิม รวม 019–021. initialize.js ตรวจ environment/target ก่อน DDL, ตรวจ drift, transaction rollback เมื่อผิดพลาด; reset drops ใช้ RESTRICT ไม่ cascade ไป schema อื่น. app.js startup authenticate เท่านั้น.
+
+Environment จริงไม่มี NODE_ENV แต่ Compose เป็น Development ที่ผู้ใช้ยืนยันแล้ว. ใช้ explicit NODE_ENV=development เฉพาะ CLI; ไม่แก้ .env. Guard ปฏิเสธ NODE_ENV=production/ไม่ระบุ, database อื่น, host/port ที่ไม่ใช่ local Development และ reset ที่ไม่มี --confirm=intern_system ผ่าน negative smoke. ไม่ทดสอบ destructive committed reset เพราะ db:init รักษาข้อมูลเดิมได้.
+
+```powershell
+# จาก root เมื่อ stack รันอยู่
+docker compose exec -T -e NODE_ENV=development backend npm run db:init
+# สร้าง schema ว่างจริงแล้ว rollback ข้อมูล
+docker compose exec -T -e NODE_ENV=development backend npm run db:verify-empty -- --confirm=intern_system
+# ลบข้อมูล Development เฉพาะเมื่อผู้ใช้ตั้งใจ reset จริง
+docker compose exec -T -e NODE_ENV=development backend npm run db:reset -- --confirm=intern_system
+```
+
+ติดตั้งใหม่ใช้ postgres/nlp ก่อน แล้ว docker compose run --rm --no-deps -e NODE_ENV=development backend npm run db:init; ดู [README](README.md) สำหรับขั้นตอนครบ. Production/Staging ยังไม่มี schema provisioning ทดแทนที่ทดสอบแล้ว. deploy.sh นำ migration calls ออก ใช้ read-only model projections; **ไม่ได้รัน deploy.sh**. Prepared READMEs และ audit/report/log เก่าเป็นประวัติ; ไม่ใช้คำสั่งจากเอกสารเก่าเป็น workflow ปัจจุบัน.
+
+### ตารางและความสัมพันธ์
+
+| กลุ่ม | ตาราง รวม 42 |
+| --- | --- |
+| บัญชีและข้อมูลนักศึกษา | `teachers`, `students`, `department_staffs`, `student_profiles`, `student_addresses`, `student_education_records`, `student_training_records`, `student_skills`, `student_files` |
+| บริษัทและประกาศงาน | `companies`, `job_submissions`, `job_postings`, `job_posting_work_modes`, `company_access_tokens`, `job_posting_reviews` |
+| คำร้องและโครงการ | `coop_requests`, `coop_request_delivery_methods`, `coop_request_prerequisite_courses`, `coop_request_reviews`, `coop_projects`, `coop_project_advisor_requests` |
+| เอกสารและบริษัทตอบรับ | `coop_documents`, `coop_document_revisions`, `company_responses`, `company_response_history`, `company_evaluations` |
+| พี่เลี้ยงและบันทึกฝึกงาน | `mentors`, `mentor_tokens`, `internship_daily_logs`, `internship_weeks`, `internship_week_events`, `internship_review_tokens` |
+| นิเทศ | `supervision_appointments`, `supervision_events`, `supervision_tokens`, `supervision_images`, `supervision_results`, `supervision_result_revisions` |
+| กิจกรรม | `coop_activities`, `coop_activity_history` |
+| Google | `google_identities`, `google_auth_requests` |
+
+Students → profile/mentor (1:1), profile children/files/requests/project-advisor requests (1:N), Teachers อ้างแยก Class/Project Advisor; company → submissions/postings/work modes/tokens. Requests → reviews/prerequisites/delivery/documents; documents/revisions → company response/history มี composite ownership/version FK. Internship log/week/events และ supervision/activity history มี immutable/transition triggers. Google actor FK แยก Student/Teacher/Staff และ Head privilege มาจาก Teacher เดิม. Student Profile/PDF policies, auth/authorization, UI และ calendar visibility ไม่เปลี่ยน.
+
+### Git และข้อจำกัด
+
+ก่อนเริ่ม: clean working tree (**0 modified / 0 deleted / 0 untracked**). ก่อนและหลัง Final Cleanup Fix: **11 modified / 183 deleted / 5 untracked**. รอบแก้เปลี่ยนเนื้อหาเพิ่มเฉพาะ README.md, HANDOFF_fitm-intern.md และ initialize.js ซึ่งอยู่ใน working tree changes เดิมแล้ว. Deleted รวม 2 path ของ Profile schema/factories ที่ย้ายมา models; ไม่มี Commit/Push/Git Reset/Clean. การลบแบบรวม directory ถูก automatic approval review ปฏิเสธเพราะเสี่ยงรวม operational files; จึงตรวจ imports และลบเฉพาะรายไฟล์ที่เป็น migrations/tests/helpers ตามขอบเขตจนสำเร็จ ไม่มีรายการที่ยังถูกบล็อกด้วย approval.
+
+Smoke checks ไม่พิสูจน์ row checksums ทุกแถวหรือ authenticated feature acceptance; ตรวจ preservation จากจำนวนแถวและการทำ DDL โดยไม่แก้ข้อมูลแอป. ยังไม่ได้รัน full regression, Profile CRUD/PDF/OCR, Google provider/linking, SMTP, full role workflows, browser/mobile, long load และ Production/Staging. Google-only onboarding, identity/encryption/retention/acknowledgement/signatures และ official PDFs/rubrics ยังมีขอบเขต/policy ค้างตามงานเดิม. ไม่มี test coverage เหลือใน repository หลัง cleanup.
+
+งานต่อไป: manual acceptance ของ supervision/activity และ Student Profile persistence/PDF บน Development ที่อนุญาต; ตกลง Production schema provisioning และ Google/linking/onboarding policies เป็นงานแยก. ไม่เปิด flags เพื่อทดสอบงานนี้.
+
+### รายการไฟล์ที่ลบในการ cleanup นี้
+
+Migration source **27 ไฟล์**:
+
+```text
+backend/src/db/migrations/001_create_companies.js
+backend/src/db/migrations/002_create_job_submissions.js
+backend/src/db/migrations/003_create_job_postings.js
+backend/src/db/migrations/004_create_job_posting_work_modes.js
+backend/src/db/migrations/005_create_company_access_tokens.js
+backend/src/db/migrations/006_add_company_job_indexes_and_checks.js
+backend/src/db/migrations/007_create_department_staffs.js
+backend/src/db/migrations/007a_create_missing_base_tables.js
+backend/src/db/migrations/008_add_resume_extraction.js
+backend/src/db/migrations/009_add_coop_request_company_job_links.js
+backend/src/db/migrations/010_cleanup_student_file_schema_drift.js
+backend/src/db/migrations/011_add_role_workflow_reviews.js
+backend/src/db/migrations/012_coop_prerequisites_and_direct_review.js
+backend/src/db/migrations/013_add_coop_projects_and_current_files.js
+backend/src/db/migrations/014_add_coop_project_advisor_requests.js
+backend/src/db/migrations/015_add_company_evaluations.js
+backend/src/db/migrations/016_add_coop_documents.js
+backend/src/db/migrations/017_add_company_responses.js
+backend/src/db/migrations/018_add_internship_logs.js
+backend/src/db/migrations/019_add_supervision_appointments.js
+backend/src/db/migrations/020_add_supervision_results.js
+backend/src/db/migrations/021_add_coop_activities.js
+backend/src/db/prepared/google-oauth/026_google_identity_mapping.js
+backend/src/db/prepared/student-profile-phase2a/migrations/022_prepare_student_profile_scalars.js
+backend/src/db/prepared/student-profile-phase2a/migrations/023_prepare_student_profile_relations.js
+backend/src/db/prepared/student-profile-phase2a/migrations/024_prepare_student_profile_file_types.js
+backend/src/db/prepared/student-profile-phase2a/migrations/025_prepare_student_profile_document_metadata.js
+```
+
+ชุดทดสอบ **89 ไฟล์** (Backend 57, Frontend 25, NLP 6, extra CJS 1):
+
+```text
+backend/test/companyEvaluation.database.test.js
+backend/test/companyEvaluationContext.test.js
+backend/test/companyEvaluationMigration.test.js
+backend/test/companyResponse.test.js
+backend/test/coopActivities.database.test.js
+backend/test/coopDirectWorkflow.test.js
+backend/test/coopPrerequisiteMigration.test.js
+backend/test/coopPrerequisites.test.js
+backend/test/coopProjectAdvisor.database.test.js
+backend/test/coopProjectAdvisorMigration.test.js
+backend/test/coopProjectMigration.test.js
+backend/test/coopRequestCompany.test.js
+backend/test/devTeacherCredential.database.test.js
+backend/test/googleAuth.test.js
+backend/test/googleAuthPostgres.test.js
+backend/test/googleOAuth026.test.js
+backend/test/googleOAuth026Postgres.test.js
+backend/test/googleOAuthDiagnostic.test.js
+backend/test/googleToken.test.js
+backend/test/internshipLogRules.test.js
+backend/test/internshipLogs.database.test.js
+backend/test/jobMatching.test.js
+backend/test/jobSubmission.database.test.js
+backend/test/jobSubmission.test.js
+backend/test/recruitmentLifecycle.database.test.js
+backend/test/recruitmentSecurity.test.js
+backend/test/resumeText.test.js
+backend/test/resumeUpload.test.js
+backend/test/roleAuth.test.js
+backend/test/roleWorkflow.database.test.js
+backend/test/staffAcceptanceProcess.test.js
+backend/test/staffAuth.test.js
+backend/test/staffBrowserEnvironment.test.js
+backend/test/staffBrowserEvaluation.test.js
+backend/test/staffBrowserFixtureDate.test.js
+backend/test/staffBrowserInput.test.js
+backend/test/staffCancellationFinalEvidence.test.js
+backend/test/staffCancellationStudentContract.test.js
+backend/test/staffDocuments.database.test.js
+backend/test/studentAdvisor.test.js
+backend/test/studentCoopProject.database.test.js
+backend/test/studentFileSchemaDrift.test.js
+backend/test/studentProfileAggregatePostgres.test.js
+backend/test/studentProfileIntegrity.test.js
+backend/test/studentProfilePdfImport.test.js
+backend/test/studentProfilePhase2APreparation.test.js
+backend/test/studentProfilePhase2B1Postgres.test.js
+backend/test/studentProfilePhase2B2.test.js
+backend/test/studentProfilePhase3BBrowser.test.js
+backend/test/studentProfilePhase4Browser.test.js
+backend/test/studentProfilePhase5Browser.test.js
+backend/test/studentProfileRestoreVerification.test.js
+backend/test/studentProfileValidation.test.js
+backend/test/supervision.database.test.js
+backend/test/supervisionResultRules.test.js
+backend/test/supervisionResults.database.test.js
+backend/test/supervisionRules.test.js
+docs/audits/evidence/google-dev-linking-readiness-20261014/linking-guards.test.cjs
+frontend/test/companyResponse.test.js
+frontend/test/coopActivities.test.js
+frontend/test/coopActivityView.test.js
+frontend/test/departmentHead.test.js
+frontend/test/googleLogin.test.js
+frontend/test/internshipLogView.test.js
+frontend/test/staffCoopRequests.test.js
+frontend/test/staffDocuments.test.js
+frontend/test/studentAdvisor.test.js
+frontend/test/studentCompanyEvaluation.test.js
+frontend/test/studentCoopAcceptance.test.js
+frontend/test/studentCoopPrerequisites.test.js
+frontend/test/studentCoopProject.test.js
+frontend/test/studentCoopSavedAcceptance.test.js
+frontend/test/studentInternshipLog.test.js
+frontend/test/studentProfileAggregateCompatibility.test.js
+frontend/test/studentProfileIntegrity.test.js
+frontend/test/studentProfilePdfImport.test.js
+frontend/test/studentProfilePhase5Security.test.js
+frontend/test/studentProfileWorkspace.test.js
+frontend/test/studentRememberMe.test.js
+frontend/test/supervision.test.js
+frontend/test/supervisionResult.test.js
+frontend/test/teacherCoop.test.js
+frontend/test/teacherCoopRequests.test.js
+nlp-service/tests/test_chatbot.py
+nlp-service/tests/test_job_matching.py
+nlp-service/tests/test_profile_pdf.py
+nlp-service/tests/test_profile_phase5.py
+nlp-service/tests/test_resume_matching.py
+nlp-service/tests/test_resume_ocr.py
+```
+
+ตัวรัน/เครื่องมือทดสอบ **38 ไฟล์** (backend/scripts 30, CJS runner 2, PowerShell runner 4, validators 2) และ fixtures/helpers/package marker **13 ไฟล์**:
+
+```text
+backend/scripts/coopActivityBrowserScenarios.js
+backend/scripts/runDisposableStaffBrowserAcceptance.js
+backend/scripts/runGoogleOAuth026Readiness.js
+backend/scripts/runGoogleOAuthIntegration.js
+backend/scripts/runLocalClassAdvisorAcceptance.js
+backend/scripts/runLocalDepartmentHeadAcceptance.js
+backend/scripts/runLocalStaffDocumentsAcceptance.js
+backend/scripts/runLocalTeacherAdvisorAcceptance.js
+backend/scripts/runStudentProfilePhase3AIntegration.js
+backend/scripts/runStudentProfilePhase3BIntegration.js
+backend/scripts/runStudentProfilePhase4Integration.js
+backend/scripts/runStudentProfilePhase4NlpTests.js
+backend/scripts/runStudentProfilePhase5Capacity.js
+backend/scripts/runStudentProfilePhase5Checks.js
+backend/scripts/runStudentProfilePhase5Integration.js
+backend/scripts/runStudentProfilePhase5Nlp.js
+backend/scripts/staffAcceptanceProcess.js
+backend/scripts/staffBrowserEnvironment.js
+backend/scripts/staffBrowserEvaluation.js
+backend/scripts/staffBrowserFixtureDate.js
+backend/scripts/staffBrowserInput.js
+backend/scripts/staffCancellationFinalEvidence.js
+backend/scripts/staffCoopCancellationBrowserScenarios.js
+backend/scripts/supervisionBrowserScenarios.js
+backend/scripts/supervisionResultBrowserScenarios.js
+backend/scripts/verifyGoogleLoginBrowser.js
+backend/scripts/verifyStudentProfileBrowser.js
+backend/scripts/verifyStudentProfilePhase2B2.js
+backend/scripts/verifyStudentProfilePhase5.js
+backend/scripts/verifyStudentProfileRestore.js
+docs/audits/evidence/google-oauth-development-config/run-checks.cjs
+docs/audits/evidence/google-oauth-development-config/run-browser.cjs
+docs/audits/evidence/verify_static.py
+docs/audits/evidence/final_validation.py
+backend/test/fixtures/coopFaculty.json
+backend/test/helpers/staffAcceptanceProcessFixture.js
+backend/test/helpers/studentProfileIntegrityFixture.js
+backend/test/helpers/studentProfilePhase2B1Postgres.js
+backend/test/runIsolatedWorkflow.ps1
+backend/test/runStaffBrowserAcceptance.ps1
+backend/test/runStaffCancellationFinalAcceptance.ps1
+backend/test/runTeacherAdvisorAcceptance.ps1
+frontend/test/helpers/staffCoopRequestsFixture.js
+frontend/test/helpers/staffDocumentsFixture.js
+frontend/test/helpers/studentCompanyEvaluationFixture.js
+frontend/test/helpers/studentCoopProjectFixture.js
+frontend/test/helpers/teacherCoopFixture.js
+nlp-service/tests/__init__.py
+nlp-service/tests/profile_pdf_fixtures.py
+nlp-service/tests/profile_phase5_fixtures.py
+docs/audits/evidence/review_evidence.cjs
+```
+
+เครื่องมือ/helpers ของ workflow เดิม **14 ไฟล์** (มี operational/documentation utilities รวมอยู่ด้วย; ดูการจัดกลุ่มหลังตรวจ):
+
+```text
+backend/src/db/migrate.js
+backend/src/db/googleOAuth026.js
+backend/src/db/studentProfileMigrationDiscovery.js
+backend/src/db/readOnlyMigrationStorage.js
+backend/src/db/prepared/student-profile-phase2a/migrationSupport.js
+backend/scripts/installGoogleOAuth026.js
+backend/scripts/installStudentProfilePhase2B2.js
+backend/scripts/backupGoogleOAuth026.js
+backend/scripts/auditStudentProfilePhase2A.js
+backend/scripts/prepareStudentProfilePhase2AReference.js
+backend/scripts/lib/googleOAuth026Backup.js
+backend/scripts/lib/studentProfileRestoreVerification.js
+docs/audits/evidence/google-dev-linking-readiness-20261014/read-only-snapshot.cjs
+docs/audits/evidence/google-oauth-development-config/runtime-audit.cjs
+```
+
+Runtime Student Profile schema/factories ย้ายจาก prepared directory ไป `backend/src/models/studentProfileAggregate.schema.js` และ `studentProfileAggregate.factories.js` โดยปรับ imports; ไม่ใช่การลบฟังก์ชัน Profile. ลบ cache bytecode ของชุดทดสอบ NLP ด้วย; cached dependencies ใน container เดิมจะเปลี่ยนเมื่อ rebuild/install ครั้งถัดไป.
+
+
+### Final Cleanup Fix — 14 ตุลาคม 2026
+
+- **README/Handoff ภาษาไทย: PASS** — กู้ข้อความส่วนใหม่จากต้นฉบับในบริบทและเรียบเรียงตาม Source/ผลตรวจ บันทึก UTF-8; ไม่อ้างว่าการเปลี่ยน encoding กู้ `?` ได้เอง. ประวัติเดิมด้านล่างคงครบ.
+- **CHECK comparison: PASS ใน focused verification** — ไม่ลบวงเล็บ/casts/string contents. นิยามที่ต่างกันให้ PostgreSQL parse ทั้งสองบน temporary LIKE table ชนิดคอลัมน์/collation เดียวกัน; เทียบ canonical expressions และ NOT VALID state. ไม่แก้ constraints จริง. ไม่สามารถพิสูจน์ได้ให้รายงาน drift หรือ rollback เมื่อ parser ล้มเหลว.
+- ตรวจ CHECK เดิม **102 รายการ**, integrity definitions รวม **109**, Models **503 คอลัมน์** ผ่าน. Boolean grouping สองกรณีที่รายงานแยกกันได้; string literal/whitespace/validation state ผ่าน. Temporary probes เหลือ **0** หลังตรวจ.
+- **Initialization: PARTIAL สำหรับรอบแก้นี้** — comparator และตรวจ schema ปัจจุบันผ่าน ไม่รัน db:init/reset/verify-empty หรือสร้างฐานว่างซ้ำ. ผล db:init/ฐานว่าง/Frontend/NLP ด้านบนเป็นหลักฐานจาก cleanup ก่อนหน้า ไม่ใช่ผล regression ใหม่.
+- Prepared READMEs เป็น historical instructions ที่ยังอ้าง migrate/installer/backup/schema/model paths เดิม ไม่มี runtime caller. `contracts.cjs` ใช้ static-scan ที่มี **112 paths ถูกลบ** จึง rerun กับ repository ปัจจุบันไม่ได้โดยตรง; ไม่แก้ historical audit evidence ตามขอบเขตงาน.
+- **ต้องให้ผู้ใช้ตัดสินใจ:** คู่ `backupGoogleOAuth026.js` และ `lib/googleOAuth026Backup.js` มีความสามารถ backup/restore verification แต่ implementation ผูกกับ migration 026/hash/ledger ที่เลิกใช้แล้ว. ถ้ายังต้องการ reusable backup/recovery tooling ควรเก็บความสามารถในเครื่องมือที่ไม่ผูก migration เป็นงานแยก; ไม่ restore ในรอบนี้.
+- **เลิกใช้แล้วใน workflow ปัจจุบัน:** `verifyStudentProfileRestore.js` และ `lib/studentProfileRestoreVerification.js` ตรวจ archive/snapshot ของ Phase 2B.2 เฉพาะงานเดิม; `prepareStudentProfilePhase2AReference.js` สร้างรายงาน preparation เก่า. ไม่พบไฟล์ในห้ารายการที่จำเป็นต่อ Runtime ปัจจุบัน.
+- ไม่ restore/delete ไฟล์เพิ่ม ไม่แก้ Models/Frontend/flags/policy และไม่สร้างเอกสารหรือ test files ใหม่.
+
+## ประวัติ Handoff ก่อน model-driven cleanup
+
+ข้อความด้านล่างเป็น dated history รวมผล tests/คำสั่ง migration ที่เลิกใช้แล้ว. สถานะฐาน Development, จำนวน tables/ledger และคำสั่ง setup ล่าสุดยึดส่วน 2026-10-14 ด้านบนและ Root README.
+
 ## CURRENT HANDOFF — Google OAuth All Roles — 2026-10-11
 
 สถานะ **PARTIAL / BLOCKED — Production Ready: NO** พัฒนา GIS ID-token verification, exact configurable email/hosted domains, persistent subject/actor models, transactional nonce/secret replay protection, explicit password linking และ UI ทั้ง Student/Teacher/Head/Staff แล้ว Student Google session ใช้ Remember Me เดิม; Teacher/Head/Staff คง sessionStorage/JWT/guards เดิม ไม่แก้ Profile/Calendar/Mentor/Company workflows

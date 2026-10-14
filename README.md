@@ -1,70 +1,37 @@
 # FITM-INTERN
 
-**Google OAuth ล่าสุด — 11 ตุลาคม 2026:** พัฒนา Login/การผูกบัญชีเดิมครบ 4 บทบาทใน Source แล้ว; regression, disposable PostgreSQL และ Edge ที่ใช้ provider จำลองผ่าน แต่สถานะรวม **PARTIAL / BLOCKED, Production Ready: NO** รออนุมัติ migration 026/นโยบายผูกบัญชี, Student-ID/Google-only onboarding และ Google provider E2E จริง อ่าน [รายงาน Google OAuth](docs/audits/FITM_GOOGLE_OAUTH_ALL_ROLES_IMPLEMENTATION.md) และ [ข้อเสนอ schema/policy](backend/src/db/prepared/google-oauth/README.md) ฟีเจอร์ยังปิดใน environment เดิม
+**สถานะล่าสุด — 14 ตุลาคม 2026 (Asia/Bangkok): Development Database ใช้ Sequelize Models แล้ว — PASS.** ตรวจครบ **42 ตาราง / 503 คอลัมน์** และทดสอบสร้าง schema จาก public schema ว่างจริงใน transaction ที่ rollback. เติม 8 ตารางเดิมที่เคยรอ 019–021 โดย **ไม่ reset ข้อมูลเดิม**. ลบ migration source 27 ไฟล์และ automated test suites 89 ไฟล์ พร้อมตัวรันและ fixtures. งานนี้ไม่ยืนยัน full regression หรือ Production readiness.
 
-ระบบจัดการนักศึกษาฝึกงาน/สหกิจศึกษา สำหรับนักศึกษา อาจารย์นิเทศ/Class Advisor เจ้าหน้าที่ภาควิชา หัวหน้าภาควิชา สถานประกอบการ และพี่เลี้ยง มีทั้งงานที่เชื่อมต่อจริงและงานที่ยังไม่ครบขอบเขตข้อกำหนด
+อ่าน [Handoff ปัจจุบัน](HANDOFF_fitm-intern.md#current-handoff--model-driven-development-database--2026-10-14) สำหรับผลตรวจและรายชื่อไฟล์ที่ลบ. เอกสาร/audit/evidence เก่าคือประวัติ; คำสั่ง migration และ test harness ในเอกสารเหล่านั้นเลิกใช้แล้ว.
 
-**สถานะล่าสุด — 11 ตุลาคม 2026 (Asia/Bangkok): Student Profile Phase 1–5 = ACCEPTED WITH LIMITATIONS — Development/Test Environment. Production ready: NO.** Manual Entry และ Text/AcroForm PDF Import ในรูปแบบที่ทดสอบผ่านแล้ว; OCR สแกนเป็น Limited Support และนโยบายเลขบัตรประชาชน/การรับรอง/ลายเซ็นยัง BLOCKED
+## ระบบและเทคโนโลยี
 
-เริ่มอ่าน [Project Handoff](HANDOFF_fitm-intern.md#current-handoff--student-profile-phase-15--2026-10-11) และ [Final Acceptance Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md) ก่อนพัฒนาต่อ สถานะนี้ไม่ยืนยันว่าทั้งโครงการหรือทุกบทบาททดสอบครบแล้ว ประวัติงานเดิมเก็บไว้ในส่วนที่พับด้านล่าง
+ระบบฝึกงาน/สหกิจสำหรับนักศึกษา อาจารย์/Class Advisor หัวหน้าภาควิชา เจ้าหน้าที่ สถานประกอบการ และพี่เลี้ยง. คำร้องใช้ Student → Class Advisor → Department Head; Project Advisor ต้องยืนยันความสัมพันธ์แยกต่างหาก.
 
-## Key Features and Workflows
-
-| ส่วน | สถานะและขอบเขต |
-| --- | --- |
-| Student Profile | 5 Tabs, Manual Entry, child CRUD, private documents/photo, editable PDF Preview และ Aggregate Revision; ACCEPTED WITH LIMITATIONS บน Dev/Test |
-| Student Dashboard | ค้นหาบริษัท/งานและ NLP matching, คำร้อง, ข้อมูลพี่เลี้ยง, โครงการ/หัวข้อ/Book/Poster และประเมินสถานประกอบการ; สถานะรายฟังก์ชันดู Handoff |
-| Teacher / Head | Project-advisor confirmation, Class Advisor/Head request decisions; งานนิเทศมี source/หลักฐาน isolated เดิม แต่ 019–020 ยังไม่ติดตั้งใน Development ที่ตรวจ |
-| Staff | จัดการเอกสาร/Company Response/Placement แบบ development HTML; Cancellation ยัง IMPLEMENTED / NEEDS VERIFICATION ตามหลักฐานเดิม; activity calendar รอ 021 ใน Development |
-| Mentor / Company | Mentor verification/weekly review/appointment capabilities; Company recruitment/email verification มี flow เดิม แต่ Company owner portal ยัง NOT STARTED และ live SMTP acceptance ยังไม่ครบ |
-| Internship Logs / Resume / Chatbot | เก็บสถานะเดิม: logbook compilation และคะแนนยังค้าง; Resume เป็น flow แยก; FAQ NLP endpoint มีอยู่ แต่ website chatbot ยัง placeholder และคุณภาพคำตอบยังต้องตรวจ |
-
-คำร้องใช้ Student → Class Advisor → Department Head เจ้าหน้าที่ไม่ใช่ขั้นอนุมัติ Project Advisor ต้องยืนยันความสัมพันธ์แยกจาก Class Advisor เมนูโครงการสหกิจคงรูปแบบเดิม และ **Student Calendar (`panel-activities`) ยัง Hidden**
-
-## Architecture and Technology Stack
+Frontend: Vite 8.2.2, Tailwind CSS 4.3.3, JavaScript multipage, Axios 1.19.0. Backend: Node.js (container 20.20.2), Express 5.2.1, Sequelize 6.37.8, pg, JWT, bcrypt. Database: PostgreSQL 16 (ตรวจจริง 16.15). NLP: Python 3.11, FastAPI 0.115.0, scikit-learn/PyThaiNLP, PyMuPDF, Tesseract tha+eng/pytesseract และ Pillow; เป็น classical NLP. Umzug, pytest และ httpx ถูกนำออกจาก dependency declarations; lockfile backend ในเครื่องอัปเดตแล้ว แต่ repository ignore package-lock.json อยู่เดิม.
 
 ```text
-Browser (Vite multipage HTML/CSS/JavaScript + Axios)
-  -> Express REST API / JWT / scoped verification capabilities
-     -> Sequelize + Umzug -> PostgreSQL 16
-     -> private STORAGE_ROOT / intern_storage volume
-     -> FastAPI NLP: matching, FAQ, Resume OCR, Profile PDF worker
+Browser/Vite → Express → Sequelize Models → PostgreSQL 16
+                     → private storage / intern_storage
+                     → FastAPI NLP/PDF/OCR
 ```
 
-Frontend ใช้ Vite **8.2.2**, Tailwind CSS **4.3.3**, Axios **1.19.0**; Backend ใช้ Express **5.2.1**, Sequelize **6.37.8**, Umzug **3.8.2** ตาม lockfiles Python ใช้ FastAPI **0.115.0**, PyMuPDF **1.24.14**, pytesseract **0.3.13**, PyThaiNLP/scikit-learn และ Tesseract `tha+eng` ตาม [requirements.txt](nlp-service/requirements.txt) เป็น classical NLP ไม่มี LLM
+## โครงสร้างและแหล่งกำหนด schema
 
-| Compose service | Container | Published port |
-| --- | --- | --- |
-| postgres | intern_postgres | 5432 |
-| backend | intern_backend | 5000 |
-| frontend | intern_frontend | 5173 |
-| nlp-service | intern_nlp_service | 8000 |
-| pgadmin | intern_pgadmin | 5050 → 80 |
+- `backend/src/models/*.model.js` และ associations กำหนดตาราง/คอลัมน์หลัก.
+- `studentProfileAggregate.schema.js` / `studentProfileAggregate.factories.js` อยู่ใน models และใช้ร่วมกับ runtime Profile validation.
+- `models/schemaIntegrity.js` เติม foreign keys, SQL defaults, indexes และข้อกำหนด nullability ของ Models ที่เดิมยังไม่ครบ.
+- `db/postgresIntegrity.js` เป็น current initialization contract สำหรับ CHECKs, composite FKs, functions และ triggers ที่ Sequelize Models แสดงโดยตรงไม่ได้.
+- `db/initialize.js` สร้าง schema ด้วย Models แล้วติดตั้ง PostgreSQL integrity objects ใน transaction เดียว; ไม่มี migration runner/ledger.
+- Startup `app.js` ใช้ authenticate เท่านั้น. ไม่ sync, force หรือ alter อัตโนมัติ.
+- `db:migrate*` และ `npm test` ถูกลบจาก backend/package.json. Migration 001–026 (รวม 007a) รวม 27 ไฟล์ถูกลบ และ `sequelize_meta` ถูกลบจาก Development.
+- README ใน prepared directories และผลตรวจเก่าเก็บไว้เป็นประวัติ; runtime ไม่ import directory เหล่านั้นแล้ว.
 
-นี่คือ Development Compose ที่ใช้ Vite/nodemon/Uvicorn reload; ไม่ใช่หลักฐาน Production Deployment
+แนวทาง indexes และ schema sync อิง [Sequelize v6](https://sequelize.org/docs/v6/other-topics/indexes/); การตรวจฐานว่างใช้ [PostgreSQL transactional DDL](https://wiki.postgresql.org/wiki/Transactional_DDL_in_PostgreSQL%3A_A_Competitive_Analysis).
 
-## Project Structure
+## Development environment
 
-```text
-backend/src/          routes, controllers, services, models, config, db
-backend/src/db/migrations/                 migrations 001–021 (รวม 007a)
-backend/src/db/prepared/student-profile-phase2a/  schema/models และ 022–025
-backend/test/         unit/contract และ opt-in integration/browser tests
-backend/scripts/      guarded acceptance / verification runners
-frontend/src/         multipage HTML, pages, API client, styles
-frontend/test/        Node/VM/DOM regression tests
-nlp-service/app/      FastAPI routes และ NLP/PDF workers
-nlp-service/tests/    pytest และ Synthetic PDF fixtures
-docs/audits/          Student Profile reports และ evidence
-docs/requirements/   TGDE-COOP–02 prototype (มีข้อมูลตัวอย่างส่วนบุคคล)
-logs/                historical acceptance artifacts
-```
-
-## Prerequisites and Environment Configuration
-
-ต้องมี Git, Docker Desktop/Linux containers + Compose สำหรับ Windows QA; Local Node ควรตรงรุ่นที่ทดสอบ **24.11.1** (Vite engine: `^20.19.0 || >=22.12.0`) และ Python **3.11** หากรัน NLP นอก Docker พร้อม Tesseract และ language packs ไทย/อังกฤษ Frontend Dockerfile ใช้ Node 22 และ Backend ใช้ Node 20; tags ไม่ pin patch ต้องตรวจรุ่นจริงเมื่อ build ใหม่
-
-จาก repository root คัดลอก template เฉพาะเมื่อไม่มีไฟล์ปลายทาง แล้วตั้งค่าลับในเครื่อง:
+เตรียมไฟล์ environment เฉพาะเมื่อยังไม่มี:
 
 ```powershell
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
@@ -72,131 +39,128 @@ if (!(Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
 if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env }
 ```
 
-| ไฟล์/ส่วน | Environment variables ตาม Source |
-| --- | --- |
-| Root [.env.example](.env.example) | `POSTGRES_PASSWORD` |
-| Backend [template](backend/.env.example) | `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `FRONTEND_URL` |
-| NLP client / private storage | `NLP_SERVICE_BASE_URL`, `NLP_SERVICE_TIMEOUT_MS`, `NLP_OCR_TIMEOUT_MS`; optional `PROFILE_PDF_NLP_URL`, `STORAGE_ROOT` มีใน Source แต่ไม่ได้อยู่ใน template |
-| Email / recruitment | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_FROM_NAME`, `RECRUITMENT_SUBMISSION_ENABLED`, `TURNSTILE_SECRET_KEY`, `TURNSTILE_EXPECTED_HOSTNAME`, `TURNSTILE_EXPECTED_ACTION` |
-| Frontend [template](frontend/.env.example) | `VITE_API_URL`, `VITE_TURNSTILE_SITE_KEY` เป็นค่าที่เปิดเผยใน Browser ห้ามใส่ secret |
+Root `.env` ใช้ POSTGRES_PASSWORD; backend ใช้ DB_USER/DB_PASSWORD ที่ตรงกัน, DB_NAME=intern_system, DB_PORT=5432 และ DB_HOST=postgres ใน Compose หรือ 127.0.0.1 บน host. เตรียม JWT_SECRET, FRONTEND_URL, SMTP และ private storage ตาม backend/.env.example. Frontend ใช้ VITE_API_URL; ห้ามใส่ secret ใน VITE variables. NLP client ใน container ใช้ service URL; บน host ใช้ NLP_SERVICE_BASE_URL=http://127.0.0.1:8000.
 
-Compose ใช้ `DB_HOST=postgres`, `DB_NAME=intern_system`; password ต้องตรง root และ backend ค่า `FRONTEND_URL` ต้องตรง origin ของหน้าเว็บ การรัน Backend บน host ใช้ `DB_HOST=localhost`; NLP client บน host ใช้ `NLP_SERVICE_BASE_URL=http://127.0.0.1:8000` ค่า override `PROFILE_PDF_NLP_URL` รับเฉพาะ private/local HTTP base URL ตาม guard ใน Source; Profile PDF มี Backend timeout 50s แยกจาก matching timeout
+Environment ที่ตรวจจริงไม่มี NODE_ENV กำหนดไว้ แต่เป็น local Development Compose ที่ใช้ nodemon/Vite/Uvicorn reload. คำสั่งจัดการ schema **ต้องตั้ง NODE_ENV=development อย่างชัดเจนทุกครั้ง**; ไม่แก้ environment files ในงานนี้. Guard ตรวจชื่อฐานจริง, local host (หรือ postgres ภายใน container), port 5432, dialect, public schema และ PostgreSQL 16; ปฏิเสธ Production, staging, environment ที่ไม่ระบุ และชื่อฐานอื่น.
 
-NLP ไม่มี `.env.example` ของตนเองที่ปลอดภัยใน repository; ใช้ defaults จาก [config.py](nlp-service/app/core/config.py) และ Compose (`PORT=8000`) แทนการคัดลอก `.env` จริง ห้ามเผยแพร่ tokens/passwords/PDF ตัวอย่างหรือ logs ที่มีข้อมูลบุคคล
+## Initialize / Reset / ตรวจฐานว่าง
 
-## Docker Setup and Database Configuration
-
-**ติดตั้งใหม่:** เตรียม `.env` และเริ่มเฉพาะ dependencies ก่อน:
+จาก repository root สำหรับ Compose ที่ยังไม่ได้เริ่ม Backend:
 
 ```powershell
 docker compose config --quiet
 docker compose up -d postgres nlp-service
-docker compose ps
+docker compose run --rm --no-deps -e NODE_ENV=development backend npm run db:init
+docker compose up -d backend frontend pgadmin
 ```
 
-ให้ตรวจ target และวางแผนสร้าง schema ก่อนเปิด Profile API: migration CLI ปกติ discover 001–021 และเพิ่ม 022–025 เฉพาะที่มีใน Ledger แล้ว การ migrate ปกติบนฐานใหม่จึงไม่ติดตั้ง Profile schema ครบ ต้องใช้ controlled installation ที่ได้รับอนุมัติ ตาม [Phase 2B.2](docs/audits/FITM_STUDENT_PROFILE_PHASE2B2_INSTALLATION.md) พร้อม backup/restore และ dependency review ไม่ย้าย prepared files หรือแก้ Ledger เอง
-
-**Development Database เดิม:** ตรวจสถานะก่อน การอัปเดต Source ไม่เท่ากับอนุญาตติดตั้ง Pending Migrations เมื่อตรวจว่า schema พร้อมและได้รับอนุญาตให้ start/rebuild แล้ว:
+สำหรับ stack ที่รันอยู่:
 
 ```powershell
-docker compose up -d --build
-docker compose ps
-docker compose exec -T backend npm run db:migrate:status
+docker compose exec -T -e NODE_ENV=development backend npm run db:init
 ```
 
-Frontend: `http://localhost:5173`; Student: `/src/student_coop/student_coop.html`; API: `http://localhost:5000`; NLP health: `http://localhost:8000/health`; pgAdmin: `http://localhost:5050` Startup Backend authenticate DB เท่านั้น ไม่ sync schema
+`db:init` สร้างตารางที่ขาด รักษาข้อมูลเดิม และตรวจ columns/types/defaults/nullability/ENUM/PK/unique keys/FKs/index predicates/triggers. หากตารางเดิมไม่ตรง Models จะ rollback และแจ้ง drift; ไม่ใช้ alter เพื่อแก้เงียบ ๆ.
 
-## Migration Instructions
-
-**ตรวจ Ledger แบบ Read-only วันที่ 2026-10-11:** Development `intern_system` / `intern_postgres` มี **23 Executed / 3 Pending**: 001–018 รวม 007a และ **022–025 Executed**; **019–021 Pending** ไม่ยืนยันสถานะ Staging/Production
-
-Scripts มี `db:migrate:status`, `db:migrate` (up ทุก pending), `db:migrate:undo` แต่คำสั่งที่แนะนำสำหรับตรวจสถานะคือ `npm run db:migrate:status` จาก `backend` บนฐานที่มี Ledger แล้ว **อย่ารัน Migrate All บน Development นี้** เพราะจะติดตั้ง 019–021 งานเดิมที่ยังไม่อนุมัติ ไม่ใช้ `sync({ alter: true })` หรือ rollback/drop/reset/truncate เป็นขั้นตอนติดตั้ง
-
-022: ขยาย students/student_profiles และ revision; 023: addresses/education/training/skills; 024: เพิ่ม document enum (ต้อง commit ก่อน 025); 025: file metadata/constraints/indexes อยู่ใน [prepared directory](backend/src/db/prepared/student-profile-phase2a/) ข้อความ “prepared only/not active” ใน README ของ directory เป็น snapshot Phase 2A ซึ่งถูก supersede โดย Phase 2B.2/3A และ Ledger ปัจจุบัน
-
-## Running Frontend, Backend and NLP Locally
-
-เปิดคนละ terminal จาก repository root โดยเตรียม DB/schema และ `.env` ข้างต้นก่อน และหลีกเลี่ยง port ชนกับ Compose:
+คำสั่ง reset ต่อไปนี้ **ลบข้อมูลทุกตารางแอปใน Development intern_system** รวมบัญชีเดิม และไม่ seed ผู้ใช้ให้เอง:
 
 ```powershell
-# Frontend
+docker compose exec -T -e NODE_ENV=development backend npm run db:reset -- --confirm=intern_system
+```
+
+การทดสอบสร้าง schema ว่างจริงที่ rollback เสมอและรักษาข้อมูลหลังจบ:
+
+```powershell
+docker compose exec -T -e NODE_ENV=development backend npm run db:verify-empty -- --confirm=intern_system
+```
+
+Reset/verify-empty drop เฉพาะตารางที่ตรวจว่าเป็นของ Models, ledger เดิม, ENUM และ functions ที่ระบบกำหนด ใช้ RESTRICT เพื่อไม่ cascade ไป schema อื่น. ดำเนินการภายใน transaction; rollback หากพบปัญหา. Force sync ใช้เฉพาะ explicit reset. Verify-empty ยืนยันว่าไม่มี application tables/ENUM/functions ก่อนสร้างใหม่; มี DDL locks ระหว่างตรวจ จึงใช้ตอนหยุดการทำงานของผู้ใช้ Development. ไม่ลบ container หรือ Docker volumes.
+
+บน Windows host จาก `backend`:
+
+```powershell
+$env:NODE_ENV='development'
+$env:DB_HOST='127.0.0.1'
+npm.cmd ci
+npm.cmd run db:init
+# Reset เฉพาะเมื่อต้องการลบข้อมูล Development จริง:
+# npm.cmd run db:reset -- --confirm=intern_system
+npm.cmd start
+```
+
+Production/Staging schema provisioning ยังไม่ได้ออกแบบหรือทดสอบในงานนี้. `deploy.sh` เลิกเรียก migrations และตรวจอ่าน model projections เท่านั้น; script ยังมี git pull/build/restart และ **ไม่ได้รันในงานนี้**.
+
+## ตารางและความสัมพันธ์ปัจจุบัน
+
+| กลุ่ม | ตาราง (รวม 42) |
+| --- | --- |
+| บัญชีและข้อมูลนักศึกษา | `teachers`, `students`, `department_staffs`, `student_profiles`, `student_addresses`, `student_education_records`, `student_training_records`, `student_skills`, `student_files` |
+| บริษัทและประกาศงาน | `companies`, `job_submissions`, `job_postings`, `job_posting_work_modes`, `company_access_tokens`, `job_posting_reviews` |
+| คำร้องและโครงการ | `coop_requests`, `coop_request_delivery_methods`, `coop_request_prerequisite_courses`, `coop_request_reviews`, `coop_projects`, `coop_project_advisor_requests` |
+| เอกสารและบริษัทตอบรับ | `coop_documents`, `coop_document_revisions`, `company_responses`, `company_response_history`, `company_evaluations` |
+| พี่เลี้ยงและบันทึกฝึกงาน | `mentors`, `mentor_tokens`, `internship_daily_logs`, `internship_weeks`, `internship_week_events`, `internship_review_tokens` |
+| นิเทศ | `supervision_appointments`, `supervision_events`, `supervision_tokens`, `supervision_images`, `supervision_results`, `supervision_result_revisions` |
+| กิจกรรม | `coop_activities`, `coop_activity_history` |
+| Google | `google_identities`, `google_auth_requests` |
+
+Students เชื่อม Teachers สองบทบาท, Profile/Mentor แบบ 1:1 และ child records/files แบบ 1:N. Companies → submissions/postings → work modes/tokens/reviews. Students → requests → prerequisites/delivery/reviews/documents; project/advisor requests และ company evaluation แยกกัน. เอกสาร/response ใช้ version history และ composite FK; files ใช้ supersedes ownership FK. Internship weeks/events/logs, supervision appointments/results/images/revisions และ activities/history คง immutable/transition guards เดิม. Google identities อ้าง Student/Teacher/Staff; Head ใช้ Teacher identity กับ privilege flag เดิม.
+
+## Google OAuth และ Student Profile
+
+**Google schema PASS / provider E2E NOT TESTED:** google_identities/google_auth_requests และ CHECKs/unique indexes/FKs จาก 026 อยู่ครบ. GOOGLE_LOGIN_ENABLED=false และ GOOGLE_ACCOUNT_LINKING_ENABLED=false ตาม environment จริง. อ่าน config และตรวจ disabled route ได้ โดยไม่เปิด flags. งานนี้ไม่เปลี่ยน linking policy, domain policy หรือสร้างบัญชี Teacher/Head/Staff. Google-only Student onboarding และบัญชีไม่มี password ยังต้องมี policy ที่อนุมัติก่อนพัฒนา.
+
+**Student Profile schema/imports PASS / functional acceptance รอบนี้ NOT TESTED:** 5 Tabs, aggregate revision, addresses/education/training/skills, private documents, file version/current indexes และ field types อยู่ครบ. ขอบเขต Phase 1–5 เดิมยัง ACCEPTED WITH LIMITATIONS ตาม [ประวัติ Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md); OCR scan มี limited support และ national ID/encryption/acknowledgement/signature ยังมี policy blockers. ไม่เปิด Student Calendar และไม่แก้ UI/menus.
+
+## บริการและผล smoke ล่าสุด
+
+| Service | Container / port บน 127.0.0.1 | ผลตรวจ 14 ต.ค. 2026 |
+| --- | --- | --- |
+| PostgreSQL | intern_postgres / 5432 | PASS — Docker healthy, Sequelize connect |
+| Backend | intern_backend / 5000 | PASS — restart/startup, / และ /health/db HTTP 200 |
+| Frontend | intern_frontend / 5173 | PASS — HTTP 200; Vite build 133 modules |
+| NLP | intern_nlp_service / 8000 | PASS — /health HTTP 200, imports และ classifier startup |
+| pgAdmin | intern_pgadmin / 5050 | PASS — HTTP 200 |
+
+Compose มี container healthcheck เฉพาะ PostgreSQL; ส่วนอื่นยืนยันด้วย HTTP/startup. Containers เดิมไม่ได้ rebuild images. Frontend build ครั้งแรกถูก sandbox จำกัด subprocess; รันด้วยสิทธิ์ที่จำเป็นแล้วผ่าน.
+
+Auth smoke ในงาน cleanup ก่อนหน้า: Student /me และ Profile /me → 401; Student/Staff login input ว่าง → 400; Teacher login input ว่าง → 401. Google config → 200 enabled=false; challenge/login → 503 GOOGLE_DISABLED. ไม่ใช้บัญชีจริงและไม่สร้างข้อมูลผู้ใช้.
+
+ฐานจริงปัจจุบัน: **42 ตาราง, 503 คอลัมน์, 234 constraints, 112 indexes, 11 functions, 13 triggers**. Schema ว่างที่สร้างใหม่มี 230 constraints และ indexes/triggers เท่ากัน เพราะ composite uniqueness บางส่วนสร้างผ่าน unique indexes ของ Models แทน UNIQUE constraints เดิม; constraints ด้าน ownership/state ยังคงครบ. Initialization ซ้ำผ่าน. จำนวนแถวในตารางเดิมคงเดิม รวม Students 4, Teachers 23, Staff 0. ไม่เกิด committed reset และไม่มีข้อมูลแอปถูกลบ; ลบเฉพาะ migration ledger.
+
+## Automated tests หลัง cleanup
+
+**ไม่มี automated test suites เหลือ และไม่มี automated regression coverage ใน repository.** ลบชุดทดสอบ 89 ไฟล์: backend/test 57, frontend/test 25, nlp-service/tests 6 และ linking-guards.test.cjs 1. ลบตัวรัน/validators 38 และ fixtures/helpers/package marker 13 ไฟล์; [รายชื่อทั้งหมดใน Handoff](HANDOFF_fitm-intern.md#รายการไฟล์ที่ลบในการ-cleanup-นี้). ลบเครื่องมือและ helpers ของ workflow เดิมอีก 14 ไฟล์; บางตัวมีหน้าที่ operational/documentation เพิ่มเติม จึงต้องตัดสินใจเรื่องการเก็บความสามารถแยกจากการเลิกใช้ migration.
+
+เก็บ application source, development seed utilities, NLP training data, environment files, historical logs/reports และ manual Google diagnostic ที่ไม่ใช่ automated test. ไม่มีไฟล์ทดสอบใหม่สร้างแทน. ผล PASS เก่าเป็นประวัติและไม่เท่ากับผลตรวจหลัง cleanup.
+
+ใช้ smoke/manual checks:
+
+```powershell
+curl.exe -fsS http://127.0.0.1:5000/health/db
+curl.exe -fsS http://127.0.0.1:8000/health
+docker compose ps
 cd frontend
-npm ci
-npm run dev
+npm.cmd run build
 ```
 
-```powershell
-# Backend
-cd backend
-npm ci
-npm run dev
-# npm start ใช้ node src/app.js
-```
+## ข้อจำกัดและงานต่อไป
 
-```powershell
-# NLP: Python 3.11 + Tesseract tha/eng ที่ติดตั้งแล้ว
-cd nlp-service
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+Full regression, authenticated role workflows, Profile CRUD/PDF/OCR E2E, SMTP acceptance, Google provider E2E, browser/mobile จริง และ Production/Staging deployment **NOT TESTED ในงานนี้**. ไม่รายงาน Full Regression PASS. Schema readiness ไม่ยืนยัน feature acceptance.
 
-ไม่มีการ execute คำสั่ง start/install เหล่านี้ในงาน Documentation Update นี้
+พัฒนาต่อด้วย manual acceptance ของ workflows ที่ใช้ supervision/activity tables ใหม่, ตรวจ Profile persistence/PDF/OCR ด้วยข้อมูล Development ที่อนุญาต, และกำหนด Production schema provisioning แยกจาก Development commands. Google/linking/onboarding ต้องรอนโยบายและการอนุญาตของงานถัดไป. ตรวจ git status/diff ก่อนทำงาน; งานนี้ไม่ Commit/Push/Git Reset/Clean.
 
-## Student Profile and PDF Import
 
-Phase 1–5 ครอบคลุม Dirty Fields/Partial Update, Omitted vs `null`, Draft Preservation, calendar/leap-year validation, expanded schema, Backend aggregate CRUD, Manual Entry 5 Tabs และ editable PDF import ตาม TGDE-COOP–02
+## การแก้ไขเฉพาะจุดหลังตรวจ cleanup — 14 ตุลาคม 2026
 
-Tabs: **ประวัตินักศึกษา · ติดต่อ / ครอบครัว / ฉุกเฉิน · การศึกษา / ทักษะ · เอกสารประกอบ · บัญชีผู้ใช้** (บัญชีแสดง Read-only) ใช้ Sequelize models เดิม 3 ตัวและ child models 4 ตัว ไม่มีระบบบัญชี/ไฟล์/Approval ซ้ำ
+กู้ข้อความภาษาไทยส่วนที่เสียเป็น `?` จากต้นฉบับในบริบทงาน และเขียนใหม่ตาม Source/ผลตรวจที่ยืนยันได้ บันทึกเป็น UTF-8; ประวัติด้านล่างเก็บไว้ครบ.
 
-นักศึกษากรอกเองได้โดยไม่ต้องอัปโหลด PDF หรือเลือก PDF หนึ่งไฟล์ ≤10MB/≤4 หน้า → Text/approved AcroForm หรือ OCR ภายในเครื่อง → เปรียบเทียบข้อมูลเดิม → เลือกใช้/แก้ค่ารายช่องและ child records → ยืนยัน → transaction บันทึก Profile + original private PDF ค่าเริ่มต้น keep/skip ไม่มี Auto-apply และ Preview ไม่เขียน DB
+ตัวเทียบ CHECK ใน `initialize.js` รักษาวงเล็บ, casts, identifiers และ string literals. หากข้อความนิยามต่างกัน จะให้ PostgreSQL parse ทั้งสอง CHECK บน session-local temporary table ที่ใช้ชนิดคอลัมน์และ collation เดียวกัน แล้วเทียบ canonical expressions. ตารางจริงและ constraints เดิมไม่ถูกแก้. Validation state ต้องตรงกัน; นิยามที่พิสูจน์ความเท่ากันไม่ได้ถือเป็น Schema Drift. ข้อผิดพลาดระหว่าง parse ทำให้ initialization rollback.
 
-`/api/student-profile` ใช้ `profile_revision` กับ `If-Match` สำหรับ Aggregate writers รวม legacy `/me`, `/student-info`, child CRUD, profile image/documents และ PDF commit; ไม่มี header ได้ **428**, stale ได้ **409** เก็บ Draft ให้ review ห้าม retry ด้วย revision ใหม่แบบเงียบ ๆ Omitted รักษาค่า; `null` ล้างเฉพาะฟิลด์ที่อนุญาต Resume/Project Files อยู่ภายนอก Aggregate
+Focused verification ผ่าน CHECK เดิม 102 รายการและ integrity definitions รวม 109 รายการ; `(a AND b) OR c` กับ `a AND (b OR c)` ไม่ถูกมองว่าเท่ากัน ตรวจ string literals, whitespace และ NOT VALID ด้วย. ตรวจ Models 503 คอลัมน์ผ่าน และไม่มี temporary probes เหลือ. รอบแก้นี้ไม่รัน db:init/db:reset/db:verify-empty, migration, backup/restore หรือ full regression; ผลสร้าง schema ว่างด้านบนเป็นหลักฐานจากงาน cleanup ก่อนหน้า.
 
-Draft อยู่ใน memory ของหน้าและมี beforeunload warning; เปลี่ยน Tab/API refresh ไม่ทำให้หาย แต่ยืนยัน reload จะทิ้ง unsaved Draft ไม่มี persistent autosave รายละเอียด endpoints/transactions อยู่ใน [Phase 3A](docs/audits/FITM_STUDENT_PROFILE_PHASE3A_IMPLEMENTATION.md) และ [Phase 4](docs/audits/FITM_STUDENT_PROFILE_PHASE4_PDF_IMPORT.md)
+Prepared READMEs ยังมีคำสั่ง migration/installer/backup และชื่อไฟล์เดิมที่เลิกใช้ เป็น historical documentation ไม่มี runtime imports. `docs/audits/evidence/contracts.cjs` ยังอ่าน static-scan เดิมที่มี 112 paths ถูกลบ จึงไม่ใช่ audit generator ที่ใช้กับ Source ปัจจุบันได้โดยตรง. ไม่แก้ historical evidence ในงานนี้; ใช้ README/Handoff ปัจจุบันสำหรับ setup.
 
-## Running Tests and Latest Results
-
-ผลอ้างอิง [Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md) วันที่ 11 ตุลาคม 2026 **ไม่ได้รันทดสอบใหม่ในงานเอกสารนี้**:
-
-| Suite | PASS | FAIL | SKIP |
-| --- | ---: | ---: | ---: |
-| Backend | 254 | 0 | 22 |
-| Frontend | 312 | 0 | 2 |
-| NLP | 30 | 0 | 0 |
-| Browser/API/real PostgreSQL | 44 | 0 | 0 |
-
-Frontend Build **PASS** (Vite 129 modules); ไม่มี CANCEL ผลทั่วไปมี opt-in skips จึงไม่ได้พิสูจน์ทุก DB workflow Browser suite แยกรันจริงบน Synthetic PostgreSQL schema clone, Edge Windows และ private storage รวม F5/Hard Reload, two-tab conflict, rollback, ownership และ read-back
-
-จาก root เมื่อ dependencies พร้อม สำหรับ checks ที่ปิด DB-writing opt-ins แล้ว:
-
-```powershell
-node backend/scripts/runStudentProfilePhase5Checks.js
-```
-
-Runner นี้รัน `node --test` ใน backend, `node --test test/*.test.js` ใน frontend, Vite build และ diff check และเขียน CHECK_RESULTS เดิม จึงสำรอง evidence ก่อน rerun ไม่มี `npm test` script ฝั่ง Frontend
-
-NLP local (จาก `nlp-service` โดยตั้ง lifespan/model data ตาม harness เดิม): `python -m pytest -q -p no:cacheprovider` ส่วน exact Phase 5 measurement runner คือ `node backend/scripts/runStudentProfilePhase5Nlp.js` จาก root ใช้ `intern_nlp_service`, Windows Tahoma font และเขียน NLP_RESULTS เดิม
-
-Browser/PostgreSQL rerun ใช้ `node backend/scripts/runStudentProfilePhase5Integration.js` จาก root **เฉพาะเมื่อได้รับอนุมัติให้สร้าง Synthetic DB/Role และใช้ Docker/Edge/local NLP** Runner อ่าน Development, dump/restore เฉพาะ schema, ไม่รัน Migration/คัดลอกแถวจริง/Drop; เก็บฐานทดสอบไว้และปิด Role login หลังจบ พร้อมเปรียบเทียบ Development ก่อน/หลังและเขียน BROWSER_RESULTS เดิม อย่าเปิด legacy integration flags กับบัญชี/ฐานจริง
-
-## Known Limitations and Security Notes
-
-- **PARTIAL / LIMITED SUPPORT:** OCR ไทย fixture strict 7/15, ผสมไทย/อังกฤษ 28/29; scan skill grid/proficiency และ shape-only checkbox บางแบบยังต้องกรอก/ตรวจเอง ไม่รับรอง PDF ทุก export โดยเฉพาะต้นแบบ official export ที่ยังมี identity warning
-- **BLOCKED — PENDING POLICY:** เลขบัตรประชาชน/encryption/key/retention, การรับรอง/ลายเซ็น/frozen snapshot และ Required/Ready-to-Apply/document acceptance ไม่ได้เปิดฟังก์ชันเหล่านี้
-- **NOT TESTED:** Google OAuth provider E2E จริง (Source Google Login ล่าสุดและการทดสอบ provider จำลองดูรายงาน Google OAuth; รอ schema/config/policy), มือถือจริง/Touch, Production, browser อื่น/WCAG เต็มรูปแบบ, full role workflows, hostile PDF actual timeout และ long-duration load/security audit
-- Private document downloads ต้องผ่าน JWT + Ownership; ไม่เปิด storage URL สาธารณะ Mass assignment/UUID/path/MIME/signature/size/revision guard ผ่านขอบเขตที่ทดสอบ ไม่เท่ากับ antivirus/full penetration test
-- NLP endpoint เป็น internal worker ไม่มี Student JWT ของตนเอง Compose ยัง publish port 8000; production network isolation, storage permissions, logging/backup/HTTPS ต้องตรวจแยก `deploy.sh` pull/build และ migrate all จึงไม่ใช่คำสั่งเริ่ม Dev แบบปลอดภัยในสถานะนี้
-- งานเดิมยังค้าง: Staff Cancellation nine-stage acceptance, Company owner portal, role administration UI, live SMTP, job expiry eligibility, logbook compilation, official PDFs และ rubrics/committee scoring ดู Handoff ไม่เปลี่ยนสถานะเพราะ Profile ผ่าน Phase 5
-
-## Development Workflow and Documentation
-
-ตรวจ `git status`/diff ก่อนแก้ เก็บ uncommitted changes เดิม อ่าน contract/report ที่เกี่ยวข้อง ใช้ Synthetic isolated tests และขออนุมัติก่อนเปลี่ยน schema/รัน migration/แก้ข้อมูลจริง/deploy; การเอกสารรอบนี้ไม่อนุญาต Commit/Push หรือเริ่ม feature ใหม่
-
-- [Main Project Handoff และสถานะระบบเดิม](HANDOFF_fitm-intern.md)
-- [Phase 1 — Integrity](docs/audits/FITM_STUDENT_PROFILE_PHASE1_IMPLEMENTATION.md) · [2A — Schema Preparation](docs/audits/FITM_STUDENT_PROFILE_PHASE2A_PREPARATION.md) · [2B.1 — Preflight](docs/audits/FITM_STUDENT_PROFILE_PHASE2B1_PREFLIGHT.md) · [2B.2 — Installation](docs/audits/FITM_STUDENT_PROFILE_PHASE2B2_INSTALLATION.md)
-- [3A — API](docs/audits/FITM_STUDENT_PROFILE_PHASE3A_IMPLEMENTATION.md) · [3B — 5 Tabs](docs/audits/FITM_STUDENT_PROFILE_PHASE3B_IMPLEMENTATION.md) · [4 — PDF Import](docs/audits/FITM_STUDENT_PROFILE_PHASE4_PDF_IMPORT.md) · [5 — Final Acceptance](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md)
-- [Tests/Build Evidence](docs/audits/FITM_STUDENT_PROFILE_PHASE5_CHECK_RESULTS.json) · [Browser/SQL](docs/audits/FITM_STUDENT_PROFILE_PHASE5_BROWSER_RESULTS.json) · [NLP](docs/audits/FITM_STUDENT_PROFILE_PHASE5_NLP_RESULTS.json) · [Database Preservation](docs/audits/FITM_STUDENT_PROFILE_PHASE5_DATABASE_VERIFICATION.json)
+Operational scripts ที่ถูกลบ: คู่ `backupGoogleOAuth026.js` / `lib/googleOAuth026Backup.js` ต้องให้ผู้ใช้ตัดสินใจว่าจะเก็บความสามารถ backup/restore ทั่วไปในเครื่องมือใหม่หรือเลิกใช้ทั้งหมด เพราะ implementation เดิมผูกกับ 026/source hash/ledger. `verifyStudentProfileRestore.js` / `lib/studentProfileRestoreVerification.js` เลิกใช้ได้ใน workflow ปัจจุบัน เนื่องจากเป็นการตรวจ archive และ snapshot ของ Phase 2B.2 เดิม. `prepareStudentProfilePhase2AReference.js` เป็น generator ของรายงาน preparation เก่า จัดเป็นเครื่องมือประวัติที่เลิกใช้แล้ว. ทั้งห้าไฟล์ไม่มี runtime caller และไม่มีการ restore/delete เพิ่ม.
 
 ## Historical Project Documentation
 

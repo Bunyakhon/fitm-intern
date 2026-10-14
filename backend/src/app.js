@@ -95,7 +95,7 @@ app.use((error, req, res, next) => {
 // Database + Server
 // ==============================
 
-// Schema changes are applied explicitly through `npm run db:migrate`.
+// Development schema initialization is explicit: `npm run db:init`.
 // Application startup must not mutate the schema.
 sequelize
   .authenticate()

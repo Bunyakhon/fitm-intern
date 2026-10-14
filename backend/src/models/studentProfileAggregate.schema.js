@@ -1,4 +1,4 @@
-// Review-only specifications. No connection, model registration or DDL on import.
+// Current Student Profile field contracts shared by models and runtime validation.
 const column = (type, extra = {}) => ({ type, nullable: true, ...extra });
 const text = (length = 255, extra = {}) => column("varchar", { length, ...extra });
 const enumCheck = (name, values) => name + " IN (" + values.map(v => "'" + v + "'").join(", ") + ")";
@@ -92,7 +92,7 @@ const tables = {
 };
 
 // Acknowledgements require an approved statement, snapshot and retention policy.
-// These proposed tables are intentionally NOT included in executable migration source.
+// Proposed policy-dependent tables are not initialized.
 const pendingAcknowledgementDesign = {
   student_profile_acknowledgements: {
     owner: "student_id -> students.id RESTRICT", request: "(coop_request_id, student_id) -> coop_requests(id, student_id) RESTRICT",
