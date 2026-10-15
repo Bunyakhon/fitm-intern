@@ -1,4 +1,5 @@
 import * as api from "../api/supervision.api.js";
+import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { showToast, showConfirmModal, setButtonLoading } from "../ui/feedback.js";
 import { bangkokInputs, element, renderAppointment, renderAppointmentHistory } from "./supervisionView.js";
 import { mountSupervisionResult } from "./supervisionResult.js";
@@ -107,4 +108,4 @@ export function mountTeacherSupervision({ document, storage, services = api, con
   $("teacherLogout").addEventListener("click", () => { clearResults(); ++sequence; current = null; studentId = null; $("supervisionDetail").hidden = true; container.replaceChildren(); });
   const ready = refresh(); return { ready, refresh, detail };
 }
-if (typeof document !== "undefined") mountTeacherSupervision({ document, storage: sessionStorage });
+if (typeof document !== "undefined") mountTeacherSupervision({ document, storage: roleSessionStorage });

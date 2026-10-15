@@ -8,6 +8,7 @@ function createGoogleAuthRouter(dependencies) {
   router.get("/config", controller.configuration);
   router.post("/challenge", controller.challenge);
   router.post("/login", controller.login);
+  router.post("/link/confirm", controller.confirmLink);
   router.post("/onboard", controller.onboard);
   return router;
 }

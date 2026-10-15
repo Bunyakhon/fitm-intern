@@ -1,3 +1,4 @@
+import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { STAFF_TOKEN_KEY, getCurrentStaff, getDocumentQueue, getDocumentRequest, saveStaffDocument, getStaffDocumentContent, saveCompanyResponse } from '../api/staffDocuments.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
 const PAGE_SIZE = 25;
@@ -21,7 +22,7 @@ export function mountStaffDocuments({ document, storage, location, me = getCurre
   function date(value) { return value ? new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '-'; }
   function clearPreview() { if (previewUrl) url.revokeObjectURL(previewUrl); previewUrl = null; get('staffPreviewFrame').src = 'about:blank'; get('staffPreviewFrame').hidden = true; }
   function clearDetail() { detailSequence++; current = null; form.hidden = true; get('staffCompanyResponseForm').hidden = true; get('staffCompanyResponseState').textContent = ''; get('staffCompanyResponseHistory').replaceChildren(); for (const id of ['staffCompanyRespondedAt', 'staffCompanyResponseNote', 'staffCompanyCorrectionReason']) get(id).value = ''; get('staffDetailBody').replaceChildren(); get('staffDocumentHistory').replaceChildren(); get('staffDetailMessage').textContent = ''; get('staffDocumentState').textContent = ''; get('staffPlacementStatus').textContent = ''; for (const id of ['staffDocumentNumber', 'staffIssueDate', 'staffSignatoryName', 'staffSignatoryPosition', 'staffNotes']) get(id).value = ''; clearPreview(); }
-  function revoke() { authorized = false; storage.removeItem(STAFF_TOKEN_KEY); get('staffDocumentList').replaceChildren(); clearDetail(); panel.hidden = true; get('staffName').textContent = ''; controls(); location.replace('/staff-login.html'); }
+  function revoke() { authorized = false; storage.removeItem(STAFF_TOKEN_KEY); get('staffDocumentList').replaceChildren(); clearDetail(); panel.hidden = true; get('staffName').textContent = ''; controls(); location.replace('/login.html'); }
   function errorMessage(error) { return error.data?.missing_fields?.length ? `${error.message}: ${error.data.missing_fields.map(field => FIELDS[field] || 'ข้อมูลเอกสาร').join(', ')}` : error.message || 'ดำเนินการไม่สำเร็จ กรุณาลองใหม่'; }
   function handle(error) { if ([401, 403].includes(error.status)) { revoke(); return true; } return false; }
   function controls() {
@@ -198,4 +199,4 @@ export function mountStaffDocuments({ document, storage, location, me = getCurre
   })();
   return { ready, refresh, openDetail };
 }
-if (typeof document !== 'undefined') mountStaffDocuments({ document, storage: sessionStorage, location: window.location });
+if (typeof document !== 'undefined') mountStaffDocuments({ document, storage: roleSessionStorage, location: window.location });

@@ -20,7 +20,7 @@ html {
 }
 
 body {
-  font-family: "Noto Sans Thai", sans-serif;
+  font-family: var(--app-font-family);
   background: var(--bg);
   color: var(--text);
 }
@@ -83,7 +83,7 @@ a {
 }
 
 .brand-text strong {
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--primary);
@@ -192,7 +192,7 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -369,7 +369,7 @@ a {
 .panel-header h2 {
   margin: 0;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.35rem;
   font-weight: 700;
 
@@ -412,7 +412,7 @@ a {
 .dashboard-banner b {
   display: block;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.25rem;
 }
 
@@ -473,7 +473,7 @@ a {
 .stat-box b {
   display: block;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.05rem;
 }
 
@@ -512,7 +512,7 @@ a {
 
 .section-card-header h3,
 .card-title {
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1rem;
   font-weight: 700;
 }
@@ -547,7 +547,7 @@ a {
 .empty-state h4 {
   margin-top: 14px;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1rem;
 }
 
@@ -607,7 +607,7 @@ a {
 .profile-main h3 {
   margin: 5px 0;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.25rem;
 }
 
@@ -733,7 +733,7 @@ a {
 #panel-profile .profile-main h3 {
   margin: 0 0 8px;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
 
   font-size: 1.45rem;
   font-weight: 700;
@@ -1349,7 +1349,7 @@ a {
 .upload-box h3 {
   margin-top: 10px;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
 }
 
 .upload-box p {
@@ -1783,7 +1783,7 @@ a {
 }
 
 .modal-header h3 {
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 1.05rem;
 }
 
@@ -2105,7 +2105,7 @@ a {
 .profile-form-title h4 {
   margin: 0;
 
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 0.95rem;
   font-weight: 700;
 

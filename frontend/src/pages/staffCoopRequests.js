@@ -1,3 +1,4 @@
+import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { STAFF_TOKEN_KEY, getCurrentStaff } from '../api/staffDocuments.api.js';
 import { getStaffCoopRequests, getStaffCoopRequest, cancelStaffCoopRequest } from '../api/staffCoopRequests.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
@@ -17,7 +18,7 @@ export function mountStaffCoopRequests({ document, storage, location, me = getCu
   function node(tag, text, className) { const element = document.createElement(tag); if (text !== undefined) element.textContent = text; if (className) element.className = className; return element; }
   function say(text, error = false) { get('staffCoopMessage').textContent = text; get('staffCoopMessage').setAttribute('role', error ? 'alert' : 'status'); }
   function clearDetail() { sequence++; current = null; body.replaceChildren(); get('staffCoopDetailMessage').textContent = ''; }
-  function revoke() { authorized = false; storage.removeItem(STAFF_TOKEN_KEY); root.replaceChildren(); clearDetail(); panel.hidden = true; closeModal?.(); controls(); location.replace('/staff-login.html'); }
+  function revoke() { authorized = false; storage.removeItem(STAFF_TOKEN_KEY); root.replaceChildren(); clearDetail(); panel.hidden = true; closeModal?.(); controls(); location.replace('/login.html'); }
   function auth(error) { if ([401, 403].includes(error.status)) { revoke(); return true; } return false; }
   function failure(error) {
     if (error.status === 400) return 'ข้อมูลไม่ถูกต้อง กรุณาระบุเหตุผลไม่เกิน 2000 ตัวอักษร';
@@ -122,4 +123,4 @@ export function mountStaffCoopRequests({ document, storage, location, me = getCu
   })();
   return { ready, refresh, openDetail };
 }
-if (typeof document !== 'undefined' && document.getElementById('staffCoopList')) mountStaffCoopRequests({ document, storage: sessionStorage, location: window.location });
+if (typeof document !== 'undefined' && document.getElementById('staffCoopList')) mountStaffCoopRequests({ document, storage: roleSessionStorage, location: window.location });

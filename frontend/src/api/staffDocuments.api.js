@@ -1,8 +1,18 @@
 import { apiRequest } from './client.js';
+import { getRoleToken } from '../auth/roleAuthStorage.js';
 export const STAFF_TOKEN_KEY = 'staffToken';
-export function staffRequest(path, options = {}) {
-  const token = sessionStorage.getItem(STAFF_TOKEN_KEY);
-  return apiRequest(path, { ...options, auth: false, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+export async function staffRequest(path, options = {}) {
+  const token = getRoleToken('department_staff');
+  const changed = () => Object.assign(new Error('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่'), { status: 401 });
+  if (!token) throw changed();
+  try {
+    const result = await apiRequest(path, { ...options, auth: false, headers: { Authorization: `Bearer ${token}` } });
+    if (getRoleToken('department_staff') !== token) throw changed();
+    return result;
+  } catch (error) {
+    if (getRoleToken('department_staff') !== token) throw changed();
+    throw error;
+  }
 }
 export const loginStaff = body => apiRequest('/api/staff/auth/login', { method: 'POST', body, auth: false });
 export const getCurrentStaff = () => staffRequest('/api/staff/me');

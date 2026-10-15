@@ -1,8 +1,6 @@
-import { loginStudent } from "../api/auth.api.js";
+import { loginAccount } from "../api/auth.api.js";
 import { setButtonLoading, showToast } from "../ui/feedback.js";
-import { saveStudentSession } from "../auth/studentAuthStorage.js";
-
-console.log("KIWI login page loaded");
+import { acceptLoginSession } from "../auth/loginSession.js";
 
 const loginForm = document.getElementById("loginForm");
 const loginEmail = document.getElementById("loginEmail");
@@ -48,6 +46,11 @@ loginPassword.addEventListener("blur", () => {
   capsLockNotice.hidden = true;
 });
 
+document.querySelector(".forgot-password").addEventListener("click", event => {
+  event.preventDefault();
+  showToast("กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือเรื่องรหัสผ่าน", "info");
+});
+
 // ==============================
 // Login Form
 // ==============================
@@ -85,7 +88,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   let loggedIn = false;
   try {
-    const result = await loginStudent({
+    const result = await loginAccount({
       email,
       password,
     });
@@ -95,7 +98,7 @@ loginForm.addEventListener("submit", async (event) => {
       throw new Error("ไม่พบ Token จากระบบ");
     }
 
-    saveStudentSession({ token: result.token, student: result.data, remember });
+    const destination = acceptLoginSession(result, { remember });
     loggedIn = true;
     loginPassword.value = "";
 
@@ -105,7 +108,7 @@ loginForm.addEventListener("submit", async (event) => {
 
     // ไปหน้าแรก
     setTimeout(() => {
-      window.location.href = "/src/student_coop/student_coop.html";
+      window.location.replace(destination);
     }, 1000);
   } catch (error) {
     console.error("LOGIN ERROR:", { status: error.status ?? null });
@@ -115,7 +118,7 @@ loginForm.addEventListener("submit", async (event) => {
   } finally {
     // Keep the guard until navigation after success, including the toast delay.
     isSubmitting = loggedIn;
-    loginForm.setAttribute("aria-busy", "false");
+    loginForm.setAttribute("aria-busy", String(loggedIn));
     rememberMe.disabled = false;
     setButtonLoading(loginSubmitBtn, false, "กำลังเข้าสู่ระบบ...", "เข้าสู่ระบบ");
     loginSubmitBtn.disabled = loggedIn;

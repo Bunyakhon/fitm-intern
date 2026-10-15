@@ -1,3 +1,4 @@
+import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { getCurrentTeacher, getTeacherCoopRequests, getTeacherCoopRequest, decideTeacherCoopRequest, TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showConfirmModal, showToast, setButtonLoading } from "../ui/feedback.js";
 
@@ -12,7 +13,7 @@ const PAGE_SIZE = 25;
 
 export function mountTeacherCoopRequests({ document, storage, location, role = "teacher", me = getCurrentTeacher, list = getTeacherCoopRequests, detail = getTeacherCoopRequest, decide = decideTeacherCoopRequest, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading }) {
   const isHead = role === "department_head", reviewStatus = isHead ? "department_head_review" : "advisor_review";
-  const loginPath = isHead ? "/department-head-login.html" : "/teacher-login.html";
+  const loginPath = "/login.html";
   const get = id => document.getElementById(id);
   const container = get("teacherCoopList"), message = get("teacherCoopMessage"), detailPanel = get("teacherCoopDetail"), detailBody = get("teacherCoopDetailBody");
   let authorized = false, fetching = false, submitting = false, modalOpen = false, detailLoading = false;
@@ -176,4 +177,4 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
   return { ready, refresh, openDetail };
 }
 
-if (typeof document !== "undefined" && document.body.dataset.workflowRole !== "department_head") mountTeacherCoopRequests({ document, storage: sessionStorage, location: window.location });
+if (typeof document !== "undefined" && document.body.dataset.workflowRole !== "department_head") mountTeacherCoopRequests({ document, storage: roleSessionStorage, location: window.location });

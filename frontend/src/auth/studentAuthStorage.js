@@ -3,7 +3,6 @@
 export const STUDENT_AUTH_EVENT_KEY = "studentAuthEvent";
 const TAB_KEY = "studentAuthSession";
 const PERSISTENT_KEY = "studentAuthPersistent";
-const AUTH_KEYS = ["token", "student", PERSISTENT_KEY];
 
 function json(value) {
   try { return JSON.parse(value); } catch { return null; }
@@ -33,7 +32,12 @@ export function createStudentAuthStorage({
   persistentStorage = localStorage, tabStorage = sessionStorage,
   now = Date.now, generation = () => crypto.randomUUID?.()
     || Array.from(crypto.getRandomValues(new Uint32Array(4)), value => value.toString(16)).join("-"),
+  tokenKey = "token", profileKey = "student", tabKey = TAB_KEY, persistentKey = PERSISTENT_KEY,
+  validateClaims = claims, sanitizeProfile = safeStudent,
 } = {}) {
+  const claims = validateClaims, safeStudent = sanitizeProfile;
+  const TAB_KEY = tabKey, PERSISTENT_KEY = persistentKey;
+  const AUTH_KEYS = [tokenKey, profileKey, PERSISTENT_KEY];
   const remove = storage => AUTH_KEYS.forEach(key => storage.removeItem(key));
   const event = () => json(persistentStorage.getItem(STUDENT_AUTH_EVENT_KEY));
   const metadata = () => json(tabStorage.getItem(TAB_KEY));
@@ -66,12 +70,12 @@ export function createStudentAuthStorage({
       remove(persistentStorage);
       // Keep a tab-bound copy in both modes. It prevents account switching when
       // another tab changes the persistent account; the shared generation revokes it.
-      tabStorage.setItem("token", token);
-      tabStorage.setItem("student", snapshot);
+      tabStorage.setItem(tokenKey, token);
+      tabStorage.setItem(profileKey, snapshot);
       tabStorage.setItem(TAB_KEY, JSON.stringify(state));
       if (remember) {
-        persistentStorage.setItem("token", token);
-        persistentStorage.setItem("student", snapshot);
+        persistentStorage.setItem(tokenKey, token);
+        persistentStorage.setItem(profileKey, snapshot);
         // Bind the compatibility token to its generation in one atomic write.
         // Mixed writes from simultaneous tabs must fail closed, not switch users.
         persistentStorage.setItem(PERSISTENT_KEY, JSON.stringify({ generation: state.generation, token }));
@@ -88,8 +92,8 @@ export function createStudentAuthStorage({
     try {
       const state = metadata(), shared = event();
       if (state?.blocked) return null;
-      const tabToken = tabStorage.getItem("token");
-      const persistentToken = persistentStorage.getItem("token");
+      const tabToken = tabStorage.getItem(tokenKey);
+      const persistentToken = persistentStorage.getItem(tokenKey);
       const binding = json(persistentStorage.getItem(PERSISTENT_KEY));
       const bound = validEvent(shared) && binding?.generation === shared.generation && binding.token === persistentToken;
       if (tabToken) {
@@ -130,10 +134,10 @@ export function createStudentAuthStorage({
         // valid login for this tab only; the backend still verifies it before UI use.
         save({ token: persistentToken, student: { id: identity.id, student_id: identity.student_id }, remember: false });
       } else {
-        tabStorage.setItem("token", persistentToken);
+        tabStorage.setItem(tokenKey, persistentToken);
         tabStorage.setItem(TAB_KEY, JSON.stringify(shared));
-        const student = json(persistentStorage.getItem("student"));
-        if (student?.id === identity.id) tabStorage.setItem("student", JSON.stringify(safeStudent(student, identity)));
+        const student = json(persistentStorage.getItem(profileKey));
+        if (student?.id === identity.id) tabStorage.setItem(profileKey, JSON.stringify(safeStudent(student, identity)));
       }
       return persistentToken;
     } catch { return null; } // Storage disabled: fail closed, without logging credentials.
@@ -142,9 +146,9 @@ export function createStudentAuthStorage({
   function updateStudent(student, expectedToken = getToken()) {
     if (!expectedToken || getToken() !== expectedToken) return false;
     const snapshot = JSON.stringify(safeStudent(student, claims(expectedToken, now)));
-    tabStorage.setItem("student", snapshot);
-    if (metadata()?.mode === "persistent" && persistentStorage.getItem("token") === expectedToken) {
-      persistentStorage.setItem("student", snapshot);
+    tabStorage.setItem(profileKey, snapshot);
+    if (metadata()?.mode === "persistent" && persistentStorage.getItem(tokenKey) === expectedToken) {
+      persistentStorage.setItem(profileKey, snapshot);
     }
     return true;
   }

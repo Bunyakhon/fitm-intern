@@ -13,11 +13,6 @@
     <link rel="stylesheet" href="/src/styles/auth.css" />
 
     <link
-      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-
-    <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
@@ -67,6 +62,7 @@
               <input
                 type="text"
                 id="regStudentId"
+                maxlength="255"
                 name="regStudentId"
                 placeholder="เช่น 6706022510107"
                 autocomplete="off"
@@ -88,6 +84,7 @@
               <input
                 type="text"
                 id="regFirstName"
+                maxlength="255"
                 name="regFirstName"
                 placeholder="กรอกชื่อ"
                 autocomplete="given-name"
@@ -109,6 +106,7 @@
               <input
                 type="text"
                 id="regLastName"
+                maxlength="255"
                 name="regLastName"
                 placeholder="กรอกนามสกุล"
                 autocomplete="family-name"
@@ -130,6 +128,7 @@
               <input
                 type="email"
                 id="regEmail"
+                maxlength="254"
                 name="regEmail"
                 placeholder="เช่น s6706022510107@email.kmutnb.ac.th"
                 autocomplete="email"
@@ -151,6 +150,7 @@
               <input
                 type="password"
                 id="regPassword"
+                maxlength="72"
                 name="regPassword"
                 placeholder="อย่างน้อย 8 ตัวอักษร"
                 minlength="8"
@@ -183,6 +183,7 @@
               <input
                 type="password"
                 id="regConfirm"
+                maxlength="72"
                 name="regConfirm"
                 placeholder="กรอกรหัสผ่านอีกครั้ง"
                 autocomplete="new-password"

@@ -84,7 +84,17 @@ registerForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!email.endsWith("@email.kmutnb.ac.th")) {
+  if (!password.trim() || new TextEncoder().encode(password).length > 72) {
+    setRegisterMessage("รหัสผ่านต้องไม่เป็นช่องว่างล้วน และมีขนาดไม่เกิน 72 ไบต์", "error");
+    return;
+  }
+
+  if ([studentId, firstName, lastName].some(value => value.length > 255) || email.length > 254) {
+    setRegisterMessage("ข้อมูลสมัครสมาชิกยาวเกินกำหนด", "error");
+    return;
+  }
+
+  if (!/^[^\s@]+@email\.kmutnb\.ac\.th$/.test(email)) {
     setRegisterMessage("กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th", "error");
     return;
   }
@@ -100,6 +110,7 @@ registerForm.addEventListener("submit", async (event) => {
 
   setButtonLoading(registerSubmitBtn, true, "กำลังสมัครสมาชิก...", "สมัครสมาชิก");
 
+  let registered = false;
   try {
     const result = await registerStudent({
       student_id: studentId,
@@ -109,6 +120,7 @@ registerForm.addEventListener("submit", async (event) => {
       password,
     });
 
+    registered = true;
     setRegisterMessage(result.message || "สมัครสมาชิกสำเร็จ", "success");
     showToast(result.message || "สมัครสมาชิกสำเร็จ", "success", { duration: 1800 });
 
@@ -118,15 +130,15 @@ registerForm.addEventListener("submit", async (event) => {
       window.location.href = "/login.html";
     }, 1500);
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
+    console.error("REGISTER ERROR:", { status: error.status ?? null });
     showToast(error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก", "error");
 
     setRegisterMessage(error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก", "error");
   } finally {
-    isSubmitting = false;
-    registerForm.setAttribute("aria-busy", "false");
+    isSubmitting = registered;
+    registerForm.setAttribute("aria-busy", String(registered));
     setButtonLoading(registerSubmitBtn, false, "กำลังสมัครสมาชิก...", "สมัครสมาชิก");
-    registerSubmitBtn.disabled = false;
+    registerSubmitBtn.disabled = registered;
 
     registerSubmitBtn.innerHTML = `
       <i class="fa-solid fa-user-plus"></i>

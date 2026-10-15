@@ -42,7 +42,7 @@
 .recruit-page .recruit-section__eyebrow,
 .recruit-page .recruit-job-card__eyebrow {
   color: var(--primary);
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -189,7 +189,7 @@
 .recruit-page .recruit-work-modes__options input { width: 16px; min-height: 16px; accent-color: var(--primary); }
 
 .recruit-page .recruit-turnstile { margin-top: 22px; padding: 20px; border: 1px solid #bdd7f5; border-radius: 13px; background: #f5f9ff; }
-.recruit-page .recruit-turnstile strong { display: block; color: #1c4f87; font-family: "Sarabun", sans-serif; }
+.recruit-page .recruit-turnstile strong { display: block; color: #1c4f87; font-family: var(--app-font-family); }
 .recruit-page .recruit-turnstile p { margin-top: 2px; color: #4a6b8d; font-size: 0.84rem; line-height: 1.5; }
 .recruit-page .recruit-turnstile__widget { min-height: 65px; margin-top: 14px; }
 .recruit-page .recruit-turnstile__status { min-height: 1.2rem; margin-top: 8px !important; color: #b42318 !important; }
@@ -278,7 +278,7 @@
 .recruit-verification-card h1 {
   margin: 0;
   color: var(--text);
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
   font-size: clamp(1.45rem, 4vw, 1.85rem);
 }
 

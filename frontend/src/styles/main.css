@@ -3,6 +3,8 @@
    Shared styles: variables, reset, navbar, footer
    ========================================= */
 
+@import url("/fonts/th-sarabun-new/fonts.css");
+
 :root {
   --primary: #1450a3;
   --primary-dark: #0f3d82;
@@ -36,7 +38,9 @@ body {
   flex-direction: column;
   background: var(--bg);
   color: var(--text);
-  font-family: "Noto Sans Thai", sans-serif;
+  font-family: var(--app-font-family);
+  /* Keep the existing size hierarchy while matching readable text proportions. */
+  font-size-adjust: 0.5;
 }
 
 h1,
@@ -45,7 +49,12 @@ h3,
 h4,
 button,
 .brand {
-  font-family: "Sarabun", sans-serif;
+  font-family: var(--app-font-family);
+}
+
+/* Icon glyphs keep their own metrics. SVG icons are unaffected. */
+.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands {
+  font-size-adjust: none;
 }
 
 a {
@@ -54,8 +63,13 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+}
+
+@media print {
+  body, input, select, textarea, button { font-family: var(--app-font-family); }
 }
 
 button {
@@ -145,7 +159,7 @@ button.is-loading::before {
 .app-toast--error .app-toast__icon::after { content: "×"; }
 .app-toast--warning .app-toast__icon::after { content: "!"; }
 
-.app-toast__message { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+.app-toast__message { min-width: 0; margin: 0; font-size: 0.9rem; line-height: 1.45; overflow-wrap: anywhere; }
 
 .app-toast__close {
   position: absolute;
@@ -172,15 +186,20 @@ button.is-loading::before {
   background: rgba(16, 24, 40, 0.48);
   pointer-events: auto;
   animation: app-fade-in 180ms ease-out;
+  overflow-y: auto;
 }
 
 .app-confirm-modal {
+  min-width: 0;
   width: min(100%, 430px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   padding: 28px;
   border-radius: 16px;
   background: #ffffff;
   box-shadow: 0 20px 50px rgba(16, 24, 40, 0.22);
   animation: app-scale-in 200ms ease-out;
+  overflow-wrap: anywhere;
 }
 
 .app-confirm-modal__icon {

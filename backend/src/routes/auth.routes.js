@@ -18,6 +18,7 @@ const studentLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, sta
 router.post("/register", studentLoginLimiter, registerStudent);
 
 router.post("/login", studentLoginLimiter, loginStudent);
+router.post("/unified-login", studentLoginLimiter, require("../controllers/unifiedAuth.controller").createUnifiedLoginHandler());
 
 router.get("/me", authenticateToken, getCurrentStudent);
 

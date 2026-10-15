@@ -23,6 +23,7 @@ function createGoogleAuthController({ service = createGoogleAuthService(), confi
   }
   return { configuration: handler("configuration"), challenge: handler("challenge", ["role", "purpose"]),
     login: handler("authenticate", ["role", "purpose", "credential", "requestId", "requestToken", "email", "password"]),
+    confirmLink: handler("confirmLink", ["confirmationToken"]),
     onboard: handler("onboard", ["role", "purpose", "credential", "requestId", "requestToken", "student_id", "first_name", "last_name"]) };
 }
 module.exports = { createGoogleAuthController };

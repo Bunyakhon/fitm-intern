@@ -29,6 +29,12 @@ exports.registerStudent = async (req, res) => {
       });
     }
 
+    // Match the existing Student model policy before querying duplicate records.
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@email\.kmutnb\.ac\.th$/.test(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: "กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th ที่ถูกต้อง" });
+    }
+
     // ตรวจอีเมลซ้ำ
     const existingEmail = await Student.findOne({
       where: {

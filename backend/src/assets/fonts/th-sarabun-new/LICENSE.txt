@@ -1,0 +1,35 @@
+Copyright (c) 2010-2011 by Software Industry Promotion Agency (Public Organization) (SIPA). All rights reserved.
+
+Created by : Suppakit CHALERMLARP.
+
+This font is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+
+
+This font is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+
+
+You should have received a copy of the GNU General Public License along with this font; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+
+As a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.
+
+Source: https://www.f0nt.com/release/th-sarabun-new/
+Archive: https://www.f0nt.com/?dl_name=sipafonts%2FTHSarabunNew.zip
+Original unmodified Version 1.35 binaries; SHA-256:
+THSarabunNew Bold.ttf  49596f298a8fe248c5340b4589b3b4adfcf34a3e24084ebeb4f49c6600f75fa7
+THSarabunNew BoldItalic.ttf  64a69cbeca6d34dc754a7ab2106615c14fbd359d339ed0f65d2a7b17de14cdfa
+THSarabunNew Italic.ttf  341b9b5d13b696f74c6318d32bbae7ff183e6bdc07ef3ca1a6f9c5dd83c6494b
+THSarabunNew.ttf  b248f824f3d7a8576bc396826a4d898070c1420564f6ce6aa716aa8ad24f824a
+
+WOFF2 derivatives for generated documents: converted with fontTools 4.67.0 / Brotli 1.2.0.
+TrueType hint instructions removed; all glyphs, outlines, cmap and advance metrics preserved and verified against the original TTFs above.
+GPL-2.0-or-later and the same font-embedding exception apply to these derivatives.
+Original TTF sources remain distributed in this directory. No font files are sold separately.
+SHA-256 for document derivatives:
+THSarabunNew Bold.woff2  fa286c6d2ea4b64903137fd8c914efd713bc51a29f6b8ba3017271c04e095e10
+THSarabunNew BoldItalic.woff2  9ce23195deef3b47117f9b26912d15daa35aa6737f12de6dc892f4a04b517477
+THSarabunNew Italic.woff2  3c413500e1a67cfea6b4b722a29f772325287c4db5412dc25f5acbef9371db0a
+THSarabunNew.woff2  7f0ed49c0dff7d47bdf5c2b4cbde3d672bd1d3230f637ba226486938109ba347

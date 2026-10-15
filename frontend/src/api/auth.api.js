@@ -1,5 +1,9 @@
 import { apiRequest } from "./client.js";
 
+export function loginAccount(data) {
+  return apiRequest("/api/auth/unified-login", { method: "POST", body: data, auth: false });
+}
+
 export function loginStudent(data) {
   return apiRequest("/api/auth/login", {
     method: "POST",

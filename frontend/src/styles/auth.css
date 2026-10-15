@@ -39,6 +39,8 @@
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 18px;
+  /* Keep form rhythm independent of the bundled font's normal line metrics. */
+  line-height: 1.5;
   box-shadow: var(--shadow-md);
   animation: auth-enter 420ms ease-out both;
 }
@@ -69,7 +71,9 @@
    GOOGLE BUTTON
    ========================================= */
 
-.btn-google {
+.btn-google,
+.google-login__retry,
+.google-login__cancel {
   width: 100%;
   min-height: 48px;
   padding: 11px 16px;
@@ -83,10 +87,13 @@
   color: #344054;
   font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.5;
   transition: 0.2s ease;
 }
 
-.btn-google:hover {
+.btn-google:hover:not(:disabled),
+.google-login__retry:hover:not(:disabled),
+.google-login__cancel:hover:not(:disabled) {
   border-color: #b7c4d8;
   background: #f8fafc;
 }
@@ -144,6 +151,14 @@
   font-weight: 600;
 }
 
+.google-login__link label {
+  display: block;
+  margin: 18px 0;
+  color: #344054;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 /* =========================================
    INPUT
    ========================================= */
@@ -194,6 +209,28 @@
 
 .input-icon-wrapper input::placeholder {
   color: #98a2b3;
+}
+
+.google-login__link input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  margin-top: 7px;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: 0.2s ease;
+}
+
+.google-login__link input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(20, 80, 163, 0.08);
 }
 
 /* =========================================
@@ -306,7 +343,8 @@
    SUBMIT BUTTON
    ========================================= */
 
-.btn-submit {
+.btn-submit,
+.google-link-confirmation .app-confirm-modal__confirm {
   width: 100%;
   height: 48px;
   display: flex;
@@ -323,7 +361,8 @@
   transition: 0.2s ease;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled),
+.google-link-confirmation .app-confirm-modal__confirm:hover:not(:disabled) {
   background: var(--primary-dark);
   transform: translateY(-1px);
 }
@@ -435,8 +474,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .google-login { margin: 20px 0; min-width: 0; }
+.login-page #googleLogin .btn-google[hidden] { display: none; }
 .google-login__button { display: flex; justify-content: center; overflow: hidden; }
-.google-login__link label { display: block; margin: 12px 0; }
-.google-login__link input { display: block; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
-.google-login__link p { font-size: 0.9rem; }
-.google-login__retry, .google-login__cancel { padding: 8px 12px; margin-top: 8px; border-radius: 8px; cursor: pointer; }
+.google-login__link p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+.google-login__retry, .google-login__cancel { margin-top: 18px; }
+.google-login__retry[hidden], .google-login__link[hidden] { display: none; }
+.google-login .login-message[role="alert"] { color: #d92d20; background: #fff1f0; }
+.login-message, .register-message, .google-login__link { overflow-wrap: anywhere; }
+
+.google-link-confirmation .app-confirm-modal__icon { color: var(--primary); background: var(--primary-soft); }
+.google-link-confirmation .app-confirm-modal__confirm { width: auto; flex: 1; }
+.google-link-confirmation #appConfirmMessage { white-space: pre-line; }

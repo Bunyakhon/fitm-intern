@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: "Sarabun", "Noto Sans Thai", Tahoma, sans-serif;
+  font-family: var(--app-font-family);
   color: #172033;
   background: #f3f7fc;
 }

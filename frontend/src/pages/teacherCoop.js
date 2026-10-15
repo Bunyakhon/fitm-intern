@@ -1,3 +1,4 @@
+import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { getCurrentTeacher, getTeacherAdvisorRequests, decideTeacherAdvisorRequest, TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showConfirmModal, showToast, setButtonLoading } from "../ui/feedback.js";
 
@@ -165,9 +166,9 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
   });
   get("teacherPrevious").addEventListener("click", async () => { if (fetching || submitting || modalOpen || offset === 0) return; offset -= PAGE_SIZE; await refresh(); });
   get("teacherNext").addEventListener("click", async () => { if (fetching || submitting || modalOpen || !hasNext) return; offset += PAGE_SIZE; await refresh(); });
-  get("teacherLogout").addEventListener("click", () => { storage.removeItem(TEACHER_TOKEN_KEY); location.replace("/teacher-login.html"); });
+  get("teacherLogout").addEventListener("click", () => { storage.removeItem(TEACHER_TOKEN_KEY); location.replace("/login.html"); });
   const ready = (async () => {
-    if (!storage.getItem(TEACHER_TOKEN_KEY)) { location.replace("/teacher-login.html"); return; }
+    if (!storage.getItem(TEACHER_TOKEN_KEY)) { location.replace("/login.html"); return; }
     say("กำลังตรวจสอบผู้ใช้งาน...");
     try {
       const result = await me();
@@ -184,4 +185,4 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
   return { ready, refresh };
 }
 
-if (typeof document !== "undefined") mountTeacherCoop({ document, storage: sessionStorage, location: window.location });
+if (typeof document !== "undefined") mountTeacherCoop({ document, storage: roleSessionStorage, location: window.location });

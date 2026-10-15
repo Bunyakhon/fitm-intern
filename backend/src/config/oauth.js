@@ -29,12 +29,14 @@ function getGoogleConfig(env = process.env) {
 }
 function checkGoogleIdentity(payload, config, role) {
   const deny = code => { throw Object.assign(new Error("Google account is not authorized"), { status: 403, code }); };
-  if (!ROLES.includes(role)) deny("GOOGLE_ROLE");
+  // An automatic login checks global identity policy before resolving a DB
+  // mapping, then repeats this check with the actual authorized role.
+  if (role !== undefined && !ROLES.includes(role)) deny("GOOGLE_ROLE");
   if (typeof payload?.sub !== "string" || !payload.sub || payload.sub.length > 255 || payload.email_verified !== true) deny("GOOGLE_IDENTITY");
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+$/.test(email)) deny("GOOGLE_IDENTITY");
   const domain = email.split("@")[1];
-  if (!config.allowedDomains.has(domain) || !config.roleDomains[role].has(domain)) deny("GOOGLE_DOMAIN");
+  if (!config.allowedDomains.has(domain) || (role !== undefined && !config.roleDomains[role].has(domain))) deny("GOOGLE_DOMAIN");
   if (config.policy === "required" && (typeof payload.hd !== "string" || !config.hostedDomains.has(payload.hd.toLowerCase()))) deny("GOOGLE_HOSTED_DOMAIN");
   return { subject: payload.sub, email, nonce: payload.nonce, hostedDomain: payload.hd };
 }

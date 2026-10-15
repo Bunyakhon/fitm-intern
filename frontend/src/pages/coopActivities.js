@@ -1,8 +1,9 @@
 import * as api from '../api/coopActivities.api.js';
+import { roleSessionStorage } from '../auth/roleAuthStorage.js';
 import { getCurrentStaff } from '../api/staffDocuments.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
 import { bangkokLocal, monthRange, calendarDays, node, renderActivity, statusLabels, activityDate } from './coopActivityView.js';
-export function mountCoopActivities({ document, container, staff = false, services = api, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading, storage = staff ? sessionStorage : localStorage } = {}) {
+export function mountCoopActivities({ document, container, staff = false, services = api, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading, storage = staff ? roleSessionStorage : localStorage } = {}) {
   if (!container) return;
   container.classList.add('activity-widget');
   container.innerHTML = `<div class="teacher-heading"><div><h2>ปฏิทินกิจกรรม</h2><p>กิจกรรมสหกิจศึกษา · วันเวลาประเทศไทย (Asia/Bangkok)</p></div><button id="activityRefresh" type="button" class="teacher-button">รีเฟรช</button></div>

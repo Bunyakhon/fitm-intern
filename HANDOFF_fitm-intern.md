@@ -1,5 +1,151 @@
 # FITM-INTERN PROJECT HANDOFF
 
+## CURRENT HANDOFF — Frontend UI Recovery / Preserve TH Sarabun New — 2026-10-15
+
+**วันที่อัปเดต: 15 ตุลาคม 2026 (Asia/Bangkok).** งานที่ได้รับมอบหมาย: คืน Presentation เดิมทั้ง Frontend โดยรักษา TH Sarabun New และฟังก์ชันใหม่; ปรับ Google Linking UI พร้อม focused UI verification/build. คำสั่งใหม่อนุญาต headless UI checks ในงานนี้ แต่คำสั่งหยุด real-account/Google Provider/Remember Me E2E ใน Final Audit ด้านล่างยังคงใช้. ไม่ขอ credentials ไม่ Login/สมัครจริง ไม่เรียก Provider ไม่แตะ Backend/Database/Models/NLP/PDF/env/flags/policy และไม่ Commit/Push/Reset/Clean.
+
+### Original Design Preservation / งานที่เสร็จจริง
+
+- อ่าน Source/Diff/History และเทียบ `25d5887` (Login เดิมพร้อม Google Button/Header/Logo) กับ `523c294` (หน้าล่าสุดก่อน Global Font/Unified Login). Header/Branding/สี/Background/Layout/Spacing ของ Login/Register ยังอยู่; ไม่คัดลอกไฟล์เก่าทับ ไม่คืน role links/Role Selector และไม่เปลี่ยน HTML IDs/เมนู/ข้อมูล. คง Google เหนือฟอร์มและ Unified Login ตามข้อตกลงล่าสุด.
+- ตรวจ CSS อื่นครบสิบไฟล์เทียบ `523c294`: index/Chatbot, Student/Dashboard/Profile, Teacher, Staff documents, Mentor, Company/recruit, activities, internship และ supervision มี Layout/Color/Component declarations เดิมครบ เมื่อ normalize เฉพาะ font-family. จึงรักษาหน้าเหล่านี้ ไม่ออกแบบใหม่หรือแก้ business workflows. ไม่อ้างว่า HTML ทั้งหมดตรง revision เก่า เพราะมีฟังก์ชันใหม่ที่ต้องเก็บ.
+- ใช้ปุ่ม Google เดิมร่วมกับ retry/cancel: สี ขอบ 10px Hover/Disabled/Loading สอดคล้องกัน; ช่อง Linking 48px พร้อม label gap/focus ring ตรงฟอร์มเดิม. ปรับ line-height เฉพาะ auth-card/ปุ่มเพื่อรักษาจังหวะฟอร์มเมื่อใช้ฟอนต์ใหม่; ปุ่ม Linking ที่ตรวจครั้งแรกสูง 53px กลับเป็น 48px แล้ว. ไม่แก้ validation/Register API/password/session logic.
+- Google confirmation ใช้ Shared Modal เดิมและเพิ่ม class เฉพาะ Presentation: action สี primary/icon primary-soft, ข้อความหลายบรรทัดผ่าน CSS แทน inline style; คง preview/receipt/confirmation/cancel/expiry/security flow. SHA-256 ของ googleLogin.js เมื่อแทนบรรทัด class กลับเป็น inline style เดิมตรง baseline: เป็น JS change เฉพาะ Presentation หนึ่งบรรทัด.
+- Shared Modal/Toast ห่อข้อความยาวและรองรับ scrolling เมื่อ Modal สูงเกิน viewport โดยรักษาสี/ขนาด/spacing/animation/breakpoints เดิม; error เช่น “Unable to connect to the server” ยังคงแสดงจริง ไม่ซ่อนหรือแปลเป็น success. TH Sarabun New/assets/license/shared font configuration/font-size-adjust/icon declarations/SVG คงเดิม; PDF ไม่อยู่ในขอบเขต.
+
+### ผลตรวจรอบ UI Recovery (หลักฐานใหม่เฉพาะขอบเขตนี้)
+
+| รายการ | สถานะ / หลักฐาน |
+| --- | --- |
+| Original UI Recovery | **PARTIAL** — Source/history comparison ยืนยันโครง/สี/องค์ประกอบเดิม; แก้ส่วน Linking ที่ต่างให้ใช้ styles เดิม. ไม่ยืนยันภาพตรงต้นฉบับทุก pixel หรือทุกหน้าที่มีข้อมูลจริง |
+| Login / Register UI | **PASS focused headless UI** — ที่ 1280/390/320 px ฟอนต์โหลด/controls family ตรง, Card/Form ไม่ล้น, Google เหนือฟอร์ม/ไม่มี selector, Password toggle ผ่าน. Register business logic/markup ไม่ถูกแก้; ไม่ทดสอบสมัครจริง |
+| Google Linking CSS / Shared Feedback | **PASS UI fixtures** — input/retry/cancel 48px/10px; hidden retry ยัง display:none; loading/disabled/aria-busy ผ่าน; Modal ข้อความ email ยาว/action primary/error และ Toast ไม่ล้นที่สามขนาด. ใช้ confirm stub ที่คืน network error ไม่เขียน mapping/ออก session. Provider iframe จริงยัง **NOT TESTED** |
+| Dashboard / Mentor / Company / Public / Chatbot | **PASS static layout เฉพาะสิบหน้าที่ตรวจ** — รวม Login/Register/Home, Dashboard สี่บทบาท, Mentor, Company/recruit และ verification page; ที่สามขนาดไม่มี page horizontal overflow. Chat window ที่เปิดด้วย fixture อยู่ใน viewport. Protected/public role pages ปิด scripts จึงไม่ข้าม RBAC; dynamic tables/tabs/dropdowns/data/role workflows ทุกสถานะยัง **NOT TESTED** และ overall acceptance **PARTIAL** |
+| TH Sarabun New | **PASS browser/static** — local font โหลดในสิบหน้าและ computed font ของ text controls/table/Modal/Toast ตรง; hashes ของ assets คงเดิม. ไม่ดัดแปลง Google iframe หรือ icon fonts. External icon CDN ถูกกันใน fixture จึงไม่ยืนยันการโหลด CDN จริง |
+| Frontend Build / CSS Compilation / JS Syntax | **PASS รอบนี้** — `npm.cmd run build -- --configLoader native` จาก frontend: 133 modules; `node --check src/pages/googleLogin.js` และ diff whitespace ผ่าน. การเริ่ม Vite ครั้งแรกใน sandbox ด้วย bundled config ล้มเหลว EPERM/native-addon config loading; ใช้ native loader พร้อมสิทธิ์รัน subprocess แล้วผ่าน โดยไม่แก้ vite.config.js/package scripts |
+| Console / Network boundary | **PASS เฉพาะ fixture** — final Login/Register fixture ไม่มี runtime exception/console.error ใหม่; ไม่มี challenge/login/link/confirm API calls หรือ Provider calls. Mock disabled config เป็นการแยก UI test ไม่ได้ปิด Development flags จริง |
+
+### ฟังก์ชันที่รักษา / ปัญหาค้าง / งานถัดไป
+
+คง Unified Login/Automatic Actor Detection/Dashboard redirect, Google OAuth/secure linking/mapping guards, JWT/live RBAC/storage/Remember Me/Logout/cross-tab/drafts, Register validation/duplicate handling/hash/feedback/redirect, Profile Phase 1–5 และ Dashboard/Mentor/Company workflows/Model-driven DB เดิม. ไม่มี Backend/PDF/NLP/env change. Google E2E/Mapping/Register จริง/Remember Me เปิด/Teacher-Head-Staff จริงยังใช้สถานะจำกัดตาม Final Audit ด้านล่าง ไม่ยก UI PASS เป็น Auth PASS.
+
+ปัญหาค้าง: สาเหตุ Google network error เดิมยังไม่ยืนยันและอยู่นอกงาน UI; ไม่มีภาพแนบก่อนหน้าสำหรับเทียบทุก pixel. Browser อื่น/physical mobile/ข้อมูลจริง/Google GIS จริง/ทุกสถานะ dynamic/short viewport acceptance ยัง NOT TESTED. ผล Company 320px overflow ใน snapshot เก่าไม่ใช่ผลรอบนี้: static fixture รอบนี้ไม่มี page overflow ภายใต้ headless/local assets/blocked external resources; ไม่ยืนยันว่า environment เดิมหรือทุก runtime state ถูกแก้. งานถัดไปเมื่อได้รับมอบหมายใหม่: visual acceptance พร้อมข้อมูลจริงและ dynamic states, Google network/root cause/secure linking E2E ตาม scope/policy ที่อนุญาต. ไม่เริ่มต่อเอง.
+
+### Files Changed / Git Before–After
+
+รอบนี้แก้เพียง **4 ไฟล์:** `frontend/src/styles/auth.css`, `frontend/src/styles/main.css`, `frontend/src/pages/googleLogin.js` (Presentation class หนึ่งบรรทัด) และ `HANDOFF_fitm-intern.md`; ไม่มีเพิ่ม/ลบ. หน้าได้รับผล: Login/Register/Google Linking และ Shared Modal/Toast ในทุกหน้า; หน้าอื่นตรวจและรักษา styles เดิม. Git ก่อน/หลังยัง **42 modified / 24 untracked รายไฟล์ / 0 deleted** (9 untracked entries แบบรวม directory). Hash comparison ก่อนอัปเดต Handoff พบเฉพาะสามไฟล์ Frontend ข้างต้นเปลี่ยนจาก baseline; Backend/README/assets/auth/session/Register/role workflows และงานค้างอื่นคงเดิม. หลังเพิ่ม section นี้ตรวจ Diff/UTF-8/status อีกครั้ง; ไม่มี Test Files/Audit Reports/Screenshots เพิ่ม และ build artifacts อยู่ใน ignored dist. ประวัติเดิมด้านล่างคงครบ.
+
+## CURRENT HANDOFF — STOP E2E LOOP & FINAL AUDIT — 2026-10-15
+
+**วันที่อัปเดต: 15 ตุลาคม 2026 (Asia/Bangkok).** งานที่ได้รับมอบหมาย: หยุด Google OAuth/Remember Me/Chrome E2E และสรุปจากหลักฐานเดิมกับ Source/Git Diff เฉพาะงานล่าสุด. รอบนี้อ่านไฟล์และ Git เท่านั้น; แก้เฉพาะ Handoff นี้ ไม่แก้ Source/README/env ไม่เปิด Browser ไม่เรียก Provider/HTTP/Database ไม่รัน build/tests และไม่สร้างบัญชี/mapping/evidence/report. **คำสั่งหยุดนี้แทนที่ขั้นขอให้ผู้ใช้ Login พร้อม Remember Me=true และแผนทดสอบต่อใน snapshot 14 ต.ค. ด้านล่าง; ไม่รอผู้ใช้ Login และไม่เริ่มต่อใน Session นี้.** ประวัติเดิมยังคงครบ.
+
+### Final Audit Summary — หลักฐานเดิม ไม่ใช่ผลทดสอบใหม่
+
+| รายการ | สถานะ / ขอบเขตหลักฐาน |
+| --- | --- |
+| Google Login Configuration / Development Flags | **PASS เฉพาะ Development** — อ่านสอง flags ปัจจุบันเป็น true ตรงการอนุมัติเดิม; หลักฐาน runtime 14 ต.ค. config 200 enabled/linkingEnabled=true, onboardingEnabled=false. รอบนี้ไม่เปลี่ยน flags/ตรวจ runtime ซ้ำ; ไม่ยืนยัน Production |
+| Google Provider Verification | **PARTIAL** — synthetic RSA/JWKS/signature/claims/nonce guards PASS และ runtime invalid credential ถูกปฏิเสธ; ผู้ใช้เคยลอง Provider ถึง GOOGLE_LINK_REQUIRED แต่มี network error บางรอบ. ไม่มีหลักฐาน Provider flow สำเร็จครบ; mock/synthetic ไม่ใช่ real-provider acceptance |
+| Google Identity Mapping จริง | **NOT TESTED สำหรับ mapping สำเร็จ** — จำนวนล่าสุดที่บันทึกคือ **0**; ไม่อ่าน DB ซ้ำ ไม่สร้าง mapping และไม่มีหลักฐาน link-confirm persist จริง |
+| Secure Account Linking | **PARTIAL** — Source มี preview/Shared Modal/explicit confirm, HMAC receipt อายุสองนาที, transaction/replay/live ownership/policy/conflict guards; synthetic/browser mock PASS. ยังไม่ยืนยันการผูกบัญชีจริงหรือ session ที่ได้จากการผูก |
+| Google Login → Student Dashboard E2E | **PARTIAL** — ยังไม่ครบ linking → logout → Google login → Application JWT → Dashboard/RBAC. **ห้ามรายงาน PASS** เมื่อ mapping ล่าสุดเป็น 0 และไม่มีหลักฐานสำเร็จครบวงจร |
+| Email/Password Login E2E | **PASS เฉพาะ Student หนึ่งบัญชีตามหลักฐานเดิม** — Dashboard, JWT/identity, /api/auth/me 200, wrong-role APIs 403, missing token 401, reload recovery และ Logout. ไม่ยืนยันทั้งระบบหรือทุกบทบาท; expiry 401 เป็น synthetic แยกต่างหาก |
+| Remember Me ปิด | **PASS เฉพาะ Student จริงหนึ่งบัญชี** — session storage ไม่มี persistent token, reload recovery และ Logout ผ่านตามบันทึกเดิม |
+| Remember Me เปิด / cross-tab บัญชีจริง | **NOT TESTED** — มี synthetic/mock coverage เดิมเท่านั้น; ไม่ทดสอบซ้ำและไม่ขอ credentials เพิ่ม |
+| Teacher / Department Head / Department Staff | **NOT TESTED ด้วยบัญชีจริง** — ทั้ง Email/Password และ Google E2E; synthetic/mock ไม่แทน real accounts |
+| Register | **PARTIAL** — Source เชื่อม API/validation/72-byte password bound/duplicate-submit guard/feedback/redirect Login; browser mock และ synthetic controller/Student hashing hook PASS. ไม่ได้ persist registration จริง และไม่สร้าง session จาก Register |
+| TH Sarabun New — Global Web / Print-PDF | **PASS ตามขอบเขตเดิม** — local fonts สี่รูปแบบพร้อม license/shared CSS และ renderer ฝัง WOFF2 ตรง Source; browser/static font checks และสอง template Print-to-PDF ด้วย synthetic content ผ่าน. **PARTIAL ด้าน UI acceptance**; dynamic ทุกสถานะ/browser อื่น/physical mobile/printer/ทุก input ยัง NOT TESTED |
+| Frontend Build | **PASS ตามบันทึก 14 ต.ค.** — 133 modules; ไม่รันใหม่ใน Final Audit |
+| Backend / Database Health | **PASS ตามบันทึก 14 ต.ค.** — / และ /health/db HTTP 200; รอบนี้ไม่ตรวจ runtime/DB ใหม่ จึงไม่ยืนยัน health ณ เวลาปิด Session |
+| Google-only onboarding / ambiguous context | **BLOCKED ตาม policy เดิม** — onboarding รอนโยบาย; หลาย Actor ไม่มี safe context ต้อง 409 AUTH_CONTEXT_AMBIGUOUS ไม่เลือก/รวมสิทธิ์เอง |
+
+### ปัญหาค้าง / ขอบเขต / งานถัดไป (บันทึกเท่านั้น ไม่เริ่มทำ)
+
+- Google UI/network failures มีรายงานเดิมแต่ root cause ยังไม่ยืนยัน; mapping/link-confirm/Google session จริงยังไม่ผ่านครบ. การตรวจ Diff แบบจำกัดครั้งนี้ไม่พบข้อผิดพลาดสำคัญใหม่ที่ยืนยันได้ และไม่พบรายการเปลี่ยน Models/Schema/NLP/ไฟล์แอปลบในสถานะ Git; ไม่ถือเป็น full audit หรือรับรองว่าไม่มี bug.
+- **UI/CSS ต้องปรับกลับดีไซน์เดิมโดยรักษา TH Sarabun New** ตามคำสั่งล่าสุด. Diff ฟอนต์เปลี่ยน family/เพิ่ม font-size-adjust:0.5 ซึ่งไม่ใช่หลักฐานว่าดีไซน์ได้รับ acceptance; หลักฐานเดิม Company 320px overflow 13px เท่า baseline ยังเป็นข้อจำกัด. รอบนี้ไม่แก้ CSS. งานถัดไปให้เทียบ Source/Diff/Git history ก่อนกู้ Header/Branding/Layout/Spacing/Buttons โดยไม่ทับงานค้าง; คง Google เหนือฟอร์มและไม่มี Role Selector.
+- งานถัดไปเมื่อได้รับมอบหมายใหม่: หาสาเหตุ Google UI/network, ทำ secure linking/mapping และ Student Google E2E จริง; ตรวจ Remember Me เปิด/cross-tab และ Teacher/Head/Staff จริง; Register persistence acceptance และ UI/CSS acceptance โดยคงฟอนต์. ไม่สร้างบัญชีหรือให้สิทธิ์เพื่อให้ผ่าน ไม่เปิด flags/เปลี่ยน identity/domain/hd/linking policy เอง.
+- Workflow ต้องรักษา: Unified Login/Backend actor detection, secure subject mapping/explicit confirmation, JWT expiry/live RBAC/Remember Me/Logout/cross-tab/drafts, Register → Login, Student UUID/Profile เดิมและฟอนต์ในเอกสาร generated ใหม่. Model-driven PostgreSQL เดิม; ห้าม migration/reset/force sync. ไม่แตะ Mentor/Company business workflows หรือโมดูลถัดไป.
+
+### Git Status / ไฟล์ / ข้อจำกัดรอบ Final Audit
+
+ก่อนรอบนี้ **42 modified / 24 untracked รายไฟล์ / 0 deleted** (untracked แบบรวม directory 9 entries) ตรง snapshot ล่าสุด; เป็นงานค้างเดิมทั้งหมด รวม Unified Login/session wiring และ Google/Register/fonts. `backend/.env` ignored มี flags ที่อนุมัติเดิม จึงไม่รวมในตัวเลข. รอบนี้แก้เพิ่มเฉพาะ `HANDOFF_fitm-intern.md` แบบ UTF-8; ไม่มีไฟล์เพิ่ม/ลบ ไม่ Commit/Push/Reset/Clean และรักษา uncommitted changes ทุกไฟล์. รายชื่อไฟล์งานพัฒนาก่อนหน้าดูหัวข้อ “ไฟล์รอบนี้และ Git baseline” ใน snapshot ด้านล่าง; ไม่ถือเป็นการแก้ Source รอบ Final Audit.
+
+ผลตรวจเอกสารหลังแก้: UTF-8 readback/Diff ผ่าน; สถานะ Git หลังแก้ยัง **42 modified / 24 untracked รายไฟล์ / 0 deleted**. สถานะ PASS ทั้งหมดในตารางคือหลักฐานเดิมตามขอบเขตที่ระบุ ไม่ใช่ rerun; ไม่มี Browser/Provider/build/health/full regression ใหม่. **จบ Session หลังอัปเดต Handoff และตรวจ Diff/Encoding/สถานะ; ไม่ดำเนินงานถัดไป.**
+
+## CURRENT HANDOFF — Google Student E2E / Register / TH Sarabun New — 2026-10-14
+
+**วันที่อัปเดต: 14 ตุลาคม 2026 (Asia/Bangkok).** งานที่ได้รับมอบหมาย: เตรียม/เปิด Google Login และ secure linking เฉพาะ Development สำหรับ Student จริงหนึ่งบัญชี, ตรวจ Email/Password จริง, Register integration, Global TH Sarabun New และ Print/PDF พร้อม README/Handoff. ไม่มีการเปลี่ยน Models/Schema/Student Profile/เมนูหรือ Mentor/Company workflows นอกเหนือฟอนต์. ไม่รัน migration/init/reset/backup audit ไม่สร้างบัญชี และไม่ Commit/Push/Reset/Clean.
+
+### งานที่เสร็จและข้อตกลงล่าสุด
+
+- **Development flags เปิดตามการยืนยันผู้ใช้ในรอบนี้:** `GOOGLE_LOGIN_ENABLED=true`, `GOOGLE_ACCOUNT_LINKING_ENABLED=true` ใน `backend/.env` ซึ่ง Git ignore; recreate เฉพาะ Backend เพื่อโหลด env. มีผลร่วมสี่บทบาทตาม Source เดิมและได้แจ้งผลกระทบก่อนขอยืนยันแล้ว. แทนที่สถานะ flags=false ในประวัติเฉพาะ Development; กฎห้ามเปิดเอง/Production ยังคงเดิม. Domain allowlist เดิมไม่ถูกแก้ (global เดิม kmutnb.ac.th/email.kmutnb.ac.th); required Hosted Domain ยังคง email.kmutnb.ac.th. Config จริง 200 enabled/linkingEnabled=true, onboardingEnabled=false.
+- **Secure linking เพิ่มขั้น preview/explicit confirmation:** ตรวจ credentials จริง + verified Google ID token + nonce + domain/hd + mapping conflicts ก่อนคืนบัญชีเป้าหมายและ Google email. ยังไม่เขียน mapping หรือออก Application JWT ในขั้น preview. Shared Modal แสดงชื่อ/email/Student ID/role ก่อน `POST /api/auth/google/link/confirm`. Receipt สองส่วนที่เซ็น HMAC อายุสองนาที ไม่ใช่ Application JWT ไม่เก็บ password/Google ID token; ใช้ GoogleAuthRequest schema เดิมเก็บ hashes เพื่อป้องกัน replay. ยืนยันซ้ำ live actor/policy/target fingerprint/password-hash fingerprint/conflicts ภายใน transaction ก่อนเขียน mapping และออก session. UUID/Profile เดิมคงเดิม; multi-actor ambiguity ยัง 409. ปุ่ม Google เตรียม linking ให้อัตโนมัติเมื่อพบ GOOGLE_LINK_REQUIRED ลดขั้นกด retry ที่ผู้ใช้แจ้งว่าสับสน. ไม่ Auto-Link จาก email และ Google-only onboarding ยัง BLOCKED.
+- **Register:** เพิ่ม HTML maxlength, validation format/domain และ UTF-8 password 72-byte bound ให้ตรง Backend/bcrypt; คง required fields/defaults/unique constraints. Success ล็อก submit จน redirect `/login.html`; error/retry ใช้ feedback เดิมและ log เฉพาะ status. ไม่มี session/token ถูกสร้างจาก Register; ใช้ Unified Login หลังสมัครตามเดิม.
+- **Web font:** TH Sarabun New 1.35 สี่รูปแบบจากหน้าเผยแพร่ SIPA/f0nt.com ไม่ใช้ฟอนต์ Windows หรือ Sarabun แทน. ตรวจ embedded font metadata family/license/fsType=0 และแนบ copyright, GPL-2.0-or-later + embedding exception, upstream URL และ SHA-256. Shared fonts.css/--app-font-family ใช้ผ่าน main.css และ override declarations เดิม; ตัด external Google text-font links. font-size-adjust:0.5 รักษาสัดส่วนข้อความ โดย icon fonts ไม่ปรับ metrics. Diagnostic page ใช้ family เดียวกัน. ไม่แก้สี/header/logo/layout/spacing/buttons/menus.
+- **Print/PDF:** Source มี HTML renderer หนังสือขอความอนุเคราะห์/ส่งตัว + Browser Print/Save as PDF ไม่มี server PDF writer. ฝัง WOFF2 data fonts ผ่าน documentFonts.js/CSP font-src data: เพื่อ sandbox Blob/offline/Docker; renderer ใช้ TH Sarabun New. WOFF2 ตัดเฉพาะ hints พร้อมตรวจทุก glyph/outline/cmap/advance metrics เท่าต้นฉบับ; ต้นฉบับ TTF/ใบอนุญาต/รายละเอียดการแปลงเก็บคู่กัน. HTML ~124KB ผ่าน service limit 250KB เดิม (ไม่เพิ่มเพดาน). คง A4/12mm page margin/16mm print padding/grid/เนื้อหา/ธุรกิจ/history/hash. เอกสาร generated ที่เก็บไว้ก่อนหน้านี้ไม่ถูกเขียนใหม่; ฟอนต์ใหม่ใช้กับการ generate ใหม่ตาม workflow เดิม. NLP และ PDF uploads ไม่ถูกแก้.
+
+### ผลตรวจรอบนี้และข้อจำกัด
+
+ฟอนต์มาตรฐานนี้ครอบคลุมข้อความที่แอปควบคุม. ข้อความใน GIS iframe และ Google Provider popup ใช้รูปแบบที่ Google ควบคุม; ไม่ดัดแปลง iframe/branding ของ Provider เพื่อบังคับฟอนต์.
+
+| รายการ | สถานะและชนิดหลักฐาน |
+| --- | --- |
+| Google Student / Account Linking | **PARTIAL** — code/flags พร้อม; synthetic guards และ browser mock GIS/Modal ผ่าน. ยังไม่มี mapping จริงใน DB และยังตรวจ Application session จาก Google จริงไม่ได้ |
+| Student Google Provider E2E | **NOT TESTED จนครบ** — ผู้ใช้ลองจริง, browser UI เคยถึงขั้น GOOGLE_LINK_REQUIRED และมี network error บางรอบ; ยังไม่ผ่าน credentials/link-confirm/logout/Google-login/JWT/RBAC ครบ. ไม่อ้าง mock เป็น Provider E2E |
+| Student Email/Password E2E | **PARTIAL / real login ขั้นหลัก PASS หนึ่งบัญชี** — เจ้าของบัญชีกรอกเองผ่าน Chrome: Student Dashboard, HS256/Student JWT/expiry, /api/auth/me 200 และ identity ตรง/safe response, Teacher/Head/Staff 403, ไม่มี token 401, Remember Me=false (session storage ไม่มี persistent token), reload recovery และ Logout ล้าง session/local tokens ผ่าน. Expired signed JWT 401 ตรวจแยกแบบ synthetic ไม่ใช่รอ token จริงหมดอายุ. Remember Me=true และ cross-tab รอบบัญชีจริงยัง NOT TESTED. จำนวนบัญชีที่ตรวจ session จริงได้ 1 |
+| Teacher / Head / Staff Provider E2E | **NOT TESTED** — ไม่สร้างบัญชีเพิ่มเติม ไม่เปลี่ยน policy/implementation หลัก |
+| Auth focused checks | **PASS synthetic/mock** — actual RSA verifier กับ synthetic JWKS/signatures ตรวจ pinned URL/RS256/aud/iss/exp/nonce/algorithm; service ownership/domain/hd/nonce/replay/receipt tamper/expiry/credential change/target change/conflict/ambiguity/student UUID/JWT; browser mock GIS auto-link preparation/target modal/cancel/confirm/password clear. **PASS runtime guards** — browser AJAX challenge 200 และ invalid credential 401 GOOGLE_CREDENTIAL. ไม่ใช่ real login success |
+| Register | **PARTIAL** — browser mock API mismatch/UTF-8 bounds/duplicate/loading/retry/success guard/Login redirect PASS; synthetic controller + actual Student model hashing hook/safe response/defaults/unique-race handling PASS. ไม่ persist registration จริง |
+| Global font / Responsive | **PASS ในขอบเขต browser/static** — Chrome Login/Register/Home/Mentor/Company ฟอนต์โหลดและ input font ถูกต้อง, Font Awesome คงเดิม; Login Google เหนือฟอร์ม/no selector. 1280/390/320 ไม่มี overflow ยกเว้น Company 320: scrollWidth333 เท่ากับ baseline CSS. Dashboard สี่บทบาท static layout ที่สามขนาด PASS (ปิด scripts เพื่อไม่ข้าม RBAC). Dynamic tables/modal/dropdown/chatbot ทุกสถานะ, browser อื่นและ physical mobile NOT TESTED |
+| Google disabled compatibility | **PASS browser mock config** — ไม่โหลด Provider/challenge/login และยังมีปุ่ม/Shared Toast เมื่อ disabled. Actual flags เปิดแล้วตามอนุมัติ ไม่อ้างว่า actual disabled อยู่ |
+| Browser Print / generated PDF font | **PASS actual renderer + synthetic content** — Chrome Print-to-PDF สอง template และ PyMuPDF inspection/rendered previews: embedded THSarabunNew/THSarabunNew-Bold, Thai/diacritics อ่านได้ ไม่มี replacement glyph อยู่ใน A4/ขอบกระดาษ. จำนวนหน้า 1/2 เท่า baseline Tahoma PDFs; ไม่ยืนยันเอกสารราชการ official ที่ยังไม่อนุมัติ หรือทุก input ยาวสุด/physical printer |
+| Build / Runtime | **PASS** — final frontend build 133 modules; changed Backend/Frontend JS syntax; Backend / และ /health/db กับ NLP /health 200; Google config/challenge และ browser AJAX checks ตามข้างต้น. Build แรก sandbox subprocess EPERM แล้วรัน escalation ผ่าน. Docker Backend recreate เท่านั้น ไม่ rebuild images/แตะ volumes |
+
+**ปัญหาค้าง / ขั้นต่อไปของงานนี้:** ทดสอบ real Student Remember Me=true/cross-tab (false/recovery/Logout/protected APIs/unauthorized roles ผ่านแล้ว); ทำ credentials + Google + target confirmation ให้ได้ mapping แล้ว Logout/Google Login อีกครั้ง ตรวจ JWT/Student UUID/RBAC เทียบ fingerprint ที่เก็บเฉพาะในหน่วยความจำระหว่างงาน. ขณะนี้ UI/network failures มีบางรอบและยังไม่ได้ระบุ root cause; runtime health/browser AJAX path ผ่าน แต่ไม่เท่ากับ Provider acceptance. หลังตรวจ Email/Password จริงและ Logout ได้ขอให้เจ้าของบัญชี Login อีกครั้งพร้อม Remember Me=true; ยังรอขั้นนั้นผ่าน browser. ไม่บันทึกหรือพิมพ์ credentials/token. Google-only onboarding และ official templates/Production schema provisioning เป็นงานแยกที่ยังไม่ได้รับอนุมัติ ไม่เริ่มเอง.
+
+### ไฟล์รอบนี้และ Git baseline
+
+**Git หลังตรวจล่าสุด:** 42 modified / 24 untracked เมื่อแจกแจงรายไฟล์ (สถานะแบบรวม directory เป็น 9 untracked entries); 0 deleted. ไฟล์ใหม่รอบนี้ 18 รายการคือ documentFonts.js กับ font assets/ใบอนุญาต 17 รายการ; อีก 6 untracked เป็น baseline เดิม. Diff whitespace และ UTF-8 readback ผ่าน. รักษางานนอกขอบเขตและไม่มี Commit/Push. `backend/.env` เป็น ignored file จึงไม่อยู่ในตัวเลข Git.
+
+Baseline ก่อนเริ่ม **26 modified / 6 untracked**; รักษางาน Unified Login/RBAC/session adapters/AGENTS ที่ค้างเดิม. รอบนี้แก้ `README.md`, `HANDOFF_fitm-intern.md`, Backend `controllers/auth.controller.js`, `controllers/googleAuth.controller.js`, `routes/googleAuth.routes.js`, `services/googleAuth.service.js`, `services/coopDocumentTemplate.js`; Frontend `src/api/googleAuth.api.js`, `src/pages/googleLogin.js`, `src/pages/register.js`, `src/styles/main.css`, `student_coop.css`, `mentor.css`, `recruit.css`, `register.html`, `oauth-hd-diagnostic.html` และตัด Google text-font links เฉพาะ `index.html`, `login.html`, Student/Teacher/Head/Recruit HTML (รวม recruit_verify_email). เพิ่ม `backend/src/services/documentFonts.js`, `backend/src/assets/fonts/th-sarabun-new/` (TTF/WOFF2/ใบอนุญาต) และ `frontend/public/fonts/th-sarabun-new/` (TTF/CSS/ใบอนุญาต). ไม่มีไฟล์แอปที่ลบ. `backend/.env` เปลี่ยนเฉพาะสอง flags ที่ผู้ใช้อนุมัติ; ไม่พิมพ์ secrets. ไม่เก็บ automated suite/audit report ใหม่ใน repository; disposable probes ไม่ใช่ regression coverage.
+
+ประวัติด้านล่างคงไว้ทั้งหมด. ข้อตกลงหน้า Login เดียว/Google เหนือฟอร์ม/ไม่มี Role Selector, Remember Me/JWT/RBAC/Logout/cross-tab/draft protection และ Model-driven PostgreSQL เดิมยังต้องรักษา. สถานะ PASS จากงานเก่าไม่ใช่ผลตรวจใหม่อัตโนมัติ.
+
+## CURRENT HANDOFF — Repository Rules & Login UI Recovery — 2026-10-14
+
+**วันที่อัปเดต: 14 ตุลาคม 2026 (Asia/Bangkok).** งานที่ได้รับมอบหมาย: สร้างกฎประจำ Repository, บังคับการอัปเดต Handoff และรักษา Login UI เดิมพร้อม Unified Authentication. ใช้ [AGENTS.md](AGENTS.md) ที่ Root สำหรับกฎก่อนเริ่ม/แก้ Source/UI/Database/Git/การทดสอบ และรายการ Handoff บังคับสิบข้อก่อนจบงาน. Source ปัจจุบันเป็นหลักฐานของสิ่งที่ระบบทำได้; Handoff เป็นบริบทและประวัติ ไม่ใช่ผลทดสอบอัตโนมัติ.
+
+**งานที่เสร็จและไฟล์รอบนี้:** เพิ่ม `AGENTS.md`; แก้ `HANDOFF_fitm-intern.md` และ `frontend/login.html`. ไม่มีไฟล์ลบ. Header `ระบบจัดการสหกิจศึกษา`, โลโก้ `/images/logo_kiwi.png`, KIWI Branding, Card/Form/Footer และ CSS เดิมกู้คืนแล้วจากรอบ UI ก่อนหน้านี้ (`login.html`, `src/styles/auth.css`, `src/pages/googleLogin.js`); รอบนี้เปลี่ยนเฉพาะตำแหน่ง Google กลับเหนือฟอร์มและข้อความ Divider ตาม Git ต้นฉบับ. ไม่แก้ Backend, JavaScript/CSS, Dashboard หรือเมนูเพิ่มในรอบนี้.
+
+**ข้อตกลงตำแหน่ง UI ล่าสุด:** ผู้ใช้ยืนยันให้ Google อยู่ **เหนือฟอร์ม Email/Password** ตาม Git ต้นฉบับ แทนที่คำสั่งใต้ฟอร์มจากรอบก่อน. ตรวจ Header/Form/Footer/Divider จาก `git show HEAD:frontend/login.html` และปุ่ม/SVG/Styles เดิมจาก revision `25d5887`. Role links เดิมใน Git ถูกแทนด้วย Unified Login ตามข้อตกลง ไม่เพิ่ม Role Selector หรือออกแบบใหม่.
+
+### Login และ Workflow ที่ต้องรักษา
+
+- หน้า Login หลักเดียวคือ `frontend/login.html` สำหรับ Student, Teacher, Department Head, Department Staff; ไม่มี Role Selector/Dropdown/Tabs. หน้า Login เก่าทั้งสามคง redirect compatibility.
+- คง `POST /api/auth/unified-login`, Email/Password, Backend credential/status/actor detection, Application JWT และ Dashboard URLs เดิม. Head ตรวจ `Teacher.is_department_head` และ department จาก Database; ห้ามอนุมาน role จาก Email หรือ Frontend.
+- คง Remember Me, JWT expiry, live RBAC, Logout, cross-tab protection, session recovery และ draft keys เดิม. Credentials ที่ยืนยันได้หลายบัญชีหรือ Google subject ที่มีหลาย Actor โดยไม่มี safe context คง `409 AUTH_CONTEXT_AMBIGUOUS`; ไม่เลือก/รวม/ยกระดับสิทธิ์เอง.
+- Google ต้องมีปุ่มใน UI เสมอ. อ่าน `/api/auth/google/config`; disabled แสดง `ยังไม่เปิดใช้งาน` และกดแล้ว Shared Toast โดยไม่โหลด Provider หรือเรียก challenge/login. Enabled ใช้ GIS, verified ID token, nonce/request guards, secure subject mapping และ `role:auto` integration เดิม. ห้ามเปิด Login/Linking flags, Auto-Link จาก Email เพียงอย่างเดียว หรือเปลี่ยน domain/hosted-domain/identity/linking policy.
+- รักษา Student → Class Advisor → Department Head และความสัมพันธ์ Class/Project Advisor แยกกัน. ไม่แก้ Student Profile, Mentor/Company workflows, Dashboard/เมนู, Models/Constraints หรือ Database ในงานนี้. ไม่รัน migration/reset หรือ Commit/Push/Reset/Clean.
+
+### ผลตรวจและข้อจำกัด
+
+- **PASS รอบนี้:** Chrome headless ที่ 1280/390/320 px ไม่มี overflow, Google เหนือฟอร์มและแสดงจริง, Logo โหลดได้, Header/Branding/Form/Footer/Divider ตรง Git HEAD และไม่มี Role Selector. Google disabled แสดงสถานะ/Shared Toast โดยไม่มี Provider/challenge/login calls. Password visibility และ checkbox Remember Me ใช้งานได้.
+- **PASS รอบนี้ในระดับ mock/static/smoke:** จำลอง Google enabled โดยไม่เปิด flags ตรวจ GIS client/nonce, `role:auto`, request/credential exchange และ 409 recovery โดยไม่เปิด Linking. Backend `/` และ `/health/db` HTTP 200, Google config HTTP 200 `enabled:false`, Unified input ว่าง HTTP 400 `LOGIN_INPUT`; route/API/session logic คง Source เดิม. Frontend build 133 modules ผ่าน. ไม่สร้าง Automated Test Files หรือ Audit Reports.
+- **หลักฐานจากรอบก่อน ไม่ใช่ rerun รอบนี้:** synthetic password auth/JWT/RBAC/ambiguity/session tests ในหัวข้อ Unified Login ด้านล่าง; รอบ UI Recovery ตรวจ frontend Email/Password ด้วย mock responses ทั้งสี่บทบาทพร้อม Remember Me false/true และ mock GIS success ทั้งสี่บทบาท. ไม่ยกผลเหล่านี้เป็น real-account/provider E2E.
+- **NOT TESTED:** Login สำเร็จด้วยบัญชีจริง, Google Provider จริง, physical mobile และ Full Regression/Production. **BLOCKED เฉพาะกรณี:** หลายบัญชี/หลาย Actor โดยไม่มีนโยบาย safe context ต้องปฏิเสธ 409. ลืมรหัสผ่านเดิมยังไม่มี reset API; Shared Toast ให้ติดต่อผู้ดูแลระบบคงเดิม.
+- **งานต่อไป:** อ่าน AGENTS/Handoff ก่อนรับงานใหม่และอัปเดต Handoff ก่อนจบทุกงานที่เปลี่ยนฟังก์ชัน; real-account/Google Provider acceptance และนโยบาย context/reset-password เป็นงานแยกเมื่อได้รับมอบหมาย. ไม่เริ่มงานเหล่านั้นเองและไม่เปิด flags เพื่อทดสอบ.
+- **Git ก่อน/หลังรอบนี้:** ก่อนเริ่ม 26 modified / 5 untracked; หลังเพิ่ม AGENTS เป็น 26 modified / 6 untracked. รักษางานค้างเดิม; สถานะ Git/test/schema ในส่วนก่อนหน้านี้อ้างอิงรอบงานและวันที่ของแต่ละหัวข้อ.
+
+หัวข้อด้านล่างเก็บประวัติ Unified Login และ Database/feature acceptance เดิมไว้ครบ. คำสั่ง migration/runner และหัวข้อ CURRENT/NEXT ของ snapshot เก่าไม่ใช่คำสั่งให้เริ่มงานหรือผลตรวจปัจจุบัน; สถานะ Database ใช้ส่วน Model-driven Development วันที่ 2026-10-14 ประกอบ Source ล่าสุด.
+
+## CURRENT HANDOFF — Unified Login — 2026-10-14
+
+หน้า Login เดียว `/login.html` ไม่มี role selector; Backend ใช้ endpoint ใหม่ `POST /api/auth/unified-login` ตรวจ credentials จาก Students/Teachers/DepartmentStaffs แล้วคืน JWT, role/actor และ Dashboard URL เดิม. Head ใช้ Teacher flag `is_department_head` และตรวจ department. Endpoint เดิมทั้งหมดคงอยู่; หน้า Login เดิมสามหน้าเป็น redirect compatibility. Protected pages เปลี่ยนเฉพาะ session adapter/URL เข้าสู่ระบบ ไม่เปลี่ยนเมนูหรือ workflow.
+
+**PASS ในขอบเขตที่ตรวจ:** Frontend build 133 modules, changed JS syntax, synthetic email/password ทั้งสี่บทบาท, head flag/status/ambiguity, JWT signature/algorithm/expiry และ live RBAC guards, session/local storage/Remember Me/recovery/Logout/cross-tab revocation/stale logout/draft keys, synthetic Google subject mapping/domain/hosted-domain/replay/link ownership/conflict. Chrome headless บนหน้า Login จริงตรวจ 1280/390/320 px ไม่มี overflow, แสดง/ซ่อน password และ shared error feedback ผ่าน; หน้าเก่าทั้งสาม redirect ถูกต้อง. Backend/DB health และ Frontend HTTP 200; unauthorized role APIs 401, unified input ว่าง 400 และ Google disabled challenge 503. รันตรวจ inline โดยไม่สร้าง Test Files หรือ Audit Reports.
+
+**NOT TESTED:** Login สำเร็จด้วยบัญชีจริงและ Google Provider จริง. Google config จริงยัง `enabled:false` และไม่มีการแก้ environment flags. โหมด `role:auto` ใช้ Google implementation เดิม ตรวจ verified subject mapping ก่อนใช้ role policy จริง. **BLOCKED:** Google subject ที่มีหลาย Actor และ credentials ที่ยืนยันได้หลายบัญชีไม่มี safe default context จึงคืน `409 AUTH_CONTEXT_AMBIGUOUS` โดยไม่เลือกสิทธิ์เอง. ไม่เปลี่ยน identity/linking policy หรือสร้าง actor. ลิงก์ลืมรหัสผ่านเดิมเป็น placeholder ไม่มี reset API; ตอนนี้ใช้ shared feedback ให้ติดต่อผู้ดูแลระบบ.
+
+Remember Me รองรับทุก Actor ผ่าน generation/event เดียวเพื่อป้องกันบัญชีสลับข้ามแท็บ และคง token keys เดิม (`token`, `teacherToken`, `staffToken`) กับ JWT อายุเดิม. ข้อมูลร่างคงเดิม; Backend ตรวจ JWT และสิทธิ์จากฐานข้อมูลตาม middleware เดิม. ไม่มีการแก้ schema/Models/Student Profile, migration/reset หรือ Git commit/push. Git ก่อนเริ่มสะอาด; รายการเปลี่ยนแปลงเป็นงาน Login รอบนี้เท่านั้น. ส่วนสถานะ Database และข้อจำกัดงานอื่นด้านล่างคงเป็นหลักฐานเดิม.
+
 ## CURRENT HANDOFF — Model-driven Development Database — 2026-10-14
 
 วันที่อ้างอิง: **14 ตุลาคม 2026 (Asia/Bangkok)**. งานนี้ supersede สถานะ Database/migration/test commands ด้านล่าง; feature acceptance อื่นที่ไม่ได้รันใหม่ยังเป็นประวัติ.
