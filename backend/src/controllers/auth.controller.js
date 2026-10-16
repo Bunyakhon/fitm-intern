@@ -1,5 +1,8 @@
 const jwt = require("jsonwebtoken");
-const { Student } = require("../models");
+const { Student, sequelize } = require("../models");
+const { applicationSession } = require("../services/unifiedAuth.service");
+const { studentIdFromEmail } = require("../services/studentIdentity");
+const { MAX_PERSON_NAME_LENGTH, isThaiPersonName } = require("../validators/personName.validator");
 
 // ==============================
 // Register Student
@@ -8,7 +11,6 @@ const { Student } = require("../models");
 exports.registerStudent = async (req, res) => {
   try {
     const {
-      student_id,
       first_name,
       last_name,
       email,
@@ -18,9 +20,9 @@ exports.registerStudent = async (req, res) => {
     // ตรวจข้อมูลที่จำเป็น
     if (
       !req.body || Array.isArray(req.body) ||
-      Object.keys(req.body).some(key => !["student_id", "first_name", "last_name", "email", "password"].includes(key)) ||
-      [student_id, first_name, last_name, email, password].some(value => typeof value !== "string" || !value.trim()) ||
-      student_id.length > 255 || first_name.length > 255 || last_name.length > 255 || email.length > 254 ||
+      Object.keys(req.body).some(key => !["first_name", "last_name", "email", "password"].includes(key)) ||
+      [email, password].some(value => typeof value !== "string" || !value.trim()) ||
+      email.length > 254 ||
       password.length < 8 || Buffer.byteLength(password, "utf8") > 72
     ) {
       return res.status(400).json({
@@ -29,16 +31,26 @@ exports.registerStudent = async (req, res) => {
       });
     }
 
-    // Match the existing Student model policy before querying duplicate records.
+    for (const [name, label] of [[first_name, "ชื่อ"], [last_name, "นามสกุล"]]) {
+      if (!isThaiPersonName(name)) {
+        const message = typeof name === "string" && [...name.trim()].length > MAX_PERSON_NAME_LENGTH
+          ? `${label}ต้องมีความยาวไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ`
+          : `กรุณากรอก${label}เป็นภาษาไทยเท่านั้น`;
+        return res.status(400).json({ success: false, message });
+      }
+    }
+
+    // Derive the identifier on the server; never accept a client-supplied Student ID.
     const normalizedEmail = email.trim().toLowerCase();
-    if (!/^[^\s@]+@email\.kmutnb\.ac\.th$/.test(normalizedEmail)) {
-      return res.status(400).json({ success: false, message: "กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th ที่ถูกต้อง" });
+    const studentId = studentIdFromEmail(normalizedEmail);
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @email.kmutnb.ac.th" });
     }
 
     // ตรวจอีเมลซ้ำ
     const existingEmail = await Student.findOne({
       where: {
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
       },
     });
 
@@ -52,7 +64,7 @@ exports.registerStudent = async (req, res) => {
     // ตรวจรหัสนักศึกษาซ้ำ
     const existingStudentId = await Student.findOne({
       where: {
-        student_id: student_id.trim(),
+        student_id: studentId,
       },
     });
 
@@ -64,21 +76,22 @@ exports.registerStudent = async (req, res) => {
     }
 
     // สร้างนักศึกษาสหกิจ
-    const student = await Student.create({
-      student_id: student_id.trim(),
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-
-      track: "co_op",
-      status: "pending",
+    const session = await sequelize.transaction(async transaction => {
+      const student = await Student.create({
+        student_id: studentId,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: normalizedEmail,
+        password,
+        track: "co_op",
+        status: "pending",
+      }, { transaction });
+      return applicationSession(student, "student");
     });
 
     return res.status(201).json({
-      success: true,
+      ...session,
       message: "สมัครสมาชิกสำเร็จ",
-      data: student,
     });
   } catch (error) {
 

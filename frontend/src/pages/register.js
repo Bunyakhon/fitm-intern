@@ -1,9 +1,10 @@
 import { registerStudent } from "../api/auth.api.js";
 import { setButtonLoading, showToast } from "../ui/feedback.js";
+import { acceptLoginSession } from "../auth/loginSession.js";
+import { MAX_PERSON_NAME_LENGTH, isThaiPersonName } from "../validators/personName.js";
 
 const registerForm = document.getElementById("registerForm");
 
-const regStudentId = document.getElementById("regStudentId");
 const regFirstName = document.getElementById("regFirstName");
 const regLastName = document.getElementById("regLastName");
 const regEmail = document.getElementById("regEmail");
@@ -53,7 +54,6 @@ registerForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const studentId = regStudentId.value.trim();
   const firstName = regFirstName.value.trim();
   const lastName = regLastName.value.trim();
   const email = regEmail.value.trim().toLowerCase();
@@ -62,10 +62,17 @@ registerForm.addEventListener("submit", async (event) => {
 
   setRegisterMessage("");
 
+  for (const [name, label] of [[firstName, "ชื่อ"], [lastName, "นามสกุล"]]) {
+    if (!isThaiPersonName(name)) {
+      const message = [...name].length > MAX_PERSON_NAME_LENGTH
+        ? `${label}ต้องมีความยาวไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ`
+        : `กรุณากรอก${label}เป็นภาษาไทยเท่านั้น`;
+      setRegisterMessage(message, "error");
+      return;
+    }
+  }
+
   if (
-    !studentId ||
-    !firstName ||
-    !lastName ||
     !email ||
     !password ||
     !confirmPassword
@@ -89,13 +96,13 @@ registerForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if ([studentId, firstName, lastName].some(value => value.length > 255) || email.length > 254) {
+  if (email.length > 254) {
     setRegisterMessage("ข้อมูลสมัครสมาชิกยาวเกินกำหนด", "error");
     return;
   }
 
-  if (!/^[^\s@]+@email\.kmutnb\.ac\.th$/.test(email)) {
-    setRegisterMessage("กรุณาใช้อีเมลมหาวิทยาลัย @email.kmutnb.ac.th", "error");
+  if (!/^s[0-9]{13}@email\.kmutnb\.ac\.th$/.test(email)) {
+    setRegisterMessage("กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @email.kmutnb.ac.th", "error");
     return;
   }
 
@@ -113,13 +120,13 @@ registerForm.addEventListener("submit", async (event) => {
   let registered = false;
   try {
     const result = await registerStudent({
-      student_id: studentId,
       first_name: firstName,
       last_name: lastName,
       email,
       password,
     });
 
+    const destination = acceptLoginSession(result, { remember: false });
     registered = true;
     setRegisterMessage(result.message || "สมัครสมาชิกสำเร็จ", "success");
     showToast(result.message || "สมัครสมาชิกสำเร็จ", "success", { duration: 1800 });
@@ -127,7 +134,7 @@ registerForm.addEventListener("submit", async (event) => {
     registerForm.reset();
 
     setTimeout(() => {
-      window.location.href = "/login.html";
+      window.location.replace(destination);
     }, 1500);
   } catch (error) {
     console.error("REGISTER ERROR:", { status: error.status ?? null });

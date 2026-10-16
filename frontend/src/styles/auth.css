@@ -307,39 +307,6 @@
 }
 
 /* =========================================
-   REGISTER TERMS
-   ========================================= */
-
-.register-terms {
-  margin: 2px 0 22px;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  color: #475467;
-  font-size: 0.82rem;
-  line-height: 1.6;
-  cursor: pointer;
-}
-
-.register-terms input {
-  width: 15px;
-  height: 15px;
-  margin-top: 3px;
-  flex-shrink: 0;
-  accent-color: var(--primary);
-}
-
-.register-terms a {
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.register-terms a:hover {
-  text-decoration: underline;
-}
-
-/* =========================================
    SUBMIT BUTTON
    ========================================= */
 
@@ -474,7 +441,8 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .google-login { margin: 20px 0; min-width: 0; }
-.login-page #googleLogin .btn-google[hidden] { display: none; }
+.auth-card .auth-form[hidden], #googleDivider[hidden],
+#googleLogin .btn-google[hidden], .google-login__button[hidden] { display: none; }
 .google-login__button { display: flex; justify-content: center; overflow: hidden; }
 .google-login__link p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
 .google-login__retry, .google-login__cancel { margin-top: 18px; }

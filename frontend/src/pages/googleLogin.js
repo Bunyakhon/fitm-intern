@@ -39,33 +39,23 @@ export function loadGoogleProvider(document, target = window) {
 
 export function mountGoogleLogin({ document, target = window, config = googleConfig, challenge = googleChallenge,
   authenticate = googleAuthenticate, loadProvider = () => loadGoogleProvider(document, target),
-  accept = acceptGoogleSession, saveStudent = saveStudentSession, toast = showToast,
-  confirmLink = preview => confirmGoogleLink(preview, { target }) } = {}) {
+  accept = acceptGoogleSession, saveStudent = saveStudentSession, toast = showToast } = {}) {
   const root = document.getElementById("googleLogin"), form = document.querySelector(".auth-form");
   if (!root || !form) return;
   const role = document.body.dataset.authRole || "student";
   const fallback = root.querySelector("#googleLoginBtn");
   root.insertAdjacentHTML("beforeend", `<div class="google-login__button"></div>
     <p id="googleLoginMessage" class="login-message" role="status" aria-live="polite"></p>
-    <div class="google-login__link" hidden>
-      <p>ผูก Google กับบัญชี KIWI เดิม</p>
-      <label>อีเมลบัญชีเดิม<input type="email" autocomplete="username" maxlength="254" aria-label="อีเมลบัญชีเดิม"></label>
-      <label>รหัสผ่านบัญชีเดิม<input type="password" autocomplete="current-password" maxlength="100" aria-label="รหัสผ่านบัญชีเดิม"></label>
-      <p>กรอกอีเมลและรหัสผ่าน KIWI ของคุณในสองช่องนี้ แล้วกดปุ่ม Google ด้านบน จากนั้นตรวจบัญชีและกดยืนยัน</p>
-      <button type="button" class="google-login__cancel">ยกเลิกการผูกบัญชี</button>
-    </div><button type="button" class="google-login__retry" hidden>ลอง Google Login อีกครั้ง</button>`);
+    <button type="button" class="google-login__retry" hidden>ลอง Google อีกครั้ง</button>`);
   const container = root.querySelector(".google-login__button"), message = root.querySelector(".login-message"),
-    link = root.querySelector(".google-login__link"), email = link.querySelector('input[type="email"]'),
-    password = link.querySelector('input[type="password"]'), retry = root.querySelector(".google-login__retry");
+    retry = root.querySelector(".google-login__retry");
   let busy = false, preparing = false, exchanging = false, completed = false, generation = 0, timer, expiryTimer, cfg;
   const say = (text, error = false) => { message.textContent = text; message.setAttribute("role", error ? "alert" : "status"); };
   const lock = value => {
     busy = value; form.inert = value; root.setAttribute("aria-busy", String(value));
-    container.inert = value; link.inert = value; retry.disabled = value;
-    if (fallback) fallback.disabled = value;
+    container.inert = value; retry.disabled = value; if (fallback) fallback.disabled = value;
   };
   const showFallback = () => { if (fallback) fallback.hidden = false; };
-  // Capture prevents simultaneous password/Google requests from racing storage.
   form.addEventListener("submit", event => { if (busy) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
   async function prepare() {
     if (busy || preparing || form.getAttribute("aria-busy") === "true") return;
@@ -73,86 +63,61 @@ export function mountGoogleLogin({ document, target = window, config = googleCon
     target.clearTimeout(timer); target.clearTimeout(expiryTimer);
     preparing = true; root.setAttribute("aria-busy", "true"); retry.disabled = true;
     showFallback(); if (fallback) fallback.disabled = true;
-    retry.hidden = true; container.replaceChildren(); say("กำลังเตรียม Google Login...");
+    retry.hidden = true; container.replaceChildren(); say("กำลังเตรียม Google...");
     try {
       cfg = await config();
       if (!cfg.enabled) { say("ยังไม่เปิดใช้งาน"); return; }
-      const purpose = link.hidden ? "login" : "link";
-      const request = await challenge({ role, purpose });
+      const request = await challenge({ role, purpose: "login" });
       const google = await loadProvider();
       if (ticket !== generation) return;
       google.initialize({ client_id: cfg.clientId, nonce: request.nonce, ux_mode: "popup", auto_select: false,
         callback: async response => {
           if (ticket !== generation || exchanging || form.getAttribute("aria-busy") === "true") return;
-          // A late response after cancellation/expiry is ignored by generation.
           exchanging = true;
-          let needsLink = false;
           target.clearTimeout(timer); target.clearTimeout(expiryTimer); lock(true); say("กำลังยืนยันบัญชี Google...");
           try {
-            const body = { role, purpose, credential: response.credential, requestId: request.requestId, requestToken: request.requestToken };
-            if (purpose === "link") { body.email = email.value.trim(); body.password = password.value; }
-            let result = await authenticate(body);
-            password.value = "";
-            if (result.confirmationRequired) {
-              say("กรุณาตรวจบัญชีเป้าหมายและยืนยันการผูกบัญชี");
-              result = await confirmLink(result);
-              if (!result) {
-                say("ยกเลิกหรือหมดเวลายืนยันการผูกบัญชี กรุณาเริ่มใหม่เมื่อพร้อม");
-                ++generation; container.replaceChildren(); showFallback(); retry.hidden = false;
-                return;
-              }
-            }
+            const result = await authenticate({ role, purpose: "login", credential: response.credential,
+              requestId: request.requestId, requestToken: request.requestToken });
             if (ticket !== generation) return;
+            // Anonymous Google login never mounts account-linking controls.
+            if (result.linkRequired || result.confirmationRequired)
+              throw new Error("กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่านเดิม แล้วเชื่อม Google จากหน้าจัดการบัญชีใน Dashboard");
             accept(result, role, { saveStudentSession: saveStudent, storage: target.sessionStorage,
               remember: !!document.getElementById("rememberMe")?.checked, location: target.location });
-            completed = true;
-            ++generation; // Successful session cannot be overwritten by another callback.
+            completed = true; ++generation;
           } catch (error) {
             if (ticket !== generation) return;
-            if (error.data?.code === "GOOGLE_LINK_REQUIRED" && cfg.linkingEnabled) {
-              needsLink = true;
-              link.hidden = false; say("ยืนยันบัญชี KIWI เดิมเพื่อผูก Google ครั้งแรก");
-              email.focus();
-            } else { say(error.message || "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่", true); toast(message.textContent, "error"); }
-            retry.hidden = false;
-            ++generation; container.replaceChildren(); showFallback();
-          } finally {
-            exchanging = false; password.value = ""; lock(completed);
-            if (needsLink) prepare();
-          }
+            say(error.message || "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่", true); toast(message.textContent, "error");
+            retry.hidden = false; ++generation; container.replaceChildren(); showFallback();
+          } finally { exchanging = false; lock(completed); }
         },
       });
-      google.renderButton(container, { type: "standard", theme: "outline", size: "large", text: "signin_with", width: Math.min(root.clientWidth || 300, 400),
-        click_listener: () => {
+      google.renderButton(container, { type: "standard", theme: "outline", size: "large", text: "continue_with",
+        width: Math.min(root.clientWidth || 300, 400), click_listener: () => {
           if (busy || form.getAttribute("aria-busy") === "true") return;
           lock(true); say("เลือกบัญชีในหน้าต่าง Google หากยกเลิกสามารถลองใหม่ได้");
           timer = target.setTimeout(() => {
             if (ticket !== generation) return;
-            ++generation; password.value = ""; lock(false); container.replaceChildren(); showFallback(); retry.hidden = false;
+            ++generation; lock(false); container.replaceChildren(); showFallback(); retry.hidden = false;
             say("ยังไม่ได้รับการยืนยันจาก Google กรุณาลองใหม่เมื่อพร้อม", true);
           }, 60000);
         }, locale: "th" });
       if (fallback) fallback.hidden = true;
-      say(purpose === "link" ? "กรอกสองช่องด้านล่าง แล้วกดปุ่ม Google เพื่อผูกกับบัญชี KIWI เดิม" : "เข้าสู่ระบบด้วยบัญชี Google ที่ได้รับอนุญาต");
-      expiryTimer = target.setTimeout(() => { if (ticket === generation && !busy) { ++generation; container.replaceChildren(); showFallback(); retry.hidden = false; say("คำขอหมดอายุ กรุณาลอง Google Login อีกครั้ง"); } }, 290000);
+      say(document.body.classList.contains("register-page") && cfg.onboardingEnabled === false
+        ? "ยังไม่เปิดสมัครบัญชีใหม่ด้วย Google กรุณาสมัครด้วยอีเมลและรหัสผ่านก่อน"
+        : "ดำเนินการต่อด้วยบัญชี Google มหาวิทยาลัย");
+      expiryTimer = target.setTimeout(() => { if (ticket === generation && !busy) { ++generation; container.replaceChildren(); showFallback(); retry.hidden = false; say("คำขอหมดอายุ กรุณาลอง Google อีกครั้ง"); } }, 290000);
     } catch (error) {
-      if (ticket === generation) { showFallback(); say(error.message || "Google Login ยังไม่พร้อมใช้งาน", true); retry.hidden = false; }
+      if (ticket === generation) { showFallback(); say(error.message || "Google ยังไม่พร้อมใช้งาน", true); retry.hidden = false; }
     } finally { preparing = false; if (ticket === generation) { root.setAttribute("aria-busy", "false"); retry.disabled = false; if (fallback) fallback.disabled = busy; } }
   }
   fallback?.addEventListener("click", () => {
     if (busy || preparing || form.getAttribute("aria-busy") === "true") return;
-    if (cfg?.enabled === false) {
-      say("ยังไม่เปิดใช้งาน");
-      toast("ยังไม่เปิดให้เข้าสู่ระบบด้วย Google", "info");
-      return;
-    }
+    if (cfg?.enabled === false) { say("ยังไม่เปิดใช้งาน"); toast("ยังไม่เปิดให้เข้าสู่ระบบด้วย Google", "info"); return; }
     prepare();
   });
   retry.addEventListener("click", prepare);
-  root.querySelector(".google-login__cancel").addEventListener("click", () => {
-    if (busy) return; password.value = ""; email.value = ""; link.hidden = true; prepare();
-  });
   prepare();
-  return { retry: prepare, dispose() { ++generation; target.clearTimeout(timer); target.clearTimeout(expiryTimer); password.value = ""; lock(false); } };
+  return { retry: prepare, dispose() { ++generation; target.clearTimeout(timer); target.clearTimeout(expiryTimer); lock(false); } };
 }
 if (typeof document !== "undefined") mountGoogleLogin({ document });

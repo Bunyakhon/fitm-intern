@@ -104,39 +104,80 @@ invitation, and audit issuer/actor/subject/consumption. No admin endpoint, arbit
 mapping write or bypass is supplied until the administrator authority and evidence
 policy are approved. Reassignment/unlinking is similarly out of the current runtime.
 
-## New Student onboarding — separate policy/schema gate
+## Current Student policy / Google-only creation — 2026-10-15
 
-Currently `/api/auth/google/onboard` returns 503
-`GOOGLE_ONBOARDING_APPROVAL_REQUIRED` with no writes. `onboardingEnabled` is always
-false and cannot be switched on by an environment flag. Existing password
-registration remains available.
+The user approved verified Google student email matching
+`^s([0-9]{13})@email\.kmutnb\.ac\.th$` as registration evidence, subject to
+the existing domain/hosted-domain policy. Extract the 13 digits as Student ID.
+This supersedes the earlier roster/invitation proposal for registration only;
+it does not attest current enrollment or internship eligibility. No domain or
+personnel identity policy changed. This prepared directory is historical;
+current database initialization is model-driven, without migrations.
 
-Proposed reviewable design (not an installed schema):
+The password schema gate is resolved in Development: only
+`ALTER TABLE public.students ALTER COLUMN password_hash DROP NOT NULL` was run.
+All four original Student rows were compared by server-side fingerprints and
+preserved; no other Student column changed. The model now matches nullable hashes.
+Ordinary creation still requires a real validated password and bcrypt hashing.
+Only the server-side `googleOnlyCreation` option with a transaction permits a new
+Student without a password. Null hashes return false from password comparison.
 
-1. University roster or approved administrator invitation attests Student ID and
-   verified university email. The backend checks this attestation; user-entered
-   Student ID or an email-derived ID is never sufficient proof.
-2. Issue a distinct five-minute `onboard` nonce and bind proof to Google subject,
-   verified email, Student ID, request and expiry. Store/consume proof once.
-3. Student submits confirmed Student ID, first/last names and approved proof.
-   Validate exact current domain/hd policy again. Reject email/Student-ID collision
-   without adopting an existing Student account; direct it to ownership linking.
-4. Under a transaction, lock the approved roster/invitation, consume proof/request,
-   create the real Student with `track=co_op`, `status=pending`, and identity. DB
-   email/Student-ID/subject uniqueness gives one concurrent-registration winner.
-5. A separate approved migration must make `students.password_hash` nullable for
-   Google-only accounts. The Student virtual-password validator and hash hook must
-   distinguish Google-only creation, and password login must return ordinary 401
-   for null hashes. Do not generate a fake/random account password.
-6. The Student model's current `@email.kmutnb.ac.th` rule also needs an approved
-   Google-creation validation context so configured domains can onboard without
-   broadening existing password registration. Do not skip model validation.
-7. Preserve all existing IDs/hashes, Profile rows/revisions/files/relationships.
-   After commit, return the ordinary Application JWT and reuse Student Remember Me.
-8. Test real disposable SQL: proof tampering/expiry/replay, email and Student-ID
-   collisions, concurrent registration, required fields, rollback after identity
-   insert, null-password login, and backward-compatible profile creation.
+`GOOGLE_STUDENT_ONBOARDING_ENABLED` defaults to false and requires explicit
+`NODE_ENV=development`; creation additionally uses the existing local-development
+database guard. Local backend/.env enables it, and only Backend was recreated.
+Login/linking/domain/hosted-domain values remain unchanged. Config now reports
+`onboardingEnabled:true` in the authorized Development environment; Production,
+test and unspecified environments cannot enable it.
 
-Approvals needed: source of Student-ID evidence, invitation/roster authority,
-Google-only password schema/model contract and profile initialization policy.
-This proposal is preparation, not a tested onboarding implementation.
+`/onboard` accepts only Student login-proof fields and verifies the same Google
+token/challenge as `/login`. For a new eligible subject, create Student with the
+email-derived ID, Google given/family names, NULL password hash and existing
+co_op/pending defaults, then create the mapping in the same transaction. Do not
+invent names or Profile rows; missing names return GOOGLE_STUDENT_PROFILE_REQUIRED
+without account creation. Existing mappings log in normally. Email or Student-ID
+collisions require ownership linking and never adopt an existing Student row.
+The subject lock, additional Student-ID lock and existing SQL unique indexes
+serialize decisions; mapping/unique failures roll back the new Student.
+
+## Student linking location / Register session update — 2026-10-15
+
+Student linking now occurs only inside the authenticated Student Dashboard.
+Anonymous Google login with an existing Student email/ID collision returns
+409 GOOGLE_DASHBOARD_LINK_REQUIRED and password-login/Dashboard instructions,
+without a JWT, ownership receipt, duplicate Student or linking form on Login.
+Anonymous Student link/verify/confirm paths are rejected. Legacy personnel
+authentication/linking backend paths retain their existing policies.
+
+Protected `/student/status`, `/student/challenge`, `/student/link` and
+`/student/link/confirm` routes use the existing signature/expiry/Student middleware.
+The service loads and authorizes the live Student; the caller cannot supply a
+target actor ID. A signed five-minute dashboard challenge binds that actor to
+the hash of the exact session JWT. Google nonce/verified claims plus the current
+website password prove fresh ownership. Preview returns the existing two-minute
+confirmation receipt extended with the same actor/session binding. Explicit
+confirmation rechecks password/target fingerprints and mapping conflicts under
+transaction/locks. Receipt kinds cannot be interchanged, replay is rejected and
+only hashes are stored in GoogleAuthRequest. Confirm returns linked status, not a
+new JWT. Google-only accounts display their existing mapping and cannot link twice.
+
+Website Register now creates the Student and ordinary Application JWT within one
+transaction, then returns 201 with the safe Student session/authorized Dashboard.
+Password validation and bcrypt are unchanged. No separate verification gate exists
+in the current registration policy; pending is an authorized Student status.
+Frontend uses the existing session adapter with remember=false and navigates to
+Student Dashboard. A JWT issuance failure rolls back the new account.
+
+Verification this update: PostgreSQL/model/controller/HTTP integration within a
+rolled-back transaction covered Register session/failure rollback, Google creation
+and return, NULL-hash rejection, collision guidance and Dashboard preview/confirm,
+cross-account/session binding, password change, nonce/expiry/replay/conflicts and
+JWT/role/origin/body-target guards. Original Student fingerprints and row counts
+were preserved. Headless UI used API/Provider mocks; full role workflows were not
+run. Earlier SQL unique/lock verification remains historical evidence. Provider,
+real-account E2E and concurrent committed registrations remain NOT TESTED.
+
+Rollback is a plan only: disable onboarding first; retain existing Google logins.
+Under an exclusive Student table lock in a transaction, check for NULL hashes.
+Restore NOT NULL/model requirements only if none exist. If any Google-only account
+exists, keep nullable pending an approved account-preserving plan; never invent
+passwords or delete accounts. Do not run migrations/reset/alter-sync.

@@ -1,0 +1,24 @@
+/* Document pages only; reuse KIWI tokens, header/footer and local TH Sarabun New. */
+.legal-page { font-family: var(--app-font-family); font-size: 1.1rem; line-height: 1.8; }
+.legal-page .legal-shell { width: min(100% - 40px, 960px); margin: 40px auto; }
+.legal-page .legal-document { padding: 36px 42px; background: var(--white); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-sm); }
+.legal-page h1 { color: var(--text); font-size: 2rem; line-height: 1.35; margin: 8px 0 12px; }
+.legal-page h2 { color: var(--primary-dark); font-size: 1.4rem; line-height: 1.5; margin: 0 0 10px; }
+.legal-page .legal-eyebrow { color: var(--primary); font-weight: 700; letter-spacing: .04em; }
+.legal-page .legal-meta { color: var(--muted); margin-bottom: 20px; }
+.legal-page .legal-draft { padding: 18px 20px; margin: 20px 0 26px; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 10px; background: var(--primary-soft); }
+.legal-page section { scroll-margin-top: 100px; margin: 28px 0; }
+.legal-page p { margin: 0 0 12px; overflow-wrap: anywhere; }
+.legal-page ul, .legal-page ol { margin: 8px 0 14px; padding-left: 26px; }
+.legal-page li { margin: 6px 0; overflow-wrap: anywhere; }
+.legal-page .legal-document a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.legal-page .legal-actions { padding-top: 22px; margin-top: 28px; border-top: 1px solid var(--border); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.legal-page .legal-actions .btn-login { text-decoration: none; }
+.legal-page .legal-note { color: var(--muted); font-size: .95rem; }
+@media (max-width: 600px) {
+  .legal-page .legal-shell { width: calc(100% - 24px); margin: 22px auto; }
+  .legal-page .legal-document { padding: 24px 18px; border-radius: 12px; }
+  .legal-page h1 { font-size: 1.65rem; }
+  .legal-page h2 { font-size: 1.25rem; }
+  .legal-page .legal-draft { padding: 14px; }
+}

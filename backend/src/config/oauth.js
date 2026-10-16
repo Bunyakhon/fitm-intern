@@ -1,3 +1,4 @@
+const { getAllowedOrigins } = require("./allowedOrigins");
 const ROLES = ["student", "teacher", "department_head", "department_staff"];
 function configurationError() {
   return Object.assign(new Error("Google Login configuration is unavailable"), { status: 503, code: "GOOGLE_CONFIGURATION" });
@@ -11,11 +12,12 @@ function domains(value) {
 function getGoogleConfig(env = process.env) {
   if (env.GOOGLE_LOGIN_ENABLED !== "true") return { enabled: false };
   if (!/^\d+-[\w-]+\.apps\.googleusercontent\.com$/.test(env.GOOGLE_CLIENT_ID || "")) throw configurationError();
-  let origin;
+  let origin, allowedOrigins;
   try {
     const url = new URL(env.FRONTEND_URL);
     if (url.username || url.password || (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)))) throw configurationError();
     origin = url.origin;
+    allowedOrigins = getAllowedOrigins(env);
   } catch { throw configurationError(); }
   const allowedDomains = domains(env.GOOGLE_ALLOWED_EMAIL_DOMAINS);
   const policy = env.GOOGLE_HOSTED_DOMAIN_POLICY || "required";
@@ -25,7 +27,9 @@ function getGoogleConfig(env = process.env) {
     const key = `GOOGLE_ALLOWED_EMAIL_DOMAINS_${role.toUpperCase()}`;
     return [role, env[key] === undefined ? allowedDomains : domains(env[key])];
   }));
-  return { enabled: true, linkingEnabled: env.GOOGLE_ACCOUNT_LINKING_ENABLED === "true", clientId: env.GOOGLE_CLIENT_ID, origin, allowedDomains, hostedDomains, policy, roleDomains };
+  return { enabled: true, linkingEnabled: env.GOOGLE_ACCOUNT_LINKING_ENABLED === "true",
+    onboardingEnabled: env.NODE_ENV === "development" && env.GOOGLE_STUDENT_ONBOARDING_ENABLED === "true",
+    clientId: env.GOOGLE_CLIENT_ID, origin, allowedOrigins, allowedDomains, hostedDomains, policy, roleDomains };
 }
 function checkGoogleIdentity(payload, config, role) {
   const deny = code => { throw Object.assign(new Error("Google account is not authorized"), { status: 403, code }); };

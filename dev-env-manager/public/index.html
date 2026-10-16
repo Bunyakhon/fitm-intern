@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FITM-INTERN Developer Console</title><link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script></head>
+<body>
+  <header><div class="brand-mark" aria-hidden="true">FI</div><div><p class="eyebrow">LOCAL DEVELOPMENT</p><h1>FITM-INTERN Developer Console</h1></div><span class="local-badge">127.0.0.1 เท่านั้น</span></header>
+  <main>
+    <section id="loginPanel" class="login-card" aria-labelledby="loginTitle">
+      <p class="eyebrow">DEVELOPER ROOT</p><h2 id="loginTitle">เข้าสู่ระบบจัดการ Environment</h2><p>บัญชีแยกจากผู้ใช้ FITM-INTERN ใช้ได้เฉพาะเครื่อง Development นี้</p>
+      <form id="loginForm"><label for="username">ชื่อบัญชี</label><input id="username" name="username" value="root" readonly autocomplete="username"><label for="loginPassword">รหัสผ่าน Developer Root</label><input id="loginPassword" type="password" name="password" required maxlength="256" autocomplete="current-password"><button class="primary" type="submit">เข้าสู่ระบบ</button></form>
+      <p class="help">ครั้งแรกให้ตั้งรหัสผ่านด้วย Local Bootstrap CLI ตาม dev-env-manager/README.md</p>
+    </section>
+    <section id="workspace" hidden aria-label="Environment Manager">
+      <div class="session-bar"><div><span class="status-dot" aria-hidden="true"></span><strong>Developer root</strong><span id="sessionInfo"></span></div><button id="logout" type="button">Logout</button></div>
+      <div class="notice">Secret เดิมจะไม่ถูกส่งมา Browser · ทุกการบันทึกต้อง Preview, ยืนยันรหัสผ่าน และมี Backup ที่ตรวจสอบได้</div>
+      <nav class="tabs" role="tablist" aria-label="เลือก Service"><button id="tab-backend" role="tab" aria-selected="true" aria-controls="editor" data-service="backend">Backend</button><button id="tab-frontend" role="tab" aria-selected="false" aria-controls="editor" data-service="frontend">Frontend</button><button id="tab-nlp" role="tab" aria-selected="false" aria-controls="editor" data-service="nlp">NLP Service</button></nav>
+      <section id="editor" class="editor" role="tabpanel" aria-labelledby="tab-backend">
+        <div class="editor-heading"><div><p class="eyebrow">ENVIRONMENT CONFIGURATION</p><h2 id="serviceTitle">Backend</h2><p id="filePath"></p></div><span id="dirty" class="chip">ไม่มีการแก้ไข</span></div>
+        <div class="toolbar"><label class="search">ค้นหา Variable<input id="search" type="search" placeholder="เช่น PORT, GOOGLE, NLP" autocomplete="off"></label><label class="filter">แสดง<select id="filter"><option value="all">ทั้งหมด</option><option value="changed">แก้ไขแล้ว</option><option value="secret">Secret</option></select></label><button id="reload" type="button">โหลดไฟล์ใหม่</button></div>
+        <p id="loadError" class="error" hidden></p><div id="variables" class="variables" aria-label="Environment Variables"></div>
+        <div class="editor-actions"><span id="variableCount"></span><button id="cancel" type="button">Cancel</button><button id="save" class="primary" type="button" disabled>Save Changes</button></div>
+      </section>
+      <section class="lower-grid"><article class="card"><p class="eyebrow">SERVICE STATUS</p><h2>Restart Notification</h2><p id="restartStatus">สถานะ Service: Unknown</p><p id="restartAdvice"></p><p class="help">เครื่องมือไม่ Restart, Rebuild หรือสั่งงาน Docker อัตโนมัติ</p></article><article class="card"><div class="backup-heading"><div><p class="eyebrow">PROTECTED BACKUPS</p><h2>Backup / Restore</h2></div><button id="backup" type="button">สร้าง Backup</button></div><p class="help">เก็บนอก Repository พร้อม Encryption และสิทธิ์ OS ที่จำกัด ไม่มี Download Endpoint</p><div id="backups"></div></article></section>
+    </section>
+  </main>
+  <div id="feedback" role="status" aria-live="polite"></div>
+  <dialog id="confirmation" aria-labelledby="confirmTitle"><form id="confirmForm"><h2 id="confirmTitle"></h2><p id="confirmDetail"></p><div id="changePreview"></div><div id="warnings" class="warnings"></div><label id="passwordLabel" for="confirmPassword">ยืนยันรหัสผ่าน Developer Root อีกครั้ง</label><input id="confirmPassword" type="password" maxlength="256" autocomplete="current-password"><label id="confirmCheckLabel" class="check"><input id="confirmCheck" type="checkbox">ฉันตรวจ Preview และคำเตือนแล้ว ยืนยันดำเนินการ</label><p id="dialogError" class="error" role="alert"></p><div class="dialog-actions"><button id="closeDialog" type="button">ยกเลิก</button><button id="confirmButton" class="primary" type="submit">ยืนยัน</button></div></form></dialog>
+  <footer>FITM-INTERN · Developer Environment Manager · Local Development Only</footer>
+</body></html>

@@ -1,10 +1,11 @@
 const { PROFILE_FIELDS, isCalendarDate, todayInBangkok } = require("./studentProfileIntegrity");
 const specs = require("../models/studentProfileAggregate.schema");
+const { MAX_PERSON_NAME_LENGTH, isThaiPersonName } = require("../validators/personName.validator");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRIVATE_PROFILE_FIELDS = ["national_id_ciphertext", "national_id_key_version"];
 const EXTRA_PROFILE_FIELDS = Object.keys(specs.extensions.student_profiles.columns).filter(key => !PRIVATE_PROFILE_FIELDS.includes(key));
 const EDITABLE_PROFILE_FIELDS = [...PROFILE_FIELDS, ...EXTRA_PROFILE_FIELDS];
-const STUDENT_FIELDS = ["major", "year_level", "gpa", "advisor_teacher_id", "department", "faculty", "last_semester_gpa"];
+const STUDENT_FIELDS = ["first_name", "last_name", "major", "year_level", "gpa", "advisor_teacher_id", "department", "faculty", "last_semester_gpa"];
 const RELATIONS = {
   addresses: { table: "student_addresses", model: "StudentAddress" },
   education: { table: "student_education_records", model: "StudentEducationRecord" },
@@ -80,7 +81,15 @@ function normalizeStudent(body) {
   const result = {};
   for (const [field, value] of Object.entries(body)) {
     if (value === undefined) continue;
-    if (["gpa", "last_semester_gpa"].includes(field)) result[field] = gpa(value, field);
+    if (["first_name", "last_name"].includes(field)) {
+      if (!isThaiPersonName(value)) {
+        const label = field === "first_name" ? "ชื่อ" : "นามสกุล";
+        fail(typeof value === "string" && [...value.trim()].length > MAX_PERSON_NAME_LENGTH
+          ? `${label}ต้องมีความยาวไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ`
+          : `กรุณากรอก${label}เป็นภาษาไทยเท่านั้น`);
+      }
+      result[field] = value.trim();
+    } else if (["gpa", "last_semester_gpa"].includes(field)) result[field] = gpa(value, field);
     else if (field === "year_level") result[field] = integer(value, field, 1, 4);
     else if (field === "advisor_teacher_id") {
       if (value !== null && !UUID.test(value || "")) fail("advisor_teacher_id ต้องเป็น UUID หรือ null");

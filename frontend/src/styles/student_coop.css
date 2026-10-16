@@ -9,6 +9,14 @@
   --danger-light: #fff1f1;
 }
 
+#studentGoogleAccount { overflow-wrap: anywhere; }
+#studentGoogleForm { display: grid; gap: 14px; }
+#studentGoogleForm[hidden], #studentGoogleAccount [hidden] { display: none; }
+#studentGoogleForm input { width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; }
+#studentGoogleProvider { display: flex; justify-content: flex-start; max-width: 100%; overflow: hidden; }
+#studentGoogleCancel, #studentGoogleReload { margin-top: 14px; }
+.google-link-confirmation #appConfirmMessage { white-space: pre-line; overflow-wrap: anywhere; }
+
 * {
   box-sizing: border-box;
   margin: 0;

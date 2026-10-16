@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 
 const cors = require("cors");
+const { getCorsOptions } = require("./config/allowedOrigins");
 
 const sequelize = require("./config/database");
 
@@ -29,7 +30,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL ? new URL(process.env.FRONTEND_URL).origin : false, credentials: true }));
+app.use(cors(getCorsOptions()));
 
 app.use(express.json());
 
@@ -87,6 +88,7 @@ app.use("/api/coop-activities", require("./routes/coopActivities.routes").create
 
 // Do not return Express parser stacks, SQL details or provider diagnostics.
 app.use((error, req, res, next) => {
+  if (error.code === "CORS_ORIGIN") return res.status(403).json({ code: "CORS_ORIGIN", message: "Origin is not allowed" });
   res.status(error.type === "entity.parse.failed" ? 400 : error.type === "entity.too.large" ? 413 : 500)
     .json({ message: "Unable to process request" });
 });

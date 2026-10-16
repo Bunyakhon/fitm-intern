@@ -18,7 +18,7 @@
     />
   </head>
 
-  <body class="register-page">
+  <body class="register-page" data-auth-role="student">
     <!-- Navbar -->
     <header class="navbar">
       <div class="nav-container">
@@ -49,33 +49,27 @@
           <p>สมัครใช้งานระบบ KIWI สำหรับนักศึกษาสหกิจศึกษา</p>
         </div>
 
+        <section id="googleLogin" class="google-login" aria-label="สมัครหรือเข้าสู่ระบบด้วย Google">
+          <button type="button" class="btn-google" id="googleLoginBtn" aria-describedby="googleLoginMessage">
+            <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z" />
+              <path fill="#FBBC05" d="M5.27 14.28A7.2 7.2 0 0 1 4.87 12c0-.79.14-1.57.4-2.28V6.63H1.29A11.98 11.98 0 0 0 0 12c0 1.93.46 3.76 1.29 5.37l3.98-3.09z" />
+              <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.8l3.43-3.43C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.63l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z" />
+            </svg>
+            <span>ดำเนินการต่อด้วย Google</span>
+          </button>
+        </section>
+
+        <div class="divider" id="googleDivider">
+          <span>หรือสมัครด้วยอีเมลและรหัสผ่าน</span>
+        </div>
+
         <form class="auth-form" id="registerForm" aria-describedby="registerMessage">
-          <!-- Student ID -->
-          <div class="form-group">
-            <label for="regStudentId">
-              รหัสประจำตัวนักศึกษา
-            </label>
-
-            <div class="input-icon-wrapper">
-              <i class="fa-solid fa-id-card input-icon"></i>
-
-              <input
-                type="text"
-                id="regStudentId"
-                maxlength="255"
-                name="regStudentId"
-                placeholder="เช่น 6706022510107"
-                autocomplete="off"
-                aria-describedby="registerMessage"
-                required
-              />
-            </div>
-          </div>
-
           <!-- First Name -->
           <div class="form-group">
             <label for="regFirstName">
-              ชื่อ
+              ชื่อ (ภาษาไทย)
             </label>
 
             <div class="input-icon-wrapper">
@@ -86,7 +80,7 @@
                 id="regFirstName"
                 maxlength="255"
                 name="regFirstName"
-                placeholder="กรอกชื่อ"
+                placeholder="กรอกชื่อภาษาไทย"
                 autocomplete="given-name"
                 aria-describedby="registerMessage"
                 required
@@ -97,7 +91,7 @@
           <!-- Last Name -->
           <div class="form-group">
             <label for="regLastName">
-              นามสกุล
+              นามสกุล (ภาษาไทย)
             </label>
 
             <div class="input-icon-wrapper">
@@ -108,7 +102,7 @@
                 id="regLastName"
                 maxlength="255"
                 name="regLastName"
-                placeholder="กรอกนามสกุล"
+                placeholder="กรอกนามสกุลภาษาไทย"
                 autocomplete="family-name"
                 aria-describedby="registerMessage"
                 required
@@ -203,21 +197,6 @@
             </div>
           </div>
 
-          <!-- Terms -->
-          <label class="register-terms">
-            <input
-              type="checkbox"
-              id="acceptTerms"
-              required
-            />
-
-            <span>
-              ฉันยอมรับ
-              <a href="#">เงื่อนไขการใช้งาน</a>
-              และนโยบายความเป็นส่วนตัวของระบบ
-            </span>
-          </label>
-
           <!-- Submit -->
           <button
             type="submit"
@@ -260,5 +239,6 @@
       type="module"
       src="/src/pages/register.js"
     ></script>
+    <script type="module" src="/src/pages/googleLogin.js"></script>
   </body>
 </html>

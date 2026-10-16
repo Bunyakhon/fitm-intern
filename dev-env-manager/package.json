@@ -1,0 +1,12 @@
+{
+  "name": "fitm-intern-dev-env-manager",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.20.0" },
+  "scripts": {
+    "bootstrap": "node src/cli.js bootstrap",
+    "start": "node src/cli.js serve",
+    "test": "node --test test/console.test.js"
+  }
+}

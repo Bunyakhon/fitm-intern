@@ -1,15 +1,19 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes, Model, ValidationError, ValidationErrorItem } = require("sequelize");
 
 const bcrypt = require("bcrypt");
 
 const SALT_ROUNDS = 10;
 
 const ALLOWED_EMAIL_DOMAIN = "@email.kmutnb.ac.th";
+const passwordError = message => new ValidationError(message, [
+  new ValidationErrorItem(message, "Validation error", "password"),
+]);
 
 module.exports = (sequelize) => {
   class Student extends Model {
     // ใช้ตรวจรหัสผ่านตอน Login ภายหลัง
     async comparePassword(plainPassword) {
+      if (!this.password_hash || typeof plainPassword !== "string" || !plainPassword) return false;
       return bcrypt.compare(
         plainPassword,
         this.password_hash,
@@ -181,14 +185,15 @@ module.exports = (sequelize) => {
 
       password_hash: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
 
       // ไม่เก็บลง Database
       // รับ plain password ชั่วคราวแล้วนำไป hash
       password: {
         type: DataTypes.VIRTUAL,
-        allowNull: false,
+        // Creation requirements are enforced by the hook's server-only context.
+        allowNull: true,
         validate: {
           notEmpty: {
             msg:
@@ -205,7 +210,8 @@ module.exports = (sequelize) => {
 
       first_name: {
         type: DataTypes.STRING,
-        allowNull: false,
+        // Google-only accounts may complete their Thai names in the Dashboard.
+        allowNull: true,
         validate: {
           notEmpty: {
             msg: "กรุณากรอกชื่อ",
@@ -215,7 +221,7 @@ module.exports = (sequelize) => {
 
       last_name: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         validate: {
           notEmpty: {
             msg:
@@ -336,10 +342,35 @@ module.exports = (sequelize) => {
       timestamps: true,
 
       hooks: {
-        // ใช้ beforeValidate เพราะ
-        // password_hash เป็น allowNull: false
         beforeValidate:
-          async (student) => {
+          async (student, options = {}) => {
+            const googleOnly = student.isNewRecord && options.googleOnlyCreation === true;
+            if (googleOnly) {
+              if (!options.transaction || student.password != null || student.password_hash != null
+                || !/^s[0-9]{13}@email\.kmutnb\.ac\.th$/.test(student.email || "")) {
+                throw passwordError("ข้อมูลการสมัครด้วย Google ไม่ถูกต้อง");
+              }
+              student.password_hash = null;
+            } else if (student.isNewRecord && (typeof student.password !== "string" || !student.password.trim())) {
+              throw passwordError("กรุณากรอกรหัสผ่าน");
+            }
+            if (student.isNewRecord && !googleOnly) {
+              for (const field of ["first_name", "last_name"]) {
+                if (typeof student[field] !== "string" || !student[field].trim()) {
+                  throw new ValidationError("กรุณากรอกชื่อและนามสกุล", [
+                    new ValidationErrorItem("กรุณากรอกชื่อและนามสกุล", "Validation error", field),
+                  ]);
+                }
+              }
+            }
+            if (!student.isNewRecord && student.changed("password_hash") && student.password_hash == null
+              && student.previous("password_hash") != null) {
+              throw passwordError("ไม่สามารถลบรหัสผ่านบัญชีเดิมได้");
+            }
+            if (student.password != null && (typeof student.password !== "string" || !student.password.trim()
+              || Buffer.byteLength(student.password, "utf8") > 72)) {
+              throw passwordError("รหัสผ่านต้องไม่เป็นช่องว่างล้วน และมีขนาดไม่เกิน 72 ไบต์");
+            }
             if (
               student.password
             ) {

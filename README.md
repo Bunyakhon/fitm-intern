@@ -1,5 +1,138 @@
 # FITM-INTERN
 
+ระบบจัดการฝึกงานและสหกิจศึกษา สำหรับ Student, Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
+
+## สถานะปัจจุบันและขอบเขตหลักฐาน — 16 ตุลาคม 2026
+
+อัปเดตเอกสารเท่านั้น (Asia/Bangkok); เทียบ Source เฉพาะส่วนที่เกี่ยวข้องและอ้างผลตรวจเดิมจาก [Handoff](HANDOFF_fitm-intern.md). **ไม่ได้รัน Tests/Build/Browser/HTTP/Database checks ใหม่ในรอบนี้**. ผล PASS ที่ระบุต่อไปเป็นผลเฉพาะขอบเขตในประวัติ ไม่ใช่ Production readiness หรือการรับรองสถานะระบบแบบ Real-time.
+
+| ส่วน | Implementation / หลักฐานล่าสุด | ข้อจำกัด |
+| --- | --- | --- |
+| Unified Login | รองรับสี่บทบาท, Backend เลือก actor/role และ Shared Middleware ตรวจ live account; deleted-account checks PASS ตามขอบเขต Handoff | Server-side JWT revocation หลัง Logout/เปลี่ยน Password ยังไม่ครอบคลุมทุกกรณี |
+| Google / Register | Google-only + mapping, Dashboard linking และ Website Register → JWT → Dashboard มี Source แล้ว | Real-account Register E2E และ Google Provider E2E ของ Flow ล่าสุด NOT TESTED |
+| Development CORS | Shared explicit origin allowlist; focused config/controller/isolated/live HTTP checks PASS ในรอบก่อน | ไม่ใช่ Google Provider acceptance และไม่เพิ่ม dev origins อัตโนมัติใน Production |
+| Developer Console | Tests 29/29 และ Chrome fixture UI/responsive PASS ในรอบก่อน; **ผู้ใช้รายงานว่าเริ่มใช้งานได้แล้ว** | การใช้งานจริงเป็น user report; real .env Save/Restore, Production/POSIX NOT TESTED โดยผู้พัฒนา |
+| Database | หลักฐานล่าสุดจากรอบ Developer Console: 42 ตาราง / 1 record | ไม่ได้ query ซ้ำรอบนี้; 42 ตาราง / 0 records เป็น snapshot หลัง Cleanup เท่านั้น |
+
+อ่าน [เทคโนโลยี](#ระบบและเทคโนโลยี), [Development setup](#development-environment), [Compose services](#บริการและผล-smoke-ล่าสุด), [Schema source](#โครงสร้างและแหล่งกำหนด-schema) และ [ข้อจำกัด](#ข้อจำกัดและงานต่อไป) ประกอบกับสรุปปัจจุบันด้านล่าง. บันทึกวันที่เก่าถูกเก็บเป็นประวัติ; หากขัดกันให้ยึด Source และข้อตกลงล่าสุดใน Handoff.
+
+## Repository Structure
+
+```text
+frontend/          Vite multipage UI, API clients, session adapters, shared UI/fonts
+backend/src/       Express routes/services, JWT/RBAC, Sequelize Models และ db initialization
+nlp-service/       FastAPI, classical NLP, PDF/OCR และ data directories
+dev-env-manager/   Developer Root Console บน host แยกจาก Compose/เว็บหลัก
+docs/              Feature references และ historical acceptance/evidence
+docker-compose.yml Development services/loopback port mappings
+HANDOFF_fitm-intern.md Project continuity, evidence scopes และลำดับงานต่อไป
+```
+
+## Authentication Overview
+
+หน้า Login หลักคือ `frontend/login.html` สำหรับ Student, Teacher, Department Head และ Department Staff ไม่มี Role Selector. Email/Password ส่ง `POST /api/auth/unified-login`; Backend พิสูจน์ credentials และสถานะจากบัญชีจริงก่อนคืน actor/role, Application JWT และ Dashboard URL ที่อนุญาต. Head ใช้ Teacher account กับ `is_department_head` และ department; ambiguous context ไม่มี safe default ยังคงปฏิเสธด้วย `409 AUTH_CONTEXT_AMBIGUOUS`. JWT, RBAC, Remember Me, Logout และ Draft Preservation คงเดิม.
+
+Shared Authentication Middleware ตรวจ signature/expiry/claim shape แล้ว lookup live account ทุก protected request ที่ใช้ middleware นี้; deleted/missing account ถูกปฏิเสธ และสถานะ/บทบาทต้องยังอนุญาต. Deleted-account authorization **PASS เฉพาะ focused routes และหลักฐานที่ระบุใน Handoff** ไม่ใช่ JWT revocation coverage ทั้งระบบ. JWT ที่คัดลอกไปของบัญชียังมีสิทธิ์อาจใช้ได้จนหมดอายุหลัง Logout/เปลี่ยน Password ตามข้อจำกัดเดิม.
+
+## Google OAuth Development Configuration
+
+- CORS และ Google POST Origin Guard ใช้ `backend/src/config/allowedOrigins.js` ร่วมกัน: FRONTEND_URL เป็น explicit origin หลัก และเพิ่ม `http://localhost:5173`, `http://127.0.0.1:5173` เฉพาะ `NODE_ENV=development`. ไม่มี wildcard/สะท้อน Origin ทุกค่า; origin อื่นถูกปฏิเสธ และคง CORS credentials เดิม.
+- Production/staging/unset environment ไม่เพิ่ม Development Origins อัตโนมัติ. Backend allowlist ไม่ตั้งค่า Google Cloud Authorized JavaScript Origins ให้เอง; Provider E2E ด้วยบัญชีจริงยัง **NOT TESTED**.
+- Frontend อ่าน `/api/auth/google/config`; ต้องมีปุ่ม Google เสมอ และ disabled ไม่โหลด Provider/เรียก challenge/login. Google อยู่เหนือ Email/Password ตามดีไซน์ที่ตกลงไว้. ไม่ใส่ Secret ใน Frontend และไม่เปิด flags/เปลี่ยน domain/hosted-domain/identity policy เอง.
+- Token verification, nonce, verified email/domain/hd และ secure subject mapping คงเดิม. Google-only registration ใช้ Student ID จาก `^s([0-9]{13})@email\.kmutnb\.ac\.th$`, สร้าง Student (`password_hash=NULL`) + mapping ภายใน transaction แล้วออก JWT; returning mapped account ใช้ identity เดิม. Development onboarding ยังต้องผ่าน flags และ local DB guard เดิม.
+- บัญชีเว็บไซต์ Student เดิมที่ชน email/Student ID ต้อง Email/Password Login → Student Dashboard → จัดการบัญชี → เชื่อม Google; ยืนยัน ownership/รหัสผ่านปัจจุบันและ explicit confirmation. ไม่เชื่อมจากหน้า Login/Register และไม่ Auto-Link จาก email เพียงอย่างเดียว.
+
+## Student Registration Flow
+
+Website Register รับชื่อ/นามสกุล, university email และ Password/Confirm Password โดยไม่มีช่อง Student ID; normalize email แล้ว Backend ดึงรหัส 13 หลักจาก `^s([0-9]{13})@email\.kmutnb\.ac\.th$` ด้วย helper ร่วมกับ Google และไม่รับ Student ID จาก Client. ตรวจ required fields, bounds, password/confirmation และ duplicate email/Student ID ใช้ bcrypt/unique constraints เดิม; รูปแบบ email ไม่ใช่การยืนยัน ownership/Google Verification. Backend สร้าง Student และ Application session ภายใน transaction แล้วตอบ 201 พร้อม JWT → Frontend ใช้ session adapter เข้า Student Dashboard โดยไม่ Login ซ้ำ (`remember:false`). หากออก JWT ไม่สำเร็จ transaction rollback.
+
+มีปุ่มสมัครด้วย Google ใช้ Google flow ด้านบน; Google-only Student ไม่ต้องตั้ง Password และ Password Login ปฏิเสธ NULL hash อย่างปลอดภัย. **Register Page Improvement เป็นงานถัดไปอันดับ 1**; ต้องตรวจ Source และรับรายละเอียดจากผู้ใช้ก่อนปรับ Validation/Student ID/UI ไม่ถือว่า real-account E2E ผ่านแล้ว.
+
+## Developer Console
+
+`dev-env-manager/` ใช้ Node.js built-ins ไม่มี dependencies เพิ่มสำหรับ Console, bind เฉพาะ **http://127.0.0.1:5379/**. Root Authentication แยกจาก Unified Login/Database ไม่มี Root role ใน PostgreSQL หรือ RBAC ของเว็บหลัก. **ผู้ใช้รายงานว่าเริ่มใช้งาน Console ได้แล้ว**; ไม่ได้เปิด Browser/ตรวจยืนยันซ้ำในงานเอกสารนี้.
+
+รองรับ Backend/Frontend/NLP `.env` ตาม allowlist ตายตัว, Search/Filter, Unsaved Changes, Change Preview, Validation, Save/Cancel, Secret Masking, encrypted Backup/Restore, Atomic Replace, Conflict Detection, Session Security, CSRF, Rate Limiting และ Restart Notification. ค่า Secret เดิมไม่ส่ง Browser; reauthentication ก่อน Save/Restore และ Backup เก็บนอก Git พร้อม OS permissions. ไม่สั่ง Docker/restart/Database operations และไม่เปิด Production. รายละเอียดความปลอดภัย/ข้อจำกัด conflict กับ external writers อยู่ใน [คู่มือ Console](dev-env-manager/README.md).
+
+จาก Repository root ใน **CMD** (ไม่ใช่ PowerShell):
+
+```cmd
+cd dev-env-manager
+set NODE_ENV=development
+npm.cmd run bootstrap
+npm.cmd start
+```
+
+Bootstrap ใช้ **ครั้งแรกเท่านั้น** เพื่อตั้งรหัสผ่านแบบ Interactive ไม่แสดงขณะพิมพ์; ครั้งถัดไปใช้ `set NODE_ENV=development` และ `npm.cmd start` ใน directory เดิม. Stop ด้วย Ctrl+C. ห้ามบันทึก Root Password/Credential ลงเอกสาร. ผลเดิม **29/29 automated tests และ Chrome fixture Login/Save/Restore/Logout, responsive 1280/768/390/320 px PASS**; Save/Restore `.env` จริงและ Production/POSIX **NOT TESTED**. ไม่รันทดสอบซ้ำรอบนี้.
+
+## Environment Configuration
+
+| ไฟล์ | วิธีโหลด / ข้อควรทราบ |
+| --- | --- |
+| Root `.env` | Compose interpolation สำหรับ PostgreSQL; ไม่อยู่ใน allowlist ของ Console |
+| `backend/.env` | Compose env_file และ dotenv; inherited env อาจมี precedence ต้อง recreate service เมื่อได้รับอนุญาตเพื่อรับค่าใหม่ |
+| `frontend/.env` | Compose env_file และ Vite ตอนเริ่ม/build; `VITE_*` เป็นข้อมูลสาธารณะ ห้ามเก็บ Secret |
+| `nlp-service/.env` | pydantic-settings อ่านตาม working directory บน host; **Compose ปัจจุบันไม่ได้ส่งหรือ mount ไฟล์นี้ และกำหนด PORT=8000 เอง** |
+
+Console แสดง Pending Restart/คำแนะนำ และสถานะจริง Unknown; ไม่ restart/rebuild/recreate อัตโนมัติ. Save ไฟล์ NLP แล้ว recreate อย่างเดียวยังไม่ทำให้ Container โหลดไฟล์ ต้องมอบหมายงาน integration แยก. รักษา actual `.env`/Secrets และ Docker Volumes; ไม่เปลี่ยนค่าตามเอกสารหรือผลทดสอบเก่าโดยอัตโนมัติ.
+
+## Database / Sequelize
+
+PostgreSQL 16 Development `intern_system.public` ใช้ Sequelize Model-driven initialization ใน `backend/src/db/initialize.js` รวม associations, `models/schemaIntegrity.js`, `db/postgresIntegrity.js`; Backend startup ไม่ force/alter/sync. Student Model รองรับ `password_hash=NULL` สำหรับ Google-only Account โดยไม่ลดข้อกำหนด Password ของ Website Register. ไม่มี migration-based workflow ปัจจุบัน; คำสั่ง migration/ledger ในเอกสารเก่าห้ามนำมารันตาม.
+
+ประวัติ Cleanup สำเร็จ **154 records** และเคยยืนยัน **42 ตาราง / 0 records** หลัง cleanup รอบสุดท้าย โดย Schema/constraints คงเดิม. **รอบ Developer Console ภายหลังรายงาน 42 ตาราง / 1 record และข้อมูลก่อน–หลังรอบนั้นตรงกัน**; รอบเอกสารนี้ไม่ query Database จึงไม่ยืนยันจำนวนปัจจุบันแบบ Real-time และไม่ลบ record ที่พบใหม่.
+
+มี Database dump และ Storage archive นอก Repository ตาม [Full Cleanup Handoff](HANDOFF_fitm-intern.md#current-handoff--full-development-database-cleanup--backup-first--2026-10-16). Database dump ผ่าน restore ลงฐานแยกและ integrity comparison; Storage archive ผ่านการตรวจอ่าน/hash/structure/permissions เทียบต้นฉบับ ไม่ได้ extract ทับ Storage จริง. เป็นหลักฐานเดิม ไม่ได้ตรวจ Backup/Restore ซ้ำรอบนี้. ห้าม Reset/เปลี่ยน Schema/ลบข้อมูลหรือ Volumes โดยไม่มีอนุญาตเฉพาะงาน.
+
+## Security Notes
+
+- Backend เป็นผู้พิสูจน์ signature/actor/role; frontend token-shape checks ไม่แทน Authorization. Logout/cross-tab protection ฝั่ง Browser ไม่ใช่ server-side revocation ของ bearer ที่คัดลอกไป.
+- Browser Storage แยกระหว่าง localhost กับ 127.0.0.1 จึงมี session/Remember Me/draft แยกกัน และ cross-tab revocation ไม่ข้ามสอง origins. ไม่ย้าย token ข้าม host อัตโนมัติ.
+- ไม่เผย Password/hash/token/Connection Credentials หรือ Secret ใน `.env`/Backup; ไม่ใช้ mock/synthetic/fixture PASS แทน Provider E2E, real-account acceptance หรือ Production Security.
+
+## Next Development Priorities
+
+1. **Register Page Improvement — งานแรกเมื่อกลับมาพัฒนา:** รับรายละเอียดจากผู้ใช้และอ่าน Source จริงก่อนแก้ Form/required fields, Student ID/email/password/confirmation, duplicate/errors, loading/success feedback, Google button, responsive/UI เดิม และ Register → JWT → Student Dashboard.
+2. **Register E2E:** หลังหน้า Register พร้อมและมีบัญชีที่ได้รับอนุญาต ตรวจ persistence/JWT/redirect/duplicate และ Login หลัง Logout.
+3. **Google OAuth E2E:** หลัง Register ผ่าน ตรวจ Google-only creation/Student ID/mapping/JWT/RBAC/Dashboard, Logout/returning Login/no duplicate และ Dashboard linking ด้วยบัญชีมหาวิทยาลัยที่ได้รับอนุญาต.
+4. **Other Roles Authentication:** Teacher/Head/Staff Login/JWT/RBAC/Dashboard/Logout เมื่อมีบัญชีที่อนุญาต ห้ามสร้างบัญชีเพื่อให้รายงาน PASS.
+5. **Remaining Features:** Remember Me/cross-tab persistence, dynamic workflows, NLP env integration, server-side JWT revocation เมื่อมีข้อกำหนด และงานฝึกงาน/สหกิจคงเหลือตาม Handoff/ลำดับที่ผู้ใช้สั่ง.
+
+รอบนี้หยุดหลังอัปเดตเอกสาร ไม่เริ่ม Register หรือ E2E. ลำดับข้างต้นแทนคำแนะนำ “งานถัดไป” ใน snapshots เก่า โดยไม่เปลี่ยนสถานะงานอื่นเป็นเสร็จ.
+
+## Documentation References
+
+- [AGENTS.md](AGENTS.md) — Repository rules และข้อห้าม
+- [HANDOFF_fitm-intern.md](HANDOFF_fitm-intern.md) — สถานะล่าสุด ขอบเขตหลักฐาน ประวัติ และงานต่อไป
+- [Developer Console guide](dev-env-manager/README.md) — Bootstrap/Start/Stop, file/secret/backup security และข้อจำกัด
+- [เงื่อนไขการใช้งาน](frontend/terms.html) และ [นโยบายความเป็นส่วนตัว](frontend/privacy.html) — เก็บหน้าร่างภาษาไทยไว้ โดย Register ไม่มี Checkbox/ลิงก์ยอมรับแล้ว; รอผู้ดูแลยืนยันผู้รับผิดชอบ ช่องทางติดต่อ ฐานการประมวลผล และระยะเวลาเก็บรักษาก่อนประกาศใช้
+- Feature acceptance/manual checklists เดิมยังอยู่ใน [Documentation](#documentation); ผลในเอกสารเหล่านั้นเป็นหลักฐานตามวันที่/ขอบเขตของแต่ละงาน
+
+<details>
+<summary>ประวัติ Authentication / Register / Fonts — 14–15 ตุลาคม 2026 (รายละเอียดที่ถูกแทนที่ให้อ่านสรุปปัจจุบันด้านบน)</summary>
+
+## Login / Register / Dashboard Google Account — 15 ตุลาคม 2026
+
+**Flow ล่าสุด:** Google บัญชีใหม่ที่ผ่านนโยบาย Student → atomic Student + mapping → JWT → Dashboard; Google ที่มี mapping → Login → Dashboard. ถ้า email หรือ Student ID ชนบัญชี Student เดิมที่ยังไม่ผูก จะตอบ `409 GOOGLE_DASHBOARD_LINK_REQUIRED` พร้อมแนะนำ Email/Password Login → **จัดการบัญชี → เชื่อมต่อ Google OAuth**. หน้า Login/Register ไม่มีฟอร์ม linking และไม่ออก JWT ให้บัญชีที่ชนกัน. Anonymous Student linking endpoints เดิมถูกปฏิเสธ; personnel backend authentication เดิมคงอยู่.
+
+Website Register คง validation/bcrypt/defaults เดิม แต่สร้างบัญชีและ Application session ใน transaction เดียว → HTTP 201 พร้อม JWT/Student role/URL Dashboard ที่ Backend อนุญาต → frontend ใช้ session adapter เดิมและ redirect เข้า Dashboard. `pending` เป็นสถานะที่ guard เดิมอนุญาต ไม่พบ verification gate แยกใน flow นี้. Register ไม่มี Remember Me เดิม จึงใช้ session storage (`remember:false`); Login Remember Me/cross-tab/Logout/drafts คงเดิม. หากออก JWT ไม่สำเร็จ บัญชีใหม่ rollback.
+
+Dashboard มี Google account panel เพิ่มเฉพาะงานนี้ ใช้ Student JWT + live actor เป็น target, ยืนยันรหัสผ่านปัจจุบันเพื่อรักษา fresh ownership เดิม, Google nonce/token/domain/hd verification และ Shared Confirmation Modal. Challenge อายุ 5 นาทีและ confirmation อายุ 2 นาทีผูกกับ Student ID/JWT เดียวกัน ใช้ครั้งเดียว ตรวจ password/target fingerprints และ identity conflicts ซ้ำก่อนบันทึก. Confirm ไม่ออกหรือเปลี่ยน JWT; refresh linked status แทน. Google-only แสดงเชื่อมแล้วโดยไม่ให้ผูกซ้ำ. API ใหม่อยู่ที่ `/api/auth/google/student/{status,challenge,link,link/confirm}` และต้องผ่าน JWT/Student guards.
+
+**PASS:** actual PostgreSQL/HTTP integration ภายใน rollback transaction โดยฉีด verified claims แบบ mock, Register JWT + token-failure rollback, Google create/return, no-password rejection, Dashboard linking/cross-account/session/replay/conflict/origin/role guards; counts/ค่าข้อมูลเดิมตรงก่อน–หลัง. Headless mock Login/Register/Google panel/Modal 1280/390/320 ผ่าน; Register API mock เข้า Dashboardด้วย session storage และไม่ submit ซ้ำ. Frontend build 134 modules/syntax/health ผ่าน. **NOT TESTED:** Google Provider/บัญชีจริง, full Dashboard workflows, physical mobile/Production และ committed concurrency. ไม่แก้ Schema/Models/env/flags ในรอบนี้. สถานะ “Register → Login” และ Student linking บนหน้า Login ในประวัติถูกแทนที่ด้วยหัวข้อนี้; รายละเอียดไฟล์/ข้อจำกัดอยู่ใน [Handoff](HANDOFF_fitm-intern.md).
+
+## Google-only Student Registration — 15 ตุลาคม 2026
+
+**ปลด Schema blocker แล้ว; Provider acceptance ยัง PARTIAL.** Google ครั้งแรกที่ผ่าน signature/iss/aud/exp/verified email/domain/hd/nonce และ pattern `^s([0-9]{13})@email\.kmutnb\.ac\.th$` จะใช้ 13 หลักเป็น Student ID, ชื่อจาก Google `given_name`/`family_name` และ defaults `co_op`/`pending` สร้าง Student (`password_hash=NULL`) + Google subject mapping ใน transaction เดียว แล้วออก Application JWT เข้า Student Dashboard. ครั้งต่อไปใช้ mapping เดิม. ถ้า Google ไม่ส่งชื่อ/นามสกุลครบ ตอบ `503 GOOGLE_STUDENT_PROFILE_REQUIRED` โดยไม่สร้างข้อมูลสมมติหรือแก้ required fields เพิ่ม. นโยบายนี้ใช้สมัครบัญชี ไม่รับรองสถานะนักศึกษาปัจจุบัน/คุณสมบัติฝึกงาน.
+
+**Development เท่านั้น:** เพิ่ม `GOOGLE_STUDENT_ONBOARDING_ENABLED` ค่าเริ่มต้น false ใน `.env.example`; จะมีผลเมื่อ `NODE_ENV=development` และ target เป็น local PostgreSQL `intern_system` ตาม guard เดิม. Development `backend/.env` ตั้งสองค่านี้เป็น development/true และ recreate เฉพาะ Backend แล้ว; Google Login/Linking flags และ domain/hd เดิมไม่เปลี่ยน. Production/test/ไม่ระบุ environment เปิด onboarding ไม่ได้ แม้ตั้ง flag=true. ไม่เปลี่ยน Production Database.
+
+Email/Password registration ยังบังคับ password/validation/bcrypt เดิม; Google-only ปฏิเสธ Password Login ด้วย 401 โดยไม่ส่ง NULL เข้า bcrypt. บัญชีเว็บไซต์เดิมที่ชน email/Student ID ต้องยืนยัน credentials → Shared Modal → explicit confirmation ตาม secure linking เดิม ไม่มี Auto-Link. ใช้ subject/Student-ID advisory locks และ UNIQUE เดิมป้องกัน duplicate; mapping ล้มเหลว rollback Student. ไม่เปลี่ยน UI/Session/Remember Me/RBAC หรือสร้าง Teacher/Staff.
+
+DDL ที่รันจริง: `ALTER TABLE public.students ALTER COLUMN password_hash DROP NOT NULL;` เฉพาะ PostgreSQL 16 Development. ตรวจ row fingerprints ของ Student เดิม 4 แถวตรงกันก่อน/หลังและคอลัมน์อื่นไม่เปลี่ยน. Model-driven column inspection ผ่านโดยไม่รัน init/reset/sync. **PASS** PostgreSQL integration ภายใน transaction ที่ rollback: creation, hashing/password rejection, linking/replay, unique failures/atomic rollback, JWT/Student guard; lock exclusion สอง connection และ build 133 modules ผ่าน. **NOT TESTED** Google Provider/บัญชีจริง, committed concurrent registration, browser/Production. ไม่คงบัญชีทดสอบไว้. รายละเอียดดู [Handoff](HANDOFF_fitm-intern.md).
+
+Rollback plan (ยังไม่ได้รัน): ปิด onboarding flag ก่อนโดยคง Google Login ของบัญชีเดิม; ตรวจ NULL hashes ใหม่ภายใต้ table lock ใน transaction. รัน `ALTER TABLE public.students ALTER COLUMN password_hash SET NOT NULL;` และคืน Model contract ได้เฉพาะเมื่อไม่มี NULL hash. ถ้ามี Google-only แล้ว ให้คง nullable และกำหนดแผนรองรับบัญชีที่ได้รับอนุญาตก่อน ห้ามสร้างรหัสผ่านทดแทน/ลบบัญชีเพื่อ rollback. สถานะ Schema BLOCKED ในประวัติด้านล่างถูกแทนที่โดยหัวข้อนี้.
+
 ## Google Student / Register / TH Sarabun New — 14 ตุลาคม 2026
 
 ขอบเขตฟอนต์ครอบคลุมข้อความที่แอปควบคุม; GIS iframe/Google Provider popup ใช้ฟอนต์และ branding ที่ Google ควบคุม. ไม่ดัดแปลง Provider UI.
@@ -29,6 +162,8 @@ Frontend build 133 modules ผ่าน; Backend syntax และ Backend/DB/NLP
 Remember Me ใช้ sessionStorage/localStorage ตามการเลือกสำหรับทุกบทบาท คง JWT expiry, generation ที่ยกเลิก session ข้ามแท็บ, session recovery, Logout และ live Backend RBAC. เปลี่ยนบัญชีหรือ Actor จะยกเลิก session เก่า; key ข้อมูลร่างคงเดิม. ลิงก์ลืมรหัสผ่านเดิมไม่มี reset endpoint จึงแสดง shared feedback ให้ติดต่อผู้ดูแลระบบ.
 
 ตรวจครั้งนี้: **PASS** สำหรับ build 133 modules, syntax, in-memory synthetic login ทั้งสี่บทบาท/ambiguity/JWT/RBAC/Remember Me/Logout, Google mapping/disabled/link ownership guards และ Chrome headless ที่ 1280/390/320 px. HTTP Backend `/`, `/health/db` และ Frontend ตอบ 200; unauthorized role APIs ตอบ 401, unified input ว่างตอบ 400, Google disabled challenge ตอบ 503. Login สำเร็จด้วยบัญชีจริงและ Google Provider จริง **NOT TESTED**. ไม่สร้างไฟล์ทดสอบ/audit, ไม่แก้ schema/Models หรือ Student Profile, ไม่รัน migration/reset/commit/push; แก้หน้าที่ป้องกันสิทธิ์เฉพาะ session wiring และ URL Login.
+
+</details>
 
 ## ระบบและเทคโนโลยี
 
@@ -67,7 +202,7 @@ if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env 
 
 Root `.env` ใช้ POSTGRES_PASSWORD; backend ใช้ DB_USER/DB_PASSWORD ที่ตรงกัน, DB_NAME=intern_system, DB_PORT=5432 และ DB_HOST=postgres ใน Compose หรือ 127.0.0.1 บน host. เตรียม JWT_SECRET, FRONTEND_URL, SMTP และ private storage ตาม backend/.env.example. Frontend ใช้ VITE_API_URL; ห้ามใส่ secret ใน VITE variables. NLP client ใน container ใช้ service URL; บน host ใช้ NLP_SERVICE_BASE_URL=http://127.0.0.1:8000.
 
-Environment ที่ตรวจจริงไม่มี NODE_ENV กำหนดไว้ แต่เป็น local Development Compose ที่ใช้ nodemon/Vite/Uvicorn reload. คำสั่งจัดการ schema **ต้องตั้ง NODE_ENV=development อย่างชัดเจนทุกครั้ง**; ไม่แก้ environment files ในงานนี้. Guard ตรวจชื่อฐานจริง, local host (หรือ postgres ภายใน container), port 5432, dialect, public schema และ PostgreSQL 16; ปฏิเสธ Production, staging, environment ที่ไม่ระบุ และชื่อฐานอื่น.
+Environment ปัจจุบันตั้ง `NODE_ENV=development` ใน backend/.env สำหรับ local Development Compose ที่ใช้ nodemon/Vite/Uvicorn reload แล้ว (15 ต.ค. 2026). คำสั่งจัดการ schema **ต้องมี NODE_ENV=development อย่างชัดเจน**; Guard ตรวจชื่อฐานจริง, local host (หรือ postgres ภายใน container), port 5432, dialect, public schema และ PostgreSQL 16; ปฏิเสธ Production, staging, environment ที่ไม่ระบุ และชื่อฐานอื่น. ไม่ใช้ init/reset เพื่อทดลอง Auth.
 
 ## Initialize / Reset / ตรวจฐานว่าง
 
@@ -133,11 +268,13 @@ Students เชื่อม Teachers สองบทบาท, Profile/Mentor �
 
 ## Google OAuth และ Student Profile
 
-**Google schema PASS / provider E2E NOT TESTED:** google_identities/google_auth_requests และ CHECKs/unique indexes/FKs จาก 026 อยู่ครบ. GOOGLE_LOGIN_ENABLED=false และ GOOGLE_ACCOUNT_LINKING_ENABLED=false ตาม environment จริง. อ่าน config และตรวจ disabled route ได้ โดยไม่เปิด flags. งานนี้ไม่เปลี่ยน linking policy, domain policy หรือสร้างบัญชี Teacher/Head/Staff. Google-only Student onboarding และบัญชีไม่มี password ยังต้องมี policy ที่อนุมัติก่อนพัฒนา.
+**Google implementation พร้อมตามขอบเขต / provider E2E NOT TESTED:** ตาราง google_identities/google_auth_requests รวม integrity definitions อยู่ใน Model-driven schema ปัจจุบัน. Google-only Student/nullable password และ Dashboard linking มี implementation แล้วตามสรุปด้านบน; ข้อความปิด flags/รอนโยบายในประวัติ 14 ต.ค. ถูกแทนที่ด้วยการอนุมัติ Development และงาน 15–16 ต.ค. ไม่ยืนยันค่าจริงของ flags แบบ Real-time ในงานเอกสารนี้ และไม่เปลี่ยน linking/domain policy หรือสร้างบัญชี Teacher/Head/Staff.
 
 **Student Profile schema/imports PASS / functional acceptance รอบนี้ NOT TESTED:** 5 Tabs, aggregate revision, addresses/education/training/skills, private documents, file version/current indexes และ field types อยู่ครบ. ขอบเขต Phase 1–5 เดิมยัง ACCEPTED WITH LIMITATIONS ตาม [ประวัติ Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md); OCR scan มี limited support และ national ID/encryption/acknowledgement/signature ยังมี policy blockers. ไม่เปิด Student Calendar และไม่แก้ UI/menus.
 
 ## บริการและผล smoke ล่าสุด
+
+ตารางนี้แสดง Compose services และ **ผลตรวจเดิมวันที่ 14 ต.ค.** ไม่ใช่ผลตรวจซ้ำรอบเอกสารนี้. หลักฐาน Developer Console รอบ 16 ต.ค. รายงาน Frontend build 134 modules และ Backend/DB/NLP health ผ่าน; Console รันบน host แยกที่ 127.0.0.1:5379 ไม่ใช่ Compose service. ทุก port mapping ใน Compose ปัจจุบัน bind 127.0.0.1; Root Password/Credential ของ Console แยกจากบริการเหล่านี้.
 
 | Service | Container / port บน 127.0.0.1 | ผลตรวจ 14 ต.ค. 2026 |
 | --- | --- | --- |
@@ -151,13 +288,13 @@ Compose มี container healthcheck เฉพาะ PostgreSQL; ส่วนอ
 
 Auth smoke ในงาน cleanup ก่อนหน้า: Student /me และ Profile /me → 401; Student/Staff login input ว่าง → 400; Teacher login input ว่าง → 401. Google config → 200 enabled=false; challenge/login → 503 GOOGLE_DISABLED. ไม่ใช้บัญชีจริงและไม่สร้างข้อมูลผู้ใช้.
 
-ฐานจริงปัจจุบัน: **42 ตาราง, 503 คอลัมน์, 234 constraints, 112 indexes, 11 functions, 13 triggers**. Schema ว่างที่สร้างใหม่มี 230 constraints และ indexes/triggers เท่ากัน เพราะ composite uniqueness บางส่วนสร้างผ่าน unique indexes ของ Models แทน UNIQUE constraints เดิม; constraints ด้าน ownership/state ยังคงครบ. Initialization ซ้ำผ่าน. จำนวนแถวในตารางเดิมคงเดิม รวม Students 4, Teachers 23, Staff 0. ไม่เกิด committed reset และไม่มีข้อมูลแอปถูกลบ; ลบเฉพาะ migration ledger.
+**Snapshot วันที่ 14 ต.ค. ก่อน Full Cleanup:** 42 ตาราง, 503 คอลัมน์, 234 constraints, 112 indexes, 11 functions, 13 triggers. Schema ว่างที่สร้างใหม่ในรอบนั้นมี 230 constraints และ indexes/triggers เท่ากัน เพราะ composite uniqueness บางส่วนสร้างผ่าน unique indexes ของ Models แทน UNIQUE constraints เดิม; ownership/state integrity และ initialization ซ้ำผ่านตามหลักฐานรอบนั้น. Students 4/Teachers 23/Staff 0 เป็นข้อมูลก่อน Cleanup 154 records และไม่ใช่จำนวนปัจจุบัน; ประวัติ 0 → 1 record ล่าสุดดู Database / Sequelize ด้านบน.
 
 ## Automated tests หลัง cleanup
 
-**ไม่มี automated test suites เหลือ และไม่มี automated regression coverage ใน repository.** ลบชุดทดสอบ 89 ไฟล์: backend/test 57, frontend/test 25, nlp-service/tests 6 และ linking-guards.test.cjs 1. ลบตัวรัน/validators 38 และ fixtures/helpers/package marker 13 ไฟล์; [รายชื่อทั้งหมดใน Handoff](HANDOFF_fitm-intern.md#รายการไฟล์ที่ลบในการ-cleanup-นี้). ลบเครื่องมือและ helpers ของ workflow เดิมอีก 14 ไฟล์; บางตัวมีหน้าที่ operational/documentation เพิ่มเติม จึงต้องตัดสินใจเรื่องการเก็บความสามารถแยกจากการเลิกใช้ migration.
+**Main application automated suites เดิมถูกลบ; ไม่มี full application regression coverage ปัจจุบัน.** ประวัติ Cleanup ลบ test suites 89 ไฟล์: backend/test 57, frontend/test 25, nlp-service/tests 6 และ linking-guards.test.cjs 1 พร้อมตัวรัน/validators 38 และ fixtures/helpers/package marker 13 ไฟล์; [รายชื่อทั้งหมดใน Handoff](HANDOFF_fitm-intern.md#รายการไฟล์ที่ลบในการ-cleanup-นี้). ลบเครื่องมือ/helpers ของ workflow เดิมอีก 14 ไฟล์. ภายหลังเพิ่มเฉพาะ `dev-env-manager/test/console.test.js` และ optional browser fixture smoke สำหรับ Console; 29/29 PASS เดิมไม่ใช่ coverage ของเว็บหลัก และไม่ได้รันใหม่รอบนี้.
 
-เก็บ application source, development seed utilities, NLP training data, environment files, historical logs/reports และ manual Google diagnostic ที่ไม่ใช่ automated test. ไม่มีไฟล์ทดสอบใหม่สร้างแทน. ผล PASS เก่าเป็นประวัติและไม่เท่ากับผลตรวจหลัง cleanup.
+เก็บ application source, development seed utilities, NLP training data, environment files, historical logs/reports และ manual Google diagnostic. ไม่ได้สร้างชุดทดสอบเว็บหลักทดแทน; ผล PASS เก่าเป็นประวัติและไม่เท่ากับผลตรวจใหม่หลัง cleanup.
 
 ใช้ smoke/manual checks:
 
@@ -173,7 +310,7 @@ npm.cmd run build
 
 Full regression, authenticated role workflows, Profile CRUD/PDF/OCR E2E, SMTP acceptance, Google provider E2E, browser/mobile จริง และ Production/Staging deployment **NOT TESTED ในงานนี้**. ไม่รายงาน Full Regression PASS. Schema readiness ไม่ยืนยัน feature acceptance.
 
-พัฒนาต่อด้วย manual acceptance ของ workflows ที่ใช้ supervision/activity tables ใหม่, ตรวจ Profile persistence/PDF/OCR ด้วยข้อมูล Development ที่อนุญาต, และกำหนด Production schema provisioning แยกจาก Development commands. Google/linking/onboarding ต้องรอนโยบายและการอนุญาตของงานถัดไป. ตรวจ git status/diff ก่อนทำงาน; งานนี้ไม่ Commit/Push/Git Reset/Clean.
+งานถัดไปตามคำสั่ง 16 ต.ค. คือ **Register Page Improvement ก่อน**, แล้ว Register E2E → Google OAuth E2E → Other Roles → Remaining Features ตามลำดับด้านบน. Google-only/Dashboard linking มี implementation แล้ว แต่ต้องมีการอนุญาตบัญชีจริงก่อน Provider E2E. Manual acceptance ของ supervision/activity/Profile persistence/PDF/OCR และ Production schema provisioning ยังเป็นงานคงเหลือ ไม่เริ่มเอง. ตรวจ git status/diff ก่อนทำงาน; ไม่ Commit/Push/Reset/Clean.
 
 
 ## การแก้ไขเฉพาะจุดหลังตรวจ cleanup — 14 ตุลาคม 2026
@@ -550,6 +687,11 @@ Statuses: VERIFIED = complete behavior for that requirement with relevant accept
 
 ## Google Login setup and configurable domains — 2026-10-11
 
+<details>
+<summary>Historical setup เท่านั้น — migration/test commands และ Login/linking/onboarding status ด้านล่างถูกแทนที่แล้ว ห้ามใช้เป็น setup ปัจจุบัน</summary>
+
+ใช้ Authentication / Google OAuth Development Configuration / Database ด้านบนและ Handoff สำหรับ workflow ปัจจุบัน; เก็บรายละเอียด/ลิงก์ต้นฉบับด้านล่างเพื่อประวัติ ไม่ใช่คำแนะนำให้เปลี่ยน flags/domains หรือรัน runner ที่ถูกลบ.
+
 Source รองรับ GIS Google Login สำหรับ Student, Teacher, Department Head และ Staff; ตอนนี้ยังปิดใน environment เดิม ดู [Acceptance Report](docs/audits/FITM_GOOGLE_OAUTH_ALL_ROLES_IMPLEMENTATION.md) สำหรับ PASS/BLOCKED/NOT TESTED และ [Prepared Migration/Policy](backend/src/db/prepared/google-oauth/README.md) สำหรับสิ่งที่ต้องอนุมัติ
 
 1. อนุมัติและติดตั้ง **prepared 026 เท่านั้น** หลัง backup/restore verification; ไฟล์อยู่นอก Umzug discovery ห้ามใช้การรัน pending migrations ทั้งหมดแทน ไม่ต้องติดตั้ง 019–021 เพื่อเปิด Google Login
@@ -578,3 +720,5 @@ node scripts/verifyGoogleLoginBrowser.js # native Edge with MOCK Google/API; not
 ```
 
 Google E2E จริงยัง NOT TESTED และห้ามตีความผล mock/RSA/isolated SQL เป็น production acceptance
+
+</details>

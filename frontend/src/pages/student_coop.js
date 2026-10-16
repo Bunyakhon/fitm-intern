@@ -1,4 +1,6 @@
 import { mountCoopActivities } from "./coopActivities.js";
+import { mountStudentGoogleAccount } from "./studentGoogleAccount.js";
+import { MAX_PERSON_NAME_LENGTH, isThaiPersonName } from "../validators/personName.js";
 import { initStudentInternshipLog } from "./studentInternshipLog.js";
 import { initStudentSupervision } from "./studentSupervision.js";
 import { StudentProfileDraft, readProfileInputs, writeProfileInputs, PROFILE_INPUTS } from "./studentProfileDraft.js";
@@ -218,14 +220,14 @@ const profileEditMessage =
   document.getElementById("profileEditMessage");
 
 const studentInfoForm = document.getElementById("studentInfoForm");
-const studentFullNameInput = document.getElementById("studentFullName");
+const studentFirstNameInput = document.getElementById("studentFirstNameInput");
+const studentLastNameInput = document.getElementById("studentLastNameInput");
 const studentIdInput = document.getElementById("studentIdInput");
 const studentEmailInput = document.getElementById("studentEmailInput");
 const studentMajorInput = document.getElementById("studentMajorInput");
 const studentYearLevelInput = document.getElementById("studentYearLevelInput");
 const studentGpaInput = document.getElementById("studentGpaInput");
 const studentAdvisorInput = document.getElementById("studentAdvisorInput");
-const studentCoopAdvisorInput = document.getElementById("studentCoopAdvisorInput");
 const studentInfoMessage = document.getElementById("studentInfoMessage");
 const profileAvatarButton = document.getElementById("profileAvatarButton");
 const profileAvatarImage = document.getElementById("profileAvatarImage");
@@ -244,6 +246,7 @@ let isTeacherDirectoryLoaded = false;
 let hasAdvisorSelectionChanged = false;
 let isProfileImageUploading = false;
 let isStudentProfileSaving = false;
+let studentGoogleAccount;
 
 // ==============================
 // Authentication
@@ -289,6 +292,8 @@ async function checkAuthentication() {
 
     // แสดงข้อมูลจาก students
     renderStudent(student);
+    studentGoogleAccount ||= mountStudentGoogleAccount({ document });
+    if (document.getElementById("panel-google-account")?.classList.contains("active")) studentGoogleAccount?.load();
 
     // โหลดข้อมูลเพิ่มเติมจาก student_profiles
     const studentProfile = await loadStudentProfile();
@@ -400,7 +405,7 @@ function setProfileLoading(isLoading) {
   profilePanel?.setAttribute("aria-busy", String(isLoading));
   // Empty startup controls are not a draft. Enable academic entry only after
   // the first aggregate snapshot supplied the revision used by its write API.
-  for (const input of [studentMajorInput, studentYearLevelInput, studentGpaInput]) {
+  for (const input of [studentFirstNameInput, studentLastNameInput, studentMajorInput, studentYearLevelInput, studentGpaInput]) {
     if (input) input.disabled = !hasLoadedStudentProfile;
   }
   const academicSave = document.getElementById("saveStudentInfoBtn");
@@ -487,8 +492,11 @@ document.getElementById("profileEditLegacySkills")?.addEventListener("click", ()
 
 function captureStudentInfoDraft() {
   if (!currentStudent || !studentInfoForm || (typeof hasLoadedStudentProfile !== "undefined" && !hasLoadedStudentProfile)) return null;
-  const draft = { major: studentMajorInput.value, year: studentYearLevelInput.value, gpa: studentGpaInput.value, advisor: studentAdvisorInput.value, advisorChanged: hasAdvisorSelectionChanged };
+  const draft = { first_name: studentFirstNameInput.value, last_name: studentLastNameInput.value, major: studentMajorInput.value, year: studentYearLevelInput.value, gpa: studentGpaInput.value, advisor: studentAdvisorInput.value, advisorChanged: hasAdvisorSelectionChanged };
   draft.changedFields = [];
+  for (const field of ["first_name", "last_name"]) {
+    if (draft[field].trim() !== String(currentStudent[field] ?? "").trim()) draft.changedFields.push(field);
+  }
   if (draft.major !== (currentStudent.major || "")) draft.changedFields.push("major");
   if (draft.year !== String(currentStudent.year_level ?? "")) draft.changedFields.push("year");
   if ((draft.gpa.trim() ? Number(draft.gpa) : null) !== (currentStudent.gpa == null ? null : Number(currentStudent.gpa))) draft.changedFields.push("gpa");
@@ -499,6 +507,8 @@ function captureStudentInfoDraft() {
 function restoreStudentInfoDraft(draft) {
   if (!draft) return;
   const changed = new Set(draft.changedFields || ["major", "year", "gpa", "advisor"]);
+  if (changed.has("first_name")) setInputElementValue(studentFirstNameInput, draft.first_name);
+  if (changed.has("last_name")) setInputElementValue(studentLastNameInput, draft.last_name);
   if (changed.has("major")) setInputElementValue(studentMajorInput, draft.major);
   if (changed.has("year")) setInputElementValue(studentYearLevelInput, draft.year);
   if (changed.has("gpa")) setInputElementValue(studentGpaInput, draft.gpa);
@@ -531,8 +541,9 @@ function populateStudentInfoForm(student) {
     return;
   }
 
-  const fullName = `${student.first_name || ""} ${student.last_name || ""}`.trim();
-  setInputElementValue(studentFullNameInput, fullName);
+  // Editing controls always show stored Thai fields, never the display fallback.
+  setInputElementValue(studentFirstNameInput, student.first_name ?? "");
+  setInputElementValue(studentLastNameInput, student.last_name ?? "");
   setInputElementValue(studentIdInput, getStudentCode(student));
   setInputElementValue(studentEmailInput, student.email);
 
@@ -551,12 +562,6 @@ function populateStudentInfoForm(student) {
   setInputElementValue(studentMajorInput, major);
   setInputElementValue(studentYearLevelInput, student.year_level ?? "");
   setInputElementValue(studentGpaInput, student.gpa ?? "");
-  setInputElementValue(
-    studentCoopAdvisorInput,
-    student.coopAdvisorTeacher
-      ? formatTeacherName(student.coopAdvisorTeacher)
-      : "ยังไม่ได้กำหนด"
-  );
 
   if (studentAdvisorInput) {
     preserveCurrentAdvisorOption(student.advisor_teacher_id);
@@ -857,6 +862,19 @@ async function saveStudentInfo(event) {
   };
   const payload = Object.fromEntries(Object.entries(candidate).filter(([key, value]) =>
     key === "gpa" ? (currentStudent?.[key] == null ? null : Number(currentStudent[key])) !== value : (currentStudent?.[key] ?? null) !== value));
+  for (const [field, input, label] of [["first_name", studentFirstNameInput, "ชื่อ"], ["last_name", studentLastNameInput, "นามสกุล"]]) {
+    const value = input.value.trim();
+    // Preserve untouched legacy names, including English names in the main columns.
+    if (value === String(currentStudent?.[field] ?? "").trim()) continue;
+    if (!isThaiPersonName(value)) {
+      showMessage(studentInfoMessage, [...value].length > MAX_PERSON_NAME_LENGTH
+        ? `${label}ต้องมีความยาวไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ`
+        : `กรุณากรอก${label}เป็นภาษาไทยเท่านั้น`, "error");
+      input.focus();
+      return;
+    }
+    payload[field] = value;
+  }
   // Omitted fields are preserved by the backend; only user changes update the advisor.
   if (isTeacherDirectoryLoaded && hasAdvisorSelectionChanged) {
     payload.advisor_teacher_id = studentAdvisorInput.value || null;
@@ -971,6 +989,8 @@ function renderStudent(student) {
 
   const prefix = String(currentStudentProfile?.prefix || "").trim();
   const fullName = [prefix, firstName, lastName].filter(Boolean).join(" ") || "-";
+  const displayName = [firstName, lastName].some(value => value.trim()) ? fullName
+    : [currentStudentProfile?.english_first_name, currentStudentProfile?.english_last_name].filter(Boolean).join(" ") || "-";
 
   const studentId = getStudentCode(student);
 
@@ -992,13 +1012,13 @@ function renderStudent(student) {
   // Navbar
   if (userNameDisplay) {
     userNameDisplay.textContent =
-      fullName;
+      displayName;
   }
 
   // Welcome
   if (overviewGreeting) {
     overviewGreeting.textContent =
-      `ยินดีต้อนรับ ${fullName}`;
+      `ยินดีต้อนรับ ${displayName}`;
   }
 
   // Profile main
@@ -1824,6 +1844,7 @@ function activateDashboardPanel(targetId) {
   if (targetId === "panel-evaluate") return companyEvaluation.load();
   if (targetId === "panel-request") return loadCoopRequests();
   if (targetId === "panel-job-matching") renderJobMatchingSource();
+  if (targetId === "panel-google-account") studentGoogleAccount?.load();
   window.scrollTo({ top: 0, behavior: "smooth" });
   return Promise.resolve(true);
 }

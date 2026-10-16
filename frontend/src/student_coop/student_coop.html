@@ -163,6 +163,11 @@
             <span>อื่น ๆ</span>
           </div>
 
+          <button type="button" class="sidebar-item" data-target="panel-google-account">
+            <span class="sidebar-icon"><i class="fa-solid fa-user-gear"></i></span>
+            <span class="sidebar-text">จัดการบัญชี</span>
+          </button>
+
           <button
             type="button"
             class="sidebar-item sidebar-danger"
@@ -182,6 +187,22 @@
          ============================== -->
 
       <main class="dashboard-content"><section id="panel-activities" class="content-panel" hidden><div id="activityCalendar"></div></section>
+        <section class="content-panel" id="panel-google-account">
+          <div class="panel-header"><h2>จัดการบัญชี</h2><p>จัดการการเข้าสู่ระบบของบัญชีนักศึกษาปัจจุบัน</p></div>
+          <div class="section-card" id="studentGoogleAccount">
+            <div class="section-card-header"><h3>เชื่อมต่อ Google OAuth</h3></div>
+            <p id="studentGoogleStatus" class="message" role="status" aria-live="polite">กำลังตรวจสอบสถานะการเชื่อม Google...</p>
+            <form id="studentGoogleForm" hidden>
+              <label for="studentGooglePassword">ยืนยันรหัสผ่านบัญชีเว็บไซต์ปัจจุบัน</label>
+              <input id="studentGooglePassword" type="password" autocomplete="current-password" maxlength="100" required />
+              <p>ยืนยันเจ้าของบัญชี เลือกบัญชี Google แล้วตรวจสอบบัญชีทั้งสองก่อนกดยืนยันการเชื่อม</p>
+              <button type="submit" class="btn-primary" id="studentGoogleConnect">เชื่อมต่อ Google</button>
+            </form>
+            <div id="studentGoogleProvider"></div>
+            <button type="button" class="btn-secondary" id="studentGoogleCancel" hidden>ยกเลิก</button>
+            <button type="button" class="btn-secondary" id="studentGoogleReload">ตรวจสถานะอีกครั้ง</button>
+          </div>
+        </section>
         <!-- ==============================
            Overview
            ============================== -->
@@ -371,8 +392,12 @@
             <form id="studentInfoForm" class="student-info-form" novalidate>
               <div class="student-info-form-grid">
                 <div class="form-group">
-                  <label for="studentFullName">ชื่อ-นามสกุล</label>
-                  <input type="text" id="studentFullName" readonly />
+                  <label for="studentFirstNameInput">ชื่อ (ภาษาไทย)</label>
+                  <input type="text" id="studentFirstNameInput" maxlength="255" autocomplete="given-name" aria-describedby="studentInfoMessage" />
+                </div>
+                <div class="form-group">
+                  <label for="studentLastNameInput">นามสกุล (ภาษาไทย)</label>
+                  <input type="text" id="studentLastNameInput" maxlength="255" autocomplete="family-name" aria-describedby="studentInfoMessage" />
                 </div>
                 <div class="form-group">
                   <label for="studentIdInput">รหัสนักศึกษา</label>
@@ -418,17 +443,6 @@
                   <select id="studentAdvisorInput">
                     <option value="">ยังไม่ได้กำหนด</option>
                   </select>
-                </div>
-                <div class="form-group student-info-form-full">
-                  <label for="studentCoopAdvisorInput"
-                    >อาจารย์ที่ปรึกษาสหกิจศึกษา / อาจารย์นิเทศ</label
-                  >
-                  <input
-                    type="text"
-                    id="studentCoopAdvisorInput"
-                    value="ยังไม่ได้กำหนด"
-                    readonly
-                  />
                 </div>
               </div>
 
