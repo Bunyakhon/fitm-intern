@@ -75,3 +75,6 @@ frontend/dist/
 *.pem
 *.key
 *.crt
+
+# Local Development account credentials: Windows DPAPI, private ACL; never publish.
+/.local-dev-accounts/

@@ -188,20 +188,39 @@
 
       <main class="dashboard-content"><section id="panel-activities" class="content-panel" hidden><div id="activityCalendar"></div></section>
         <section class="content-panel" id="panel-google-account">
-          <div class="panel-header"><h2>จัดการบัญชี</h2><p>จัดการการเข้าสู่ระบบของบัญชีนักศึกษาปัจจุบัน</p></div>
-          <div class="section-card" id="studentGoogleAccount">
-            <div class="section-card-header"><h3>เชื่อมต่อ Google OAuth</h3></div>
-            <p id="studentGoogleStatus" class="message" role="status" aria-live="polite">กำลังตรวจสอบสถานะการเชื่อม Google...</p>
-            <form id="studentGoogleForm" hidden>
+          <div class="panel-header"><h2>จัดการบัญชี</h2><p>ตรวจสอบข้อมูลบัญชีของคุณและจัดการการเชื่อมต่อ Google ในที่เดียว</p></div>
+          <div class="account-management-grid">
+          <section class="section-card account-information" id="studentAccountInfo" aria-labelledby="studentAccountHeading" aria-busy="true">
+            <div class="account-card-heading"><span class="account-card-icon" aria-hidden="true"><i class="fa-solid fa-user"></i></span><div><h3 id="studentAccountHeading">ข้อมูลบัญชีผู้ใช้</h3><p>ข้อมูลจากบัญชีนักศึกษาที่เข้าสู่ระบบอยู่</p></div><span class="account-readonly">อ่านอย่างเดียว</span></div>
+            <dl class="account-details">
+              <div><dt>ชื่อ-นามสกุล</dt><dd id="studentAccountName">กำลังโหลดข้อมูล...</dd></div>
+              <div><dt>รหัสนักศึกษา</dt><dd id="studentAccountStudentId">—</dd></div>
+              <div><dt>อีเมลที่ใช้เข้าสู่ระบบ</dt><dd id="studentAccountEmail">—</dd></div>
+            </dl>
+            <p class="account-help" id="studentAccountInfoStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลบัญชีที่ยืนยันแล้ว</p>
+            <p class="account-help">แก้ไขชื่อภาษาไทยได้ที่ประวัตินักศึกษา รหัสนักศึกษาและอีเมลใช้ข้อมูลบัญชีเดิม</p>
+          </section>
+          <section class="section-card account-google" id="studentGoogleAccount" aria-labelledby="studentGoogleHeading" data-state="idle">
+            <div class="account-card-heading"><span class="account-card-icon" aria-hidden="true"><i class="fa-solid fa-link"></i></span><div><h3 id="studentGoogleHeading">การเชื่อมต่อ Google</h3><p>เชื่อมบัญชีเพื่อใช้ Google เข้าสู่ระบบ</p></div></div>
+            <span id="studentGoogleBadge" class="account-connection-state">ยังไม่ได้ตรวจสอบ</span>
+            <p id="studentGoogleStatus" class="message" role="status" aria-live="polite">เปิดหน้านี้เพื่อตรวจสอบสถานะการเชื่อมต่อ</p>
+            <p class="account-help">สถานะนี้แสดงเฉพาะการเชื่อมต่อ Google ไม่ได้ระบุว่าบัญชีมีรหัสผ่านหรือไม่ บัญชีที่เชื่อมแล้วไม่ต้องเชื่อมซ้ำ</p>
+            <form id="studentGoogleForm" aria-describedby="studentGoogleLinkHelp studentGoogleStatus" hidden>
+              <h4>เชื่อมต่อกับบัญชีปัจจุบัน</h4>
               <label for="studentGooglePassword">ยืนยันรหัสผ่านบัญชีเว็บไซต์ปัจจุบัน</label>
-              <input id="studentGooglePassword" type="password" autocomplete="current-password" maxlength="100" required />
-              <p>ยืนยันเจ้าของบัญชี เลือกบัญชี Google แล้วตรวจสอบบัญชีทั้งสองก่อนกดยืนยันการเชื่อม</p>
+              <input id="studentGooglePassword" type="password" autocomplete="current-password" maxlength="100" aria-describedby="studentGoogleLinkHelp studentGoogleStatus" required />
+              <p class="account-help" id="studentGoogleLinkHelp">สำหรับบัญชีเว็บไซต์ที่ระบบอนุญาตให้เชื่อม: ยืนยันรหัสผ่าน เลือก Google แล้วตรวจสอบบัญชีทั้งสองก่อนกดยืนยัน ระบบจะเชื่อมเมื่อยืนยันสำเร็จเท่านั้น</p>
               <button type="submit" class="btn-primary" id="studentGoogleConnect">เชื่อมต่อ Google</button>
             </form>
-            <div id="studentGoogleProvider"></div>
-            <button type="button" class="btn-secondary" id="studentGoogleCancel" hidden>ยกเลิก</button>
-            <button type="button" class="btn-secondary" id="studentGoogleReload">ตรวจสถานะอีกครั้ง</button>
+            <div id="studentGoogleProvider" role="group" aria-label="เลือกบัญชี Google เพื่อเชื่อมต่อ"></div>
+            <div class="account-connection-actions"><button type="button" class="btn-secondary" id="studentGoogleCancel" hidden>ยกเลิกการเชื่อมต่อ</button><button type="button" class="btn-secondary" id="studentGoogleReload">ตรวจสอบสถานะอีกครั้ง</button></div>
+          </section>
           </div>
+          <section id="studentAccountProfileOverview" class="account-overview" aria-labelledby="studentAccountProfileHeading" aria-busy="true">
+            <div class="account-overview-heading"><h3 id="studentAccountProfileHeading">รายละเอียดประวัติที่บันทึกแล้ว</h3><button id="studentAccountProfileEdit" type="button" class="btn-primary">ไปแก้ไขประวัตินักศึกษา</button><button id="studentAccountProfileReload" type="button" class="btn-secondary">โหลดประวัติอีกครั้ง</button></div>
+            <p id="studentAccountProfileStatus" role="status" aria-live="polite">กำลังโหลดประวัติที่บันทึกแล้ว...</p>
+            <div id="studentAccountProfileGroups"></div>
+          </section>
         </section>
         <!-- ==============================
            Overview
@@ -293,12 +312,18 @@
 
           <section class="info-card profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading">
             <div class="profile-section-header"><h3 id="profilePdfHeading"><i class="fa-solid fa-file-import" aria-hidden="true"></i> เลือกวิธีกรอกประวัติ</h3></div>
-            <p class="profile-tab-help">กรอกเองใน 5 แท็บ หรือนำข้อมูลจาก TGDE-COOP–02 มาตรวจและแก้ไขก่อนบันทึก ข้อมูลทั้งสองวิธีอยู่ในประวัติชุดเดียวกัน</p>
-            <div class="profile-entry-actions"><button id="profilePdfChooseManual" type="button" class="btn-primary">กรอกข้อมูลด้วยตัวเอง</button><button id="profilePdfChooseImport" type="button" class="btn-secondary" aria-controls="profilePdfBody">นำเข้าจาก Profile PDF</button></div>
+            <p class="profile-tab-help">เลือกวิธีเริ่มต้น ข้อมูลทั้งสองวิธีอยู่ในประวัติชุดเดียวกัน และแก้ไขต่อได้ใน 4 แท็บด้านล่าง</p>
+            <div class="profile-methods">
+              <button id="profilePdfChooseManual" type="button" class="btn-secondary profile-method" aria-controls="profilePersonalPanel" aria-pressed="true"><i class="fa-solid fa-keyboard" aria-hidden="true"></i><span><strong>กรอกข้อมูลด้วยตัวเอง</strong><small>เลือกหมวด กรอกข้อมูล และบันทึกทีละส่วน</small></span><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
+              <button id="profilePdfChooseImport" type="button" class="btn-secondary profile-method" aria-controls="profilePdfBody" aria-expanded="false" aria-pressed="false"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span><strong>นำเข้าจาก Profile PDF</strong><small>TGDE-COOP–02 · ตรวจและแก้ข้อมูลก่อนยืนยัน</small></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+            </div>
             <div id="profilePdfBody" hidden>
+              <ol class="profile-import-steps" aria-label="ขั้นตอนนำเข้า PDF">
+                <li data-import-step="1" aria-current="step"><span>1</span>เลือกไฟล์</li><li data-import-step="2"><span>2</span>อ่านข้อมูล</li><li data-import-step="3"><span>3</span>ตรวจและแก้ไข</li><li data-import-step="4"><span>4</span>ยืนยัน</li><li data-import-step="5"><span>5</span>บันทึก</li>
+              </ol>
               <label for="profilePdfFile">Profile PDF แบบ TGDE-COOP–02</label>
-              <input id="profilePdfFile" type="file" accept="application/pdf,.pdf" />
-              <p class="profile-tab-help">PDF ไม่เกิน 10MB และ 4 หน้า · อ่านข้อความหรือ OCR ไทย/อังกฤษภายในระบบ · ไม่รองรับไฟล์เข้ารหัสหรือมีรหัสผ่าน</p>
+              <input id="profilePdfFile" type="file" accept="application/pdf,.pdf" aria-describedby="profilePdfFileHelp profilePdfMessage" />
+              <p class="profile-tab-help" id="profilePdfFileHelp">PDF ไม่เกิน 10MB และ 4 หน้า · อ่านข้อความหรือ OCR ไทย/อังกฤษภายในระบบ · ไม่รองรับไฟล์เข้ารหัสหรือมีรหัสผ่าน</p>
               <button id="profilePdfExtract" type="button" class="btn-secondary" disabled>อ่าน PDF และดู Preview</button>
               <div id="profilePdfPreview" aria-live="polite"></div>
               <p class="profile-tab-help">ยังไม่มีการบันทึกอัตโนมัติ ฟิลด์ที่ไม่เลือกหรือ PDF ไม่มีค่าจะคงเดิม หลังยืนยันจะเก็บต้นฉบับในพื้นที่ส่วนตัว</p>
@@ -320,12 +345,11 @@
             <button type="button" class="profile-tab" id="profileContactTab" role="tab" aria-selected="false" aria-controls="profileContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
             <button type="button" class="profile-tab" id="profileEducationTab" role="tab" aria-selected="false" aria-controls="profileEducationPanel" tabindex="-1"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>การศึกษา / ทักษะ</span></button>
             <button type="button" class="profile-tab" id="profileDocumentsTab" role="tab" aria-selected="false" aria-controls="profileDocumentsPanel" tabindex="-1"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>เอกสารประกอบ</span></button>
-            <button type="button" class="profile-tab" id="profileAccountTab" role="tab" aria-selected="false" aria-controls="profileAccountPanel" tabindex="-1"><i class="fa-solid fa-user-gear" aria-hidden="true"></i><span>บัญชีผู้ใช้</span></button>
           </div>
 
-          <div class="profile-workspace-notice" role="note">ข้อมูลที่ยังไม่บันทึกจะคงอยู่ระหว่างเปลี่ยนแท็บ กรุณาบันทึกก่อนรีเฟรชหรือปิดหน้า ขณะนี้ไม่มีการบันทึกอัตโนมัติ</div>
+          <div class="profile-workspace-notice" role="note">บันทึกทีละหมวดด้วยปุ่มท้ายฟอร์ม · สลับแท็บได้โดยไม่เสียข้อมูลที่กำลังกรอก · กรุณาบันทึกก่อนรีเฟรชหรือปิดหน้า ไม่มีการบันทึกอัตโนมัติ</div>
+          <div class="profile-workspace-toolbar"><p id="profileSaveState" class="profile-save-state" role="status" aria-live="polite" data-state="loading">กำลังโหลดประวัติ</p><button id="profileWorkspaceReload" class="btn-secondary" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>โหลดข้อมูลล่าสุด</button></div>
           <div id="profileWorkspaceStatus" class="message" role="status" aria-live="polite"></div>
-          <button id="profileWorkspaceReload" class="btn-secondary" type="button">โหลดข้อมูลล่าสุด</button>
 
           <div id="profilePersonalPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profilePersonalTab" tabindex="0">
 
@@ -384,12 +408,13 @@
        ============================== -->
 
           <div class="info-card student-info-card">
-            <div class="card-title">
+            <h3 class="card-title">
               <i class="fa-solid fa-graduation-cap"></i>
               ข้อมูลนักศึกษา
-            </div>
+            </h3>
+            <p class="profile-tab-help" id="studentInfoHelp">ชื่อที่แก้ไขต้องเป็นภาษาไทย · ข้อมูลการศึกษาที่ยังไม่ทราบเว้นว่างได้ · รหัสนักศึกษาและอีเมลเป็นข้อมูลบัญชีที่อ่านอย่างเดียว</p>
 
-            <form id="studentInfoForm" class="student-info-form" novalidate>
+            <form id="studentInfoForm" class="student-info-form" novalidate aria-describedby="studentInfoHelp">
               <div class="student-info-form-grid">
                 <div class="form-group">
                   <label for="studentFirstNameInput">ชื่อ (ภาษาไทย)</label>
@@ -409,7 +434,7 @@
                 </div>
                 <div class="form-group">
                   <label for="studentMajorInput">สาขา</label>
-                  <select id="studentMajorInput" required>
+                  <select id="studentMajorInput">
                     <option value="">เลือกสาขา</option>
                     <option value="IT">IT</option>
                     <option value="INE">INE</option>
@@ -417,7 +442,7 @@
                 </div>
                 <div class="form-group">
                   <label for="studentYearLevelInput">ชั้นปี</label>
-                  <select id="studentYearLevelInput" required>
+                  <select id="studentYearLevelInput">
                     <option value="">เลือกชั้นปี</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -433,7 +458,6 @@
                     min="0"
                     max="4"
                     step="0.01"
-                    required
                   />
                 </div>
                 <div class="form-group">
@@ -443,6 +467,7 @@
                   <select id="studentAdvisorInput">
                     <option value="">ยังไม่ได้กำหนด</option>
                   </select>
+                  <button id="retryProfileTeachers" type="button" class="btn-secondary" hidden>ลองโหลดรายชื่ออาจารย์อีกครั้ง</button>
                 </div>
               </div>
 
@@ -725,18 +750,6 @@
             <div class="profile-section-header"><div><h3>เอกสารประกอบ</h3><p>เก็บเอกสารส่วนตัวและดาวน์โหลดได้เฉพาะบัญชีของคุณ</p></div></div>
             <div id="profileDocumentCards"></div>
             <p class="profile-workspace-notice">การรับรองข้อมูลและลายเซ็นยังไม่เปิดใช้งาน อยู่ระหว่างยืนยันข้อกำหนด การอัปโหลดเอกสารไม่ได้หมายถึงการรับรองสำเนา</p>
-          </div>
-          <div id="profileAccountPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileAccountTab" tabindex="0" hidden>
-            <section class="info-card" aria-labelledby="profileAccountTitle">
-              <h3 class="card-title" id="profileAccountTitle"><i class="fa-solid fa-user-gear" aria-hidden="true"></i> บัญชีผู้ใช้</h3>
-              <p class="profile-tab-help">ข้อมูลบัญชีจากระบบ อีเมลและรหัสนักศึกษาเป็นข้อมูลอ่านอย่างเดียว</p>
-              <div class="info-grid">
-                <div class="info-item"><span>ชื่อ-นามสกุลเจ้าของบัญชี</span><strong id="profileAccountName">-</strong></div>
-                <div class="info-item"><span>รหัสนักศึกษา</span><strong id="profileAccountStudentId">-</strong></div>
-                <div class="info-item"><span>อีเมลที่ใช้เข้าสู่ระบบ</span><strong id="profileAccountEmail">-</strong></div>
-                <div class="info-item"><span>วิธีเข้าสู่ระบบ</span><strong>อีเมลและรหัสผ่าน</strong></div>
-              </div>
-            </section>
           </div>
         </section>
 
@@ -1397,7 +1410,7 @@
      ============================== -->
 
     <div class="modal-overlay" id="profileEditModal" aria-hidden="true">
-      <div class="modal-box profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
+      <div class="modal-box profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle" aria-describedby="profileEditHelp" tabindex="-1">
         <!-- Header -->
         <div class="modal-header">
           <div>
@@ -1406,7 +1419,7 @@
               แก้ไขประวัตินักศึกษา
             </h3>
 
-            <p>แก้ไขข้อมูลแต่ละหมวด แล้วบันทึกประวัติทั้งหมดพร้อมกัน</p>
+            <p id="profileEditHelp">ปุ่มบันทึกข้อมูลจะบันทึกการแก้ไขทั้งสองหมวด ส่วนรูปโปรไฟล์ใช้ปุ่มอัปโหลดแยก</p>
           </div>
 
           <button
@@ -1421,7 +1434,7 @@
 
         <!-- Body -->
         <div class="modal-body">
-          <form id="profileEditForm">
+          <form id="profileEditForm" novalidate>
             <div class="profile-tabs" id="studentProfileEditTabs" role="tablist" aria-label="หมวดข้อมูลที่แก้ไข">
               <button type="button" class="profile-tab" id="profileEditPersonalTab" role="tab" aria-selected="true" aria-controls="profileEditPersonalPanel" tabindex="0"><i class="fa-solid fa-user" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
               <button type="button" class="profile-tab" id="profileEditContactTab" role="tab" aria-selected="false" aria-controls="profileEditContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
@@ -1915,7 +1928,7 @@
         <div class="modal-footer">
           <button type="button" class="btn-secondary" id="cancelProfileEditBtn">
             <i class="fa-solid fa-xmark"></i>
-            ยกเลิก
+            ปิด / เก็บข้อมูลที่กำลังแก้
           </button>
 
           <button type="button" class="btn-primary" id="saveProfileBtn">

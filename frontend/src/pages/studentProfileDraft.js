@@ -73,12 +73,27 @@ export class StudentProfileDraft {
       const value = canonical(field, raw[field]);
       if (Object.is(value, canonical(field, this.baseline[field]))) continue;
       if (numbers.has(field) && value !== null && !Number.isFinite(value)) {
-        throw new Error("กรุณาระบุตัวเลขที่ถูกต้อง");
+        throw Object.assign(new Error("กรุณาระบุตัวเลขที่ถูกต้อง"), { field });
       }
       if (["father_age", "mother_age"].includes(field) && value !== null && (!Number.isSafeInteger(value) || value < 1 || value > 2147483647)) {
-        throw new Error("อายุบิดาและมารดาต้องเป็นจำนวนเต็มบวกในช่วงที่อนุญาต");
+        throw Object.assign(new Error("อายุบิดาและมารดาต้องเป็นจำนวนเต็มบวกในช่วงที่อนุญาต"), { field });
       }
-      if (field === "birth_date") validateProfileBirthDate(value);
+      // Match the existing owner API limits while identifying the control to fix.
+      if (["height_cm", "weight_kg"].includes(field) && value !== null && (value <= 0 || value > 999.99)) {
+        throw Object.assign(new Error((field === "height_cm" ? "ส่วนสูง" : "น้ำหนัก") + " ต้องเป็นจำนวนบวกไม่เกิน 999.99"), { field });
+      }
+      if (field.endsWith("_phone") && value !== null && (!/^[+\d\s()-]+$/.test(value) || (value.match(/\d/g) || []).length < 7 || (value.match(/\d/g) || []).length > 20)) {
+        throw Object.assign(new Error("กรุณากรอกโทรศัพท์ที่มีตัวเลข 7–20 หลัก ใช้ + เว้นวรรค วงเล็บ หรือขีดได้"), { field });
+      }
+      if (typeof value === "string") {
+        const longText = ["medical_conditions", "allergies", "special_abilities", "related_skills", "hometown_address", "current_address", "parent_contact_address", "emergency_contact_address"];
+        if (!longText.includes(field) && [...value].length > 255) throw Object.assign(new Error("กรุณากรอกไม่เกิน 255 อักขระ"), { field });
+        if (/[\u0000\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value)) throw Object.assign(new Error("ข้อมูลมีอักขระที่ไม่รองรับ กรุณาตรวจและกรอกใหม่"), { field });
+      }
+      if (field === "birth_date") {
+        try { validateProfileBirthDate(value); }
+        catch (error) { error.field = field; throw error; }
+      }
       patch[field] = value;
     }
     return patch;

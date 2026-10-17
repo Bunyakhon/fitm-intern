@@ -50,6 +50,10 @@ module.exports = (sequelize) => {
           );
         },
       },
+      first_name_en: { type: DataTypes.STRING(255), allowNull: true, validate: { is: /^[A-Z]+(?:[ '-][A-Z]+)*$/, len: [1, 255] } },
+      last_name_en: { type: DataTypes.STRING(255), allowNull: true, validate: { is: /^[A-Z]+(?:[ '-][A-Z]+)*$/, len: [1, 255] } },
+      position: { type: DataTypes.STRING(255), allowNull: true, validate: { len: [1, 255] } },
+      department: { type: DataTypes.STRING(255), allowNull: true, validate: { len: [1, 255] } },
       password_hash: {
         type: DataTypes.STRING,
         allowNull: false,

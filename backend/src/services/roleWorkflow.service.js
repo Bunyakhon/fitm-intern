@@ -64,7 +64,7 @@ function createRoleWorkflowService(m = models) {
       role === "department_staff"
         ? await m.DepartmentStaff.findOne({
             where: { id, is_active: true },
-            attributes: ["id", "first_name", "last_name", "email", "is_active"],
+            attributes: ["id", "first_name", "last_name", "first_name_en", "last_name_en", "position", "department", "email", "is_active"],
             transaction,
             lock,
           })

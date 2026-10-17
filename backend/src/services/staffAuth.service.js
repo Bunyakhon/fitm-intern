@@ -29,6 +29,10 @@ function toSafeDepartmentStaffProfile(staff) {
     id: staff.id,
     first_name: staff.first_name,
     last_name: staff.last_name,
+    first_name_en: staff.first_name_en,
+    last_name_en: staff.last_name_en,
+    position: staff.position,
+    department: staff.department,
     email: staff.email,
     is_active: staff.is_active,
   };

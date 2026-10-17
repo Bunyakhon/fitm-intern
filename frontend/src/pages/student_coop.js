@@ -1,11 +1,13 @@
 import { mountCoopActivities } from "./coopActivities.js";
 import { mountStudentGoogleAccount } from "./studentGoogleAccount.js";
+import { renderAccountProfile, accountProfileState } from "./studentAccountOverview.js";
 import { MAX_PERSON_NAME_LENGTH, isThaiPersonName } from "../validators/personName.js";
 import { initStudentInternshipLog } from "./studentInternshipLog.js";
 import { initStudentSupervision } from "./studentSupervision.js";
 import { StudentProfileDraft, readProfileInputs, writeProfileInputs, PROFILE_INPUTS } from "./studentProfileDraft.js";
 import { mountStudentProfileWorkspace } from "./studentProfileWorkspace.js";
 import { mountStudentProfilePdfImport } from "./studentProfilePdfImport.js";
+import { profileMessage, profileFieldError, clearProfileFieldError, clearProfileErrors, notifyProfileChange, profileModalFocus } from "./studentProfileFeedback.js";
 import { getCurrentStudent } from "../api/auth.api.js";
 import { getStudentToken, clearStudentSession, updateStoredStudent, subscribeStudentSession } from "../auth/studentAuthStorage.js";
 import { getMyJobMatches } from "../api/jobMatching.api.js";
@@ -319,6 +321,7 @@ async function checkAuthentication() {
 async function loadStudentProfile() {
   const loadSequence = typeof studentProfileLoadSequence === "number" ? ++studentProfileLoadSequence : null;
   setProfileLoading(true);
+  accountProfileState(document, "loading");
   showMessage(profileLoadMessage, "กำลังโหลดข้อมูลประวัตินักศึกษา...", "loading");
 
   try {
@@ -380,6 +383,7 @@ async function loadStudentProfile() {
 
     if (loadSequence !== null && loadSequence !== studentProfileLoadSequence) return null;
     // A failed refresh must not turn an existing profile/draft into an empty form.
+    accountProfileState(document, "error");
 
     if (error.status === 401) {
       clearAuthentication();
@@ -410,6 +414,7 @@ function setProfileLoading(isLoading) {
   }
   const academicSave = document.getElementById("saveStudentInfoBtn");
   if (academicSave) academicSave.disabled = !hasLoadedStudentProfile || isStudentInfoSaving;
+  notifyProfileChange(document);
 }
 
 // Profile tabs only change visibility; inputs remain mounted and APIs are not reloaded.
@@ -457,10 +462,33 @@ let profilePdfImport = null;
 const profileWorkspace = typeof mountStudentProfileWorkspace === "function" ? mountStudentProfileWorkspace({
   document, reload: loadStudentProfile,
   externalBusy: () => isStudentProfileSaving || isStudentInfoSaving || isProfileImageUploading || profilePdfImport?.busy,
-  onSnapshot: result => profilePdfImport?.acceptSnapshot(result),
+  onSnapshot: result => { profilePdfImport?.acceptSnapshot(result); renderAccountProfile(document, result); },
   onUnauthorized: () => { clearAuthentication(); redirectToLogin(); },
   onCommit: applyProfileWorkspaceCommit,
 }) : null;
+let profileOutcome = "ready";
+const profileFocus = profileModalFocus(profileEditModal, btnEditProfile);
+function refreshProfileSaveState() {
+  const target = document.getElementById("profileSaveState");
+  if (!target) return;
+  const saving = isStudentInfoSaving || isStudentProfileSaving || isProfileImageUploading || profileWorkspace?.busy || profilePdfImport?.busy;
+  const dirty = hasUnsavedStudentProfile();
+  const state = saving ? "saving" : profileOutcome === "error" ? "error" : !hasLoadedStudentProfile ? "loading" : dirty ? "unsaved" : profileOutcome === "saved" ? "saved" : "ready";
+  target.dataset.state = state;
+  target.textContent = { saving: "กำลังบันทึก · กรุณารอสักครู่", error: "โปรดตรวจข้อความแจ้งเตือน · ข้อมูลที่กำลังแก้ไขยังอยู่", loading: "กำลังโหลดประวัติ", unsaved: "มีข้อมูลที่ยังไม่บันทึก · บันทึกแยกแต่ละหมวด", saved: "บันทึกแล้ว · ไม่มีข้อมูลที่แก้ไขค้าง", ready: "ข้อมูลพร้อมแก้ไข" }[state];
+}
+document.addEventListener("student-profile-state", event => {
+  if (event.detail?.outcome) profileOutcome = event.detail.outcome;
+  queueMicrotask(refreshProfileSaveState);
+});
+for (const type of ["input", "change"]) document.addEventListener(type, event => {
+  if (!profilePanel?.contains(event.target) && !profileEditModal?.contains(event.target)) return;
+  clearProfileFieldError(event.target);
+  profileOutcome = "edit";
+  if (studentInfoForm?.contains(event.target)) showMessage(studentInfoMessage, "มีการแก้ไขที่ยังไม่บันทึก", "info");
+  if (document.getElementById("profileEditForm")?.contains(event.target)) showMessage(profileEditMessage, "มีการแก้ไขที่ยังไม่บันทึก · บันทึกทั้งสองหมวดด้วยปุ่มด้านล่าง", "info");
+  queueMicrotask(refreshProfileSaveState);
+});
 profilePdfImport = typeof mountStudentProfilePdfImport === "function" ? mountStudentProfilePdfImport({
   document, getSnapshot: () => profileWorkspace?.snapshot,
   externalBusy: () => isStudentProfileSaving || isStudentInfoSaving || isProfileImageUploading || profileWorkspace?.busy,
@@ -596,6 +624,8 @@ async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_
   }
 
   isTeacherDirectoryLoaded = false;
+  const retry = document.getElementById("retryProfileTeachers");
+  if (retry) retry.hidden = true;
   hasAdvisorSelectionChanged = false;
   studentAdvisorInput.disabled = true;
   studentAdvisorInput.setAttribute("aria-busy", "true");
@@ -652,8 +682,15 @@ async function loadTeachers(selectedTeacherId = currentStudent?.advisor_teacher_
   } finally {
     studentAdvisorInput.disabled = !isTeacherDirectoryLoaded;
     studentAdvisorInput.setAttribute("aria-busy", "false");
+    if (retry) retry.hidden = isTeacherDirectoryLoaded;
   }
 }
+document.getElementById("retryProfileTeachers")?.addEventListener("click", async () => {
+  const draft = captureStudentInfoDraft();
+  await loadTeachers(draft?.advisor || currentStudent?.advisor_teacher_id);
+  restoreStudentInfoDraft(draft);
+  if (isTeacherDirectoryLoaded) { showMessage(studentInfoMessage, "โหลดรายชื่ออาจารย์แล้ว ข้อมูลที่กำลังแก้ไขยังอยู่", "info"); notifyProfileChange(document, "ready"); }
+});
 
 studentAdvisorInput?.addEventListener("change", () => {
   if (isTeacherDirectoryLoaded) {
@@ -743,9 +780,11 @@ function setStudentInfoButtonState(button, isLoading, loadingLabel, defaultLabel
   }
 
   button.disabled = isLoading;
+  button.setAttribute("aria-busy", String(isLoading));
   button.innerHTML = isLoading
     ? `<i class="fa-solid fa-spinner fa-spin"></i>${loadingLabel}`
     : defaultLabel;
+  notifyProfileChange(document);
 }
 
 async function uploadSelectedProfileImage() {
@@ -793,6 +832,7 @@ async function uploadSelectedProfileImage() {
     };
     await loadProfileImage(true);
     showMessage(profileImageMessage, "อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
+    notifyProfileChange(document, "saved");
     showToast("อัปโหลดรูปโปรไฟล์สำเร็จ", "success");
   } catch (error) {
     console.error("UPLOAD PROFILE IMAGE ERROR:", profileRequestDiagnostic(error));
@@ -846,11 +886,18 @@ async function saveStudentInfo(event) {
   const gpa = gpaValue ? Number(gpaValue) : null;
 
   clearMessage(studentInfoMessage);
+  clearProfileErrors(studentInfoForm);
+  if (studentGpaInput.validity.badInput) {
+    profileFieldError(studentGpaInput, "กรุณากรอก GPA เป็นตัวเลขระหว่าง 0.00–4.00");
+    showMessage(studentInfoMessage, "โปรดแก้ไข GPA สะสม", "error"); return;
+  }
   if (yearLevel !== null && (!Number.isSafeInteger(yearLevel) || yearLevel < 1 || yearLevel > 4)) {
+    profileFieldError(studentYearLevelInput, "เลือกชั้นปีตั้งแต่ 1 ถึง 4 หรือเว้นว่าง");
     showMessage(studentInfoMessage, "กรุณากรอกสาขาและชั้นปีให้ถูกต้อง", "error");
     return;
   }
   if (gpa !== null && (!/^\d(?:\.\d{1,2})?$/.test(gpaValue) || gpa < 0 || gpa > 4)) {
+    profileFieldError(studentGpaInput, "กรอก GPA 0.00–4.00 โดยมีทศนิยมไม่เกิน 2 ตำแหน่ง");
     showMessage(studentInfoMessage, "GPA ต้องอยู่ระหว่าง 0.00 ถึง 4.00", "error");
     return;
   }
@@ -867,6 +914,7 @@ async function saveStudentInfo(event) {
     // Preserve untouched legacy names, including English names in the main columns.
     if (value === String(currentStudent?.[field] ?? "").trim()) continue;
     if (!isThaiPersonName(value)) {
+      profileFieldError(input, [...value].length > MAX_PERSON_NAME_LENGTH ? `${label}ต้องไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ` : `กรุณากรอก${label}เป็นภาษาไทย ไม่ใช้ตัวเลขหรือสัญลักษณ์พิเศษ`);
       showMessage(studentInfoMessage, [...value].length > MAX_PERSON_NAME_LENGTH
         ? `${label}ต้องมีความยาวไม่เกิน ${MAX_PERSON_NAME_LENGTH} อักขระ`
         : `กรุณากรอก${label}เป็นภาษาไทยเท่านั้น`, "error");
@@ -906,7 +954,8 @@ async function saveStudentInfo(event) {
     const pendingAcademic = captureStudentInfoDraft();
     await loadTeachers(student?.advisor_teacher_id);
     restoreStudentInfoDraft(pendingAcademic);
-    showMessage(studentInfoMessage, "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
+    showMessage(studentInfoMessage, !student ? "บันทึกสำเร็จ แต่โหลดข้อมูลซ้ำไม่สำเร็จ กรุณาลองโหลดข้อมูลล่าสุด" : !isTeacherDirectoryLoaded ? "บันทึกสำเร็จ แต่ยังโหลดรายชื่ออาจารย์ไม่ได้ กรุณากดลองโหลดรายชื่ออีกครั้ง" : captureStudentInfoDraft() ? "บันทึกสำเร็จ ข้อมูลที่แก้ระหว่างบันทึกยังอยู่ กรุณาบันทึกอีกครั้งเมื่อพร้อม" : "บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
+    notifyProfileChange(document, !student || !isTeacherDirectoryLoaded ? "error" : "saved");
     showToast("บันทึกข้อมูลนักศึกษาสำเร็จ", "success");
   } catch (error) {
     console.error("SAVE STUDENT INFO ERROR:", profileRequestDiagnostic(error));
@@ -1024,7 +1073,7 @@ function renderStudent(student) {
   // Profile main
   setText(
     profileFullName,
-    fullName
+    displayName
   );
 
   setText(
@@ -1037,10 +1086,7 @@ function renderStudent(student) {
     email
   );
 
-  // Reuse the existing profile response and render only public account fields.
-  setText(document.getElementById("profileAccountName"), fullName);
-  setText(document.getElementById("profileAccountStudentId"), studentId);
-  setText(document.getElementById("profileAccountEmail"), email);
+  renderStudentAccountInfo(student);
   setText(document.getElementById("profileContactEmail"), email);
 
   // Profile details
@@ -1093,6 +1139,18 @@ function renderStudent(student) {
 // ==============================
 // Render Student Profile
 // ==============================
+
+function renderStudentAccountInfo(student) {
+  // Only the verified current actor and its owner Profile supply account details.
+  const profile = student?.id && currentStudentProfile?.student_id === student.id ? currentStudentProfile : null;
+  const name = [student?.first_name, student?.last_name].filter(value => typeof value === "string" && value.trim()).join(" ")
+    || [profile?.english_first_name, profile?.english_last_name].filter(value => typeof value === "string" && value.trim()).join(" ");
+  setText(document.getElementById("studentAccountName"), student ? name || "ยังไม่ได้ระบุชื่อ" : "กรุณาเข้าสู่ระบบใหม่");
+  setText(document.getElementById("studentAccountStudentId"), student ? getStudentCode(student) : "—");
+  setText(document.getElementById("studentAccountEmail"), student?.email || "—");
+  document.getElementById("studentAccountInfo")?.setAttribute("aria-busy", "false");
+  setText(document.getElementById("studentAccountInfoStatus"), student ? "ข้อมูลบัญชีปัจจุบัน · อ่านอย่างเดียว" : "สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบอีกครั้ง");
+}
 
 function renderStudentProfile(profile) {
   renderJobMatchingSource();
@@ -1365,6 +1423,7 @@ function openProfileEditModal() {
     profileEditMessage
   );
 
+  profileFocus.open();
   profileEditModal?.classList.add(
     "open"
   );
@@ -1394,7 +1453,7 @@ function closeProfileModal() {
     "true"
   );
 
-  document.body.style.overflow = "";
+  profileFocus.close();
 }
 
 function openProfileImageEditor() {
@@ -1628,18 +1687,22 @@ async function saveStudentProfile() {
     return;
   }
   clearMessage(profileEditMessage);
+  clearProfileErrors(document.getElementById("profileEditForm"));
   let sentRaw, payload;
   try {
-    for (const id of Object.values(PROFILE_INPUTS)) {
+    for (const [field, id] of Object.entries(PROFILE_INPUTS)) {
       const input = document.getElementById(id);
       if (input?.validity?.badInput) {
-        input.focus();
-        throw new Error("กรุณาระบุวันที่หรือตัวเลขให้ครบถ้วนและถูกต้อง");
+        throw Object.assign(new Error("กรุณาระบุวันที่หรือตัวเลขให้ครบถ้วนและถูกต้อง"), { field });
       }
     }
     sentRaw = readProfileInputs(document);
     payload = studentProfileDraft.patch(sentRaw);
   } catch (error) {
+    if (error.field) {
+      const input = document.getElementById(PROFILE_INPUTS[error.field]);
+      if (input) { studentProfileEditTabs?.select(input.closest('[role="tabpanel"]')?.getAttribute("aria-labelledby")); profileFieldError(input, error.message); }
+    }
     showMessage(profileEditMessage, error.message, "error");
     return;
   }
@@ -1649,6 +1712,7 @@ async function saveStudentProfile() {
   }
   const revision = studentProfileDraft.revision;
   isStudentProfileSaving = true;
+  notifyProfileChange(document);
   // A GET started before this write must not replace the committed response.
   ++studentProfileLoadSequence;
   setProfileLoading(false);
@@ -1662,6 +1726,7 @@ async function saveStudentProfile() {
       throw new Error("ไม่สามารถยืนยันผลบันทึกได้ กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง");
     }
     applySavedStudentProfile(result, sentRaw);
+    notifyProfileChange(document, "saved");
     const refreshed = await loadStudentProfile();
     showMessage(profileEditMessage, refreshed
       ? "บันทึกข้อมูลเรียบร้อยแล้ว"
@@ -1683,6 +1748,7 @@ async function saveStudentProfile() {
       : error.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
   } finally {
     isStudentProfileSaving = false;
+    notifyProfileChange(document);
     if (saveProfileBtn) {
       saveProfileBtn.disabled = false;
       saveProfileBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล`;
@@ -1703,6 +1769,7 @@ btnEditProfile?.addEventListener(
 );
 
 document.getElementById("btnEditProfileContacts")?.addEventListener("click", () => { openProfileEditModal(); studentProfileEditTabs?.select("profileEditContactTab"); });
+document.getElementById("profileEditForm")?.addEventListener("submit", event => { event.preventDefault(); saveStudentProfile(); });
 
 profileAvatarButton?.addEventListener("click", openProfileImageEditor);
 
@@ -1744,7 +1811,7 @@ document.addEventListener(
   "keydown",
   (event) => {
     if (
-      event.key === "Escape" &&
+      event.key === "Escape" && !document.querySelector('.app-confirm-overlay:not(.is-leaving)') &&
       profileEditModal?.classList.contains(
         "open"
       )
@@ -1806,10 +1873,18 @@ function clearAuthentication() {
 }
 
 function handleStudentSessionChange() {
+  renderStudentAccountInfo(null);
+  renderAccountProfile(document, null);
   if (hasUnsavedStudentProfile()) {
     showActionModal({ title: "สถานะเข้าสู่ระบบเปลี่ยนแล้ว", message: "กรุณาเก็บข้อมูลที่ยังไม่บันทึกก่อนกลับไปเข้าสู่ระบบ ข้อมูลในหน้านี้จะไม่ถูกส่งไปยังบัญชีอื่น", actionLabel: "ไปหน้าเข้าสู่ระบบ", onAction: redirectToLogin });
   } else redirectToLogin();
 }
+
+document.getElementById("studentAccountProfileReload")?.addEventListener("click", () => loadStudentProfile());
+document.getElementById("studentAccountProfileEdit")?.addEventListener("click", () => {
+  document.querySelector('.sidebar-item[data-target="panel-profile"]')?.click();
+  document.getElementById("profilePersonalTab")?.focus();
+});
 
 function redirectToLogin() {
   window.location.href =
@@ -3887,6 +3962,7 @@ function showMessage(
     return;
   }
 
+  if (profilePanel?.contains(element) || profileEditModal?.contains(element)) { profileMessage(element, message, type); return; }
   element.textContent =
     message;
 
@@ -3901,6 +3977,7 @@ function clearMessage(
     return;
   }
 
+  if (profilePanel?.contains(element) || profileEditModal?.contains(element)) { profileMessage(element, ""); return; }
   element.textContent = "";
 
   element.className =

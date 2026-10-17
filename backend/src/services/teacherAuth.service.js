@@ -4,6 +4,8 @@ const TEACHER_PROFILE_FIELDS = [
   "academic_title",
   "first_name",
   "last_name",
+  "first_name_en",
+  "last_name_en",
   "email",
   "department",
   "major",

@@ -21,7 +21,17 @@ export const workspaceFields = {
 };
 export function canonicalWorkspaceValue(spec, raw, validate = false) {
   const text = String(raw ?? "").trim();
-  const invalid = () => { throw new Error(spec.label + " ไม่ถูกต้อง"); };
+  const invalid = () => {
+    const help = !text && spec.required ? "กรุณาระบุ" + spec.label
+      : spec.type === "gpa" ? spec.label + " ต้องอยู่ระหว่าง 0.00–4.00 และมีทศนิยมไม่เกิน 2 ตำแหน่ง"
+      : spec.type === "phone" ? spec.label + " ต้องมีตัวเลข 7–20 หลัก ใช้ + เว้นวรรค วงเล็บ หรือขีดได้"
+      : spec.type === "date" ? spec.label + " ต้องเป็นวันที่ที่มีอยู่จริง"
+      : spec.type === "integer" ? spec.label + ` ต้องเป็นจำนวนเต็มตั้งแต่ ${spec.min} ถึง ${spec.limit}`
+      : spec.options ? "กรุณาเลือก" + spec.label + "จากรายการ"
+      : [...text].length > spec.max ? spec.label + ` ต้องไม่เกิน ${spec.max} อักขระ`
+      : spec.label + " มีอักขระที่ไม่รองรับ กรุณาตรวจข้อมูลอีกครั้ง";
+    throw Object.assign(new Error(help), { field: spec.key });
+  };
   if (!text) { if (validate && spec.required) invalid(); return null; }
   if (spec.type === "boolean") { if (!["true", "false"].includes(text)) invalid(); return text === "true"; }
   if (spec.type === "integer") {

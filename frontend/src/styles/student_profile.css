@@ -59,3 +59,78 @@
   #panel-profile .profile-entry-actions button, #panel-profile .profile-record-section .profile-section-header button { width: 100%; }
   #panel-profile .profile-tab { font-size: .82rem; }
 }
+
+/* Profile editors only: preserve the dashboard navigation and shared theme. */
+#panel-profile { max-width: 1200px; margin-inline: auto; }
+#panel-profile .profile-pdf-import { padding: 24px; }
+#panel-profile .profile-pdf-import > .profile-section-header { margin-top: 0; }
+#panel-profile .profile-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+#panel-profile .profile-method { width: 100%; display: flex; gap: 14px; justify-content: flex-start; text-align: left; padding: 18px; white-space: normal; }
+#panel-profile .profile-method > i:first-child { display: grid; place-items: center; flex: 0 0 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); font-size: 1.2rem; }
+#panel-profile .profile-method > span { flex: 1; min-width: 0; }
+#panel-profile .profile-method strong, #panel-profile .profile-method small { display: block; }
+#panel-profile .profile-method strong { font-size: 1rem; }
+#panel-profile .profile-method small { margin-top: 4px; color: var(--muted); font-size: .85rem; font-weight: 400; }
+#panel-profile .profile-method[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
+#panel-profile .profile-method > i:last-child { color: var(--primary); }
+#panel-profile .profile-workspace-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+#panel-profile .profile-save-state { display: inline-flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; font-size: .88rem; background: var(--primary-soft); color: var(--primary-dark); overflow-wrap: anywhere; }
+#panel-profile .profile-save-state::before { content: ""; flex: 0 0 8px; height: 8px; border-radius: 50%; background: currentColor; }
+#panel-profile .profile-save-state[data-state="unsaved"] { background: #fff9ee; color: #854a0e; }
+#panel-profile .profile-save-state[data-state="error"] { background: var(--danger-light); color: #a52f2f; }
+#panel-profile .profile-save-state[data-state="saving"]::before { animation: app-spinner .7s linear infinite; border: 2px solid currentColor; border-right-color: transparent; background: transparent; }
+#panel-profile .profile-import-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; gap: 8px; margin-bottom: 24px; }
+#panel-profile .profile-import-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border-bottom: 2px solid var(--border); font-size: .85rem; color: var(--muted); }
+#panel-profile .profile-import-steps li > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--bg); }
+#panel-profile .profile-import-steps [data-state="current"] { border-color: var(--primary); color: var(--primary); font-weight: 700; }
+#panel-profile .profile-import-steps [data-state="current"] > span { background: var(--primary); color: var(--white); }
+#panel-profile .profile-import-steps [data-state="done"] { color: var(--primary-dark); }
+#panel-profile .profile-pdf-extracted { padding: 10px 12px; margin-top: 8px; border-left: 3px solid var(--primary); background: var(--white); font-size: .88rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+#panel-profile .profile-pdf-field > label, #panel-profile .profile-pdf-record .form-group > label { margin-top: 16px; }
+#panel-profile .profile-pdf-record .profile-entry-grid { margin-bottom: 0; }
+#panel-profile #profilePdfFile { border-style: dashed; padding: 18px; }
+#panel-profile #profilePdfPreview:empty { margin: 0; }
+#panel-profile .profile-main h3 { overflow-wrap: anywhere; }
+#panel-profile .profile-card { margin-top: 22px; }
+#panel-profile .info-card { margin-top: 22px; }
+#panel-profile .profile-entry-grid { gap: 20px 24px; }
+#panel-profile .profile-entry-grid .form-group { margin-bottom: 0; }
+#panel-profile .student-info-form-grid { gap: 20px 24px; }
+#panel-profile .student-info-form-grid .form-group { min-width: 0; margin-bottom: 0; }
+#panel-profile .student-info-submit { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+#panel-profile .profile-entry-actions { padding-top: 14px; }
+#panel-profile :is(.form-group label, .profile-entry label, .profile-document-card label),
+#profileEditModal .form-group label { font-size: .9rem; line-height: 1.7; margin-bottom: 7px; }
+#panel-profile :is(.form-group input, .form-group select, .form-group textarea, .profile-document-card input, #profilePdfBody input, #profilePdfBody select),
+#profileEditModal :is(.form-group input, .form-group select, .form-group textarea) { min-width: 0; max-width: 100%; min-height: 44px; padding: 10px 12px; font-size: .95rem; line-height: 1.6; border-radius: 9px; }
+#panel-profile .form-group textarea, #profileEditModal .form-group textarea { min-height: 96px; }
+#panel-profile :is(.btn-primary, .btn-secondary), #profileEditModal :is(.btn-primary, .btn-secondary) { min-height: 44px; border-radius: 10px; font-size: .9rem; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
+#panel-profile #btnEditProfile { min-height: 44px; font-size: .9rem; }
+#panel-profile .form-group :is(input, select, textarea):disabled,
+#profileEditModal .form-group :is(input, select, textarea):disabled { background: var(--bg); color: var(--muted); cursor: not-allowed; }
+#panel-profile .form-group :is(input, select, textarea):focus-visible,
+#profileEditModal .form-group :is(input, select, textarea):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+#panel-profile .message, #profileEditModal .message { font-size: .88rem; line-height: 1.7; overflow-wrap: anywhere; }
+#panel-profile .profile-tab-help { font-size: .88rem; }
+#panel-profile .profile-field-error, #profileEditModal .profile-field-error { display: block; margin-top: 6px; color: #a52f2f; font-size: .88rem; line-height: 1.6; overflow-wrap: anywhere; }
+#panel-profile [aria-invalid="true"], #profileEditModal [aria-invalid="true"] { border-color: #a52f2f !important; }
+#panel-profile #retryProfileTeachers { margin-top: 10px; }
+#profileEditModal .modal-profile-image-actions:focus-within > label { outline: 2px solid var(--primary); outline-offset: 3px; }
+#profileEditModal .modal-footer { position: sticky; bottom: 0; background: var(--white); z-index: 2; flex-wrap: wrap; }
+
+@media (max-width: 1000px) {
+  #panel-profile .student-info-form-grid { grid-template-columns: minmax(0, 1fr); }
+  #panel-profile .student-info-form-full { grid-column: auto; }
+  #panel-profile .profile-methods { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  #panel-profile .profile-pdf-import { padding: 18px 14px; }
+  #panel-profile .profile-method { padding: 14px; gap: 10px; }
+  #panel-profile .profile-import-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  #panel-profile .profile-import-steps li { padding: 8px; border-bottom-width: 1px; }
+  #panel-profile .profile-workspace-toolbar { align-items: stretch; flex-direction: column; }
+  #panel-profile .student-info-submit { align-items: stretch; flex-direction: column; }
+  #panel-profile .student-info-submit > button { width: 100%; }
+  #panel-profile .student-info-form-grid, #panel-profile .profile-entry-grid { gap: 18px; }
+  #panel-profile .profile-tabs { scroll-padding-inline: 6px; }
+}

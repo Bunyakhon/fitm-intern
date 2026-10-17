@@ -2,6 +2,7 @@ import { workspaceFields, ProfileSectionDraft, validateProfileDocument, canonica
 import { updateMyStudentProfile, updateStudentInfo, createStudentProfileRecord, updateStudentProfileRecord, deleteStudentProfileRecord,
   uploadStudentProfileDocument, updateStudentProfileDocument, deleteStudentProfileDocument, downloadStudentProfileDocument } from "../api/studentProfile.api.js";
 import { showToast, showConfirmModal, setButtonLoading } from "../ui/feedback.js";
+import { profileMessage, profileFieldError, clearProfileErrors, notifyProfileChange } from "./studentProfileFeedback.js";
 
 const mounted = new WeakMap();
 const documentTypes = [["transcript", "ใบแสดงผลการเรียน", "fa-file-contract"], ["national_id_copy", "สำเนาบัตรประชาชน", "fa-id-card"],
@@ -14,7 +15,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   let snapshot = null, busy = false, serial = 0;
   const node = (tag, text, className) => { const element = document.createElement(tag); if (text !== undefined) element.textContent = text; if (className) element.className = className; return element; };
   const button = (label, action, className = "btn-secondary") => { const element = node("button", label, className); element.type = "button"; element.addEventListener("click", action); return element; };
-  const status = (target, text, type = "info") => { target.textContent = text; target.className = "message " + type; };
+  const status = profileMessage;
   const globalStatus = document.getElementById("profileWorkspaceStatus");
   const getRow = entry => {
     if (["personal", "family"].includes(entry.kind)) return snapshot?.profile || {};
@@ -28,6 +29,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   function updateInputs(entry) {
     for (const [key, input] of entry.inputs) input.value = entry.draft.values[key] ?? "";
     updateLicense(entry);
+    notifyProfileChange(document);
   }
   function updateLicense(entry) {
     if (entry.kind !== "personal") return;
@@ -67,6 +69,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
         if (keepChanges) for (const spec of entry.fields) if (!Object.is(canonicalWorkspaceValue(spec, old[spec.key]), baseline[spec.key])) entry.draft.values[spec.key] = old[spec.key];
         clearConflict(entry); updateInputs(entry); if (keepChanges) showDifferences(entry);
         status(entry.message, "โหลดฉบับล่าสุดแล้ว กรุณาตรวจค่าก่อนบันทึก", "info");
+        notifyProfileChange(document, "ready");
       },
     });
   }
@@ -74,23 +77,24 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     if (busy || externalBusy()) { status(message, "กำลังบันทึกข้อมูลส่วนอื่น กรุณารอสักครู่", "info"); return false; }
     if (!revision) { status(message, "กรุณาโหลดข้อมูลประวัติล่าสุดก่อนบันทึก Draft ยังอยู่", "error"); return false; }
     busy = true; setButtonLoading(target, true, "กำลังบันทึก...");
+    notifyProfileChange(document);
     status(message, "กำลังบันทึก...", "loading");
     try {
       const result = await action();
       if (!result?.student || !result.profile_revision) throw new Error("ยังยืนยันผลบันทึกไม่ได้ กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง");
       after?.(result); controller.acceptSnapshot(result, { ownRevision: revision }); onCommit?.(result, revision);
-      status(message, "บันทึกเรียบร้อยแล้ว", "success"); showToast("บันทึกข้อมูลประวัติเรียบร้อยแล้ว", "success"); return true;
+      status(message, "บันทึกเรียบร้อยแล้ว · หากแก้ไขเพิ่มระหว่างบันทึก กรุณาบันทึกส่วนนั้นอีกครั้ง", "success"); notifyProfileChange(document, "saved"); showToast("บันทึกข้อมูลประวัติเรียบร้อยแล้ว", "success"); return true;
     } catch (error) {
       if ([401, 403].includes(error.status)) { onUnauthorized(error); return false; }
       if (error.status === 409 && error.data?.student && error.data.profile_revision) controller.acceptSnapshot(error.data);
       status(message, error.status === 409 ? "ประวัติเปลี่ยนจากหน้าต่างอื่น Draft ยังอยู่ โปรดตรวจความแตกต่างก่อนบันทึก" : error.status === 428 ? "ต้องโหลดประวัติล่าสุดก่อนบันทึก Draft ยังอยู่" : !error.status || error.status >= 500 ? "ยังยืนยันผลบันทึกไม่ได้ กรุณาโหลดประวัติล่าสุดและตรวจค่าก่อนลองอีกครั้ง Draft ยังอยู่" : error.message || "ไม่สามารถบันทึกข้อมูลได้", "error");
       return false;
-    } finally { busy = false; setButtonLoading(target, false); for (const section of lists.values()) section.add.disabled = !snapshot; }
+    } finally { busy = false; setButtonLoading(target, false); for (const section of lists.values()) section.add.disabled = !snapshot; notifyProfileChange(document); }
   }
   function fieldControl(entry, spec) {
     const group = node("div", undefined, "form-group");
     const id = "profileWorkspace-" + entry.key.replace(/[^\w-]/g, "-") + "-" + spec.key;
-    const label = node("label", spec.label); label.htmlFor = id;
+    const label = node("label", spec.label + (spec.required ? " (จำเป็น)" : " (ถ้ามี)")); label.htmlFor = id;
     const input = node(spec.options ? "select" : spec.type === "textarea" ? "textarea" : "input"); input.id = id; input.name = spec.key;
     if (spec.options) {
       const empty = node("option", spec.required ? "เลือก" + spec.label : "ยังไม่ระบุ"); empty.value = ""; input.append(empty);
@@ -119,9 +123,10 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const actions = node("div", undefined, "profile-entry-actions"); actions.append(entry.save);
     if (kind !== "documents" && (isNew || (id && !addressType))) { entry.remove = button(isNew ? "ยกเลิกรายการใหม่" : "ลบรายการ", () => removeEntry(entry), "btn-secondary profile-danger"); actions.append(entry.remove); }
     actions.append(entry.review, entry.discard);
-    form.append(heading, grid, entry.difference, actions, entry.message);
+    const help = node("p", "บันทึกเฉพาะหมวดนี้ ช่องที่ระบุว่าถ้ามีสามารถเว้นว่างได้", "profile-tab-help");
+    form.append(heading, help, grid, entry.difference, actions, entry.message);
     if (kind === "personal") form.append(node("p", "เลขบัตรประชาชนยังไม่เปิดให้กรอก อยู่ระหว่างยืนยันนโยบาย", "profile-tab-help"));
-    form.addEventListener("input", () => { capture(entry); status(entry.message, "มีการแก้ไขที่ยังไม่บันทึก", "info"); });
+    form.addEventListener("input", () => { capture(entry); status(entry.message, entry.draft.dirty() || entry.isNew ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); });
     form.addEventListener("change", event => {
       capture(entry); updateLicense(entry);
       if (event.target.name === "has_driving_license" && event.target.value === "false" && fields.some(spec => spec.license && entry.draft.values[spec.key])) {
@@ -134,15 +139,16 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   }
   async function saveEntry(entry) {
     capture(entry);
+    clearProfileErrors(entry.form);
     if (entry.draft.conflict) { showDifferences(entry); status(entry.message, "โปรดตรวจความต่างหรือโหลดฉบับล่าสุดก่อนบันทึก Draft ยังอยู่", "error"); return; }
     let patch;
     try {
-      for (const input of entry.inputs.values()) if (input.validity?.badInput) { input.focus(); throw new Error("กรุณากรอกวันที่หรือตัวเลขให้ถูกต้อง"); }
+      for (const [field, input] of entry.inputs) if (input.validity?.badInput) throw Object.assign(new Error("กรุณากรอกวันที่หรือตัวเลขให้ครบถ้วนและถูกต้อง"), { field });
       patch = entry.draft.patch(entry.isNew || (entry.addressType && !entry.id));
       const state = { ...(snapshot?.profile || {}), ...patch };
-      if (entry.kind === "personal" && state.national_id_issue_date && state.national_id_expiry_date && state.national_id_expiry_date < state.national_id_issue_date) throw new Error("วันหมดอายุบัตรต้องไม่ก่อนวันออกบัตร");
+      if (entry.kind === "personal" && state.national_id_issue_date && state.national_id_expiry_date && state.national_id_expiry_date < state.national_id_issue_date) throw Object.assign(new Error("วันหมดอายุบัตรต้องไม่ก่อนวันออกบัตร"), { field: "national_id_expiry_date" });
       if (entry.kind === "personal" && state.has_driving_license === false && ["driving_license_number", "driving_license_type", "driving_license_expiry_date"].some(key => state[key] != null)) throw new Error("กรุณายืนยันล้างรายละเอียดใบขับขี่ก่อนบันทึกว่าไม่มีใบขับขี่");
-    } catch (error) { status(entry.message, error.message, "error"); return; }
+    } catch (error) { if (error.field) profileFieldError(entry.inputs.get(error.field), error.message); status(entry.message, error.message, "error"); return; }
     if (!Object.keys(patch).length) { status(entry.message, "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); return; }
     const sent = { ...entry.draft.values }, revision = entry.draft.revision;
     const action = () => entry.kind === "academic" ? updateStudentInfo(patch, revision)
@@ -163,7 +169,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     if (busy || externalBusy()) return;
     showConfirmModal({ title: entry.isNew ? "ยกเลิกรายการใหม่?" : "ลบรายการนี้?", message: "ลบเฉพาะรายการนี้ การแก้ไขในรายการอื่นยังคงอยู่", confirmLabel: entry.isNew ? "ยกเลิกรายการ" : "ลบรายการ",
       onConfirm: async () => {
-        if (!entry.id) { entries.delete(entry.key); entry.form.remove(); return; }
+        if (!entry.id) { entries.delete(entry.key); entry.form.remove(); notifyProfileChange(document, "edit"); return; }
         const revision = entry.draft.revision;
         const saved = await perform(entry.save, entry.message, revision, () => deleteStudentProfileRecord(entry.kind, entry.id, revision), () => { entries.delete(entry.key); entry.form.remove(); });
         if (!saved) throw new Error(entry.message.textContent);
@@ -250,8 +256,9 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     input.addEventListener("change", () => { entry.file = input.files?.[0] || null; entry.revision = snapshot?.profile_revision; status(message, entry.file ? "เลือกไฟล์แล้ว ยังไม่อัปโหลด" : "ยังไม่เลือกไฟล์"); });
     uploadForm.addEventListener("submit", async event => {
       event.preventDefault();
+      clearProfileErrors(uploadForm);
       try { validateProfileDocument(entry.file, type, labelInput.value); }
-      catch (error) { status(message, error.message, "error"); return; }
+      catch (error) { profileFieldError(entry.file && type === "supporting_other" && !labelInput.value.trim() ? labelInput : input, error.message); status(message, error.message, "error"); return; }
       const body = new FormData(); body.append("document", entry.file); if (labelInput.value.trim()) body.append("document_label", labelInput.value.trim());
       input.disabled = true; labelInput.disabled = true;
       try { await perform(save, message, entry.revision, () => uploadStudentProfileDocument(type, body, entry.revision, progress => {
@@ -310,6 +317,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const result = await reload();
     const committedDuringReload = !!revision && snapshot?.profile_revision !== revision;
     status(globalStatus, result ? "โหลดข้อมูลล่าสุดแล้ว Draft ที่ยังไม่บันทึกยังอยู่" : committedDuringReload ? "ใช้ฉบับที่บันทึกล่าสุดแล้ว Draft ที่ยังไม่บันทึกยังอยู่" : "โหลดข้อมูลไม่สำเร็จ Draft ยังอยู่", result || committedDuringReload ? "success" : "error");
+    if (result || committedDuringReload) notifyProfileChange(document, "ready");
   });
   mounted.set(root, controller); return controller;
 }
