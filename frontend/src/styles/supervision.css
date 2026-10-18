@@ -22,3 +22,11 @@
 .supervision-result figure { margin: .8rem 0; }
 .supervision-result-readback p, .supervision-result-history p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .supervision-result-history details { margin-top: .5rem; padding: .6rem; border: 1px solid #e2e8f0; border-radius: .5rem; }
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .supervision-form label, .supervision-result label { font-size: var(--ui-text-label); }
+  .supervision-form :is(input, select, textarea), .supervision-result :is(input, textarea) { font-size: var(--ui-text-body); }
+  .supervision-check { min-height: 44px; }
+  .supervision-check input { min-height: auto; }
+  @media (max-width: 767px) { .supervision-form { grid-template-columns: minmax(0, 1fr); } }
+}

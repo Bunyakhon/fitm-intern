@@ -1,5 +1,8 @@
 const jwt = require("jsonwebtoken");
-const { Student, Teacher, DepartmentStaff } = require("../models");
+const models = require('../models');
+const { Student, Teacher, DepartmentStaff, SuperAdmin } = models;
+const { assertAccountAccess } = require('../services/adminAccountAccess.service');
+const { resolveAdminPrincipal } = require('../services/teacherAdminGrant.service');
 const { authorizeActor } = require("../services/unifiedAuth.service");
 const { uuid } = require("../validators/roleWorkflow.validator");
 const {
@@ -11,11 +14,15 @@ function createAuthenticateToken({
   StudentModel = Student,
   TeacherModel = Teacher,
   StaffModel = DepartmentStaff,
+  SuperAdminModel = SuperAdmin,
+  checkAccountAccess = (type, id, issuedAt) => assertAccountAccess(models, type, id, { issuedAt }),
+  resolveTeacherAdmin = claims => resolveAdminPrincipal(models, claims),
 } = {}) {
   const actors = {
     student: { Model: StudentModel, fields: ["id", "student_id", "status"] },
     teacher: { Model: TeacherModel, fields: ["id", "status", "is_department_head", "department"] },
     department_staff: { Model: StaffModel, fields: ["id", "is_active"] },
+    super_admin: { Model: SuperAdminModel, fields: ['id', 'email', 'first_name', 'last_name', 'is_active', 'permissions', 'session_version', 'teacher_id'] },
   };
   return async (req, res, next) => {
     try {
@@ -60,11 +67,13 @@ function createAuthenticateToken({
       const type = legacyStudent ? "student" : decoded.actor_type;
       if (typeof type !== "string" || !Object.hasOwn(actors, type)
         || (type === "student" && (typeof decoded.student_id !== "string" || !decoded.student_id
-          || decoded.teacher_id !== undefined || decoded.staff_id !== undefined))
+          || decoded.teacher_id !== undefined || decoded.staff_id !== undefined || decoded.super_admin_id !== undefined))
         || (type === "teacher" && (decoded.teacher_id !== decoded.id
-          || decoded.student_id !== undefined || decoded.staff_id !== undefined))
+          || decoded.student_id !== undefined || decoded.staff_id !== undefined || decoded.super_admin_id !== undefined))
         || (type === "department_staff" && (decoded.staff_id !== decoded.id
-          || decoded.student_id !== undefined || decoded.teacher_id !== undefined))) {
+          || decoded.student_id !== undefined || decoded.teacher_id !== undefined || decoded.super_admin_id !== undefined))
+        || (type === 'super_admin' && (decoded.super_admin_id !== decoded.id || !Number.isInteger(decoded.session_version)
+          || decoded.student_id !== undefined || decoded.teacher_id !== undefined || decoded.staff_id !== undefined))) {
         throw new jwt.JsonWebTokenError("Invalid application identity");
       }
 
@@ -76,6 +85,9 @@ function createAuthenticateToken({
         return res.status(401).json({ success: false, message: "Token ไม่ถูกต้อง" });
       }
       const role = authorizeActor(actor, type);
+      if (type === 'super_admin' && actor.teacher_id) return res.status(403).json({ message: 'Teacher membership ต้องใช้ Teacher session ที่ยืนยันรหัสผ่านใหม่' });
+      if (type === 'super_admin' && decoded.session_version !== actor.session_version) return res.status(401).json({ message: 'Admin Session ถูกเพิกถอนแล้ว' });
+      await checkAccountAccess(type, actor.id, decoded.iat);
       if (!legacyStudent && decoded.role !== role) {
         return res.status(403).json({ success: false, message: "บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานบทบาทที่ระบุ" });
       }
@@ -84,6 +96,8 @@ function createAuthenticateToken({
       }
 
       req.user = { ...decoded, actor_type: type, role };
+      if (type === 'super_admin') req.superAdmin = actor;
+      if (type === 'teacher' && decoded.admin_grant_id !== undefined) req.superAdmin = await resolveTeacherAdmin(req.user);
       return next();
     } catch (error) {
 
@@ -102,7 +116,7 @@ function createAuthenticateToken({
       }
 
       if (error.code === "ACCOUNT_UNAUTHORIZED" && error.status === 403) {
-        return res.status(403).json({ success: false, message: error.message });
+        return res.status(403).json({ success: false, code: error.code, message: error.message });
       }
 
       return res.status(500).json({

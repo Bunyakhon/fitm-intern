@@ -2,6 +2,12 @@
 
 ระบบจัดการฝึกงานและสหกิจศึกษา สำหรับ Student, Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
+## สถานะงานล่าสุด — 18 ตุลาคม 2026
+
+ระบบ Student เป็นงานหลัก; Teacher/Head/Staff มี workflows รองรับบางส่วน **ยังไม่ถือว่าทั้งสามระบบพัฒนาเสร็จทั้งหมด**. Application `super_admin` รองรับ **Teacher หนึ่งบัญชีสองบทบาท** ผ่าน server-side grant ที่ผูก Teacher ID เดิม ไม่สร้าง Login/Email/Profile/Password ชุดที่สอง. Login ยังเข้า Teacher Dashboard ก่อน แล้วสลับเข้า Admin ได้ด้วย session เดียวเมื่อ Backend ยืนยันสิทธิ์จริง. ไม่มี Role Selector; Admin เปิดเฉพาะ `NODE_ENV=development` และ Production ปิดจนกว่าจะมี Strong Authentication/MFA. ไม่ใช้ Developer Console Root หรือ Google เพื่อยกระดับสิทธิ์.
+
+Local PostgreSQL `127.0.0.1:5432 / intern_system.public` เตรียม4ตาราง Admin จากรอบก่อน และขยาย `super_admins` ให้เก็บ Teacher membership หลังสำรองใหม่/ตรวจ archive+DPAPI สำเร็จ. Student7/Teacher23 (รวม Head1)/Staff2 รวม32 คงเดิม. **Grant และ credential rotation จริงยัง WAITING FOR USER TERMINAL** สำหรับ ผศ.ดร.สุพาภรณ์ ซิ้มเจริญ ที่ตรวจพบเพียง1 Record; SQL/API assignment tests เป็น rollback-only ไม่ใช่การเปิดสิทธิ์จริง. ดู [Handoff](HANDOFF_fitm-intern.md); ข้อความวันที่16 ตุลาคมด้านล่างเป็น snapshot เก่า.
+
 ## สถานะปัจจุบันและขอบเขตหลักฐาน — 16 ตุลาคม 2026
 
 อัปเดตเอกสารเท่านั้น (Asia/Bangkok); เทียบ Source เฉพาะส่วนที่เกี่ยวข้องและอ้างผลตรวจเดิมจาก [Handoff](HANDOFF_fitm-intern.md). **ไม่ได้รัน Tests/Build/Browser/HTTP/Database checks ใหม่ในรอบนี้**. ผล PASS ที่ระบุต่อไปเป็นผลเฉพาะขอบเขตในประวัติ ไม่ใช่ Production readiness หรือการรับรองสถานะระบบแบบ Real-time.
@@ -48,7 +54,7 @@ Website Register รับชื่อ/นามสกุล, university email �
 
 มีปุ่มสมัครด้วย Google ใช้ Google flow ด้านบน; Google-only Student ไม่ต้องตั้ง Password และ Password Login ปฏิเสธ NULL hash อย่างปลอดภัย. **Register Page Improvement เป็นงานถัดไปอันดับ 1**; ต้องตรวจ Source และรับรายละเอียดจากผู้ใช้ก่อนปรับ Validation/Student ID/UI ไม่ถือว่า real-account E2E ผ่านแล้ว.
 
-## Developer Console
+## การเปิด Developer Console สำหรับจัดการ .env
 
 `dev-env-manager/` ใช้ Node.js built-ins ไม่มี dependencies เพิ่มสำหรับ Console, bind เฉพาะ **http://127.0.0.1:5379/**. Root Authentication แยกจาก Unified Login/Database ไม่มี Root role ใน PostgreSQL หรือ RBAC ของเว็บหลัก. **ผู้ใช้รายงานว่าเริ่มใช้งาน Console ได้แล้ว**; ไม่ได้เปิด Browser/ตรวจยืนยันซ้ำในงานเอกสารนี้.
 
@@ -59,11 +65,51 @@ Website Register รับชื่อ/นามสกุล, university email �
 ```cmd
 cd dev-env-manager
 set NODE_ENV=development
-npm.cmd run bootstrap
 npm.cmd start
 ```
 
-Bootstrap ใช้ **ครั้งแรกเท่านั้น** เพื่อตั้งรหัสผ่านแบบ Interactive ไม่แสดงขณะพิมพ์; ครั้งถัดไปใช้ `set NODE_ENV=development` และ `npm.cmd start` ใน directory เดิม. Stop ด้วย Ctrl+C. ห้ามบันทึก Root Password/Credential ลงเอกสาร. ผลเดิม **29/29 automated tests และ Chrome fixture Login/Save/Restore/Logout, responsive 1280/768/390/320 px PASS**; Save/Restore `.env` จริงและ Production/POSIX **NOT TESTED**. ไม่รันทดสอบซ้ำรอบนี้.
+เปิด **http://127.0.0.1:5379/** ใช้ `127.0.0.1` ไม่ใช่ `localhost`. หากยังไม่เคยตั้ง Root Password ให้รันคำสั่งนี้ **เพียงครั้งแรก ก่อน `npm.cmd start`** หลังตั้ง `NODE_ENV=development` ใน directory เดียวกัน:
+
+```cmd
+npm.cmd run bootstrap
+```
+
+Root Login แยกจาก Website Login และ Application Super Admin. Bootstrap รับรหัสผ่าน Interactive แบบไม่แสดงขณะพิมพ์. หยุด Service ด้วย **Ctrl+C**. บางค่าต้อง Restart/recreate Service ที่เกี่ยวข้อง; Console ไม่ทำให้อัตโนมัติ และการบันทึก `nlp-service/.env` ยังไม่ทำให้ NLP Docker โหลดค่าทันทีตามข้อจำกัดด้านล่าง. ใช้เฉพาะ Local Development; ไม่บันทึก Password/Secrets ลง README. ดู [คู่มือ Developer Console](dev-env-manager/README.md). ผลเดิม **29/29 automated tests และ Chrome fixture Login/Save/Restore/Logout, responsive1280/768/390/320px PASS** เป็นหลักฐานเก่า ไม่ได้รันทดสอบ Console ซ้ำรอบนี้; Save/Restore `.env` จริงและ Production/POSIX ยัง NOT TESTED.
+
+## Application Super Admin
+
+ใช้ `http://localhost:5173/login.html` เดิม → Unified Login ตรวจรหัสผ่าน Teacher → Teacher Dashboard → **เข้าสู่ระบบผู้ดูแล** → Super Admin Dashboard → **กลับไปหน้าอาจารย์**. ใช้ Teacher token เดียว ไม่มีการคัดลอก session ไปเป็นบัญชี Admin. ลิงก์ Admin แสดงหลัง `/api/teachers/admin-access` ตรวจสิทธิ์จาก Server เท่านั้น; Teacher อื่น/Student/Staff/Head ไม่ได้สิทธิ์เพิ่ม.
+
+`super_admins.teacher_id` เป็น unique FK ไป Teacher เดิม; แถวที่ผูก Teacher เป็น **grant** ที่ไม่มี email/name/password ของตัวเอง. Audit/Settings อ้าง principal/grant เดิมได้ จึงไม่เพิ่มบุคคลซ้ำในยอดผู้ใช้. เก็บ compatibility สำหรับ standalone rows เดิมแต่ CLI ไม่สร้างบัญชี standalone ใหม่. Membership session มี Teacher claims เดิม + signed grant ID/version อายุ15นาที; Backend ตรวจ live Teacher/password stamp/membership/permission ทุก Admin request. Token ก่อน Grant หรือ token จาก Google ที่ไม่มี password-verified grant evidence ไม่ได้สิทธิ์ใหม่. เปลี่ยนสิทธิ์ต้อง Login ใหม่; Logout/เปลี่ยนรหัสผ่านเพิกถอน session ฝั่ง Server. Remember Me/cross-tab ใช้ adapter เดิม.
+
+เตรียมจาก Repository root ด้วย **Windows CMD**:
+
+```cmd
+cd backend
+set NODE_ENV=development
+npm.cmd run admin:assign-teacher
+```
+
+**Schema พร้อมแล้ว ไม่ต้องรัน `admin:prepare` หรือ Seed ซ้ำ.** คำสั่งใหม่ตรวจ Local DB จริงและค้นชื่อไทยที่อนุญาต ต้องพบ Teacher เพียง1คน แสดงชื่อ/สถานะ/Primary Key แล้วให้ผู้ใช้พิมพ์ `GRANT <Teacher ID ที่แสดง>` ใน terminal ด้วยตนเอง. จากนั้นรับ Password ใหม่/Confirm แบบซ่อน และเปลี่ยนรหัสผ่าน Teacher เดิมพร้อมสร้าง Grant/Audit ใน transaction เดียว มี rollback และ preservation checks. หากมี Grant แล้วจะหยุดแบบ idempotent โดยไม่เปลี่ยนรหัสผ่านซ้ำ. `admin:bootstrap` เป็น compatibility alias ไป flow นี้ ไม่รับ Email/ชื่อเพื่อสร้างบุคคลใหม่.
+
+CLI diagnostics (18 ตุลาคม 2026): หากล้มเหลวจะแสดง `BLOCKED [ERROR_CODE] stage=...` พร้อมคำแนะนำคงที่ เช่น `PASSWORD_TOO_SHORT`, `PASSWORD_MISMATCH`, `ENVIRONMENT_BLOCKED`, `SCHEMA_MISMATCH`, `DATABASE_ERROR`; ไม่พิมพ์ exception/SQL/ค่ารหัสผ่าน. รหัสผ่านต้องอย่างน้อย14ตัวอักษร ไม่เกิน72 UTF-8 bytes ไม่มีช่องว่างหัวท้าย/รูปแบบทั่วไปหรือซ้ำ และต่างจากรหัสเดิม. Hidden input รองรับ CR/LF, Backspace และ Ctrl+C เพื่อยกเลิก. หากพบ `DATABASE_CLOSE_ERROR` การ Commit อาจเสร็จแล้ว; รันใหม่จะตรวจ Grant เดิมก่อนและไม่ Rotate ซ้ำ. ส่งเฉพาะรหัสข้อผิดพลาดและ stage เพื่อวิเคราะห์ต่อ ห้ามส่งรหัสผ่าน/Hash/Secret. Focused fixture tests (ไม่เชื่อม DB): จาก `backend` ใช้ `node src/seeders/assignTeacherAdmin.test.js`.
+
+**ต้องเปลี่ยนจาก Initial Password เดิมเป็นรหัสเฉพาะที่แข็งแรงก่อนเปิดสิทธิ์จริง**: อย่างน้อย14ตัวอักษร/ไม่เกิน72 UTF-8 bytes ไม่ใช้รหัสเดิม/รหัสร่วม/Root credential. ไม่รับ Password ผ่าน args/env/pipe/chat และไม่พิมพ์ Password/Hash/JWT ใน log. รหัสเดิมของ Teacher อื่น22คน/Profile/Email/ข้อมูลส่วนตัวไม่เปลี่ยน. Credential Viewer/Vault เดิมไม่อัปเดตรหัสเป้าหมายให้อัตโนมัติหลัง rotation; ใช้รหัสใหม่ที่ตั้งใน terminal. ไม่เปิด Public Register/Google promotion หรือเปลี่ยน OAuth policy.
+
+| ส่วน | ความสามารถ / ขอบเขต |
+| --- | --- |
+| ภาพรวม | Counts จริงจาก Backend; TeacherรวมHead, นับ Teacher+Admin เป็นบุคคลเดียวใน total; แสดง Super Admin membership แยก (หลัง Grant สำเร็จ =1, ผู้ใช้ไม่ซ้ำยัง32) |
+| บัญชีผู้ใช้งาน | ตารางทุก Role, search/filter/pagination, รายละเอียดพื้นฐานที่ปลอดภัย; แก้ชื่อ/ชื่ออังกฤษ/ตำแหน่งตาม Model ที่รองรับ |
+| สถานะ | Account Control แยกจาก Student workflow status; Teacher/Staff ใช้ native status เดิมร่วมด้วยเพื่อให้ legacy guards/รายชื่อ Advisor สอดคล้อง; ปิดแล้ว tokenเดิมถูกปฏิเสธและไม่กลับมาใช้ได้เมื่อเปิดใหม่; ปฏิเสธปิด Teacher ที่เป็น Head/Advisor/มีคำขอที่ปรึกษา และไม่เปิด native inactive เดิมที่ไม่ได้ปิดผ่าน Admin |
+| สิทธิ์ | Server-side permission allowlist ของ membership; ระงับ Admin grant โดยคง Teacher identity ได้เมื่อไม่ใช่ผู้ดูแลคนสุดท้าย; ไม่ย้าย Actor/เปลี่ยน Head/Advisor หรือ bypass ownership |
+| ค่าระบบ | `admin.page_size` จำนวนเต็ม10–100 ค่าเริ่มต้น25 มีผลทันทีในการเรียก Account List ถัดไปที่ไม่ระบุ limit; ไม่เปิดแก้ `.env`/Secrets |
+| Audit | การแก้ไขสำเร็จและ Audit อยู่ใน transaction เดียวกัน; ประวัติ append-only มี DB trigger, ไม่มี Password/Hash/Token/เอกสารส่วนบุคคล |
+| บัญชีของฉัน | แสดง Teacher identity เดิม; เปลี่ยนรหัสผ่าน Teacher เพียงชุดเดียว พร้อมยืนยัน Password ปัจจุบัน/Confirmation แล้ว Login ใหม่ทั้งสองมุมมอง |
+| Pending | Student Profile/เอกสารส่วนบุคคล/การย้าย Role/Head/Advisor/CRUD ที่ยังไม่มี Admin workflow ปลอดภัย ไม่เปิด endpoint ข้าม Validation |
+
+ทุก write ต้องมี live permission, Password ปัจจุบัน, explicit confirmation และ `If-Match`; มี rate limits/transaction rollback/last-admin protection. ไม่แก้ Schema ของ Teacher/Student/Staff; ส่วนขยาย `super_admins` เพิ่ม `teacher_id`/`credential_stamp`, FK/unique/check และยอมให้ credential/profile columns ว่างเฉพาะ grant ตาม identity check โดยไม่ลบข้อมูล/fields เดิม. Backup ก่อน DDL เป็น encrypted DPAPI CurrentUser archive ใน `.local-dev-accounts/super-admin-backups/` ที่ Git-ignore; ไม่มี migrations/startup sync/reset. ไม่มี infrastructure/secret management ใน Admin.
+
+Focused tests: `npm.cmd run test:admin-membership` และ `npm.cmd run test:admin`. Default ใช้ isolated tests/SQL SKIP; ตั้ง FITM_ADMIN_SQL_TEST=1 เฉพาะ process เพื่อ SQL rollback-only ก่อน Grant จริง. หากมี Admin/grant จริงแล้ว fixture จะ SKIP เพื่อรักษาบัญชี. ดูผลล่าสุดใน Handoff. Manual acceptance ที่เหลือ: หลังผู้ใช้ทำ CLI ให้ Login ด้วย Teacher email เดิม/รหัสใหม่ → Teacher → Admin → กลับ Teacher, ตรวจ account counts/menus/keyboard/Confirmation/Logout และ responsive1366/768/390/320px. Browser ยัง NOT TESTED เพราะ startup blocker เดิม ไม่อ้าง static/DOM แทน Browser E2E. Production ปิดต่อจนมี Strong Authentication/MFA และ security/operational acceptance.
 
 ## Environment Configuration
 
@@ -90,7 +136,7 @@ PostgreSQL 16 Development `intern_system.public` ใช้ Sequelize Model-drive
 - Browser Storage แยกระหว่าง localhost กับ 127.0.0.1 จึงมี session/Remember Me/draft แยกกัน และ cross-tab revocation ไม่ข้ามสอง origins. ไม่ย้าย token ข้าม host อัตโนมัติ.
 - ไม่เผย Password/hash/token/Connection Credentials หรือ Secret ใน `.env`/Backup; ไม่ใช้ mock/synthetic/fixture PASS แทน Provider E2E, real-account acceptance หรือ Production Security.
 
-## Next Development Priorities
+## Next Development Priorities — แผนเดิมวันที่ 16 ตุลาคม 2026
 
 1. **Register Page Improvement — งานแรกเมื่อกลับมาพัฒนา:** รับรายละเอียดจากผู้ใช้และอ่าน Source จริงก่อนแก้ Form/required fields, Student ID/email/password/confirmation, duplicate/errors, loading/success feedback, Google button, responsive/UI เดิม และ Register → JWT → Student Dashboard.
 2. **Register E2E:** หลังหน้า Register พร้อมและมีบัญชีที่ได้รับอนุญาต ตรวจ persistence/JWT/redirect/duplicate และ Login หลัง Logout.
@@ -98,7 +144,7 @@ PostgreSQL 16 Development `intern_system.public` ใช้ Sequelize Model-drive
 4. **Other Roles Authentication:** Teacher/Head/Staff Login/JWT/RBAC/Dashboard/Logout เมื่อมีบัญชีที่อนุญาต ห้ามสร้างบัญชีเพื่อให้รายงาน PASS.
 5. **Remaining Features:** Remember Me/cross-tab persistence, dynamic workflows, NLP env integration, server-side JWT revocation เมื่อมีข้อกำหนด และงานฝึกงาน/สหกิจคงเหลือตาม Handoff/ลำดับที่ผู้ใช้สั่ง.
 
-รอบนี้หยุดหลังอัปเดตเอกสาร ไม่เริ่ม Register หรือ E2E. ลำดับข้างต้นแทนคำแนะนำ “งานถัดไป” ใน snapshots เก่า โดยไม่เปลี่ยนสถานะงานอื่นเป็นเสร็จ.
+ลำดับข้างต้นเป็นประวัติแผนงานเอกสารวันที่16 ตุลาคม; งานปัจจุบันวันที่18 ตุลาคมคือ Application Super Admin ตามหัวข้อใหม่ด้านบนและ Current Handoff. ไม่เริ่ม Register/โมดูลถัดไปเอง และไม่เปลี่ยนสถานะ Teacher/Head/Staff เป็นพัฒนาเสร็จทั้งหมด.
 
 ## Documentation References
 

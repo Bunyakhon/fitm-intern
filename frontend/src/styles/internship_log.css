@@ -157,3 +157,40 @@
   #panel-daily[aria-busy="true"] .internship-status::before,
   #panel-daily button.is-loading::before { animation: none; }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  #panel-daily .daily-header-caption { font-size: var(--ui-text-sm); }
+  #panel-daily input[type="date"] { font-size: 1rem; }
+  #panel-daily .daily-action-help { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-guide p { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-summary-card h3 { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-summary-hint { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-date-cell span { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-muted { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-work-preview { font-size: var(--ui-text-sm); }
+  #panel-daily .daily-badge { font-size: var(--ui-text-sm); }
+  #panel-daily .empty-state p { font-size: var(--ui-text-sm); }
+  #panel-daily .internship-editor legend { font-size: var(--ui-text-sm); }
+  @media (max-width: 600px) {
+    #panel-daily .daily-header p { font-size: var(--ui-text-sm); }
+  }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  #panel-daily .daily-header h2 { font-size: var(--ui-text-title); }
+  #panel-daily .daily-guide h3, #panel-daily .daily-summary-card h3,
+  #panel-daily .daily-date-control label, #panel-daily .internship-editor label { font-size: var(--ui-text-label); }
+  #panel-daily .empty-state h4, #panel-daily .internship-editor h3 { font-size: var(--ui-text-card); }
+  #panel-daily .daily-timeline-heading h4, #panel-daily .daily-history-details .internship-entry h3 { font-size: var(--ui-text-body); }
+  #panel-daily #dailyEntryDate, #panel-daily .daily-feedback-box,
+  #panel-daily .daily-history-details, #panel-daily .daily-unavailable { font-size: var(--ui-text-sm); }
+  .internship-toolbar { flex-wrap: wrap; }
+  .internship-toolbar > * { min-width: 0; max-width: 100%; }
+  .internship-review button { min-height: 44px; max-width: 100%; font-size: var(--ui-text-label); }
+  @media (max-width: 767px) {
+    #panel-daily .daily-summary-grid { grid-template-columns: minmax(0, 1fr); }
+    #panel-daily .daily-header { padding: 20px 16px; gap: 12px; }
+    #panel-daily .daily-header > div { min-width: 0; }
+  }
+}

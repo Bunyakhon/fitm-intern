@@ -134,3 +134,31 @@
   #panel-profile .student-info-form-grid, #panel-profile .profile-entry-grid { gap: 18px; }
   #panel-profile .profile-tabs { scroll-padding-inline: 6px; }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  #panel-profile :is(.form-group input, .form-group select, .form-group textarea, .profile-document-card input, #profilePdfBody input, #profilePdfBody select),
+  #profileEditModal :is(.form-group input, .form-group select, .form-group textarea) { font-size: 1rem; }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  #panel-profile :is(.profile-entry label, .profile-document-card label, .form-group label),
+  #panel-profile #profilePdfBody label, #profileEditModal .form-group label { font-size: var(--ui-text-label); }
+  #panel-profile :is(.profile-workspace-notice, .profile-pdf-current, .profile-pdf-warnings,
+  .profile-method small, .profile-import-steps li, .profile-pdf-extracted, .profile-field-error,
+  .profile-tab-help, .message), #profileEditModal :is(.profile-field-error, .message) { font-size: var(--ui-text-sm); line-height: 1.65; }
+  #panel-profile .profile-save-state { font-size: var(--ui-text-sm); }
+  #panel-profile :is(.btn-primary, .btn-secondary), #panel-profile #btnEditProfile,
+  #profileEditModal :is(.btn-primary, .btn-secondary) { font-size: var(--ui-text-label); }
+  #panel-profile .profile-tab { font-size: var(--ui-text-label); }
+  @media (max-width: 1023px) {
+    #panel-profile .profile-entry-grid, #panel-profile #profileDocumentCards,
+    #panel-profile #profilePdfPreview { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 767px) {
+    #panel-profile .profile-import-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    #panel-profile .profile-entry-actions { flex-direction: column; align-items: stretch; }
+    #panel-profile .profile-entry-actions button { width: 100%; }
+    #panel-profile .profile-entry, #panel-profile .profile-document-card, #panel-profile .profile-pdf-import { padding: 18px 14px; }
+  }
+}

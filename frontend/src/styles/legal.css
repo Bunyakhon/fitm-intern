@@ -1,4 +1,4 @@
-/* Document pages only; reuse KIWI tokens, header/footer and local TH Sarabun New. */
+/* Public legal pages use the shared UI font; print uses the document font. */
 .legal-page { font-family: var(--app-font-family); font-size: 1.1rem; line-height: 1.8; }
 .legal-page .legal-shell { width: min(100% - 40px, 960px); margin: 40px auto; }
 .legal-page .legal-document { padding: 36px 42px; background: var(--white); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-sm); }
@@ -21,4 +21,11 @@
   .legal-page h1 { font-size: 1.65rem; }
   .legal-page h2 { font-size: 1.25rem; }
   .legal-page .legal-draft { padding: 14px; }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .legal-page { font-size: 1.0625rem; line-height: 1.7; }
+  .legal-page h1 { font-size: var(--ui-text-title); }
+  .legal-page h2 { font-size: var(--ui-text-section); line-height: 1.35; }
+  .legal-page .legal-note, .legal-page .legal-meta { font-size: var(--ui-text-label); }
 }

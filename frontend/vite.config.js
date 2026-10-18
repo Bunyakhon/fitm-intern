@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         index: fileURLToPath(new URL('./index.html', import.meta.url)),
         login: fileURLToPath(new URL('./login.html', import.meta.url)),
+        superAdmin: fileURLToPath(new URL('./src/super_admin/super_admin.html', import.meta.url)),
         teacherLogin: fileURLToPath(new URL('./teacher-login.html', import.meta.url)),
         teacherCoop: fileURLToPath(new URL('./src/teacher_coop/teacher_coop.html', import.meta.url)),
         departmentHeadLogin: fileURLToPath(new URL('./department-head-login.html', import.meta.url)),

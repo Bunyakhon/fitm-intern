@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon --legacy-watch src/app.js",
+    "admin:prepare": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File src/db/prepareSuperAdmin.ps1",
+    "admin:bootstrap": "node src/seeders/bootstrapSuperAdmin.js",
+    "admin:assign-teacher": "node src/seeders/assignTeacherAdmin.js",
+    "test:admin": "node src/services/superAdmin.test.js",
+    "test:admin-membership": "node src/services/teacherAdminGrant.test.js",
     "format": "prettier --write .",
     "seed:jobs": "node src/db/seedJobMatchingDemo.js",
     "staff:create": "node src/seeders/createDepartmentStaff.js",

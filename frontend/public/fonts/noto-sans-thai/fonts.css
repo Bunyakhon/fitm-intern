@@ -1,0 +1,29 @@
+/* Noto Sans Thai v2.002, SIL Open Font License 1.1 (see OFL.txt).
+   Unmodified variable TTF from google/fonts/ofl/notosansthai:
+   https://github.com/google/fonts/blob/main/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf
+   Git blob: 34b48ab6f74867dbfce19410a2f452abef34e3ff
+   SHA-256: 5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8
+   Sarabun faces remain available for document printing; UI never falls back to them. */
+@import url("../th-sarabun-new/fonts.css");
+
+@font-face {
+  font-family: "Noto Sans Thai";
+  src: url("./NotoSansThai-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-document: "TH Sarabun New", serif;
+  /* Compatibility for all existing page styles and shared components. */
+  --app-font-family: var(--font-ui);
+}
+
+body { font-family: var(--app-font-family); }
+
+@media print {
+  :root { --app-font-family: var(--font-document); }
+}

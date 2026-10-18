@@ -1,6 +1,7 @@
 import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { getCurrentTeacher, getTeacherAdvisorRequests, decideTeacherAdvisorRequest, TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showConfirmModal, showToast, setButtonLoading } from "../ui/feedback.js";
+import { createTeacherListPresentation } from "./teacherListPresentation.js";
 
 const STATUS_LABELS = { pending: "รออาจารย์ยืนยัน", confirmed: "ยืนยันรับเป็นที่ปรึกษาแล้ว", rejected: "ปฏิเสธคำขอแล้ว" };
 const PAGE_SIZE = 25;
@@ -8,6 +9,7 @@ const PAGE_SIZE = 25;
 export function mountTeacherCoop({ document, storage, location, me = getCurrentTeacher, list = getTeacherAdvisorRequests, decide = decideTeacherAdvisorRequest, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading }) {
   const get = id => document.getElementById(id);
   const container = get("teacherRequestList"), message = get("teacherRequestMessage");
+  const presentation = createTeacherListPresentation({ document, list: container, message, refresh: get("teacherRefresh"), emptyTitle: "ยังไม่มีคำขอที่ปรึกษารอยืนยัน", emptyDescription: "เมื่อมีนักศึกษาเลือกคุณเป็นที่ปรึกษาโครงการ คำขอจะแสดงที่นี่" });
   let authorized = false, fetching = false, submitting = false, modalOpen = false;
   let status = "pending", offset = 0, hasNext = false, rows = [];
 
@@ -38,6 +40,7 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     get("teacherPageNumber").textContent = "";
     get("teacherSignIn").hidden = false;
     say(error.status === 401 ? "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอาจารย์อีกครั้ง" : "บัญชีนี้ไม่มีสิทธิ์ใช้งานหน้าอาจารย์ กรุณาเข้าสู่ระบบใหม่", "error");
+    presentation.setState("error", { retry: false });
     controls();
     return true;
   }
@@ -93,6 +96,7 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     rows = [];
     render();
     if (!preserveMessage) say("กำลังโหลดคำขอ...");
+    presentation.setState("loading");
     loading(get("teacherRefresh"), true, "กำลังโหลด...", "รีเฟรช");
     try {
       let data = await list({ status, offset, limit: PAGE_SIZE + 1 });
@@ -103,14 +107,16 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
         data = await list({ status, offset, limit: PAGE_SIZE + 1 });
         if (!Array.isArray(data)) throw new Error("Invalid request list");
       }
-      if (!storage.getItem(TEACHER_TOKEN_KEY)) { rows = []; render(); return false; }
+      if (!storage.getItem(TEACHER_TOKEN_KEY)) { rows = []; render(); presentation.setState("error", { retry: false }); return false; }
       hasNext = data.length > PAGE_SIZE;
       rows = data.slice(0, PAGE_SIZE);
       render();
       if (!preserveMessage) say(rows.length ? `แสดง ${rows.length} คำขอในหน้านี้` : status === "pending" ? "ยังไม่มีคำขอเป็นอาจารย์ที่ปรึกษาโครงการ" : `ยังไม่มีคำขอ${status === "confirmed" ? "ที่ยืนยันแล้ว" : "ที่ปฏิเสธแล้ว"}`);
+      presentation.setState("ready", { count: rows.length, filtered: status !== "pending", pageable: offset > 0 || hasNext });
       return true;
     } catch (error) {
       if (!authError(error)) say(errorText(error), "error");
+      presentation.setState("error", { retry: authorized });
       return false;
     } finally {
       fetching = false;
@@ -179,7 +185,7 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
       authorized = true;
       await refresh();
     } catch (error) {
-      if (!authError(error)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherSignIn").hidden = false; }
+      if (!authError(error)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherSignIn").hidden = false; presentation.setState("error", { retry: false }); }
     } finally { controls(); }
   })();
   return { ready, refresh };

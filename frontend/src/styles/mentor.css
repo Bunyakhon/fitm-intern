@@ -355,3 +355,27 @@ fieldset:disabled input {
     animation: none;
   }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  .eyebrow { font-size: var(--ui-text-sm); }
+  .security-note { font-size: var(--ui-text-sm); }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .mentor-verification-card { min-width: 0; overflow-wrap: anywhere; }
+  .mentor-verification-header h1 { font-size: var(--ui-text-title); }
+  .student-context h2, legend { font-size: var(--ui-text-card); line-height: 1.35; }
+  .student-context-list dt, .form-group label { font-size: var(--ui-text-label); }
+  .verification-state p { font-size: var(--ui-text-label); line-height: 1.6; }
+  .button { min-height: 44px; max-width: 100%; font-size: var(--ui-text-label); }
+  .form-actions { flex-wrap: wrap; }
+  @media (max-width: 767px) {
+    .mentor-verification-page { padding: 24px 12px; place-items: start center; }
+    .mentor-verification-card { padding: 26px 18px; }
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .form-group-full { grid-column: auto; }
+    .form-actions { flex-direction: column-reverse; }
+    .button { width: 100%; }
+  }
+}

@@ -3,6 +3,7 @@ import { createStudentAuthStorage, STUDENT_AUTH_EVENT_KEY } from "./studentAuthS
 const settings = {
   teacher: { tokenKey: "teacherToken", profileKey: "teacher", roles: ["teacher", "department_head"], idKey: "teacher_id" },
   department_staff: { tokenKey: "staffToken", profileKey: "staff", roles: ["department_staff"], idKey: "staff_id" },
+  super_admin: { tokenKey: 'superAdminToken', profileKey: 'superAdmin', roles: ['super_admin'], idKey: 'super_admin_id' },
 };
 export function roleClaims(token, type, now = Date.now) {
   try {
@@ -10,7 +11,8 @@ export function roleClaims(token, type, now = Date.now) {
     const [header, claims] = token.split(".").slice(0, 2).map(part => JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/"))));
     const cfg = settings[type];
     if (header.alg !== "HS256" || !cfg || typeof claims.id !== "string" || !claims.id || claims[cfg.idKey] !== claims.id
-      || claims.actor_type !== type || !cfg.roles.includes(claims.role) || !Number.isFinite(claims.exp) || claims.exp * 1000 <= now()) return null;
+      || claims.actor_type !== type || !cfg.roles.includes(claims.role) || !Number.isFinite(claims.exp) || claims.exp * 1000 <= now()
+      || (type === 'super_admin' && (!Number.isInteger(claims.session_version) || claims.session_version < 0))) return null;
     return claims;
   } catch { return null; }
 }
@@ -30,6 +32,8 @@ export function createRoleAuthStorage(type, options = {}) {
 const stores = {};
 const current = type => stores[type] ||= createRoleAuthStorage(type);
 export const getRoleToken = type => { try { return current(type).getToken(); } catch { return null; } };
+export const getApplicationAdminToken = () => getRoleToken('teacher') || getRoleToken('super_admin');
+export const clearApplicationAdminSession = () => { clearRoleSession('teacher'); clearRoleSession('super_admin'); };
 export const saveRoleSession = (type, session) => current(type).save({ ...session, student: session.profile });
 export const clearRoleSession = (type, options) => { try { return current(type).clear(options); } catch { return false; } };
 
@@ -68,4 +72,5 @@ if (typeof window !== "undefined") {
   const path = window.location.pathname;
   if (path.startsWith("/src/teacher_coop/") || path.startsWith("/src/department_head/")) watchRoleSession("teacher");
   else if (path.startsWith("/src/department_staff/")) watchRoleSession("department_staff");
+  else if (path.startsWith('/src/super_admin/')) watchRoleSession(getRoleToken('teacher') ? 'teacher' : 'super_admin');
 }

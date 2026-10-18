@@ -18,16 +18,17 @@ function toSafeTeacherProfile(teacher) {
     TEACHER_PROFILE_FIELDS.map((key) => [key, teacher[key]]),
   );
 }
-function issueTeacherToken(teacher) {
+function issueTeacherToken(teacher, { adminGrant } = {}) {
   return jwt.sign(
     {
       id: teacher.id,
       teacher_id: teacher.id,
       actor_type: "teacher",
       role: teacher.is_department_head ? "department_head" : "teacher",
+      ...(adminGrant ? { admin_grant_id: adminGrant.id, admin_session_version: adminGrant.session_version } : {}),
     },
     process.env.JWT_SECRET,
-    { algorithm: "HS256", expiresIn: process.env.JWT_EXPIRES_IN || "1d" },
+    { algorithm: "HS256", expiresIn: adminGrant ? '15m' : process.env.JWT_EXPIRES_IN || "1d" },
   );
 }
 module.exports = {

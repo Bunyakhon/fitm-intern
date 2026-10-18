@@ -1,3 +1,4 @@
+import { revealNavigationItem } from "../ui/navigationScroll.js";
 import { mountCoopActivities } from "./coopActivities.js";
 import { mountStudentGoogleAccount } from "./studentGoogleAccount.js";
 import { renderAccountProfile, accountProfileState } from "./studentAccountOverview.js";
@@ -1914,6 +1915,7 @@ function activateDashboardPanel(targetId) {
   // The former upload destination now opens the combined project panel.
   if (targetId === "panel-report-upload") targetId = "panel-coop";
   sidebarItems.forEach((item) => item.classList.toggle("active", item.dataset.target === targetId));
+  revealNavigationItem(document.querySelector('.sidebar-menu'), [...sidebarItems].find(item => item.dataset.target === targetId));
   contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
   if (targetId === "panel-mentor") loadMentor();
   if (targetId === "panel-evaluate") return companyEvaluation.load();
@@ -1923,6 +1925,8 @@ function activateDashboardPanel(targetId) {
   window.scrollTo({ top: 0, behavior: "smooth" });
   return Promise.resolve(true);
 }
+
+window.addEventListener('resize', () => revealNavigationItem(document.querySelector('.sidebar-menu'), document.querySelector('.sidebar-item.active')));
 
 sidebarItems.forEach(
   (item) => {

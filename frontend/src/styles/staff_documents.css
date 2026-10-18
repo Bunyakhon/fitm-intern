@@ -4,3 +4,13 @@
 .staff-filters{display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin:20px 0}.staff-filters label{flex:1 1 180px}.staff-filters input,.staff-filters select,.staff-document-fields input,.staff-document-fields textarea{display:block;width:100%;min-height:42px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:white;color:#18282e}
 .staff-document-form,.staff-placement{border-top:1px solid #dce4e8;padding:20px 0}.staff-document-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}.staff-field-wide{grid-column:1/-1}#staffPreviewFrame{width:100%;height:650px;border:1px solid #cad6dc;border-radius:8px;margin:16px 0}.staff-document-history-item{padding:10px 0;border-bottom:1px solid #e0e7eb;overflow-wrap:anywhere}.staff-detail-grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:8px}.staff-detail-grid dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:700px){.staff-document-fields{grid-template-columns:1fr}.staff-detail-grid{grid-template-columns:1fr;gap:4px}.staff-detail-grid dd{margin-bottom:12px}.staff-filters{display:grid;grid-template-columns:1fr}#staffPreviewFrame{height:500px}}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .staff-document-picker, .staff-filters label, .staff-document-fields label { min-width: 0; font-size: var(--ui-text-label); }
+  .staff-document-picker select, .staff-filters :is(input, select), .staff-document-fields :is(input, select, textarea) { min-width: 0; max-width: 100%; min-height: 44px; font-size: var(--ui-text-body); }
+  @media (max-width: 1023px) {
+    .staff-document-fields, .staff-detail-grid { grid-template-columns: minmax(0, 1fr); }
+    .staff-detail-grid dd { margin-bottom: 12px; }
+  }
+  @media (max-width: 767px) { .staff-filters { display: grid; grid-template-columns: minmax(0, 1fr); } }
+}

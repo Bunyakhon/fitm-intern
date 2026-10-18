@@ -3,8 +3,10 @@ import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { showToast, showConfirmModal, setButtonLoading } from "../ui/feedback.js";
 import { bangkokInputs, element, renderAppointment, renderAppointmentHistory } from "./supervisionView.js";
 import { mountSupervisionResult } from "./supervisionResult.js";
+import { createTeacherListPresentation } from "./teacherListPresentation.js";
 export function mountTeacherSupervision({ document, storage, services = api, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading, resultMount = typeof mountSupervisionResult === "function" ? mountSupervisionResult : null }) {
   const $ = id => document.getElementById(id), container = $("supervisionStudents");
+  const presentation = createTeacherListPresentation({ document, list: container, message: $("supervisionMessage"), refresh: $("supervisionRefresh"), picker: $("teacherSupervisionPicker"), emptyTitle: "ยังไม่มีนักศึกษาในความดูแล", emptyDescription: "นักศึกษาที่คุณได้รับสิทธิ์เป็นอาจารย์นิเทศหรือที่ปรึกษาโครงการจะแสดงที่นี่" });
   let current = null, studentId = null, offset = 0, next = false, busy = false, sequence = 0, modal = false;
   const resultWidgets = [];
   const clearResults = () => { resultWidgets.splice(0).forEach(widget => widget.dispose()); };
@@ -62,15 +64,18 @@ export function mountTeacherSupervision({ document, storage, services = api, con
   async function refresh() {
     if (busy || modal || !storage.getItem("teacherToken")) return;
     clearResults(); busy = true; const ticket = ++sequence; current = null; studentId = null; $("supervisionDetail").hidden = true; container.replaceChildren(); controls(); say("กำลังโหลดนักศึกษาในความดูแล...");
+    presentation.setState("loading");
     try {
       let result = await services.listSupervisionStudents(offset);
       if (!result.students.length && offset) { offset = 0; result = await services.listSupervisionStudents(offset); }
-      if (ticket !== sequence || !storage.getItem("teacherToken")) return;
+      if (ticket !== sequence) return;
+      if (!storage.getItem("teacherToken")) { presentation.setState("error", { retry: false }); return; }
       next = result.students.length > 25; const select = $("supervisionStudentSelect"); select.replaceChildren();
       const blank = element(document, "option", "เลือกนักศึกษาในความดูแล"); blank.value = ""; select.append(blank);
       for (const row of result.students.slice(0, 25)) { const option = element(document, "option", `${row.first_name} ${row.last_name} · ${row.student_id}`); option.value = row.id; select.append(option); }
       say(result.students.length ? "เลือกนักศึกษาเพื่อนัดนิเทศครั้งที่ 1 หรือ 2" : "ยังไม่มีนักศึกษาที่คุณเป็นอาจารย์นิเทศ / ที่ปรึกษาโครงการ");
-    } catch (err) { error(err); } finally { busy = false; controls(); }
+      presentation.setState("ready", { count: result.students.length, pageable: offset > 0 || next });
+    } catch (err) { error(err); presentation.setState("error", { retry: !!storage.getItem("teacherToken") }); } finally { busy = false; controls(); }
   }
   function mutation(title, message, operation) {
     if (busy || modal || !current || !storage.getItem("teacherToken")) return;

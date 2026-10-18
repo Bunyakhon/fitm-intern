@@ -14,3 +14,10 @@
 .account-overview article { padding-block: 12px; border-bottom: 1px dashed var(--border); }
 .account-overview .account-empty { color: var(--muted); margin-block: 12px; }
 @media (max-width: 760px) { .account-overview { padding: 18px 14px; } .account-overview dl { grid-template-columns: minmax(0, 1fr); } }
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .account-overview h2, .account-overview h3 { font-size: var(--ui-text-card); }
+  .account-overview dt { font-size: var(--ui-text-label); }
+  .account-overview button { font-size: var(--ui-text-label); max-width: 100%; }
+  @media (max-width: 1023px) { .account-overview dl { grid-template-columns: minmax(0, 1fr); } }
+}

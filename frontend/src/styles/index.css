@@ -716,3 +716,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  .search-input-group input { font-size: 1rem; }
+  .company-location { font-size: var(--ui-text-sm); }
+  .tag { font-size: var(--ui-text-sm); }
+  .job-details { font-size: var(--ui-text-sm); }
+  .filter-input,
+  .filter-select { font-size: 1rem; }
+  .online-status { font-size: var(--ui-text-sm); }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .hero-section h1 { font-size: var(--ui-text-title); }
+  .hero-section p { font-size: var(--ui-text-body); }
+  .section-header h2 { font-size: var(--ui-text-section); }
+  .section-header p, .company-name { font-size: var(--ui-text-label); }
+  .job-title, .filter-modal-header h3 { font-size: var(--ui-text-card); line-height: 1.35; }
+  .filter-field label { font-size: var(--ui-text-label); }
+  .btn-filter-toggle, .btn-reset-filter, .btn-apply-filter { min-height: 44px; font-size: var(--ui-text-label); }
+  .search-input-group { min-width: 0; height: auto; min-height: 52px; }
+  .search-input-group input { min-width: 0; }
+  .nav-btn, .btn-search-icon { width: 44px; height: 44px; flex-shrink: 0; }
+  .filter-modal-card { max-height: calc(100dvh - 32px); }
+  .filter-modal-header, .filter-modal-footer { flex-shrink: 0; }
+  .filter-modal-header h3 { min-width: 0; }
+  .filter-modal-header button, .btn-close-chat, .chat-footer button { min-width: 44px; min-height: 44px; }
+  .chat-body { min-height: 0; overflow-wrap: anywhere; }
+  .chat-quick-replies button { min-height: 44px; font-size: var(--ui-text-sm); }
+  .chat-footer input { font-size: var(--ui-text-body); }
+  @media (max-width: 767px) {
+    .main-content { padding: 28px 12px 60px; }
+    .hero-section { padding: 32px 16px; }
+    .search-filter-wrapper { flex-wrap: wrap; }
+    .search-input-group { flex-basis: 100%; }
+    .btn-filter-toggle { width: 100%; }
+    .section-header { flex-wrap: wrap; gap: 12px; }
+    .job-card { width: min(280px, calc(100vw - 40px)); min-width: 0; overflow-wrap: anywhere; }
+    .chat-window { position: fixed; width: calc(100% - 24px); right: 12px; bottom: 86px; height: min(500px, calc(100dvh - 110px)); }
+    .filter-modal-footer { grid-template-columns: minmax(0, 1fr); }
+  }
+}

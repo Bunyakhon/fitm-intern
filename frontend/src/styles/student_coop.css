@@ -3715,3 +3715,164 @@ textarea::placeholder {
     align-items: stretch;
   }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  #panel-google-account .account-readonly { font-size: var(--ui-text-sm); }
+  .brand-text span { font-size: var(--ui-text-sm); }
+  .nav-user-info small { font-size: var(--ui-text-sm); }
+  .btn-logout { font-size: .875rem; }
+  .sidebar-header small { font-size: var(--ui-text-sm); }
+  .sidebar-item { font-size: .875rem; }
+  .sidebar-divider span { font-size: var(--ui-text-sm); }
+  .dashboard-banner span { font-size: var(--ui-text-sm); }
+  .stat-box span { font-size: var(--ui-text-sm); }
+  .section-card-header p { font-size: var(--ui-text-sm); }
+  .empty-state p { font-size: var(--ui-text-sm); }
+  .profile-label { font-size: var(--ui-text-sm); }
+  .profile-main p { font-size: var(--ui-text-sm); }
+  #panel-profile .profile-label { font-size: var(--ui-text-sm); }
+  #panel-profile .profile-main p { font-size: var(--ui-text-sm); }
+  #panel-profile #btnEditProfile { font-size: .875rem; }
+  .info-item span { font-size: var(--ui-text-sm); }
+  .form-group label { font-size: .875rem; }
+  .job-matching-source dt { font-size: var(--ui-text-sm); }
+  .job-matching-progress-note { font-size: var(--ui-text-sm); }
+  #panel-job-matching .job-matching-top-label { font-size: var(--ui-text-sm); }
+  .job-matching-score-label { font-size: var(--ui-text-sm); }
+  #panel-job-matching .job-matching-category { font-size: var(--ui-text-sm); }
+  .upload-box p { font-size: var(--ui-text-sm); }
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger { font-size: .875rem; }
+  .message { font-size: var(--ui-text-sm); }
+  #panel-profile .profile-avatar-overlay { font-size: var(--ui-text-sm); }
+  #panel-profile .profile-section-header p,
+  #panel-profile .profile-tab-help,
+  #profileEditModal .profile-tab-help { font-size: var(--ui-text-sm); }
+  @media (max-width: 900px) {
+    #panel-profile .profile-tab,
+    #profileEditModal .profile-tab { font-size: var(--ui-text-sm); }
+  }
+  .data-table th,
+  .data-table td { font-size: var(--ui-text-sm); }
+  .data-table th { font-size: var(--ui-text-sm); }
+  .modal-header p { font-size: var(--ui-text-sm); }
+  .footer p { font-size: var(--ui-text-sm); }
+  @media (max-width: 700px) {
+    .panel-header p { font-size: var(--ui-text-sm); }
+  }
+  .modal-profile-image-actions small { font-size: var(--ui-text-sm); }
+  .profile-form-title p { font-size: var(--ui-text-sm); }
+  .profile-edit-modal .form-group label { font-size: .875rem; }
+  .profile-edit-modal .form-group input,
+  .profile-edit-modal .form-group select,
+  .profile-edit-modal .form-group textarea { font-size: 1rem; }
+  .coop-request-summary span,
+  .coop-readonly-grid span { font-size: var(--ui-text-sm); }
+  .coop-status-badge { font-size: var(--ui-text-sm); }
+  .coop-current-eyebrow { font-size: var(--ui-text-sm); }
+  .coop-step { font-size: var(--ui-text-sm); }
+  .coop-history-detail { font-size: var(--ui-text-sm); }
+  .coop-detail-status > span { font-size: var(--ui-text-sm); }
+  #panel-request .btn-danger-outline { font-size: .875rem; }
+  .coop-form-section small { font-size: var(--ui-text-sm); }
+  .coop-request-modal .form-group label,
+  .coop-delivery-methods > p { font-size: .875rem; }
+  .coop-detail-chip { font-size: var(--ui-text-sm); }
+  @media (max-width: 700px) {
+    .coop-step { font-size: var(--ui-text-sm); }
+  }
+  #panel-evaluate dt,
+  #panel-evaluate .evaluation-help { font-size: var(--ui-text-sm); }
+  #panel-evaluate select,
+  #panel-evaluate textarea { font-size: 1rem; }
+  #panel-coop .form-group input,
+  #panel-coop .form-group select,
+  #panel-report-upload input[type="file"] { font-size: 1rem; }
+  #panel-coop .project-help,
+  #panel-report-upload .project-help { font-size: var(--ui-text-sm); }
+  .sidebar-item { font-size: .9375rem; line-height: 1.5; }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .dashboard-layout, .dashboard-sidebar, .dashboard-content, .content-panel { min-width: 0; }
+  .dashboard-layout { grid-template-columns: 264px minmax(0, 1fr); }
+  .dashboard-content { padding: 28px; overflow-wrap: anywhere; }
+  .dashboard-content > .content-panel { max-width: 1240px; margin-inline: auto; }
+  .nav-container { height: auto; flex-wrap: wrap; padding-block: 12px; }
+  .nav-right, .nav-user, .nav-user-info { min-width: 0; }
+  .nav-right { flex-wrap: wrap; }
+  .nav-user { flex: 1 1 auto; }
+  .brand-text strong { font-size: 1.125rem; line-height: 1.4; }
+  .brand-text span, .nav-user-info small { font-size: var(--ui-text-sm); }
+  .nav-user-info span { font-size: var(--ui-text-body); overflow-wrap: anywhere; }
+  .btn-logout { min-height: 44px; font-size: var(--ui-text-label); flex-shrink: 0; }
+  .sidebar-title { font-size: var(--ui-text-card); }
+  .sidebar-divider span { color: var(--muted); }
+  .sidebar-item { min-height: 48px; font-size: var(--ui-text-body); line-height: 1.5; }
+  .panel-header h2 { font-size: var(--ui-text-title); }
+  .panel-header p { font-size: var(--ui-text-label); }
+  .section-card-header h3, .card-title, .empty-state h4, .profile-main h3,
+  #panel-profile .profile-main h3, #panel-profile .profile-section-header h3,
+  #panel-google-account .account-card-heading h3, #jobMatchingResultsTitle,
+  .job-matching-title, .modal-header h3, .coop-request-modal-head h3 { font-size: var(--ui-text-card); line-height: 1.35; }
+  .form-group label, .profile-edit-modal .form-group label, .mentor-modal .form-group label,
+  .coop-request-modal .form-group label, .coop-delivery-methods > p,
+  #panel-evaluate .evaluation-question label, #panel-coop .form-group label,
+  #panel-report-upload .form-group label, #studentGoogleForm label { font-size: var(--ui-text-label); line-height: 1.6; }
+  .form-group :is(input, select, textarea) { font-size: var(--ui-text-body); min-width: 0; max-width: 100%; }
+  :is(.btn-primary, .btn-secondary, .btn-danger, .btn-danger-outline, .btn-mock-sm),
+  #panel-request .btn-danger-outline, #panel-mentor :is(.btn-mock-sm, .btn-danger-outline),
+  #panel-google-account :is(.btn-primary, .btn-secondary) { min-height: 44px; max-width: 100%; font-size: var(--ui-text-label); line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+  .info-item strong, #panel-mentor .info-item strong, #panel-profile .profile-main p strong,
+  .coop-request-summary strong, .coop-readonly-grid strong, #panel-evaluate dd { font-size: var(--ui-text-body); }
+  .job-matching-result-source, .job-matching-loading-caption, .job-matching-note, .job-matching-meta-item,
+  .coop-history-empty, #panel-request .request-card-head p, .coop-status-summary, .coop-terminal-status,
+  .coop-request-modal-head p, .coop-unavailable, .coop-company-result span,
+  #panel-mentor .info-item span, #panel-mentor .mentor-verification-hint,
+  #panel-evaluate .evaluation-summary-grid span, #panel-evaluate .evaluation-score-control,
+  #panel-coop .project-advisor-status, #panel-coop .project-help,
+  #panel-report-upload .project-current-file, #panel-google-account .account-help { font-size: var(--ui-text-sm); }
+  .coop-status-badge, .coop-detail-chip, #panel-mentor .mentor-status-badge { font-size: var(--ui-text-sm); white-space: normal; overflow-wrap: anywhere; }
+  .coop-form-section h4, .coop-form-section legend, .profile-form-title h4,
+  #panel-mentor .request-card-head h4, #panel-request .request-card-head h4 { font-size: var(--ui-text-card); line-height: 1.35; }
+  .coop-delivery-methods .coop-check-item { min-height: 44px; font-size: var(--ui-text-label); }
+  .data-table :is(th, td), .coop-course-table { font-size: var(--ui-text-sm); line-height: 1.6; }
+  .table-wrapper, .coop-course-table-wrap { max-width: 100%; min-width: 0; overflow-x: auto; }
+  .modal-box { min-width: 0; max-width: 100%; max-height: calc(100dvh - 32px); }
+  .modal-header > div { min-width: 0; }
+  .modal-close { width: 44px; height: 44px; flex: 0 0 44px; }
+  .modal-footer { flex-wrap: wrap; }
+  #panel-profile .profile-tab, #profileEditModal .profile-tab { min-height: 44px; font-size: var(--ui-text-label); }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .dashboard-layout { grid-template-columns: 224px minmax(0, 1fr); }
+    .dashboard-content { padding: 24px 18px; }
+    .stat-row, .info-grid, .form-grid, .coop-request-summary, .coop-readonly-grid,
+    .profile-form-grid, #panel-evaluate .evaluation-summary-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 767px) {
+    .dashboard-layout { display: block; }
+    .dashboard-sidebar { padding: 8px 10px; border-right: 0; border-bottom: 1px solid var(--border); }
+    .sidebar-header, .sidebar-divider { display: none; }
+    .sidebar-menu { min-width: 0; flex-direction: row; overflow-x: auto; gap: 8px; padding: 4px 4px 8px; scroll-padding-inline: 4px; }
+    .sidebar-item { flex: 0 0 auto; width: auto; white-space: nowrap; }
+    .sidebar-item:hover { transform: none; }
+    .dashboard-content { padding: 20px 12px; }
+    .nav-container { padding: 12px; gap: 12px; }
+    .nav-right { width: 100%; justify-content: space-between; gap: 12px; }
+    .nav-user-info { display: flex; }
+    .brand-text span { display: block; }
+    .btn-logout { width: auto; height: auto; padding: 8px 12px; }
+    .btn-logout span { display: inline; }
+    .panel-header { padding: 18px 16px; }
+    .stat-row, .info-grid, .form-grid, .profile-form-grid, .coop-request-summary,
+    .coop-readonly-grid, .coop-stepper, #panel-evaluate .evaluation-summary-grid { grid-template-columns: minmax(0, 1fr); }
+    .section-card-header { flex-wrap: wrap; gap: 12px; }
+    .section-card-header > div { min-width: 0; }
+    .modal-overlay { padding: 12px; }
+    .modal-box { max-height: calc(100dvh - 24px); }
+    .modal-header, .modal-body, .modal-footer { padding: 16px; }
+    .modal-footer > button { flex: 1 1 160px; }
+  }
+}

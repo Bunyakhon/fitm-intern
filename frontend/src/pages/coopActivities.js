@@ -41,6 +41,7 @@ export function mountCoopActivities({ document, container, staff = false, servic
       const root = get('activityResults');
       if (monthly) {
         const grid = node(document,'div',undefined,'activity-grid');
+        grid.tabIndex = 0; grid.setAttribute('role', 'region'); grid.setAttribute('aria-label', 'ปฏิทินกิจกรรมรายเดือน เลื่อนแนวนอนเพื่อดูวันทั้งหมด');
         for (const label of ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']) grid.append(node(document,'div',label,'activity-weekday'));
         const start = new Date(`${get('activityMonth').value}-01T00:00:00Z`).getUTCDay(); for (let i=0;i<start;i++) grid.append(node(document,'div',undefined,'activity-day activity-blank'));
         for (const day of calendarDays(get('activityMonth').value,rows)) { const cell = node(document,'div',undefined,'activity-day'); cell.append(node(document,'span',String(day.day))); for (const row of day.activities) { const label = `${row.title} · ${statusLabels[row.status]}`, el = button(label,() => detail(row.id)); el.title = label; el.setAttribute('aria-label',`${day.date} ${label}`); el.className = `activity-event activity-${row.status}`; cell.append(el); } grid.append(cell); }

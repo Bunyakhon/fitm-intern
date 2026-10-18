@@ -1,0 +1,86 @@
+.super-admin-page { background: var(--bg); color: var(--text); }
+.super-admin-page .navbar { height: auto; }
+.super-admin-page .brand-text { display: grid; }
+.super-admin-page .nav-container { height: auto; min-height: 84px; padding: 12px 24px; gap: 16px; flex-wrap: wrap; }
+.super-admin-page .nav-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.super-admin-page button, .super-admin-page input, .super-admin-page select { font: inherit; }
+.super-admin-page .admin-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1600px; margin: auto; }
+.super-admin-page .admin-sidebar { padding: 30px 20px; border-right: 1px solid var(--border); background: var(--white); min-width: 0; }
+.super-admin-page .admin-sidebar h1 { font-size: 1.4rem; margin: 4px 0; }
+.super-admin-page .admin-sidebar nav { display: grid; gap: 6px; margin-block: 26px; }
+.super-admin-page .admin-sidebar a { color: var(--text); padding: 12px 14px; border-radius: 10px; text-decoration: none; min-height: 44px; }
+.super-admin-page .admin-sidebar a[aria-current="page"] { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.super-admin-page .admin-main { padding: 32px; min-width: 0; }
+.super-admin-page .admin-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.super-admin-page .admin-heading h2 { font-size: 1.8rem; }
+.super-admin-page .admin-eyebrow { color: var(--primary); font-weight: 700; font-size: .9rem; }
+.super-admin-page .admin-muted, .super-admin-page .admin-scope { color: var(--muted); }
+.super-admin-page .admin-scope { font-size: .9rem; line-height: 1.6; }
+.super-admin-page #adminStatus { margin-block: 12px 20px; min-height: 28px; }
+.super-admin-page [role="alert"] { color: #a52f2f; }
+.super-admin-page .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 16px; }
+.super-admin-page .admin-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-block: 16px; min-width: 0; }
+.super-admin-page .admin-card h3 { margin-bottom: 12px; }
+.super-admin-page .admin-stat strong { display: block; font-size: 2rem; margin-top: 10px; color: var(--primary); }
+.super-admin-page .admin-skeleton { min-height: 120px; background: linear-gradient(100deg,var(--white),var(--primary-soft),var(--white)); color: var(--muted); }
+.super-admin-page .admin-button { border: 1px solid var(--primary); background: var(--primary); color: var(--white); border-radius: 9px; padding: 9px 16px; min-height: 44px; cursor: pointer; text-decoration: none; }
+.super-admin-page .admin-button.secondary { color: var(--primary); background: var(--white); }
+.super-admin-page button:disabled { opacity: .55; cursor: default; }
+.super-admin-page :is(button,a,input,select):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.super-admin-page .admin-filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin-bottom: 18px; }
+.super-admin-page label { display: grid; gap: 5px; min-width: 0; margin-block: 10px; }
+.super-admin-page .admin-filters label:first-child { flex: 1 1 220px; }
+.super-admin-page input:not([type="checkbox"]), .super-admin-page select { width: 100%; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); color: var(--text); }
+.super-admin-page .admin-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--white); }
+.super-admin-page .admin-table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+.super-admin-page .admin-table caption { text-align: left; padding: 16px; font-weight: 700; }
+.super-admin-page .admin-table th { color: var(--muted); background: var(--bg); }
+.super-admin-page .admin-table :is(td,th) { padding: 14px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+.super-admin-page .admin-table td small { display: block; color: var(--muted); }
+.super-admin-page .admin-pagination, .super-admin-page .admin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+.super-admin-page dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 22px; margin-block: 16px; }
+.super-admin-page dt { color: var(--muted); font-size: .9rem; }
+.super-admin-page dd { margin: 3px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.super-admin-page .admin-pending { background: var(--primary-soft); border-radius: 10px; padding: 16px; margin-block: 16px; }
+.super-admin-page .admin-dialog { width: min(560px,calc(100% - 24px)); max-height: calc(100vh - 32px); overflow: auto; border: 1px solid var(--border); border-radius: 16px; margin: auto; padding: 24px; color: var(--text); }
+.super-admin-page .admin-dialog::backdrop { background: #10182880; }
+.super-admin-page .admin-dialog label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.super-admin-page .admin-skip { position: absolute; top: -100px; left: 16px; z-index: 1000; background: var(--white); padding: 12px; }
+.super-admin-page .admin-skip:focus { top: 8px; }
+.super-admin-page [hidden] { display: none !important; }
+@media(max-width: 960px) { .super-admin-page .admin-layout { grid-template-columns: minmax(0,1fr); } .super-admin-page .admin-sidebar { padding: 18px 22px; border-right: 0; border-bottom: 1px solid var(--border); } .super-admin-page .admin-sidebar nav { display: flex; overflow-x: auto; margin-block: 16px 0; } .super-admin-page .admin-sidebar a { white-space: nowrap; } .super-admin-page .admin-scope { display: none; } }
+@media(max-width: 600px) { .super-admin-page .admin-main { padding: 20px 14px; } .super-admin-page .nav-container { padding: 12px 14px; } .super-admin-page .admin-heading h2 { font-size: 1.5rem; } .super-admin-page .admin-card { padding: 16px; } .super-admin-page .admin-table :is(th,td) { padding: 8px 5px; font-size: .9rem; } .super-admin-page .admin-table .admin-button { padding: 8px 5px; } .super-admin-page dl { grid-template-columns: minmax(0,1fr); } .super-admin-page .admin-filters label { flex: 1 1 100%; } }
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .super-admin-page .brand-text { min-width: 0; }
+  .super-admin-page .brand-text strong { font-size: 1.125rem; }
+  .super-admin-page .brand-text span { font-size: var(--ui-text-sm); }
+  .super-admin-page .nav-right { min-width: 0; }
+  .super-admin-page #adminName { min-width: 0; overflow-wrap: anywhere; }
+  .super-admin-page .admin-sidebar h1 { font-size: var(--ui-text-section); }
+  .super-admin-page .admin-sidebar a { font-size: var(--ui-text-body); }
+  .super-admin-page .admin-heading h2 { font-size: var(--ui-text-title); }
+  .super-admin-page .admin-card h3 { font-size: var(--ui-text-card); }
+  .super-admin-page label { font-size: var(--ui-text-label); }
+  .super-admin-page input:not([type='checkbox']), .super-admin-page select { font-size: var(--ui-text-body); }
+  .super-admin-page .admin-button { font-size: var(--ui-text-label); line-height: 1.5; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .super-admin-page .admin-table { min-width: 640px; }
+  .super-admin-page .admin-table :is(th, td) { font-size: var(--ui-text-sm); line-height: 1.6; padding: 14px 12px; }
+  .super-admin-page .admin-table td small, .super-admin-page dt { font-size: var(--ui-text-sm); }
+  .super-admin-page .admin-dialog { max-height: calc(100dvh - 24px); }
+  @media (max-width: 1023px) {
+    .super-admin-page .admin-layout { grid-template-columns: minmax(0, 1fr); }
+    .super-admin-page .admin-sidebar { padding: 18px 20px; border-right: 0; border-bottom: 1px solid var(--border); }
+    .super-admin-page .admin-sidebar nav { display: flex; gap: 8px; overflow-x: auto; margin-block: 16px 0; padding: 4px; scroll-padding-inline: 4px; }
+    .super-admin-page .admin-sidebar a { flex: 0 0 auto; white-space: nowrap; }
+    .super-admin-page .admin-scope { display: block; }
+  }
+  @media (max-width: 767px) {
+    .super-admin-page .admin-main { padding: 20px 12px; }
+    .super-admin-page .nav-container { padding: 12px; }
+    .super-admin-page .nav-right { width: 100%; justify-content: space-between; }
+    .super-admin-page .admin-filters label { flex: 1 1 100%; }
+    .super-admin-page dl { grid-template-columns: minmax(0, 1fr); }
+    .super-admin-page .admin-card, .super-admin-page .admin-dialog { padding: 18px 14px; }
+  }
+}

@@ -844,3 +844,5 @@ module.exports = {
     }
   ]
 };
+// Additive Application Super Admin contracts; no startup schema mutation.
+for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./superAdminIntegrity')[key]);

@@ -3,49 +3,70 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>คำร้องและคำขอที่ปรึกษา | KIWI</title>
+    <title>พื้นที่ทำงานอาจารย์ | KIWI</title>
     <link rel="stylesheet" href="/src/styles/main.css" />
     <link rel="stylesheet" href="/src/styles/student_coop.css" />
     <link rel="stylesheet" href="/src/styles/teacher_coop.css" />
     <link rel="stylesheet" href="/src/styles/supervision.css" />
   </head>
-  <body class="teacher-page">
+  <body class="teacher-page" data-workflow-role="teacher">
     <header class="navbar"><div class="nav-container">
       <a href="/index.html" class="brand"><img src="/images/logo_kiwi.png" alt="KIWI" class="brand-logo" /><div class="brand-text"><strong>KIWI</strong><span>ระบบจัดการสหกิจศึกษา</span></div></a>
-      <div class="nav-right"><div class="nav-user-info"><small>อาจารย์</small><span id="teacherName">กำลังตรวจสอบผู้ใช้งาน...</span></div><button class="btn-logout" id="teacherLogout" type="button">ออกจากระบบ</button></div>
+      <div class="nav-right"><span class="teacher-user-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><div class="nav-user-info"><small>พื้นที่ทำงานอาจารย์</small><span id="teacherName">กำลังตรวจสอบผู้ใช้งาน...</span></div><button class="btn-logout" id="teacherLogout" type="button">ออกจากระบบ</button></div>
     </div></header>
+    <a class="teacher-skip-link" href="#teacherWorkspace">ข้ามไปยังงานที่เลือก</a>
     <div class="dashboard-layout">
-      <aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">เมนูอาจารย์</span><small>ระบบสหกิจศึกษา</small></div>
-        <nav class="sidebar-menu"><a class="sidebar-item" href="#coopApprovals">อนุมัติคำร้องสหกิจ</a><a class="sidebar-item" href="#advisorRequests">คำขอที่ปรึกษาโครงการ</a><a class="sidebar-item" href="#supervisionScheduling">นัดนิเทศครั้งที่ 1–2</a></nav>
+      <aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">พื้นที่ทำงาน</span><small>ระบบสหกิจศึกษา · อาจารย์</small></div>
+        <nav class="sidebar-menu" aria-label="เมนูอาจารย์">
+          <div class="teacher-menu-group" role="group" aria-labelledby="teacherWorkMenuHeading">
+            <p class="teacher-menu-label" id="teacherWorkMenuHeading">งานอาจารย์</p>
+            <a class="sidebar-item active" href="#coopApprovals" aria-current="page">คำร้องสหกิจ</a>
+            <a class="sidebar-item" href="#advisorRequests">คำขอที่ปรึกษาโครงการ</a>
+            <a class="sidebar-item" href="#supervisionScheduling">นัดหมายและผลนิเทศ</a>
+          </div>
+          <div class="teacher-menu-group" id="teacherAccountMenu" role="group" aria-labelledby="teacherAccountMenuHeading">
+            <p class="teacher-menu-label" id="teacherAccountMenuHeading">บัญชีและสิทธิ์</p>
+          </div>
+        </nav>
       </aside>
-      <main class="dashboard-content">
+      <main class="dashboard-content" id="teacherWorkspace" tabindex="-1" aria-label="งานที่เลือก">
         <section id="coopApprovals" aria-labelledby="coopApprovalHeading">
-          <div class="teacher-heading"><div><h1 id="coopApprovalHeading">อนุมัติคำร้องสหกิจ</h1><p>พิจารณาคำร้องของนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น เมื่ออนุมัติจะส่งต่อให้หัวหน้าภาควิชา</p></div><button class="teacher-button" id="teacherCoopRefresh" type="button" disabled>รีเฟรช</button></div>
+          <div class="teacher-heading"><div><p class="teacher-eyebrow">งานอาจารย์ <span aria-hidden="true">/</span> คำร้องสหกิจ</p><h1 id="coopApprovalHeading">คำร้องสหกิจศึกษา</h1><p>พิจารณาคำร้องของนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น เมื่ออนุมัติจะส่งต่อให้หัวหน้าภาควิชา</p></div></div>
+          <div class="teacher-workspace-card" aria-labelledby="teacherCoopListHeading">
+          <div class="teacher-card-heading"><div><h2 id="teacherCoopListHeading">รายการคำร้อง</h2><p>ตรวจสอบรายละเอียดและประวัติก่อนพิจารณาเป็นรายบุคคล</p></div><button class="teacher-button" id="teacherCoopRefresh" type="button" disabled>รีเฟรช</button></div>
           <div class="teacher-toolbar"><label for="teacherCoopStatus">สถานะคำร้อง</label><select id="teacherCoopStatus" disabled><option value="advisor_review">รออาจารย์ที่ปรึกษาพิจารณา</option><option value="department_head_review">รอหัวหน้าภาควิชาพิจารณา</option><option value="approved">อนุมัติแล้ว</option><option value="rejected">ไม่ได้รับการอนุมัติ</option><option value="cancelled">ยกเลิกแล้ว</option><option value="document_issued">ออกเอกสารแล้ว</option><option value="in_progress">กำลังปฏิบัติงาน</option><option value="submitted">สถานะเดิม: ยื่นคำร้อง</option><option value="staff_review">สถานะเดิม: รอเจ้าหน้าที่</option></select></div>
           <p id="teacherCoopMessage" class="teacher-message" role="status" aria-live="polite"></p>
           <a id="teacherCoopSignIn" class="teacher-button" href="/login.html" hidden>เข้าสู่ระบบอาจารย์อีกครั้ง</a>
           <div id="teacherCoopList" class="teacher-request-list" aria-busy="true"></div>
           <div class="teacher-pagination"><button class="teacher-button" id="teacherCoopPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherCoopPage"></span><button class="teacher-button" id="teacherCoopNext" type="button" disabled>ถัดไป</button></div>
           <section id="teacherCoopDetail" class="teacher-request-card teacher-coop-detail" aria-labelledby="teacherCoopDetailHeading" hidden tabindex="-1"><div class="teacher-heading"><h2 id="teacherCoopDetailHeading">รายละเอียดคำร้อง</h2><button id="teacherCoopCloseDetail" class="teacher-button" type="button">ปิดรายละเอียด</button></div><p id="teacherCoopDetailMessage" role="status" aria-live="polite"></p><div id="teacherCoopDetailBody"></div></section>
+          </div>
         </section>
-        <section id="advisorRequests">
-        <div class="teacher-heading"><div><h1>คำขอเป็นอาจารย์ที่ปรึกษาโครงการ</h1><p>ยืนยันหรือปฏิเสธคำขอจากนักศึกษาที่เลือกคุณเป็นที่ปรึกษาโครงการสหกิจ</p></div><button class="teacher-button" id="teacherRefresh" type="button" disabled>รีเฟรช</button></div>
+        <section id="advisorRequests" aria-labelledby="advisorRequestHeading" hidden>
+        <div class="teacher-heading"><div><p class="teacher-eyebrow">งานอาจารย์ <span aria-hidden="true">/</span> ที่ปรึกษาโครงการ</p><h1 id="advisorRequestHeading">คำขอที่ปรึกษาโครงการ</h1><p>ยืนยันหรือปฏิเสธคำขอจากนักศึกษาที่เลือกคุณเป็นที่ปรึกษาโครงการสหกิจ</p></div></div>
+        <div class="teacher-workspace-card" aria-labelledby="teacherAdvisorListHeading">
+        <div class="teacher-card-heading"><div><h2 id="teacherAdvisorListHeading">รายการคำขอเป็นที่ปรึกษา</h2><p>เลือกสถานะเพื่อดูคำขอและผลการพิจารณา</p></div><button class="teacher-button" id="teacherRefresh" type="button" disabled>รีเฟรช</button></div>
         <div class="teacher-toolbar"><label for="teacherRequestStatus">สถานะคำขอ</label><select id="teacherRequestStatus" disabled><option value="pending">รอยืนยัน</option><option value="confirmed">ยืนยันแล้ว</option><option value="rejected">ปฏิเสธแล้ว</option></select></div>
         <p id="teacherRequestMessage" class="teacher-message" role="status" aria-live="polite"></p>
         <a id="teacherSignIn" class="teacher-button" href="/login.html" hidden>เข้าสู่ระบบอาจารย์อีกครั้ง</a>
         <div id="teacherRequestList" class="teacher-request-list" aria-busy="true"></div>
         <div class="teacher-pagination"><button class="teacher-button" id="teacherPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherPageNumber"></span><button class="teacher-button" id="teacherNext" type="button" disabled>ถัดไป</button></div>
+        </div>
         </section>
-        <section id="supervisionScheduling" aria-labelledby="supervisionHeading">
-          <div class="teacher-heading"><div><h1 id="supervisionHeading">นัดนิเทศครั้งที่ 1–2</h1><p>นัดนักศึกษาที่คุณเป็นอาจารย์นิเทศ / ที่ปรึกษาโครงการ วันเวลาใช้ Asia/Bangkok</p></div><button id="supervisionRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
+        <section id="supervisionScheduling" aria-labelledby="supervisionHeading" hidden>
+          <div class="teacher-heading"><div><p class="teacher-eyebrow">งานอาจารย์ <span aria-hidden="true">/</span> การนิเทศ</p><h1 id="supervisionHeading">นัดหมายและผลนิเทศ</h1><p>จัดการนัดนิเทศครั้งที่ 1–2 และบันทึกผลของนักศึกษาในความดูแล วันเวลาใช้ Asia/Bangkok</p></div></div>
+          <div class="teacher-workspace-card" aria-labelledby="teacherSupervisionListHeading">
+          <div class="teacher-card-heading"><div><h2 id="teacherSupervisionListHeading">นักศึกษาในความดูแล</h2><p>เลือกนักศึกษาเพื่อดูนัดหมาย ข้อมูลพี่เลี้ยง และผลนิเทศ</p></div><button id="supervisionRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
           <p id="supervisionMessage" class="supervision-message" role="status" aria-live="polite"></p>
-          <label for="supervisionStudentSelect">นักศึกษาในความดูแล</label><select id="supervisionStudentSelect" class="teacher-button"></select>
+          <div class="teacher-student-picker" id="teacherSupervisionPicker"><label for="supervisionStudentSelect">เลือกนักศึกษา</label><select id="supervisionStudentSelect" class="teacher-button"></select></div>
           <div id="supervisionStudents"></div>
           <div class="teacher-pagination"><button id="supervisionPrevious" type="button" class="teacher-button" disabled>ก่อนหน้า</button><button id="supervisionNext" type="button" class="teacher-button" disabled>ถัดไป</button></div>
+          </div>
           <section id="supervisionDetail" hidden>
-            <h2 id="supervisionStudentName"></h2><p id="supervisionPlacementInfo"></p><p id="supervisionMentorInfo"></p>
+            <div class="teacher-student-summary"><p class="teacher-eyebrow">ข้อมูลนักศึกษาที่เลือก</p><h2 id="supervisionStudentName"></h2><p id="supervisionPlacementInfo"></p><p id="supervisionMentorInfo"></p></div>
             <div id="supervisionAppointments"></div>
-            <div class="teacher-heading"><h3>สร้าง / แก้ไขนัดหมาย</h3><button id="supervisionNew" type="button" class="teacher-button">เริ่มนัดใหม่</button></div>
+            <div class="teacher-workspace-card">
+            <div class="teacher-card-heading"><div><h3>สร้าง / แก้ไขนัดหมาย</h3><p>ตรวจสอบพี่เลี้ยงและรายละเอียดก่อนบันทึกนัด</p></div><button id="supervisionNew" type="button" class="teacher-button">เริ่มนัดใหม่</button></div>
             <form id="supervisionForm">
               <input id="supervisionVersion" type="hidden" />
               <fieldset id="supervisionFieldset" class="supervision-form">
@@ -65,15 +86,18 @@
                   <label class="supervision-wide">เหตุผลที่ใช้พี่เลี้ยงแทน<textarea id="substitute_reason" maxlength="2000" disabled></textarea></label>
                 </div>
               </fieldset>
-              <button id="supervisionSave" type="submit" class="teacher-button">บันทึกนัดหมาย</button>
+              <div class="teacher-form-actions"><button id="supervisionSave" type="submit" class="teacher-button teacher-button--accept">บันทึกนัดหมาย</button></div>
             </form>
-            <h3>ประวัติการนัดและการยืนยัน</h3><div id="supervisionHistory"></div>
+            </div>
+            <div class="teacher-workspace-card"><div class="teacher-card-heading"><div><h3>ประวัติการนัดและการยืนยัน</h3><p>ติดตามการเปลี่ยนแปลงและสถานะการยืนยันของนัดหมาย</p></div></div><div id="supervisionHistory"></div></div>
           </section>
         </section>
       </main>
     </div>
+    <script type="module" src="/src/pages/teacherNavigation.js"></script>
     <script type="module" src="/src/pages/teacherCoop.js"></script>
     <script type="module" src="/src/pages/roleAccount.js"></script>
+    <script type="module" src="/src/pages/teacherAdminNavigation.js"></script>
     <script type="module" src="/src/pages/teacherCoopRequests.js"></script>
     <script type="module" src="/src/pages/teacherSupervision.js"></script>
   </body>

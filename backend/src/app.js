@@ -64,6 +64,7 @@ app.get("/health/db", async (req, res) => {
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+app.use('/api/admin', require('./routes/superAdmin.routes').createSuperAdminRouter());
 
 // Student Profile routes
 app.use("/api/student-profile", studentProfileRoutes);

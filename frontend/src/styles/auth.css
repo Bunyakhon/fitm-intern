@@ -453,3 +453,28 @@
 .google-link-confirmation .app-confirm-modal__icon { color: var(--primary); background: var(--primary-soft); }
 .google-link-confirmation .app-confirm-modal__confirm { width: auto; flex: 1; }
 .google-link-confirmation #appConfirmMessage { white-space: pre-line; }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  .google-login__link input { font-size: 1rem; }
+  .caps-lock-notice { font-size: var(--ui-text-sm); }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .auth-header h1 { font-size: var(--ui-text-title); }
+  .auth-header p, .google-login__link p, .auth-footer { font-size: var(--ui-text-label); }
+  .form-group label, .google-login__link label { font-size: var(--ui-text-label); }
+  .input-icon-wrapper input, .google-login__link input { min-width: 0; font-size: var(--ui-text-body); }
+  .btn-google, .google-login__retry, .google-login__cancel, .btn-submit { font-size: var(--ui-text-body); height: auto; min-height: 48px; }
+  .btn-submit { padding: 10px 14px; }
+  .toggle-password { width: 44px; height: 44px; flex-shrink: 0; }
+  .caps-lock-notice, .divider, .remember-me, .forgot-password, .login-message, .register-message { font-size: var(--ui-text-sm); }
+  .remember-me, .forgot-password { min-height: 44px; display: inline-flex; align-items: center; }
+  .form-actions { flex-wrap: wrap; }
+  .divider, .input-icon-wrapper input::placeholder { color: var(--muted); }
+  @media (max-width: 767px) {
+    .auth-wrapper { padding: 28px 12px; }
+    .auth-card { padding: 28px 18px; }
+    .form-actions { align-items: flex-start; flex-direction: column; gap: 4px; }
+  }
+}

@@ -902,7 +902,7 @@
                 <p>แสดงคำร้องทั้งหมดของคุณ เรียงตามวันที่ยื่นล่าสุด</p>
               </div>
             </div>
-            <div class="table-wrapper coop-history-table-wrapper">
+            <div class="table-wrapper coop-history-table-wrapper" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด">
               <table class="data-table">
                 <thead><tr><th>สถานประกอบการ</th><th>จังหวัด</th><th>วันที่ยื่น</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead>
                 <tbody id="coopRequestHistoryBody"></tbody>
@@ -1999,7 +1999,7 @@
               <h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกงาน / สหกิจศึกษา</h4>
               <p class="coop-unavailable" id="coopPrerequisiteContext"></p>
               <p class="coop-unavailable" id="coopPrerequisiteNotice">เลือกผ่านแล้วพร้อมผลการเรียน หรือกำลังศึกษา (กำลังลงทะเบียนเรียนในเทอมนี้) ข้อมูลรายวิชาจะบันทึกเป็นส่วนหนึ่งของคำร้องนี้</p>
-              <div class="coop-course-table-wrap"><table class="coop-course-table" aria-describedby="coopPrerequisiteContext coopPrerequisiteNotice"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopPrerequisiteCourses"></tbody></table></div>
+              <div class="coop-course-table-wrap" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด"><table class="coop-course-table" aria-describedby="coopPrerequisiteContext coopPrerequisiteNotice"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopPrerequisiteCourses"></tbody></table></div>
             </section>
             <section class="coop-form-section coop-signer-section">
               <h4>ลงชื่อผู้ยื่นคำร้อง</h4>
@@ -2041,7 +2041,7 @@
             <section class="coop-form-section coop-student-section"><h4>ข้อมูลนักศึกษา</h4><div class="coop-readonly-grid" id="coopDetailStudent"></div></section>
             <section class="coop-form-section coop-company-section"><h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4><div class="coop-readonly-grid" id="coopDetailRequest"></div></section>
             <section class="coop-form-section coop-delivery-detail"><h4>การดำเนินการจัดส่งหนังสือ</h4><div class="coop-detail-chip-list" id="coopDetailDeliveryMethods"></div></section>
-            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
+            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
             <section class="coop-form-section coop-signer-section"><h4>ลงชื่อผู้ยื่นคำร้อง</h4><div class="coop-readonly-grid" id="coopDetailSigner"></div></section>
             <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p><div class="coop-readonly-grid coop-advisor-grid"><div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopDetailAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div><div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div></div></section>
             <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p></section>

@@ -1,6 +1,7 @@
 import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { getCurrentTeacher, getTeacherCoopRequests, getTeacherCoopRequest, decideTeacherCoopRequest, TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showConfirmModal, showToast, setButtonLoading } from "../ui/feedback.js";
+import { createTeacherListPresentation } from "./teacherListPresentation.js";
 
 const LABELS = {
   advisor_review: "รออาจารย์ที่ปรึกษาพิจารณา", department_head_review: "รอหัวหน้าภาควิชาพิจารณา",
@@ -16,6 +17,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
   const loginPath = "/login.html";
   const get = id => document.getElementById(id);
   const container = get("teacherCoopList"), message = get("teacherCoopMessage"), detailPanel = get("teacherCoopDetail"), detailBody = get("teacherCoopDetailBody");
+  const presentation = createTeacherListPresentation({ document, list: container, message, refresh: get("teacherCoopRefresh"), emptyTitle: "ยังไม่มีคำร้องรอพิจารณา", emptyDescription: "เมื่อมีคำร้องจากนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น รายการจะแสดงที่นี่" });
   let authorized = false, fetching = false, submitting = false, modalOpen = false, detailLoading = false;
   let status = reviewStatus, offset = 0, hasNext = false, rows = [], detailId = null, returnFocus = null;
   function say(text, type = "info") {
@@ -40,6 +42,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     get("teacherRequestList")?.replaceChildren();
     for (const id of ["teacherRefresh", "teacherRequestStatus", "teacherPrevious", "teacherNext"]) { const node = get(id); if (node) node.disabled = true; }
     say(error.status === 401 ? "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง" : isHead ? "บัญชีนี้ไม่มีสิทธิ์หัวหน้าภาควิชา กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์" : "ไม่มีสิทธิ์พิจารณาคำร้องนี้ กรุณาเข้าสู่ระบบอาจารย์อีกครั้ง", "error");
+    presentation.setState("error", { retry: false });
     controls(); return true;
   }
   function errorText(error) {
@@ -78,6 +81,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     container.replaceChildren();
     for (const row of rows) {
       const card = node("article", "", "teacher-request-card");
+      if (!isHead) card.dataset.status = row.status;
       card.append(node("span", LABELS[row.status] || "ไม่ทราบสถานะ", "teacher-status"), node("h2", name(row)), fields([
         ["รหัสนักศึกษา", row.student?.student_id], ["สาขา", row.student?.major], ["สถานประกอบการ", row.company_name], ["วันที่ยื่น", date(row.submitted_at)],
       ]), courses(row.prerequisite_courses));
@@ -119,14 +123,16 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     if (!authorized || !storage.getItem(TEACHER_TOKEN_KEY) || fetching) return false;
     fetching = true; rows = []; hasNext = false; render();
     if (!preserveMessage) say("กำลังโหลดคำร้อง..."); loading(get("teacherCoopRefresh"), true, "กำลังโหลด...", "รีเฟรช");
+    presentation.setState("loading");
     try {
       let data = await list({ status, offset, limit: PAGE_SIZE + 1 });
       if (!Array.isArray(data?.data) || !data.success) throw Error("Invalid list");
       if (!data.data.length && offset > 0) { offset = 0; data = await list({ status, offset, limit: PAGE_SIZE + 1 }); if (!Array.isArray(data?.data) || !data.success) throw Error("Invalid list"); }
-      if (!authorized || !storage.getItem(TEACHER_TOKEN_KEY)) return false;
+      if (!authorized || !storage.getItem(TEACHER_TOKEN_KEY)) { presentation.setState("error", { retry: false }); return false; }
       hasNext = data.data.length > PAGE_SIZE; rows = data.data.slice(0, PAGE_SIZE); render();
-      if (!preserveMessage) say(rows.length ? `แสดง ${rows.length} คำร้องในหน้านี้` : status === reviewStatus ? isHead ? "ยังไม่มีคำร้องสหกิจที่รอการพิจารณาจากหัวหน้าภาควิชา" : "ยังไม่มีคำร้องสหกิจที่รอการพิจารณา" : "ยังไม่มีคำร้องในสถานะที่เลือก"); return true;
-    } catch (error) { if (!authError(error)) say(errorText(error), "error"); return false; }
+      if (!preserveMessage) say(rows.length ? `แสดง ${rows.length} คำร้องในหน้านี้` : status === reviewStatus ? isHead ? "ยังไม่มีคำร้องสหกิจที่รอการพิจารณาจากหัวหน้าภาควิชา" : "ยังไม่มีคำร้องสหกิจที่รอการพิจารณา" : "ยังไม่มีคำร้องในสถานะที่เลือก");
+      presentation.setState("ready", { count: rows.length, filtered: status !== reviewStatus, pageable: offset > 0 || hasNext }); return true;
+    } catch (error) { if (!authError(error)) say(errorText(error), "error"); presentation.setState("error", { retry: authorized }); return false; }
     finally { fetching = false; loading(get("teacherCoopRefresh"), false, "กำลังโหลด...", "รีเฟรช"); controls(); }
   }
   function openDecision(row, action, button) {
@@ -171,7 +177,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
       if (isHead && get("headName")) get("headName").textContent = teacherName(result.data);
       authorized = true; await refresh();
     }
-    catch (error) { if (!authError(error)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherCoopSignIn").hidden = false; } }
+    catch (error) { if (!authError(error)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherCoopSignIn").hidden = false; presentation.setState("error", { retry: false }); } }
     finally { controls(); }
   })();
   return { ready, refresh, openDetail };

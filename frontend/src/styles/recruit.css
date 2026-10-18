@@ -310,3 +310,40 @@
   .recruit-verification-main { padding: 28px 0; }
   .recruit-verification-card { padding: 32px 22px; }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  .recruit-page .recruit-hero__eyebrow,
+  .recruit-page .recruit-section__eyebrow,
+  .recruit-page .recruit-job-card__eyebrow { font-size: var(--ui-text-sm); }
+  .recruit-page .recruit-field input,
+  .recruit-page .recruit-field select,
+  .recruit-page .recruit-field textarea { font-size: 1rem; }
+  .recruit-page .recruit-field__error { font-size: var(--ui-text-sm); }
+  .recruit-verification-eyebrow { font-size: var(--ui-text-sm); }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .recruit-page .recruit-hero h1, .recruit-verification-card h1 { font-size: var(--ui-text-title); }
+  .recruit-page .recruit-section__heading h2 { font-size: var(--ui-text-section); }
+  .recruit-page .recruit-job-card__title { font-size: var(--ui-text-card); }
+  .recruit-page .recruit-section__heading { flex-wrap: wrap; }
+  .recruit-page .recruit-section__heading > div { min-width: 0; }
+  .recruit-page .recruit-field label, .recruit-page .recruit-work-modes legend,
+  .recruit-page .recruit-work-modes__options label { font-size: var(--ui-text-label); }
+  .recruit-page .recruit-work-modes__options label { min-height: 44px; }
+  .recruit-page .recruit-section__heading > p, .recruit-page .recruit-section__description,
+  .recruit-page .recruit-turnstile p, .recruit-page .recruit-form__actions > p { font-size: var(--ui-text-sm); }
+  .recruit-page .recruit-remove-job, .recruit-page .recruit-add-job, .recruit-page .recruit-submit,
+  .recruit-verification-home { min-height: 44px; max-width: 100%; font-size: var(--ui-text-label); }
+  .recruit-page .recruit-hero, .recruit-page .recruit-section, .recruit-verification-card { overflow-wrap: anywhere; }
+  .recruit-page .recruit-field :is(input, textarea)::placeholder { color: var(--muted); }
+  @media (max-width: 767px) {
+    .recruit-page .recruit-main { padding: 28px 12px 58px; }
+    .recruit-page .recruit-hero, .recruit-page .recruit-section { padding: 26px 16px; }
+    .recruit-page .recruit-fields { grid-template-columns: minmax(0, 1fr); }
+    .recruit-page .recruit-field--wide { grid-column: auto; }
+    .recruit-page .recruit-form__actions, .recruit-page .recruit-section__heading { flex-direction: column; align-items: stretch; }
+    .recruit-page .recruit-submit { width: 100%; }
+  }
+}

@@ -25,3 +25,25 @@
 @media(max-width:600px) {
   .activity-event { min-height:44px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical; }
 }
+
+/* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+@media screen {
+  @media (max-width:600px) {
+    .activity-event { font-size: var(--ui-text-sm); }
+    .activity-weekday { font-size: var(--ui-text-sm); }
+  }
+}
+/* Shared UI scale and responsive refinement; document/print layout is unchanged. */
+@media screen {
+  .activity-filters, .activity-form { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+  .activity-filters label, .activity-form label { font-size: var(--ui-text-label); }
+  .activity-widget button { min-height: 44px; font-size: var(--ui-text-label); }
+  .activity-weekday, .activity-widget .activity-event { font-size: var(--ui-text-sm); }
+  .activity-widget .activity-event { display: block; overflow: visible; -webkit-line-clamp: unset; line-height: 1.6; }
+  .activity-grid { grid-template-columns: repeat(7, minmax(112px, 1fr)); max-width: 100%; overflow-x: auto; }
+  @media (max-width: 767px) {
+    .activity-filters, .activity-form { grid-template-columns: minmax(0, 1fr); }
+    /* Preserve the seven-day comparison and every event inside a local scroller. */
+    .activity-day { min-height: 100px; padding: 6px; }
+  }
+}
