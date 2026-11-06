@@ -3,8 +3,13 @@ const { Op } = require("sequelize");
 const { profileRevision } = require("./studentProfileIntegrity");
 const rules = require("./studentProfileValidation");
 const specs = require("../models/studentProfileAggregate.schema");
+const { CONTACT_FIELDS, LEGACY_FRIEND_FIELDS } = require("./studentProfileContacts");
+const { createNationalIdStorage } = require("./studentProfileNationalId");
+const { englishTitleColumnReady } = require("./studentProfileEnglishTitle");
 const OWNER_ATTRIBUTES = ["id", "student_id", "first_name", "last_name", "email", "major", "year_level", "gpa", "profile_image", "track", "status", "advisor_teacher_id", "coop_advisor_teacher_id", "department", "faculty", "last_semester_gpa", "profile_data_revision"];
 const PROFILE_ATTRIBUTES = ["id", "student_id", ...rules.EDITABLE_PROFILE_FIELDS, "createdAt", "updatedAt"];
+const PROFILE_STORAGE_ATTRIBUTES = [...PROFILE_ATTRIBUTES.filter(field => field !== "national_id"), ...rules.PRIVATE_PROFILE_FIELDS];
+const storageAttributes = (contacts, title) => PROFILE_STORAGE_ATTRIBUTES.filter(field => (contacts || !CONTACT_FIELDS.includes(field)) && (title || field !== "english_prefix"));
 const FILE_ATTRIBUTES = ["id", "student_id", "file_type", "original_name", "mime_type", "file_size", "document_label", "content_sha256", "document_version", "supersedes_file_id", "is_current", "createdAt", "updatedAt"];
 const TEACHER_ATTRIBUTES = ["id", "academic_title", "first_name", "last_name", "email", "department", "major", "position", "status"];
 const plain = instance => instance?.get ? instance.get({ plain: true }) : instance;
@@ -29,7 +34,7 @@ function aggregateRevision(snapshot) {
   })]));
   return '"' + createHash("sha256").update(JSON.stringify(["student-profile-aggregate-v2", student, profileRevision(student.id, snapshot.profile), profile, relations, snapshot.documents])).digest("hex") + '"';
 }
-function createStudentProfileAggregateService(models) {
+function createStudentProfileAggregateService(models, nationalId = createNationalIdStorage()) {
   const { Student, StudentProfile, Teacher, StudentFile, sequelize } = models;
   async function owner(id, transaction, lock) {
     if (!rules.UUID.test(id || "")) rules.fail("Student authorization is required", 403);
@@ -39,13 +44,33 @@ function createStudentProfileAggregateService(models) {
   }
   async function snapshot(student, transaction) {
     const studentId = student.id;
-    const profile = await StudentProfile.findOne({ where: { student_id: studentId }, attributes: PROFILE_ATTRIBUTES, transaction });
+    // Source may be deployed before the separately authorized additive DDL. Keep
+    // all existing profile operations available without selecting absent columns.
+    const columns = await sequelize.getQueryInterface().describeTable("student_profiles", { transaction });
+    const contactsAvailable = CONTACT_FIELDS.every(field => Object.hasOwn(columns, field));
+    const titleAvailable = englishTitleColumnReady(columns.english_prefix);
+    const attributes = storageAttributes(contactsAvailable, titleAvailable);
+    const profile = await StudentProfile.findOne({ where: { student_id: studentId }, attributes, transaction });
     const data = { student: pick(student, OWNER_ATTRIBUTES.filter(field => field !== "profile_data_revision")), profile: profile ? pick(profile, PROFILE_ATTRIBUTES) : null };
+    if (data.profile) data.profile.national_id = await nationalId.decrypt(plain(profile), studentId);
+    if (data.profile && !titleAvailable) delete data.profile.english_prefix;
+    data.profile_contacts_available = contactsAvailable;
+    data.profile_english_prefix_available = titleAvailable;
+    // A legacy layout requires an explicitly approved inspection/backfill plan.
+    // Never infer that legacy columns are empty, or query PII just for readiness.
+    data.close_friends_legacy_pending = LEGACY_FRIEND_FIELDS.some(field => Object.hasOwn(columns, field));
+    const qi = sequelize.getQueryInterface();
+    const friendTable = specs.tables.student_close_friends;
+    const friendColumns = await qi.tableExists("student_close_friends", { transaction })
+      ? await qi.describeTable("student_close_friends", { transaction }) : {};
+    data.close_friends_available = !data.close_friends_legacy_pending
+      && Object.keys(friendTable.columns).every(field => Object.hasOwn(friendColumns, field));
     // Counter is server-managed metadata and is used only to derive an opaque validator.
     const internal = { ...data, student: { ...data.student, profile_data_revision: student.profile_data_revision ?? "0" } };
     for (const [kind, spec] of Object.entries(rules.RELATIONS)) {
       const attributes = Object.keys(specs.tables[spec.table].columns);
-      data[kind] = (await models[spec.model].findAll({ where: { student_id: studentId }, attributes, transaction, order: [["id", "ASC"]] })).map(row => pick(row, attributes));
+      data[kind] = kind === "close_friends" && !Object.keys(friendTable.columns).every(field => Object.hasOwn(friendColumns, field)) ? []
+        : (await models[spec.model].findAll({ where: { student_id: studentId }, attributes, transaction, order: [["id", "ASC"]] })).map(row => pick(row, attributes));
       internal[kind] = data[kind];
     }
     data.documents = (await StudentFile.findAll({ where: { student_id: studentId, file_type: { [Op.in]: specs.newFileTypes }, is_current: true }, attributes: FILE_ATTRIBUTES, transaction, order: [["id", "ASC"]] })).map(row => pick(row, FILE_ATTRIBUTES));
@@ -89,10 +114,21 @@ function createStudentProfileAggregateService(models) {
   }
   async function writeProfile(context, patch) {
     const { before, student, transaction } = context;
+    if (Object.hasOwn(patch, "english_prefix") && !before.profile_english_prefix_available) {
+      rules.fail("BLOCKED: ยังไม่พร้อมบันทึก Title (English) ต้องติดตั้งคอลัมน์ที่ได้รับอนุญาตก่อน Draft ยังอยู่", 503, "PROFILE_ENGLISH_TITLE_SCHEMA_PENDING");
+    }
+    if (!before.profile_contacts_available && CONTACT_FIELDS.some(field => Object.hasOwn(patch, field))) {
+      rules.fail("ยังไม่เปิดบันทึกข้อมูลติดต่อเพิ่มเติม กรุณาติดต่อผู้ดูแลระบบ", 503, "PROFILE_CONTACTS_SCHEMA_PENDING");
+    }
     const changes = difference(before.profile, patch);
     if (!Object.keys(changes).length) return false;
     rules.validateProfileState({ ...(before.profile || {}), ...changes });
-    const profile = await StudentProfile.findOne({ where: { student_id: student.id }, attributes: PROFILE_ATTRIBUTES, transaction, lock: transaction.LOCK.UPDATE });
+    if (Object.hasOwn(changes, "national_id")) {
+      Object.assign(changes, await nationalId.encrypt(changes.national_id, student.id));
+      delete changes.national_id;
+    }
+    const attributes = storageAttributes(before.profile_contacts_available, before.profile_english_prefix_available);
+    const profile = await StudentProfile.findOne({ where: { student_id: student.id }, attributes, transaction, lock: transaction.LOCK.UPDATE });
     if (profile) await profile.update(changes, { transaction, fields: Object.keys(changes) });
     else await StudentProfile.create({ student_id: student.id, ...changes }, { transaction, fields: ["student_id", ...Object.keys(changes), "id"] });
     return true;
@@ -112,6 +148,10 @@ function createStudentProfileAggregateService(models) {
     return record;
   }
   async function childOperation(context, kind, action, id, patch) {
+    if (kind === "close_friends" && !context.before.close_friends_available) {
+      rules.fail(context.before.close_friends_legacy_pending ? "ต้องตรวจและรักษาข้อมูลเพื่อนสนิทเดิมก่อนเปิดบันทึก" : "ยังไม่เปิดบันทึกข้อมูลเพื่อนสนิท กรุณาติดต่อผู้ดูแลระบบ", 503,
+        context.before.close_friends_legacy_pending ? "CLOSE_FRIENDS_LEGACY_REVIEW_REQUIRED" : "CLOSE_FRIENDS_SCHEMA_PENDING");
+    }
     const model = models[rules.RELATIONS[kind].model];
     if (action === "create") {
       const record = await model.create({ ...patch, student_id: context.student.id }, { transaction: context.transaction });
@@ -164,16 +204,24 @@ function createStudentProfileAggregateService(models) {
     if (new Set(targets).size !== targets.length) rules.fail("ไม่อนุญาตให้แก้หรือลบรายการเดียวกันซ้ำในคำขอ");
     return { student, profile, operations };
   }
-  async function applyAggregate(context, { student, profile, operations }) {
+  async function applyAggregate(context, { student, profile, operations }, receipts) {
       let changed = false;
       if (student) changed = await writeStudent(context, student) || changed;
       if (profile) changed = await writeProfile(context, profile) || changed;
-      for (const op of operations) changed = (await childOperation(context, op.kind, op.action, op.id, op.patch)).changed || changed;
+      for (const op of operations) {
+        const result = await childOperation(context, op.kind, op.action, op.id, op.patch);
+        changed = result.changed || changed;
+        receipts?.push({ kind: op.kind, action: op.action, id: result.response?.record?.id || op.id });
+      }
       return changed;
   }
   function saveAggregate(id, body, expected) {
     const prepared = prepareAggregate(body);
-    return mutate(id, expected, async context => ({ changed: await applyAggregate(context, prepared) }));
+    return mutate(id, expected, async context => {
+      const receipts = [];
+      const changed = await applyAggregate(context, prepared, receipts);
+      return { changed, response: { aggregate_operations: receipts } };
+    });
   }
   return { read, mutate, saveProfile, saveStudent, saveChild, saveAggregate, prepareAggregate, applyAggregate };
 }

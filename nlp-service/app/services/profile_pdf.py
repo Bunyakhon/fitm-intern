@@ -12,7 +12,7 @@ MAX_BYTES = 10 * 1024 * 1024
 MAX_PAGES = 4
 MAX_TEXT = 120_000
 MAX_PIXELS = 6_000_000
-PROFILE = set("prefix english_first_name english_last_name birth_date gender height_cm weight_kg religion ethnicity nationality blood_type medical_conditions allergies special_abilities related_skills hometown_address hometown_phone current_address current_phone father_name father_age father_occupation father_address father_phone mother_name mother_age mother_occupation mother_address mother_phone parent_contact_address parent_phone emergency_contact_name emergency_contact_relation emergency_contact_occupation emergency_contact_workplace emergency_contact_address emergency_contact_phone national_id_issue_date national_id_expiry_date has_driving_license driving_license_number driving_license_type driving_license_expiry_date military_status".split())
+PROFILE = set("prefix english_prefix english_first_name english_last_name birth_date gender height_cm weight_kg religion ethnicity nationality blood_type medical_conditions allergies special_abilities related_skills hometown_address hometown_phone current_address current_phone father_name father_age father_occupation father_address father_phone mother_name mother_age mother_occupation mother_address mother_phone parent_contact_address parent_phone emergency_contact_name emergency_contact_relation emergency_contact_occupation emergency_contact_workplace emergency_contact_address emergency_contact_phone national_id_issue_date national_id_expiry_date has_driving_license driving_license_number driving_license_type driving_license_expiry_date military_status".split())
 STUDENT = set("major department faculty year_level gpa last_semester_gpa".split())
 CHILD = {
     "addresses": set("address_type house_no road subdistrict district province postal_code".split()),
@@ -42,6 +42,10 @@ def clean(value):
 
 def meaningful(value):
     return bool(re.search(r"[A-Za-z0-9\u0e00-\u0e7f]", clean(value)))
+
+
+def english_title_value(value):
+    return {"mr": "Mr.", "mrs": "Mrs.", "miss": "Miss", "ms": "Ms."}.get(clean(value).lower().rstrip("."), value)
 
 
 def calendar_value(value):
@@ -145,6 +149,7 @@ def label_specs(context):
         ("identity", "student_id", r"Student\s*ID\s*(?:No\.?)?|รหัส\s*(?:ประจำตัว|ประจําตัว)?\s*นักศึกษา"),
         ("identity", "thai_name", r"ชื่อ\s*[-–]\s*(?:สกุล|นามสกุล)"),
         ("identity", "english_name", r"Name\s*[-–]\s*Surname"),
+        ("profile", "english_prefix", r"English\s+Title|Title\s*\(\s*English\s*\)|คำนำหน้าชื่อภาษาอังกฤษ"),
         ("student", "major", r"สาขาวิชา|\bMajor\b"), ("student", "department", r"ภาควิชา|\bDepartment\b"),
         ("student", "faculty", r"คณะ|\bFaculty\b"), ("student", "year_level", r"ชั้นปี|Year\s*level"),
         ("student", "last_semester_gpa", r"เกรดเฉลี่ยเทอมที่ผ่านมา|Last\s*semester\s*GPA"),
@@ -284,6 +289,8 @@ def extract_document(data):
                     return
                 if key.endswith("_date"):
                     value = calendar_value(value)
+                if key == "english_prefix":
+                    value = english_title_value(value)
                 candidates[scope + "." + key] = {"scope": scope, "key": key, "value": value, "page": page, "source": source, "review_required": True}
 
         for index, lines in enumerate(pages):

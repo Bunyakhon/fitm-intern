@@ -50,7 +50,10 @@ export function updateStudentInfo(data, revision) {
   });
 }
 
-const profileCollections = new Set(["addresses", "education", "training", "skills"]);
+export function updateStudentProfileAggregate(data, revision) {
+  return apiRequest("/api/student-profile/aggregate", { method: "PATCH", body: data, headers: withRevision(revision) });
+}
+const profileCollections = new Set(["addresses", "education", "training", "skills", "close_friends"]);
 function collectionPath(kind, id) {
   if (!profileCollections.has(kind)) throw new Error("ประเภทข้อมูลประวัติไม่ถูกต้อง");
   return "/api/student-profile/" + kind + (id ? "/" + encodeURIComponent(id) : "");

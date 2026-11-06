@@ -14,6 +14,7 @@ const {normalizePrerequisites, prerequisiteInclude} = require('../services/coopP
 const PREREQUISITE_INCLUDE = prerequisiteInclude(require('../models'));
 const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'], separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
+const { publishedJobWhere, isPublishedJobAvailable } = require("../services/jobEligibility");
 
 const ACTIVE_STATUSES = new Set([
   "submitted",
@@ -273,9 +274,10 @@ exports.createCoopRequest = async (req, res) => {
       payload.company_province = company.province;
       payload.company_address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
     }
+    let jobPosting;
     if (payload.job_posting_id) {
-      const jobPosting = await JobPosting.findByPk(payload.job_posting_id, { transaction });
-      if (!jobPosting || jobPosting.status !== "published") { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
+      jobPosting = await JobPosting.findByPk(payload.job_posting_id, { transaction, lock: transaction.LOCK.SHARE });
+      if (!isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
       if (company && jobPosting.company_id !== company.id) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting does not belong to the selected company" }); }
       if (!company) {
         company = await Company.findByPk(jobPosting.company_id, { transaction });
@@ -317,6 +319,8 @@ exports.createCoopRequest = async (req, res) => {
       });
     }
 
+    // Expiration can pass while waiting for the owner's submission lock.
+    if (jobPosting && !isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
     const request = await CoopRequest.create(
       {
         ...payload,
@@ -387,7 +391,7 @@ exports.checkCompanyDuplicate = async (req, res) => {
 
 exports.getPublishedJobPostingForCoopRequest = async (req, res) => {
   try {
-    const job = await JobPosting.findOne({ where: { id: req.params.id, status: "published" }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
+    const job = await JobPosting.findOne({ where: { id: req.params.id, ...publishedJobWhere() }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
     if (!job || !job.company) return res.status(404).json({ success: false, message: "Published job posting was not found" });
     return res.json({ success: true, data: job });
   } catch (error) { return toErrorResponse(error, res, "Unable to load job posting"); }

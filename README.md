@@ -1,6 +1,382 @@
-# FITM-INTERN
+# FITM-INTERN (CoopConnect)
 
-ระบบจัดการฝึกงานและสหกิจศึกษา สำหรับ Student, Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
+แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
+
+## สถานะปัจจุบัน — Student Project UX/UI — 6 พฤศจิกายน 2026
+
+ปรับเฉพาะ Student **โครงการสหกิจศึกษา** (`#panel-coop`): Header กระชับ, Advisor/Topic การ์ดเดียว, CO-09/กำหนดสอบเป็นสองคอลัมน์เมื่อพื้นที่พอ, Book/Poster สอง subcards และ Mobile คอลัมน์เดียว. ปุ่มบันทึก/อัปโหลดแยกจากเปิดดู/ดาวน์โหลด พร้อม loading/retry/status จากผลจริง; สถานะอาจารย์ เอกสาร และการสอบแยกกันตามเดิม. ไม่เปลี่ยน Backend/API/Database/RBAC/Staff/Admin/เมนูอื่น.
+
+**Frontend tests12/12 / Build160 modules / Chrome + Mock clients / Responsive1280×800,768×1024,390×844,320×568 PASS.** CSS ใหม่88rules scoped ใต้ panel; Browser ตรวจ1,229องค์ประกอบนอก panel ไม่เปลี่ยน และ manager queue/detail เทียบ baseline ตรงกัน. ภาพ Before/After และหลักฐานแยก mock/real อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). รอบนี้ไม่ทดสอบ Real API/PostgreSQL E2E ของ UI ใหม่; ผล Deployment ด้านล่างเป็นประวัติของวันที่5พฤศจิกายน.
+
+เพิ่ม `studentCoopProjectView.js`/`student_coop_project.css`; แก้เฉพาะ Student panel/project handlers, optional student view hook ใน controller CO-09, focused test และเอกสาร. Git **39 modified/39 untracked → 39 modified/41 untracked**, ไม่ลบ/Commit/Push และรักษางานค้างเดิม. **NEXT TASK:** รอผู้ใช้ตรวจหน้าจอจริง; Legacy Book/Poster COMMIT uncertainty, Topic lost-update และ Super Admin password recovery ยังเป็นงานแยก ไม่เริ่มเอง.
+
+## ประวัติ — CO-09 Development Deployment / Integration Acceptance — 5 พฤศจิกายน 2026
+
+**DEVELOPMENT SCHEMA INSTALLED / RBAC ACTIVATED / BACKUP-RESTORE PASS / REAL DEVELOPMENT HTTP 6/6 PASS / REAL BROWSER + DEVELOPMENT API + POSTGRESQL 2/2 PASS / ISOLATED POSTGRESQL 11/11 PASS / FOCUSED REGRESSION 22 PASS + 2 SKIP / BUILD PASS.** สถานะนี้แทนที่ DDL/capability BLOCKED ในประวัติรอบก่อน. **SUPER ADMIN LIVE LOGIN NOT VERIFIED** เพราะไม่มี credentials ที่ได้รับอนุญาต และงานนี้ห้าม reset password.
+
+- Target ที่ตรวจจริง: Development PostgreSQL **16.15**, `127.0.0.1:5432 / intern_system.public`; Backend container ต่อ `postgres:5432` ฐานเดียวกัน. ไม่มี Production/Staging/reset/force sync/startup DDL.
+- Fresh Backup custom format **186,704 bytes**, header/TOC/checksum/Windows ACL ผ่าน เก็บนอก Git ที่ `%LOCALAPPDATA%/FITM-INTERN/backups/20261105-co09-9e74f6cc/`. Restore ลงฐานใหม่แยกและตรวจ all-table counts/fingerprints/schema objects ผ่านก่อนซ้อมและ Apply จริง. ลบเฉพาะ temporary Restore DB/container dump แล้ว; Host Backup + private receipt ยังเก็บอยู่.
+- ติดตั้ง CO-09 ตาม SQL Preview/Models สำเร็จ **5 พ.ย. 2026 เวลา18:40:24 Asia/Bangkok**: **47→51 tables / 554→599 columns / 250→277 constraints / 121→132 indexes / 15 triggers เท่าเดิม**. เพิ่ม 4 ตาราง CO-09 และขยาย existing Super Admin permission CHECK เท่านั้น. Preview ยังคง ROLLBACK ไม่เป็น auto-install script; ห้ามใช้ db:init/reset แทน rollout.
+- เพิ่ม `topic-exams.manage` ให้ **Existing Teacher Super Admin membership** ที่ผู้ใช้ระบุ โดยรักษาสิทธิ์เดิมทั้งหมด ไม่ใช้ email bypass/ไม่เพิ่ม Staff role/ไม่สร้าง Admin สำรอง. session_version +1 และ audit เพิ่ม1แถวระบุ explicit authorized Development operation; ไม่อ่านหรือเปลี่ยน credential columns. ต้องใช้ fresh authenticated session ตาม guard เดิม. Staff active role ใช้ policy กลางเดิมได้โดยไม่เปลี่ยนสิทธิ์บัญชี.
+- Student PDF10MB/URL/status/reason/Protected Preview/Download และตารางสอบ/กรรมการ/สถานะ ใช้กับ API Development จริงแล้ว. Staff search/review/schedule/edit/reschedule/cancel/complete/history ผ่านจริงกับ controlled fixtures. หลัง save อัปเดต management queue ให้แสดงสถานะ/ห้องล่าสุด โดยคง Draft ของอีกฟอร์ม; queue-load error หลัง acknowledged save ไม่ถูกแจ้งเป็น write failure.
+- **Data preservation/cleanup:** หลังทุก run Students7/Profiles6/StudentFiles13/Teachers23/Staff2/Projects0/SuperAdmin1 เท่าเดิม; audit6→7 เป็น grant ที่อนุญาต. CO-09 documents/exams/committee/history **0/0/0/0** หลังล้าง fixtures โดย Schema ยังคงอยู่. 5 runs สร้างเฉพาะ test namespaces รวม15 students/10 teachers/5 staff และลบครบ; private fixture files7ไฟล์/5directories ล้างหลังยืนยัน no references. Inventory referenced/missing/unreferenced **0/0/0**. Business-table fingerprints/schema ตรงหลัง activation.
+- **Transient exception:** Browser Login เรียก Google challenge/expiry cleanup ตาม Source/flags เดิม; `google_auth_requests` ก่อน Deployment2→หลังBrowser1แถว. ลบเฉพาะ request IDs ที่ยืนยันว่า Browser test สร้าง; แถว anonymous ที่ระบุ ownership ไม่ได้คงไว้ให้ lifecycle เดิม ไม่ restore expired nonce/ไม่แก้ Google policy. Google identities/ข้อมูลบัญชี/ข้อมูลธุรกิจเดิมไม่เปลี่ยน.
+
+ผลทดสอบรอบนี้แยกหลักฐานชัดเจน:
+
+| หลักฐาน | ผล |
+| --- | --- |
+| **HTTP API + Real Development PostgreSQL** | Final HTTP-only **6/6 nodes** ผ่าน Normal Unified Login ของ Fixture ใหม่; PDF/invalid MIME/signature/size/URL, protected bytes/download, owner/RBAC, review, concurrent upload/schedule, conflicts, revisions, committee/history/transitions, SQL read-back และ cleanup |
+| **Real Browser + Real Development API/PostgreSQL** | Final Browser-only **2/2 nodes**, Chrome156: Login UI จริงของ Student/Staff, actual dashboards/API adapter, upload/URL/preview/hard reload, review/approve/full schedule lifecycle/committee/queue status, offline/error→retry และ SQL read-back. **1280×800 / 768×1024 / 390×844 / 320×568** ไม่มี overflow ทั้งสองบทบาท. ไม่มี Mock API |
+| **Isolated PostgreSQL Integration** | **11/11**, รวม Admin/Teacher membership restrictions, atomic rollback, disk/SQL failures, statement timeout และ lost COMMIT acknowledgement. ไม่ inject faults บนฐาน Development |
+| **Focused/Synthetic/Regression** | **22 PASS / 2 SKIP**; default Development acceptance SKIP1 เพื่อป้องกันรันโดยไม่อนุญาต |
+| **Browser Mock regression** | actual Source กับ synthetic client ตรวจ independent Draft/409/confirm reload/preview/session wipe/4ขนาดจอผ่านหลัง queue fix; แยกจาก Real Development Browser ด้านบน |
+| **Build/Static** | Frontend `npm.cmd run build -- --configLoader native` **158 modules PASS**, syntax/UTF-8/diff/source preservation และ live health checks |
+| **NOT VERIFIED** | Existing real-user Login/whole-dashboard E2E, Super Admin live Login/Browser, full accessibility/PDF printing และ Legacy Book/Poster upload E2E |
+
+รายละเอียด Source helper, API contracts, private Backup metadata, test guards, known issues และรายชื่อไฟล์อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). เพิ่ม `backend/src/db/coopTopicExamDevelopment.js`, `backend/test/coopTopicExamsDevelopment.test.js`, `backend/test/helpers/coopTopicExamsBrowser.cjs`; แก้เฉพาะ `frontend/src/pages/coopTopicExams.js` และ README/Handoff. Git **39 modified/36 untracked → 39 modified/39 untracked**, ไม่มีลบ/Commit/Push และรักษางานค้างเดิม.
+
+**Manual Chrome acceptance:** เปิด `http://localhost:5173/login.html` → Student ของตนเอง → โครงการ → PDF/HTTPS URL/Preview/Download/Hard Reload. Staff ที่ได้รับอนุญาตค้นนักศึกษา → ตรวจเอกสาร/เหตุผล → จัดและแก้ตาราง/กรรมการ → เลื่อน/ยกเลิก/จบสอบ → ตรวจ Student Reload และ queue ล่าสุด. ลอง invalid file/เวลา/กรรมการซ้ำ/เวลาซ้อน/409 พร้อม Draft, error→retry และ4ขนาดจอข้างต้น. Super Admin ต้อง Login ปกติด้วย fresh session; **ไม่มีการ reset password ในงานนี้**. Checklist เต็มใน Handoff.
+
+**NEXT TASK:** รอผู้ใช้ตรวจรับ CO-09 ใน Chrome. Recovery บัญชีที่ลืมรหัส, Legacy Book/Poster COMMIT uncertainty และ Project-topic lost-update ยังคงเป็นงานแยก ไม่เริ่มเอง. ไม่เพิ่มคะแนนสอบ/สอบ100%/ข้อกำหนดจำนวนกรรมการหรือ room aliases ที่ยังไม่ยืนยัน.
+
+## ประวัติ — CO-09 Topic Examination Management — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED / ISOLATED POSTGRESQL + REAL HTTP 11/11 PASS / FOCUSED + REGRESSION 22 PASS + 2 OPT-IN SKIP / CHROME MOCK UI PASS / BUILD PASS / BLOCKED PENDING DEVELOPMENT DDL + CAPABILITY GRANT.** Source พร้อมสำหรับตรวจรับ; Development `intern_system.public` ยังไม่มี 4 ตารางใหม่และยังไม่เปิด persistence จริง. ดู [Current Handoff](HANDOFF_fitm-intern.md) สำหรับไฟล์ทั้งหมด ผลตรวจ และข้อจำกัด.
+
+- **Student:** ภายในโครงการสหกิจศึกษาเดิมมี CO-09 Document Card: PDF 10MB/ชื่อ/วันที่/Protected Preview/Download และ HTTPS URL แยกจาก PDF พร้อมสถานะตรวจ/เหตุผล. ถัดลงมาแสดง Exam Card: หัวข้อ/วันเวลา Asia/Bangkok/สถานที่หรือ Meeting URL/สถานะ/กรรมการ/บทบาท/หมายเหตุ. ไม่มีข้อมูลตัวอย่างเมื่อยังไม่จัดตาราง.
+- **Staff:** พื้นที่ CO-09 ในหน้าจัดการเอกสารเดิม มีค้นหา/แบ่งหน้า/ตรวจเอกสาร/จัดและแก้ตาราง/เลื่อนหรือยกเลิกพร้อมเหตุผล/จบสอบ/เพิ่มลบกรรมการ Active Teacher Directory/ประวัติกำหนดการ.
+- **Super Admin:** Widget/Service/API ร่วมกับ Staff ในเมนูจัดการข้อมูลระบบเดิม ใช้ capability `topic-exams.manage` ผ่าน live server RBAC และ Teacher membership/fresh bound session/environment guard เดิม. ไม่ hardcode อีเมลหรือให้ Staff role แก่ครู. Read-only พบ membership ของบัญชีที่ผู้ใช้ระบุ แต่ยังไม่มี capability ใหม่นี้; ไม่มีการแก้สิทธิ์/บัญชีจริง.
+- **เอกสาร:** `missing → pending → needs_revision/approved`; เปลี่ยน PDF/URL แล้วกลับรอตรวจและล้างผลเก่า. URL อย่างเดียวไม่ถือว่าอัปโหลด PDF. **สอบ:** `unscheduled → scheduled/cancelled`; scheduled/rescheduled → scheduled/rescheduled/cancelled/completed; cancelled → scheduled; completed ปิดแก้ตาราง. สถานะแยกจาก Project Advisor; การเลื่อน/ยกเลิกต้องมีเหตุผล.
+- **กรรมการ:** One-to-Many Teacher FK + role chair/member/advisor + display_order + unique exam/teacher. ยังไม่ยืนยันจำนวนกรรมการตามกฎวิชาการ จึงไม่ยืมขั้นต่ำ/สูงสุดของการสอบ 100%. Payload cap 100 คนเป็นขอบเขต request เท่านั้น. ยังไม่รวมสอบโครงการ 100%/คะแนนสอบ.
+- **Concurrency:** Document/Exam revisions แยก, บังคับ `If-Match: "N"` (เริ่ม `"0"`; missing428/stale409), Transaction/advisory lock กลาง/row locks และ atomic committee/history save. ตรวจเวลาห้อง/กรรมการซ้อนใน active schedules จาก Backend. Free-text room matching normalize case/whitespace/NFKC; ยังไม่มี room alias directory.
+- **File safety:** Private immutable UUID files ใต้ `STORAGE_ROOT/co09/<owner>/<uuid>.pdf`; ตรวจ MIME/extension/signature/owner/path/symlink, ไม่ public URL/ไม่ server-fetch URL. Replacement ไม่ทับ/ไม่ลบไฟล์เดิมหรือไฟล์ใหม่เมื่อ Rollback/COMMIT ไม่แน่ชัด. Uncertain ตอบ503 ให้โหลดผลล่าสุดก่อน retry. `node backend/src/db/inspectCo09Storage.js` เป็น read-only count inventory; retained files อาจเป็นรุ่นเก่าหรือ uncertain writes ห้าม auto-delete. ไม่มี automatic garbage collection/recovery UI.
+
+API base `/api/coop-topic-exams` (ทุก route ต้อง Application JWT):
+
+| สิทธิ์ | Method / Path | Contract |
+| --- | --- | --- |
+| Student owner/co_op | GET `/me` | `{success,data:{student,project,advisor,document,exam}}` |
+| Student owner/co_op | POST `/me/document` | multipart `file`, PDF10MB, document If-Match |
+| Student owner/co_op | PUT `/me/document-url` | `{document_url}`, HTTPS หรือว่างเพื่อล้าง URL, document If-Match |
+| Student owner/co_op | GET `/me/document/preview` หรือ `/download` | Protected PDF bytes, no-store/nosniff/disposition |
+| Staff/capable Admin | GET `/manage/students?search=&page=`; GET `/manage/teachers`; GET `/manage/students/:id` | รายการ/active directory/รายละเอียดและประวัติ |
+| Staff/capable Admin | PUT `/manage/students/:id/review` | `{review_status,review_reason}`, document If-Match |
+| Staff/capable Admin | PUT `/manage/students/:id/schedule` | `{status,starts_at,ends_at,mode,location,meeting_url,notes,reason,committee:[{teacher_id,role}]}`, exam If-Match |
+| Staff/capable Admin | GET `/manage/students/:id/document/preview` หรือ `/download` | Protected PDF ตาม capability เท่านั้น |
+
+Mutation ตอบ `{success:true,data:document|exam}` + ETag. เวลาขาเขียนรูปแบบ `YYYY-MM-DDTHH:mm:00+07:00`; validation ปฏิเสธ unknown fields, duplicate/inactive committee, invalid times/transitions และ scheduling conflicts. UI มี Shared Feedback/Retry/Draft/conflict confirmation/session guards. Schema ขาดตอบ `503 CO09_SCHEMA_NOT_READY`; SQL timeout แยก `CO09_TIMEOUT`; COMMIT acknowledgement ไม่แน่ชัดแยก `CO09_COMMIT_UNCERTAIN`.
+
+**Schema plan ยังไม่ Apply:** [SQL Preview](backend/src/db/coopTopicExam.preview.sql) สร้างจาก Sequelize/Integrity โดย `node backend/src/db/coopTopicExamSchema.js` (ไม่ connect DB): 4 ตาราง `coop_topic_documents`, `coop_topic_exams`, `coop_topic_exam_committee_members`, `coop_topic_exam_history` พร้อม FK/index/CHECK และขยาย existing Super Admin permission CHECK เฉพาะ capability ใหม่. ไม่เปลี่ยน `student_files`/Book/Poster ENUM/unique constraints หรือข้อมูลบัญชี. Preview มี target/transaction guards และจบ ROLLBACK; ไม่มี migration runner/ledger/startup sync. ต้องได้รับอนุญาต DDL แยกหลัง preflight/backup/restore; ไม่รัน db:init/reset เพื่อเปิดโมดูล. Grant capability บัญชีจริงยังไม่ทำ.
+
+**ผลตรวจใหม่:** actual PostgreSQL16.15/Express/JWT/RBAC/storage **11/11** บนฐานทดสอบเดิมที่แยกจาก Development และ random disposable schema; public-table fingerprints เดิมตรงและ cleanup เฉพาะ fixtures. ครอบคลุม owner/capabilities/Teacher membership, validation/conflicts/revisions/concurrent writes/history/rollback/upload failures/real SQL timeout/missing-schema 503/lost COMMIT acknowledgement. Focused+regression **22 PASS / 2 SKIP**, syntax และ frontend `npm.cmd run build -- --configLoader native` **158 modules PASS**. Chrome actual Source กับ **Mock API** ผ่านการกรอก/Save/Reload/Review/Preview wiring/Draft/409/session wipe และ 1280/768/390/320 px ไม่มี overflow; **ไม่ใช่ Browser → PostgreSQL หรือ live-account E2E**. Health `/` และ `/health/db` 200; anonymous new routes401.
+
+Focused command: `node --test --test-isolation=none backend/test/coopTopicExams.test.js frontend/test/coopTopicExams.test.js frontend/test/phase1.test.js backend/src/services/superAdmin.test.js backend/src/services/teacherAdminGrant.test.js`. Isolated PostgreSQL: เฉพาะ test process ตั้ง `FITM_CO09_POSTGRES_TESTS=1`, `FITM_CO09_TEST_DATABASE=fitm_profile_accept_20261105_fc1b0c2e` แล้ว `node --test --test-isolation=none backend/test/coopTopicExamsPostgres.test.js`; default SKIP/guard ห้าม intern_system. ไม่สร้าง/reset/drop database.
+
+**Password recovery:** พบเพียง `/api/admin/me/password` ที่ต้องยืนยันรหัสปัจจุบัน; ยังไม่มี authorized forgot-password recovery ของ existing Super Admin membership. `admin:assign-teacher` ไม่ reset membership ที่มีแล้ว. รอบนี้ไม่อ่าน/แสดง/เปลี่ยนรหัสผ่านหรือ hash บัญชีเป้าหมาย. ผู้ดูแลต้องยืนยันเจ้าของและอนุมัติงาน recovery แยก โดยเตรียม atomic Teacher credential + membership stamp/session revocation/audit และทดสอบ isolated ก่อนใช้จริง; ไม่ใช้ test-credential utility ทดลองกับบัญชีนี้.
+
+Git baseline **35 modified/16 untracked/0 deleted → 39 modified/36 untracked/0 deleted**. งานนี้เพิ่ม20/แก้9/ลบ0 ไฟล์; งานค้างเดิมนอกขอบเขตคงเดิม. รักษา Profile/Advisor/Book/Poster/โมดูลอื่น/Auth/.env/Docker/ข้อมูล Development. **Known legacy issues:** Book/Poster COMMIT-uncertainty และ Project-topic lost-update เดิมยังไม่แก้. **NEXT TASK:** รอตรวจรับ Source/SQL Preview และอนุญาต Development DDL/capability assignment ก่อนเปิดใช้งานจริง; Recovery/Legacy safety เป็นงานแยก ไม่เริ่มเอง.
+
+## ประวัติ — Student Profile บันทึกทักษะคอมพิวเตอร์ / ภาษา — 5 พฤศจิกายน 2026
+
+แก้สาเหตุบันทึกสองหมวดไม่ได้จริง: ขั้นลงทะเบียน Model เปลี่ยน default `student_skills.display_order` จากเลข `0` เป็น Sequelize `Literal("0")`; เมื่อฟอร์มไม่ส่ง field ลำดับตาม Contract เดิม ตัวตรวจ `Number.isInteger` จึงปฏิเสธก่อน INSERT และ API คืน 400. ทดสอบแยก computer/language แล้วพบปัญหาทั้งคู่. แก้ `backend/src/models/schemaIntegrity.js` เฉพาะ runtime default นี้ให้เป็น integer `0`; คง SQL default/Schema/API keys/Enum/UI/ลำดับข้อมูลเดิม ไม่รัน DDL หรือเขียนข้อมูลนักศึกษาจริง.
+
+**หลักฐาน Persistence จริง:** PostgreSQL 16.15 บนฐานทดสอบแยกที่มีอยู่ `fitm_profile_accept_20261105_fc1b0c2e` ผ่าน **9/9 Integration test nodes** ด้วย actual Models/JWT/protected HTTP API/transactions/Workspace/API adapter และ SQL read-back. ครอบคลุมแต่ละหมวด/ทั้งคู่, update/optional clear/order, validation, 428/409, rollback ไม่บันทึกบางส่วน, owner isolation และ explicit PDF mapping. Chrome ใช้ Profile HTML/CSS/controller เดิมผ่าน **กรอก → กดบันทึกประวัติ → API จริง → PostgreSQL → รีเฟรชหน้า** รวมสลับแท็บ/แก้ไข/ล้าง/validation/409 และ Responsive 1280/390/320 px. API transport proxy ต่อฐานทดสอบจริง ไม่ใช่ Mock Save. Cleanup เฉพาะ Fixture UUIDs แล้ว fingerprints ของทุกตารางและ Schema ตรงก่อนทดสอบ; หลังผู้ใช้ Reload Window ตรวจ READ ONLY พบ **0 skill fixture markers / 0 reserved fixture accounts** คงค้าง.
+
+Regression/DOM/synthetic **71/71**, syntax และ frontend `npm.cmd run build -- --configLoader native` **154 modules PASS**. ผลทั้งหมดก่อน Reload จบจริงด้วย exit code 0; หลัง Reload ตรวจ Source แล้วไม่แก้ implementation ซ้ำ รันเฉพาะ skills/PDF/four-tab **4/4** และ registered Model default ผ่าน. ยัง **NOT VERIFIED** สำหรับ live-user Save บนบัญชีจริง, full Login/Dashboard browser E2E และ PDF upload/OCR ไฟล์จริง; ไม่ใช้ผลทดสอบจำลองแทนผล PostgreSQL.
+
+เพิ่ม `backend/test/studentProfileSkillsPostgres.test.js`; แก้ `backend/src/models/schemaIntegrity.js`, `frontend/test/studentProfileContacts.test.js`, `README.md`, `HANDOFF_fitm-intern.md` รวม 5 ไฟล์. Git ก่อน **34 modified / 15 untracked / 0 deleted** → หลัง **35 modified / 16 untracked / 0 deleted**; งานเดิมนอกขอบเขต 762 ไฟล์ตรง Baseline. ไม่เปลี่ยน Sidebar/Header/Layout/เมนูอื่น/Auth/RBAC/Schema/PDF source/Frontend production code และไม่ Commit/Push/Reset/Clean/Stash/Checkout. **NEXT TASK:** รอผู้ใช้ตรวจรับในหน้า Profile จริง ไม่เริ่มโมดูลอื่น. รายละเอียดและคำสั่ง opt-in tests อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+## ประวัติ — Student Profile อีเมลติดต่อ / ที่อยู่ปัจจุบันอัตโนมัติ — 5 พฤศจิกายน 2026
+
+แก้เฉพาะสองจุดใน Student Profile: ลบอีเมลบัญชีที่แสดงซ้ำใน Contact Card พร้อม JS bindings โดยคงอีเมลใน Student Summary/Account/Login เดิม; เพิ่ม **Read-only Preview ที่อยู่ปัจจุบัน** จากบ้านเลขที่ → ถนน → ตำบล/แขวง → อำเภอ/เขต → จังหวัด → รหัสไปรษณีย์ อัปเดตทันทีเมื่อกรอก/แก้/ลบ ข้ามค่าว่างและไม่แสดง null/undefined หรือช่องว่างซ้ำ. Source/Contract ปัจจุบันไม่มีช่องหมู่/ซอย จึงไม่เพิ่ม Schema หรือ API keys เอง. ที่อยู่ทะเบียนบ้านไม่ถูกนำมาเติมแทน.
+
+Generated text ใช้ `profile.current_address` และ aggregate/Draft/Save All/If-Match/409/validation เดิมเมื่อข้อความเก่าว่างหรือตรงกับ generated baseline ของช่องย่อย. **ข้อความเก่าอิสระที่จับคู่ไม่ได้จะเก็บและแสดงแยกแบบอ่านอย่างเดียว ไม่ถูกเขียนทับด้วย Preview**; บันทึกเฉพาะ structured fields ที่แก้ในกรณีนั้น. หลัง reload ยังคำนวณ Preview จาก current structured row และรักษา legacy text เดิม. เปิดหน้าอย่างเดียวไม่สร้าง row/เขียนค่าใหม่. ข้อตกลงนี้แทนที่การให้พิมพ์ข้อความที่อยู่ปัจจุบันซ้ำกับช่องย่อยในประวัติรอบก่อน; ที่อยู่ทะเบียนบ้านคงเดิม.
+
+ผลตรวจใหม่: **46/46 (Profile38 + regression8)** จาก `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js` ผ่าน. ครอบคลุม generated input/change/clear/revert/Save/read-back, legacy preservation รวมข้อความใหม่จากอีกหน้าต่างหลัง 409 review, Draft/late typing/409 และ DOM contracts. Syntax และ build จาก frontend `npm.cmd run build -- --configLoader native` **154 modules PASS**. Chrome จริงกับ HTML/CSS/Controller/API adapter จริงและ **API จำลอง** ผ่าน **1280/768/390/320 px**, ไม่มี overflow/form ซ้อน/IDs ซ้ำ/label หรือ ARIA references หาย; ผ่าน Save/fresh GET/page reload/409 และ legacy preservation. Backend health `/` และ `/health/db` 200 เป็น read-only smoke เท่านั้น. **Live-account Backend/PostgreSQL Save และ PDF/OCR E2E ยัง NOT TESTED**.
+
+แก้เพิ่มจาก baseline 6 ไฟล์: `frontend/src/student_coop/student_coop.html`, `frontend/src/pages/student_coop.js`, `frontend/src/pages/studentProfileWorkspace.js`, `frontend/test/studentProfileContacts.test.js`, `HANDOFF_fitm-intern.md`, `README.md`; ไม่มีเพิ่ม/ลบไฟล์. Git ก่อน/หลัง **34 modified / 15 untracked / 0 deleted**, รักษางานเดิมครบ. ไม่แก้ Backend/Database/Auth/CSS/API adapters/เมนูอื่น และไม่ Commit/Push/Reset/Clean. **NEXT TASK: รอผู้ใช้ตรวจรับหน้า Profile จริง**; ไม่เริ่มฟังก์ชันอื่น. รายละเอียดหลักฐานและข้อจำกัดใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+## ประวัติ — Student Profile ติดต่อ / ที่อยู่แยกกัน — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED / FOCUSED TESTS + SYNTAX + BUILD PASS / CHROME FIXTURE PASS (MOCK API) / LIVE BACKEND E2E NOT VERIFIED.** ส่วน Contact เรียงเป็น **ข้อมูลติดต่อ → ที่อยู่ตามทะเบียนบ้าน → ที่อยู่ปัจจุบัน**. ข้อมูลติดต่อรวมโทรศัพท์เดิม, อีเมลบัญชีอ่านอย่างเดียว, LINE/Facebook; แต่ละที่อยู่กรอก Inline ได้ทันที พร้อมบ้านเลขที่/ถนน/ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์และที่อยู่ข้อความเดิมครบ.
+
+ลบปุ่ม “ใช้ที่อยู่เดียวกับทะเบียนบ้าน” พร้อม Handler คัดลอก, ข้อความ “ช่องที่ระบุว่าจำเป็นต้องกรอก ช่องอื่นเว้นว่างได้” และ contact summary ที่แสดงซ้ำ. หัวข้อ “ที่อยู่และโทรศัพท์ที่บันทึกไว้” เดิมเป็น editors จึงย้ายฟิลด์ทั้งหมดเข้าหมวดที่เกี่ยวข้องแทนการลบ. รักษา API keys, required/validation และ hidden legacy adapters เดิม; ไม่แปลงหรือ sync ข้อความเดิมไปทับ structured address. Save All ส่งเฉพาะค่าที่เปลี่ยน และไม่สร้าง/ล้างที่อยู่เมื่อแค่โหลดหน้า. Draft/If-Match/409/late typing/Title/Gender/รูปบนสุด/PDF/Responsive/Noto Sans Thai เดิมยังคงอยู่.
+
+ผลใหม่ **41/41 (Profile33+regression8)** จาก `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js`; ทดสอบ independent Save/Reload, missing rows, omitted-value preservation, Draft/validation/409 และ DOM contracts ด้วย API จำลอง. Syntax และ Frontend `npm.cmd run build -- --configLoader native` **154 modules PASS**.
+
+**Chrome จริง 1280/768/390/320 px ผ่านใน Profile fixture:** ใช้ HTML/CSS/Controller/API adapter จริงกับข้อมูลสังเคราะห์และ intercept API ทั้งหมด; ตรวจไม่ล้น, grid 2/1 columns, รูปด้านบน, ไม่มี form ซ้อน, IDs/labels/ARIA และ Save/Fresh GET/Page Reload ของที่อยู่ทั้งสองแยกกัน รวม 409→Review→Save. **ไม่ได้ทดสอบ live-account/backend/PostgreSQL E2E หรือ PDF/OCR ไฟล์จริง**. ไม่ส่ง request ถึง Backend/Database และไม่แก้ Auth.
+
+รอบนี้แก้เพิ่ม 6 ไฟล์: `frontend/src/student_coop/student_coop.html`, `frontend/src/pages/studentProfileWorkspace.js`, `frontend/src/pages/student_coop.js`, `frontend/test/studentProfileContacts.test.js`, `HANDOFF_fitm-intern.md`, `README.md`. ไม่มีเพิ่ม/ลบไฟล์; Git ก่อน/หลัง **34 modified / 15 untracked / 0 deleted**, รักษางานค้างเดิมครบ. CSS/field definitions/API adapters/Backend/Database/Sidebar/Header/เมนูอื่นไม่เปลี่ยน และไม่ Commit/Push/Reset/Clean/Stash.
+
+**NEXT TASK: รอผู้ใช้ตรวจรับหน้า Profile จริง** ไม่เริ่มฟังก์ชันอื่น. รายละเอียดหลักฐานและข้อจำกัดอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md); ประวัติ Title Database ด้านล่างยังเก็บไว้ ไม่ใช่ผลตรวจใหม่ของรอบ frontend นี้.
+
+## ประวัติ — English Title Development Persistence Enabled — 5 พฤศจิกายน 2026
+
+**DEVELOPMENT SCHEMA READY / BACKUP + RESTORE PASS / REAL POSTGRESQL + HTTP ACCEPTANCE PASS / BUILD PASS / BROWSER NOT VERIFIED.** เพิ่มเฉพาะ `public.student_profiles.english_prefix varchar(255) NULL` บน Development `127.0.0.1:5432 / intern_system` PostgreSQL 16.15 ตามอนุญาตแล้ว. ไม่มี default/backfill/การแก้ข้อมูลนักศึกษาจริงหรือ Schema อื่น. สถานะนี้แทน Title Persistence BLOCKED / Awaiting Authorization ของ Development ในประวัติด้านล่าง.
+
+ก่อน DDL ทำ read-only preflight, ตรวจ [SQL Preview](backend/src/db/studentProfileEnglishTitle.preview.sql), Backup ใหม่ด้วย pg_dump16 และ Restore ฐานแยกสำเร็จ; ซ้อม DDL และทดสอบก่อน Apply จริง. Backup 185,744 bytes เก็บแบบ private ACL และ Git-ignored ที่ `.local-db-backups/20261105-title-fc1b0c2e/intern_system.dump`; ฐาน Restore `fitm_profile_accept_20261105_fc1b0c2e` ยังคงอยู่พร้อมข้อมูลต้นฉบับครบและล้าง fixtures แล้ว. ไม่ restore ทับฐานเดิม. Preview ยังคง ROLLBACK เพื่อการตรวจทาน; Apply ใช้ transaction/target guards/locks/timeouts และตรวจ preservation ก่อน Commit.
+
+Title (English) **แสดงผลและพร้อมบันทึกจริง**: Mr./Mrs./Miss/Ms./ค่าว่าง รวมค่า legacy ที่ validation เดิมรองรับ; เก็บใน `profile.english_prefix` โดยไม่เดาจากคำนำหน้าไทย. ทดสอบ Save/SQL read-back/Fresh GET/Reload ผ่าน PostgreSQL ฐานแยกครบทุกตัวเลือกและ null/empty/whitespace. Backend ที่รันอยู่ตรวจ metadata จริงพร้อมแล้ว; UI เดิมซ่อนคำเตือนเฉพาะ Title เมื่อ `profile_english_prefix_available === true` จึงไม่ต้องบังคับซ่อนหรือถอด fallback. Gender ไทย/อังกฤษยังใช้ `profile.gender` เดียวและทดสอบ sync/Save/Reload ทั้งสองทิศทางผ่าน. ไม่เขียนข้อมูลนักศึกษาจริงเพื่อทดสอบ.
+
+หลัง Commit ข้อมูลเดิมทั้ง **47 ตาราง** และ Schema objects เดิมครบ: columns **553→554**, constraints **250**, indexes **121**, triggers **15** เท่าเดิม; students **7**, profiles **6**, student files **13** เท่าเดิม. เทียบ row counts และ fingerprints แบบ private ก่อน/หลังโดยตัดเฉพาะคอลัมน์ใหม่ออก. ไม่แตะ Production/Staging, Sidebar/Header/เมนูอื่น/Auth/Workflow อื่น, `.env`, encryption key หรือข้อมูลบัญชี.
+
+ผลรอบนี้: **PostgreSQL/HTTP 19/19 test nodes** ผ่าน โดยใช้บัญชีสังเคราะห์เฉพาะฐานแยก; ครอบคลุม Title/nullable/legacy/omission/validation/owner isolation/atomic rollback/Draft/late typing/If-Match 428/409/review, Gender สองภาษา และ explicit PDF mapping builder ลง DB. รัน opt-in ด้วย `FITM_PROFILE_POSTGRES_TESTS=1`, `FITM_PROFILE_TEST_DATABASE=fitm_profile_accept_20261105_fc1b0c2e` เฉพาะ test process และ `node --test backend/test/studentProfilePostgres.test.js`; default SKIP และไม่ยอมใช้ intern_system เป็น test target. Frontend controller ใช้ synthetic DOM จึงไม่ใช่ Browser E2E.
+
+Focused regression **54/54 (Frontend37+Backend17)** ผ่านด้วย `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js backend/test/studentProfileContacts.test.js`; รวม DOM/Draft/Save/PDF Preview/Mapping/Confirm/ready-pending guards. Syntax และ Frontend Build **154 modules** ผ่านจาก frontend ด้วย `npm.cmd run build -- --configLoader native`. Backend health/db 200, anonymous protected API 401 และ Student HTML 200. **Browser/Responsive, การ Save ด้วยบัญชีจริง และ PDF/OCR/ไฟล์จริง E2E ยัง NOT VERIFIED**.
+
+รอบนี้แก้เพิ่มเฉพาะ `backend/test/studentProfilePostgres.test.js`, `HANDOFF_fitm-intern.md`, `README.md`; รักษางาน uncommitted เดิม. Git ก่อน/หลัง **34 modified / 15 untracked / 0 deleted**; ไม่ Commit/Push/Reset/Clean/Stash. รายละเอียด Target/Backup/ข้อจำกัดอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+หลัง DDL รัน PostgreSQL/HTTP acceptance ซ้ำ **19/19 PASS**, cleanup fixtures ครบ และอ่านตรวจ Schema/ข้อมูลเดิมของ Development อีกครั้งผ่าน.
+
+**NEXT TASK: หยุดรอผู้ใช้ตรวจรับ** ไม่เริ่มฟังก์ชันอื่น. เก็บ Backup/ฐาน Restore ไว้; ไม่ DROP คอลัมน์หรือ restore ทับ live เพื่อย้อนงาน.
+
+## ประวัติ — English Title Persistence Prepared — 5 พฤศจิกายน 2026
+
+**CODE READY / LIVE DATABASE PENDING / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** เตรียมModel/ownerAPI/Validation/Draft/SaveReadBack/PDFสำหรับ `profile.english_prefix` nullablevarchar255 แล้ว; รองรับMr./Mrs./Miss/Ms./ค่าว่าง/ค่าlegacyโดยไม่เดาจากThai prefix. Genderอังกฤษยังเป็นdropdownmirrorของ `gender` เดียว; Layout/HTML/รูป/Inline/CSS/NotoSansThai/เมนูอื่นไม่เปลี่ยน.
+
+Backendตรวจcolumnmetadataจริงและส่ง `profile_english_prefix_available`. ก่อนติดตั้งหรือdefinitionไม่ตรงยังอ่าน/บันทึกProfileส่วนอื่นและสร้างProfileเดิมได้; Titlewrites503และUIยังแสดงBLOCKED/เก็บDraft. เมื่อcolumnพร้อมจริงจึงเปิดPersistenceและซ่อนคำเตือน; ตรวจTitleacknowledgementก่อนSuccess. PDFรองรับexplicitEnglishTitle/AcroFormและConfirmMappingเดิม; pendingSchemaจะข้ามTitleพร้อมเตือนแต่ไม่ปิดImportส่วนอื่น.
+
+Read-onlypreflightรอบนี้ยืนยัน **Development `127.0.0.1:5432 / intern_system.public` PostgreSQL16 ยังไม่มีenglish_prefix**. จึงยังไม่อ้างTitleSaveลงDatabaseจริงผ่าน. เตรียม [SQL Preview](backend/src/db/studentProfileEnglishTitle.preview.sql) เพิ่มnullablecolumnเดียว ไม่มีbackfill/default/Drop/migrationrunner. ไฟล์จบROLLBACKและ**ยังไม่เคยexecute**; ต้องอนุญาตก่อนDDLรวมถึงการทดสอบRestore. แผนBackup→verifiedRestore→preservationchecks→guardedDDL/COMMITอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+ผลใหม่ **54/54 (Frontend37+Backend17)**: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js backend/test/studentProfileContacts.test.js`; syntheticready/pending/legacy/SaveReadBack/If-Match409/Draft/PDFConfirm/rollback/regressionผ่าน. Syntax/DOM/SQLstatic/PythonhelpersและBuildจากfrontend `npm.cmd run build -- --configLoader native` ผ่าน. Hostไม่มีPyMuPDFและChromeheadlessปิดก่อนDevTools จึงไม่อ้างPDF/OCRหรือBrowserE2Eผ่าน.
+
+**NEXT TASK:** ขออนุญาตBackup+Restoreฐานชั่วคราวและเพิ่ม `student_profiles.english_prefix varchar(255) NULL` บนDevelopmentตามPreviewก่อนลงมือจริง แล้วตรวจAPI/Database/Browserread-backตามหลักฐานจริง. ไม่DDL/reset/สร้างบัญชี/เปลี่ยนAuthหรือเมนูอื่นเอง.
+
+## ประวัติ — Student Profile English Title / Shared Gender — 5 พฤศจิกายน 2026
+
+**FRONTEND IMPLEMENTED / TITLE PERSISTENCE BLOCKED / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** คืน Personal Information (English): Title|Gender → First Name|Last Name. TitleมีMr./Mrs./Miss/Ms. และรักษาค่าเดิมหากsnapshotส่งมา; ไม่จับคู่จากคำนำหน้าไทย. GenderอังกฤษแสดงMale/Female/Unspecified และค่าlegacyตามBackend varchar(32), syncทันทีกับเพศไทยผ่าน `profile.gender` เดียว ไม่มีคอลัมน์หรือAPIfieldเพศซ้ำ. ไทยใช้controlsเดิมวางคำนำหน้า|เพศเหนือชื่อ|นามสกุล. รูปบนสุด/DirectInline/Responsivegrid/NotoSansThai/4+2tabs/Save/Draft/PDF/เลขบัตร/เมนูอื่นคงเดิม.
+
+**Titleบันทึกไม่ได้จริง:** SourceBackend/Schemaยังไม่มีEnglish-prefix field. Titleเป็นDraftในหน้านี้; หากเปลี่ยนแล้วSaveจะหยุดพร้อมBLOCKEDและเก็บทุกDraft ไม่ส่งunsupportedkeyหรือรายงานSuccess. ตั้งTitleกลับค่าเดิมก่อนSaveข้อมูลส่วนอื่น. Gender/ชื่ออังกฤษ/นามสกุลใช้Persistence/APIเดิม; รอบนี้ตรวจSource+syntheticSave/read-back ไม่มีDatabasewritesหรือlive-accountE2E. Backend/Models/API contract/canonicalDraft/PDF files/CSS/Authไม่เปลี่ยน.
+
+ผลใหม่ **35/35 (Profile27+regression8)**: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js`; syntax/DOMcontracts/bilingualsync/legacyvalues/TitleBLOCKED/late typing/If-Match409/PDF/baselinechecksผ่าน. Buildจากfrontend: `npm.cmd run build -- --configLoader native` ผ่าน. Chromeheadlessยังปิดก่อนDevToolsจึงไม่อ้างBrowser/ResponsivePASS.
+
+**NEXT TASK:** ManualChrome1280/768/390/320และSave+Reload/PDFจริงตาม [Current Handoff](HANDOFF_fitm-intern.md). มีแผนAdditiveTitle(`english_prefix` nullablevarchar255 + Model/ownerAPI/explicitPDFmapping/guardedrollout) ในHandoffเท่านั้น; **ยังไม่รันDDLหรือแก้Databaseจริง** และต้องได้รับอนุญาตสำหรับDBก่อนดำเนินการ.
+
+## ประวัติ — Student Profile Thai Personal Data / National ID — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED / FOCUSED TESTS + REAL POSTGRESQL/HTTP ROLLBACK ACCEPTANCE + BUILD PASS / BROWSER NOT VERIFIED.** เพศย้ายมา Inlineข้อมูลส่วนตัวไทยพร้อมคำไทยและรักษาvalueเดิม (`male`/`female`/ค่าเดิมอื่น). Englishเหลือชื่อ/นามสกุลสองช่อง. เปิดเลขบัตรประชาชนoptional13หลักพร้อมchecksum validationทั้งFrontend/Backend; ใช้owner APIเดิมเพิ่ม `profile.national_id` และเก็บในสองencryptedcolumnsเดิมด้วยAES-256-GCM ไม่เปลี่ยนSchema/Models/Auth.
+
+Keyสร้างเมื่อSaveIDครั้งแรกที่ `STORAGE_ROOT/keys/student-profile-national-id-v1.key` ภายในpersistentstorageเดิม; ต้องรักษา/สำรองพร้อมข้อมูลเข้ารหัส. Missing/unknown/corrupt keyหรือciphertextตอบ503และไม่เขียนทับข้อมูล. ไม่แสดงIDในLog/Summary/conflictหรือเก็บในAuth Storage. PDF mappingเดิมไม่รับnational-ID fieldใหม่นี้และไม่ส่งค่าไปprocessor.
+
+ลบ “ตัวเลือกเพิ่มเติม”/ปุ่มReload+Discard/listenersและSummaryส่วนตัว+สุขภาพตามคำสั่ง. คงข้อมูลและInlineสุขภาพ/รูป/4+2tabs/Save All/Draft/If-Match/409/Calendar/Close Friends/PDF/เอกสาร/Resumeเดิม. CSS/NotoSansThai/เมนูอื่น/Sidebar/Header/Backendส่วนอื่น/DatabaseSchema/.env/Dockerไม่เปลี่ยน.
+
+ผลใหม่ **46/46 (Frontend32+Backend14)**: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js backend/test/studentProfileContacts.test.js`; Syntax/DOM/scope/UTF-8/Baseline checksผ่าน. Buildจากfrontend: `npm.cmd run build -- --configLoader native` ผ่าน. ทดสอบactualPostgreSQL16+isolatedHTTP/JWT+FrontendAPIadapter Save/edit/read-back/encryptedstorage/validation/409/clearผ่านในtransactionที่Rollbackแล้ว; profile/studentfingerprintsเดิมตรง ไม่มีสร้างบัญชี/DDL/committedID/livekey.
+
+**NEXT TASK:** ตรวจChromeจริง1280/768/390/320px, optionalID Save+Reloadที่เจ้าของยินยอม, Responsive/focus/Calendar/PDFจริง ตาม [Current Handoff](HANDOFF_fitm-intern.md). Chromeheadlessยังปิดก่อนDevTools จึง **BROWSER NOT VERIFIED**; ไม่อ้างcommittedreal-accountหรือOCR/ไฟล์จริงE2Eผ่าน.
+
+## ประวัติ — Student Profile Form Refinement — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED WITH ENGLISH-PREFIX LIMITATION / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** ลบ `(ถ้ามี)` จาก Labels เฉพาะ Profile โดยคง Required/Optional/validators เดิม. คำนำหน้าไทยเป็น Dropdown นาย/นาง/นางสาว; เพศเป็น Dropdown ชาย/หญิง/ไม่ประสงค์ระบุ ตาม Backend varchar(32) และรักษาค่า free-text/English ที่โหลดมาโดยไม่แปลงเอง. ไม่มี English-prefix field ใน Backend/Schema/API/PDF จึงแสดง Dropdown Mr./Mrs./Miss/Ms. แบบ disabled พร้อมคำอธิบาย ไม่มีการบันทึกจำลองหรือจับคู่จากคำนำหน้าไทย.
+
+วันเกิดใช้ Popup ขาว/ฟ้า/ขอบ12px เฉพาะ Profile พร้อมเดือนภาษาไทย/ปี ค.ศ. ย้อนหลัง/Selected/Today/keyboard/Escape/visible focus/ล้างวันที่. ไม่เพิ่ม dependency; เก็บ `YYYY-MM-DD` เดิม ใช้ Bangkok today และ UTC calendar arithmetic ป้องกันวันเลื่อน. เปิด/ปิดหรือเปลี่ยนเดือน/ปีไม่เปลี่ยน Draft. นำปุ่ม “โหลดสถานะอาจารย์โครงการล่าสุด” และ handler เฉพาะปุ่มออก; คง Advisor summaries/Project API/workflows/เมนูอื่นเดิม. รูปด้านบน/Inline/4+2tabs/Save All/Draft/If-Match/409/เพื่อนหลายคน/PDF/ไฟล์แยกยังคงเดิม; Backend/Database/Auth/Sidebar/Header/Dependenciesไม่เปลี่ยน.
+
+ผลใหม่ **Frontend31/31 (Profile23+regression8)** พร้อม syntax/DOM contracts/CSS scope/Baseline preservation ผ่าน. รัน root: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js`. Build จาก frontend: `npm.cmd run build -- --configLoader native` **154 modules PASS**; default config bundler ติด `spawn EPERM`. Backend health200/anonymous Profile401/Student HTML200. ผลเป็น synthetic/static/build ไม่ใช่ real-account Save/DB integration หรือ Browser.
+
+**NEXT TASK:** ตรวจ Chrome ที่1280/390/320px: Labels/Dropdownค่าเดิม/Calendarเดือนปีและkeyboard/Draft/Save+Reload/PDFเฉพาะmapping/ไม่มีoverflow/Projectเมนูเดิม ตาม [Current Handoff](HANDOFF_fitm-intern.md). Chrome headlessยังปิดก่อนDevTools จึง **BROWSER NOT VERIFIED**. English-prefix persistence ต้องมีงาน Backend/Schema ที่ได้รับอนุญาตแยก; ไม่เริ่มเอง.
+
+## ประวัติ — Student Profile Direct Inline Editing — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** หลังโหลด Profile สำเร็จกรอกข้อมูลทั่วไป Inline ได้ทันที; ลบปุ่มเปิดแก้และฟอร์มที่ผู้ใช้กรอกซ้ำใน Modal. Modalคงไว้สำหรับรูป/Preview พร้อม2tabsเดิมและทางกลับไปข้อมูลติดต่อ. รักษาadapter IDsเป็นhidden stateและDraft/If-Match/validation/owner/Save logicเดิม ไม่ใช่ฟอร์มแก้ไขชุดที่สอง.
+
+ลำดับใหม่: นักศึกษา/บัญชี → ส่วนตัว → ติดต่อ/ที่อยู่ → ครอบครัว/ผู้ปกครอง → ฉุกเฉิน → เพื่อนสนิท → การศึกษา → ทักษะ/ความสามารถ → สุขภาพ/เพิ่มเติมท้ายแท็บการศึกษา/ทักษะ. คง4Main tabsและSection linksตรงตำแหน่งจริง. รูป/Summary/Modern Design/CSSเดิม; อายุreadonlyย้ายเข้าInline. Field/API keys/Required/validatorsเดิมครบ ไม่แก้Backend/DB/API/เมนูอื่น. รูป/PDF/Documents/Resumeยังบันทึกแยก.
+
+ผลใหม่: **Frontend26/26 (Profile18+regression8)**, syntax/HTML+DOM contracts/isolation/Diff/UTF-8และBuild153modules PASS. รันroot: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js`; buildจากfrontend: `npm.cmd run build -- --configLoader native`. เป็นsynthetic/static/build; Chromeยังปิดก่อนDevTools ไม่มีVisual/Responsive/real-file E2E PASS.
+
+**NEXT TASK: ผู้ใช้ตรวจDirect Inline/ลำดับ/Save/Draft/รูป/เพื่อนที่1280/768/390/320pxตาม [Current Handoff](HANDOFF_fitm-intern.md) แล้วส่งจุดปรับ.** หยุดก่อนงานอื่น.
+
+## ประวัติ — Student Profile Exact Text-only Design — 5 พฤศจิกายน 2026
+
+**DESIGN IMPLEMENTED / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** สเปกข้อความใหม่แทนภาพ Mockup อย่างสมบูรณ์; ไม่ต้องรอหรือขอภาพอีก. Profile ใช้โทนขาว/ฟ้าและ local tokens เฉพาะ `#panel-profile`, Summary/Photoด้านบนพร้อม major/year/status จาก API และปุ่มเปลี่ยนรูปผ่าน Editor เดิม, segmented entry method, 4 Main tabs/ทางลัดเฉพาะแท็บ/Form Cardเดียว, Desktop2columns/Mobile1column และ Saveจุดเดียวพร้อมสถานะจริง. 2 Modal tabs และข้อมูล/ฟังก์ชันเดิมครบ.
+
+รักษา Draft/If-Match/409/validation/owner/Shared Feedback, เพื่อนหลาย Card/ชื่อเล่น/strict Facebook/Stage Delete/Undo และ PDF/รูป/Documents/Resume lifecycleเดิม. CSS/JSที่เพิ่มจำกัด Profile; Sourceนอก Profile/Sidebar/Global Header/เมนูอื่น/Backend/API/Database/.env ไม่เปลี่ยน.
+
+ผลตรวจใหม่: **Frontend24/24 (Profile16+regression8), syntax/HTML contracts/CSS scope PASS, Build153 modules PASS**. รันจากrootด้วย `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js`; buildจากfrontend `npm.cmd run build -- --configLoader native`. เป็น synthetic/static/build ไม่ใช่ Visual PASS. Chrome headlessยังออกก่อนDevTools จึงไม่มี screenshot/responsive/real upload acceptance.
+
+**NEXT TASK: ผู้ใช้ตรวจหน้าเว็บจริง1280×800/768×1024/390×844/320×568ตาม [Current Handoff](HANDOFF_fitm-intern.md) แล้วแจ้งจุดปรับ.** ไม่เริ่มโมดูลถัดไปเอง. สถานะ Missing Reference ของประวัติด้านล่างถูกแทนที่โดยสเปกข้อความนี้แล้ว.
+
+## ประวัติ — Student Profile Visual / Photo Placement — 5 พฤศจิกายน 2026
+
+**PARTIAL — PHOTO/SUMMARY IMPLEMENTED / REFERENCE IMAGE MISSING / BROWSER NOT VERIFIED.** ย้ายรูปและ Student Summary จาก disclosure ด้านล่างขึ้นใต้ Profile Header ก่อนวิธีกรอก/Tabs และแสดงทุกแท็บ. ใช้ข้อมูล/Placeholder/Avatar control และ image editor/upload เดิม; Card ย่อได้บนมือถือ ปุ่มเปลี่ยนรูปเห็นได้ และปุ่มเปิด Modal เป็นคำสั่งรอง.
+
+แก้เฉพาะ HTML/CSS ใน Profile และเอกสาร; Source นอก Profile/JS/API/Backend/Database/Sidebar/Header/เมนูอื่นคงเดิม. Original IDs, 4+2 tabs, file inputs และ Workflow เดิมครบตาม static contracts. ผลใหม่ Frontend focused22/22 + syntax/HTML/CSS scope checks + Build153 modules PASS; ไม่ใช่ rendered Visual PASS.
+
+ไฟล์แนบที่ได้รับมีเฉพาะข้อความ ไม่มีภาพ Mockup ให้เทียบ. **NEXT TASK: รับภาพอ้างอิงหรือพาธภาพ แล้วทำส่วน Match Reference ต่อก่อนตรวจรับใน Chrome** ที่ 1280×800/768×1024/390×844/320×568. Chrome headless ยังปิดก่อน DevTools; real upload/focus/overflow/visual acceptance ยังไม่ตรวจ. รายละเอียดไฟล์/Baseline/checklist อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+## ประวัติ — Student Profile UX/UI Refinement — 5 พฤศจิกายน 2026
+
+**IMPLEMENTED / FOCUSED SYNTHETIC + STATIC + BUILD PASS / BROWSER NOT VERIFIED.** Profile ใช้ Header และวิธีกรอกเอง/PDF แบบกระชับ เปิดแล้วเริ่มกรอก inline ได้; คง 4 Main tabs + 2 Modal tabs และแสดงทางลัดเฉพาะหัวข้อย่อยของแท็บปัจจุบัน. สรุปข้อมูลเดิม/รูปโปรไฟล์/ทางเข้า Modal เปิดดูได้ในหัวข้อพับเก็บ.
+
+- ปุ่มหลัก “บันทึกประวัติ” จุดเดียวท้ายฟอร์ม พร้อมลิงก์ข้ามจาก Header. Reload/Discard อยู่ในตัวเลือกเพิ่มเติม; Retry เฉพาะ load failure และ Review เฉพาะ revision conflict. Save bar อยู่ใน document flow. ไม่มี autosave; รักษา Draft/If-Match/owner/late response และ confirmation เดิม.
+- เพื่อนสนิทหลาย Card ใช้ fields/URL/privacy เดิม; ยืนยันลบเป็น Draft และ Undo คืนได้ทันทีจน Save. PDF Preview/Mapping/Confirm รูป Resume และเอกสารยังบันทึกแยกตาม Lifecycle/API เดิม.
+- ผลตรวจใหม่: Frontend Profile14 + regression8 = **22/22**, Backend Profile **12/12** แบบ synthetic/in-memory (ไม่มี DB writes), syntax/static DOM contracts และ Build **153 modules PASS**. รันจาก root: `node --test --test-isolation=none frontend/test/studentProfileContacts.test.js frontend/test/phase1.test.js` และ `node --test --test-isolation=none backend/test/studentProfileContacts.test.js`; build จาก frontend ด้วย `npm.cmd run build -- --configLoader native`.
+- รอบนี้แก้เฉพาะ Profile frontend/test และเอกสาร; ไม่เปลี่ยน Database/Backend/API/Auth/Theme/Font/โมดูลอื่น. รายละเอียดไฟล์/Git Baseline/Workflow ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+**NEXT TASK: Manual Chrome acceptance 1280×800 / 768×1024 / 390×844 / 320×568 ตาม Handoff.** Chrome headless ปิดก่อน DevTools; ยังไม่ยืนยัน rendered UX/overflow/keyboard/focus/real-account save และ PDF/ไฟล์ E2E. ไม่อ้างผล PostgreSQL รอบก่อนเป็นผล UX ใหม่ และไม่เริ่มโมดูลถัดไปเอง.
+
+## ประวัติ — Student Profile Database Finalization — 5 พฤศจิกายน 2026
+
+**DEVELOPMENT SCHEMA READY / BACKUP-RESTORE PASS / REAL POSTGRESQL + ISOLATED HTTP API PASS / BROWSER NOT VERIFIED.** เพิ่มSchemaจริงเฉพาะDevelopment `intern_system.public` PostgreSQL16.15 หลังPreflight/Backup/Restoreผ่านแล้ว: `student_profiles.student_line_id varchar(100)`, `student_facebook varchar(500)` nullable และตารางOne-to-Many `student_close_friends` พร้อมUUID/ownerFK/timestamps/index/CHECKตามModels. ไม่เพิ่ม4single-friend columnsและไม่พบlegacy friend columnsที่ต้องbackfill.
+
+- Backupใหม่custom183,292bytes เก็บในprivateGit-ignored directory พร้อมWindows ACLจำกัด; pg_dump/pg_restore16.15. ทดลองRestoreฐานแยกสำเร็จ ข้อมูล46ตารางตรงก่อนDDL. Archive SHA-256/path/metadataอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md); ห้ามเผยBackupcontents.
+- ใช้additiveDDL5statementsภายใต้transaction/locks/timeoutsและตรวจModels/Integrity+preservationก่อนcommit. ตาราง46→47,columns541→553,constraints247→250,indexes119→121,triggers15เท่าเดิม. students7/profiles6/files13คงเดิม;ข้อมูลและSchema objectsเดิมครบ,Social columnsใหม่ยังNULLทุกแถว,ตารางเพื่อน0แถว. ไม่แก้บัญชีจริง/.env/credentials/Compose/Volumes และไม่ใช้init/reset/sync/seed.
+- **PASS15actual integration cases (Node16/16testnodes)**: isolatedPostgreSQL+actualExpress/JWT/Owner API,CRUD/read-back/multiple/optional,invalidURL/FK/PK/CHECK,ownerisolation,concurrentIf-Match409,atomicrollback,omitted-listpreservation,privateprojectionsและFrontendAPIadapterต่อHTTPจริง. ใช้syntheticaccountsในฐานRestoreเท่านั้น;cleanupครบและลบฐานทดสอบหลังตรวจlive/cloneSchemaและfull-rowfingerprintsตรงทั้ง47ตาราง. ผลนี้ไม่ใช่BrowserE2Eหรือreal-accountacceptanceบนlive.
+- FreshfocusedProfiletests12/13และPhase1/1.5regression17/8PASS;build153modulesPASSด้วย `npm.cmd run build -- --configLoader native`. Livehealth200/anonymousprotectedAPI401/StudentHTML200. **ไม่มีFrontend/UI/Layout/Navigation/Theme/Font/Tabsเปลี่ยนรอบนี้**;รักษางานProfile/Draft/PDF/Resume/Auth/RBACและโมดูลเดิมทั้งหมด.
+
+เพิ่ม `backend/src/db/studentProfileDevelopment.js` เป็นexplicitguardedoperationhelper (ไม่เรียกจากstartup/ไม่ใช่migrationrunner), `backend/test/studentProfilePostgres.test.js` เป็นopt-inisolatedtest. ทดสอบนี้defaultSKIPโดยไม่เปิดDB;ต้องมีฐานRestoreที่อนุมัติและชื่อตรงguardก่อนเปิด FITM_PROFILE_POSTGRES_TESTS/FITM_PROFILE_TEST_DATABASE เฉพาะtestprocess. ฐานชั่วคราวรอบนี้ถูกลบแล้ว ไม่สร้าง/seedใหม่อัตโนมัติ.
+
+**NEXT TASK ของรอบ Database (ประวัติ): Student Profile UX/UI Refinement — ดำเนินการแล้วตามสถานะปัจจุบันด้านบน.** ManualChromeAcceptance1280/768/390/320/Draft/Save/Undo/409/PDFอยู่ในHandoff. Browser/Provider/realaccounts/OCR/ProductionยังNOT VERIFIED;ไม่แก้BrowserEnvironmentหรือChromeprofileรอบนี้.
+
+## ประวัติ — Unified Student Profile / Multiple Close Friends — 5 พฤศจิกายน 2026 (สถานะSchemaแทนที่โดยผลด้านบน)
+
+**IMPLEMENTED SOURCE / FOCUSED SYNTHETIC PASS / LIVE SCHEMA PENDING APPROVAL / BROWSER NOT VERIFIED / POSTGRESQL PERSISTENCE NOT VERIFIED.** งานนี้แทน single-friend columns และการบันทึกทีละหมวดของ Part1 เฉพาะ Profile; ไม่อนุมัติโมดูลถัดไปหรือ DB writes.
+
+- กรอก Profile inline ต่อเนื่องพร้อม Section Navigation และปุ่มบันทึก Aggregate หลักครั้งเดียว, validation/focus/dirty state/review/discard/Draft/If-Match เดิม. รักษา 4 แท็บหลัก +2 Modal tabs; Modal mirror Draft เดียวกับ inline. รูป/Resume/private documents/PDF Import ยังบันทึกตาม Lifecycle/API แยกเดิมและระบุขอบเขตบน Toolbar.
+- เพื่อนสนิทหลายคนอยู่ใน `student_close_friends` ผ่าน Sequelize hasMany/owner FK/UUID/index/CHECK; nickname/full_name/phone/line_id/facebook_url optional. เพิ่ม/แก้/ยืนยันลบ/Undo เป็น Draft จนกด Save. Omitted collection ไม่ลบเดิม; transaction/revision/owner checks ใช้ชุดเดิม. ชื่อเล่น (หรือชื่อจริงเมื่อไม่มีชื่อเล่น) เปิด HTTPS Facebook ในแท็บใหม่เฉพาะ exact allowed hosts พร้อม noopener noreferrer; ไม่มี URL เป็นข้อความปกติ ไม่ fetch Facebook.
+- `student_profiles` เตรียมเพียง2nullable student social columns; ไม่มี single-friend columns ใน Schema Source ใหม่. API ตรวจ readiness และ block friend writes หากตารางไม่ครบหรือพบ legacy friend columns; ไม่ DROP/ย้ายข้อมูลอัตโนมัติ. Profile เดิมยังใช้ได้โดยไม่ส่งส่วน pending. DDL Preview/แผนรักษาข้อมูลเดิม/ข้อจำกัดอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md); **ยังไม่เปลี่ยน PostgreSQL จริง** และห้ามใช้ init/reset/sync เปิดฟังก์ชัน.
+- Owner GET aggregate เพิ่ม close_friends/readiness metadata; PATCH/PUT aggregate รับ explicit create/update/delete พร้อม If-Match และคืน ID receipts. Protected child routes `/api/student-profile/close_friends` ใช้ JWT/live Co-op owner guard เดิม. ไม่เพิ่ม public/Company/Mentor access/log payload/PDF export/NLP transfer. PDF mapping/commit จำกัด relationเดิมโดยชัดแจ้ง.
+
+**ผลใหม่:** Profile Backend12/Frontend13 PASS (in-memory transactions/DOM/API substitutes), focused Phase1/1.5 regression17/8 PASS. Build153modules PASS ด้วย `npm.cmd run build -- --configLoader native`; default loaderติด spawn EPERM/oxide config bundling. HTTP health/delivery200; Chrome probeปิดก่อนDevTools จึงยังไม่มี rendered1280/768/390/320/keyboard/real Browser/PDF acceptance. SQL generation PASS ไม่ใช่ SQL execution หรือ PostgreSQL persistence/concurrency. ไม่เปลี่ยน flags/config/dependencies/accounts/.env ไม่ Commit/Push.
+
+รัน focused tests จาก root: `node backend/test/studentProfileContacts.test.js`, `node frontend/test/studentProfileContacts.test.js`; รายชื่อไฟล์19ไฟล์/Schema Preview/API/ข้อจำกัดและNEXT TASKอยู่ใน Handoff หลัก.
+
+## ประวัติ — Phase 2 Part 1: Student Profile — 4 พฤศจิกายน 2026 (แทนที่เฉพาะ Profile โดยสถานะด้านบน)
+
+**SOURCE IMPLEMENTED / SYNTHETIC TESTS PASS / LIVE SCHEMA PENDING APPROVAL / BROWSER NOT VERIFIED.** ผู้ใช้อนุญาตเริ่มเฉพาะ Student Profile Enhancement แล้ว แทนที่สถานะ `PHASE 2 NOT STARTED` เฉพาะงาน Part 1 นี้; ขอบเขต ทก.01/แผนโมดูลอื่นยังรอการหารือ ไม่เริ่มงานถัดไปเอง.
+
+- เพิ่ม LINE ID/Facebook นักศึกษา และชื่อ-นามสกุล/โทรศัพท์/LINE ID/Facebook เพื่อนสนิทในแท็บติดต่อเดิม ไม่เพิ่มแท็บ; ทุกช่องเป็น optional มีข้อความแจ้งการใช้ข้อมูลและแนะนำแจ้งเจ้าของข้อมูลก่อนบันทึก.
+- ใช้ Owner API `/api/student-profile/me` เดิม, allowlist/validation, Draft/Save/Retry, Revision/If-Match และ Shared Feedback. เพิ่มสรุป Class Advisor/Project Advisor ใน Profile โดยใช้ความสัมพันธ์และคำขอเดิม แสดง pending/confirmed/rejected/empty/error แยกกัน ไม่ assign หรือเปลี่ยน approval flow.
+- เตรียม **6 nullable columns ใน `student_profiles` เฉพาะ Source/Model definitions**; **ยังไม่เปลี่ยน DB จริง**. Owner API ตรวจ column metadata: ถ้ายังไม่ครบ จะอ่าน/บันทึก Profile เดิมได้ แต่ UI ปิดบันทึกสองหมวดใหม่ และ Backend ตอบ `503 PROFILE_CONTACTS_SCHEMA_PENDING` สำหรับการเขียนฟิลด์ใหม่. หลังได้รับอนุญาตต้องตรวจ target/ข้อมูลเดิม/backup และใช้ additive DDL เฉพาะรายการใน [Current Handoff](HANDOFF_fitm-intern.md); ห้ามใช้ init/reset/sync เพื่อเปิดฟังก์ชัน.
+- ฟิลด์ใหม่ excluded จาก legacy/default Model projections และ PDF Import mapping/commit; ไม่ส่งข้อมูลที่บันทึกไป NLP ไม่เพิ่ม public API/log/audit payload/export. รักษา **4 แท็บหลักและ 2 แท็บใน Modal แก้ไขตาม Source จริง** (ข้อความ 5 Tabs ในประวัติคือ document drift), PDF preview/mapping/confirm, Co-op Only/Auth/session, Advisor relationships, Noto Sans Thai ของเว็บและ TH Sarabun New ของเอกสารเดิม.
+
+**ผลตรวจที่รันใหม่:** Contact Backend **7 PASS**, Frontend **6 PASS**; focused Phase1/1.5 regression **17/8 PASS**; syntax **12 JS PASS**; Frontend build **153 modules PASS**. ใช้ actual services/controllers/JWT/Sequelize definitions กับ in-memory persistence และ DOM/API substitutes; ไม่ใช่ PostgreSQL/Provider/Browser E2E. PDF ตรวจ legacy mapping, preview และ privacy guards แบบ synthetic ไม่ได้ยืนยัน OCR/ไฟล์จริง. Responsive CSS เดิมถูกใช้ต่อ; rendered mobile/desktop/keyboard **BROWSER NOT VERIFIED**. ไม่ query/write DB จริง ไม่เปิด flags/restart/provision/commit/push. รายละเอียดไฟล์/DDL/ข้อจำกัดและงานรออนุญาตอยู่ใน Handoff.
+
+รัน focused tests จาก repository root: `node backend/test/studentProfileContacts.test.js` และ `node frontend/test/studentProfileContacts.test.js`.
+
+## ประวัติ — Full Source Audit & Documentation Sync — 4 พฤศจิกายน 2026 ก่อน Phase 2 Part 1
+
+**READ-ONLY SOURCE AUDIT + DOCUMENTATION UPDATE ONLY.** รอบนี้แก้เฉพาะ README/Handoff ไม่แก้ Application/Tests/Database/Config และไม่รัน Tests/Build/Provider Login. Phase 1 และ Phase 1.5 มี implementation อยู่ใน Source; ยังไม่ใช่ Production Ready. ขอบเขต Student คือ **Co-op Only — Option A**: ปิดสิทธิ์ `internship` แต่เก็บข้อมูล/Schema/Shared Code รวม `/api/internship-logs` และ `internship_*` ที่ Co-op ใช้จริง.
+
+**ขอบเขตปริญญานิพนธ์กำลังเปลี่ยน:** ทก.01 ฉบับเก่าเป็น requirement reference ตามวันที่ ไม่ใช่ข้อกำหนดล่าสุดทั้งหมด. ไม่แก้ ทก.01 ไม่เพิ่ม/ตัด Feature และไม่อนุมัติ Roadmap แทนผู้ใช้. สถานะถัดไปคือ **WAITING FOR UPDATED ทก.01 REQUIREMENTS / PHASE 2 NOT STARTED / DEVELOPMENT PLAN PENDING USER DISCUSSION** ซึ่งแทนที่ข้อความรอเริ่ม Phase 2/แผนพัฒนาอัตโนมัติในประวัติ.
+
+### Evidence และสถานะการตรวจ
+
+| ชนิดหลักฐาน | ผลและขอบเขต |
+| --- | --- |
+| VERIFIED FROM SOURCE | Inventory ทุกกลุ่มใน Repository, เชื่อม UI handlers → API clients → routes/controllers/services → Models, guards, NLP และ infrastructure; static references ไม่พบ literal relative JS imports ที่ปลายทางหาย |
+| Static syntax รอบนี้ | JavaScript `node --check` 248 ไฟล์, Python AST 32 ไฟล์, PowerShell parser 4 ไฟล์ ผ่าน; ไม่ execute application modules หรือสร้าง Python bytecode |
+| VERIFIED FROM LIVE READ-ONLY QUERY | PostgreSQL 16.15, `intern_system.public`, read-only transaction; snapshot **2026-11-04 20:16:38 Asia/Bangkok** ด้านล่าง; connection ปิดแล้ว |
+| Live anonymous health/config GET | Backend `/`, `/health/db`, Frontend Login, NLP `/health` ตอบ 200; Google config enabled/linking/onboarding=true; ไม่เปลี่ยน flags และไม่เรียก challenge/login |
+| HISTORICAL EVIDENCE | Phase 1.5 Backend 17/Frontend 8 tests และ build 152 modules จากเวลา 19:33; Console 29 tests จากประวัติเดิม ไม่รันซ้ำใน Audit นี้ |
+| VERIFIED FROM TEST EXECUTION รอบนี้ | ไม่มี — ไม่รัน tests/build ที่สร้างไฟล์หรืออาจมี side effects |
+| NOT VERIFIED | Real-account/Provider/SMTP, authenticated writes, PostgreSQL concurrency, storage bytes/PDF/OCR/NLP functional integration, Browser/responsive/keyboard และ Production/Staging; Developer Console ไม่ตอบ Local probe รอบนี้ ไม่ restart เพื่อสร้างผลผ่าน |
+
+### Database / Test Data Snapshot
+
+ค่าต่อไปนี้เป็น **Query จริงเวลา 20:16:38** ไม่ใช่ค่าคงที่หรือจำนวน Real-time หลังจากนั้น:
+
+| รายการ | จำนวน |
+| --- | ---: |
+| Public tables / Actor accounts | 46 / 32 |
+| Student รวม / Co-op / Internship | 7 / 5 / 2 |
+| Teacher รวม Head / Head membership | 23 / 1 |
+| Department Staff | 2 |
+| Active Teacher-linked Admin grants / Standalone Admin | 1 / 0 |
+| Google identity mappings | 1 |
+| Co-op ที่ยังไม่มี Class Advisor | 2 |
+| Company / Jobs / Mentor / Cooperative Requests | 0 / 0 / 0 / 0 |
+| Daily Logs / Supervision Appointments / Project / Company Evaluation | 0 / 0 / 0 / 0 |
+
+Head/Admin เป็น membership บน Teacher เดิม ไม่เพิ่มผู้ใช้ซ้ำ. 32 คือ Actor accounts ไม่ใช่การรับรองจำนวนบุคคลจริงที่แตกต่างกันทั้งหมด; Mentor/Company records ไม่ใช่ Website Login accounts โดยอัตโนมัติ. รายละเอียด audit ก่อนหน้าเวลา 19:42–19:50 เป็น historical snapshot: Models/aggregate tables 46/46 ตรงกับ DB, FKs 79, Unique constraints16, indexes119/invalid0, columns541; FK definitions68 และชื่อ integrity constraints113/functions12/triggers15 พบครบ. รอบนี้ไม่ได้ทำ full DDL-body comparison ใหม่. CHECK `coop_reviews_reason_check`/`coop_reviews_transition_check` ยังเป็น NOT VALID สองรายการตาม Source definition ไม่ใช่ตารางหาย; ไม่สั่ง repair/validate.
+
+### Current Roles / Features
+
+สถานะต่อไปนี้เป็น **Implementation ตาม Source**. IMPLEMENTED หมายถึงชั้นที่ระบุเชื่อมกันแล้ว ไม่ใช่ E2E PASS; PARTIAL/MOCKUP/NOT IMPLEMENTED ไม่ใช่คำตัดสินว่าจะเพิ่มหรือตัดออกจาก ทก.01 ใหม่. Existing tests หลักอยู่ที่ [Backend Phase 1](backend/test/phase1.test.js), [Frontend Phase 1](frontend/test/phase1.test.js) และ focused Account/Admin/Console suites; coverage ไม่ครอบคลุมทุก business workflow.
+
+| Role / Feature | UI / Handler / API / Backend / DB | Tests ที่มี / Status / สิ่งที่ยังขาด |
+| --- | --- | --- |
+| Student Register/Login/Google/Dashboard | ครบ; live Co-op eligibility | Focused auth/session/router tests; IMPLEMENTED; real accounts/Provider NOT VERIFIED |
+| Student Overview | ครบ; existing owner request API | Binding/error/retry/stale response tests; IMPLEMENTED; data เป็น request snapshot ไม่ใช่ official placement |
+| Profile/addresses/education/training/skills/documents | ครบ; aggregate/revision/private files | Fixture/guard coverage บางส่วน; IMPLEMENTED; acknowledgement/signature/national-ID policy ยังรอ ไม่ใช่รับรองสำเนา |
+| Profile PDF Import / Resume Upload | ครบ; preview/review/commit + text/OCR services | Guard/fixture บางส่วน; IMPLEMENTED; real PDF/OCR/Storage E2E ยังไม่รับรอง |
+| Skills/Resume Job Matching | ครบ; Express → FastAPI | Expired-job regression; IMPLEMENTED; DB ไม่มี Jobs/Resume สำหรับ live matching |
+| Company Search / Cooperative Application / Status | ครบ; owner/Co-op guards | Request owner/expiry/route tests; IMPLEMENTED ตาม review/cancel flow; lifecycle หลัง approval ยังไม่รับรองครบ |
+| Student documents / official issuance | Staff UI/API/DB มี; Student download flow ไม่ครบ | PARTIAL; HTML development letters ไม่ใช่ official PDF/issuance |
+| Project Advisor / Topic / Book / Poster | ครบ; request → Teacher acceptance | Route guards; IMPLEMENTED; confirmed-advisor replacement มีข้อจำกัดเดิม |
+| Mentor CRUD/Verification | ครบ; owner + public capability guards | Race/rotation/expiry/rollback tests; IMPLEMENTED; SMTP/DB race จริง NOT VERIFIED |
+| Daily Logs / Weekly Review | ครบ; Co-op/approved period/verified Mentor | Capability/guard บางส่วน; PARTIAL สำหรับ compiled logbook/numeric rubric |
+| Student/Teacher Supervision1–2/results/images | ครบ; Project Advisor scope | Guard coverage บางส่วน; IMPLEMENTED เชิงบรรยาย; official report/numeric grading ยังขาด |
+| Student Company Evaluation | ครบ; five-score feedback | Route coverage; IMPLEMENTED เป็น Student feedback ไม่ใช่ Academic Assessment ของ Teacher |
+| Student Account | ดูข้อมูล/Google linking เชื่อมแล้ว | PARTIAL สำหรับ recovery/password workflows; Remember Me/Logout/cross-tab/drafts คงเดิม |
+| Student Transfer / Calendar | Transfer มี handler แจ้งยังไม่เชื่อม; Calendar API มีแต่ panel/menu hidden | MOCKUP / PARTIAL ตามลำดับ; ไม่เปิดหรือพัฒนาต่อเอง |
+| Teacher Class Advisor / Project Advisor | approval และ accept/reject UI/API/DB ครบ | IMPLEMENTED; ไม่มี requests/relations จริงสำหรับรับรอง E2E |
+| Teacher Directory / Account / Assessment / Documents | มี scoped supervision student list และบัญชีอ่านอย่างเดียว | PARTIAL; ไม่ใช่ full directory, academic grading หรือ official documents ทั้งระบบ |
+| Head Approval / Teacher Management / Advisor | Approval UI/API ครบ; Teacher list/update มีเฉพาะ Backend | IMPLEMENTED approval / PARTIAL management UI; direct advisor assignment ตอบ 409 โดยตั้งใจ ใช้ Student request/Teacher acceptance |
+| Staff Tracking/Cancel/Documents/Company Response/Calendar | UI/API/Service/DB เชื่อมแล้ว | IMPLEMENTED ตามขอบเขต/เอกสาร PARTIAL; ไม่มี current data และ real acceptance |
+| Staff Job Publication / Company-Teacher Management / Exam-Scores | Publish/reject API มีแต่ไม่พบ UI caller; modules อื่นไม่ครบ | PARTIAL publication; NOT IMPLEMENTED สำหรับ full management/examination/academic scores; calendar presentation ไม่ใช่ระบบสอบ |
+| Mentor Verification/Weekly Review/Appointment | Capability UI/API/DB ครบ ไม่มี Website Password Login | IMPLEMENTED; appointment identity confirmation ไม่ใช่ attendance; numeric student evaluation ยังไม่ครบ |
+| Company Recruitment/Email Verification/Owner Portal | Public submission/captcha/email capability มี | IMPLEMENTED submission; publication ต้อง Staff; NOT IMPLEMENTED full Company owner portal |
+| Super Admin Accounts/Controls/Permissions/Settings/Audit | UI/API/DB ครบ; Teacher-linked grant | Focused suites; IMPLEMENTED Development-only; fresh password-bound grant/permission checks, ไม่เปิด Google promotion หรือ arbitrary role/Head/Advisor reassignment |
+| Homepage Jobs/Search/Filters/Chat | Handler มีแต่ mock arrays/logging/static delayed reply | MOCKUP; ไม่ใช่ Student Matching API หรือ NLP Chatbot integration |
+
+### NLP / Chatbot ที่มีจริง
+
+- Thai/English normalization, dictionary tokenization ผ่าน PyThaiNLP `newmm` และ stopwords; TF-IDF + cosine similarity ใน `nlp-service/app/nlp/matching/`. ไม่มี Sentence Embedding/LLM/vector database implementation ที่พบ.
+- Current Dashboard เลือก skills หรือ resume แยกกัน → `/api/job-matches/me?source=...` → NLP `/api/v1/job-matches`. `job_matching_service.py` มีทางเลือกผสมคะแนน profile65%/resume35% เมื่อส่งสองข้อความ; ไม่ใช่การกล่าวว่าทุกปุ่ม UI ใช้ weighted scoring. `/api/v1/resume-matching` ยังมีเป็น API เดิม แต่ไม่พบ current application caller.
+- Candidate skills ใช้ `Student.major`/`profile.related_skills`; structured `student_skills` เป็นอีกส่วนใน Profile ไม่พบการนำ child records มารวมตรงใน matching controller ต้องยืนยัน semantics กับ requirements ใหม่.
+- Resume ใช้ `pdf-parse` ก่อน OCR fallback ผ่าน PyMuPDF/Tesseract tha+eng; Profile PDF ใช้ AcroForm/text/layout/regex และ OCR ตามกรณี มี worker/time/size budgets. เป็น extraction ตามกฎ ไม่ใช่ trained generic NER. OCR scan/รูปแบบเอกสารหลากหลายยังมีข้อจำกัด.
+- FAQ service มี TF-IDF + Logistic Regression, train ตอน startup, confidence threshold/fallback และ dataset **7 intents /31 examples**. NLP API `/api/v1/chat` มี แต่ Homepage ยังไม่ได้เรียก และยังไม่มี authenticated document-status chatbot ที่อ่าน DB ตาม owner.
+
+### Findings / Technical Debt
+
+| ระดับ / ประเภท | หลักฐาน / ผลกระทบ |
+| --- | --- |
+| High / Potential workflow risk | `coopRequest.controller.js:293–335` ไม่บังคับ Class Advisor ก่อนตั้ง advisor_review; Teacher review ต้องเป็น class advisor (`roleWorkflow.service.js:97`). DB มี Co-op ไม่มี advisor2 จึงเสี่ยงคำร้องไม่มีผู้พิจารณา; ไม่สร้างคำร้องเพื่อทดลอง ต้องยืนยัน prerequisite policy ก่อนแก้ |
+| Medium / Confirmed integration gaps | Head management มี API แต่ไม่มี UI caller, Staff job publish/reject เช่นกัน (`roleWorkflow.routes.js:75–84`); Homepage/Transfer mock path ยืนยันจาก handlers ไม่ใช่ตัดสินจาก TODO |
+| Medium / Potential operational risk | NLP endpoints ไม่มี Application JWT layer ของตัวเอง; Compose bind loopback แต่ต้องทบทวน boundary ก่อน Production. Resume OCR ขาด overall worker/pixel/time budgets แบบ Profile PDF; Matching รับ jobs list/fit TF-IDF โดยไม่มี count cap ที่พบ ไม่ได้ load-test หรือยืนยัน DoS |
+| Medium / Potential diagnostic exposure | `/health/db` ส่ง raw `error.message` เมื่อผิดพลาด (`app.js:57`); health รอบนี้ 200 จึงไม่ทดสอบ failure path |
+| Medium / Coverage / deployment debt | Suites เดิมถูกลบ, ไม่มี full business regression ปัจจุบัน; Dockerfiles ใช้ development servers/npm install และ image tags ไม่ใช่ immutable deployment; ไม่มี Production security/rollback acceptance |
+| Low / Source/document drift | Comment `roleWorkflow.service.js:86` ว่า Student ไม่มี department ล้าสมัย แต่ scope จริงยังอิง class advisor ตาม policy; migration019/018 messages และ old counts อยู่ใน historical references ไม่ใช่คำสั่งปัจจุบัน |
+
+ไม่พบ Critical bug ที่ยืนยันเพิ่มจากขอบเขต Audit นี้ ไม่ใช่การรับรองว่าไม่มีช่องโหว่. Duplicate legacy JWT issuance ยังอยู่เพื่อ compatibility แต่ Student eligibility รวมศูนย์แล้ว. ไม่พบ Backend cron/queue worker สำหรับ expiry; job availability ตรวจเวลา request ตาม Phase1. Student/role state-machine ที่ยังไม่ครบ, logbook, academic rubrics, transfer, documents และ scope changes เป็นรายการรอหารือ ทก.01 ไม่ใช่งานที่ได้รับอนุมัติ.
+
+### Infrastructure / Setup Boundary
+
+Vite multipage มี **16 build entries** จาก `frontend/vite.config.js`; Frontend มี 17 HTML รวม diagnostic และ Console มีอีก 1 HTML. API clients ใช้ Axios และ role/session adapters. Shared feedback มี modal/toast/loading, ARIA, focus/Escape และ CSS breakpoints/typography tokens แต่ static source ไม่ยืนยัน rendered responsive/accessibility. Backend เป็น Express/Sequelize/JWT, private storage และ Nodemailer; ใช้ transactions/row locks/revision guards ใน modules ที่ระบุ ไม่มี global jobs runner ที่พบ.
+
+Compose เป็น Development: PostgreSQL16, pgAdmin, Backend Node20/nodemon, Frontend Node22/Vite, NLP Python3.11/Uvicorn reload; ports 5432/5050/5000/5173/8000 bind127.0.0.1. NLP `.env` ยังไม่ส่ง/mount เข้า Compose จึงไม่รับค่าจาก Console Save โดยอัตโนมัติ. Backend/Frontend env_file มี precedence ตอน recreate; ไม่เปลี่ยน environment เพื่อ Audit.
+
+Developer Console Source มี loopback/Host-Origin guards, Root แยกจาก DB, scrypt, HttpOnly/SameSite/CSRF/session expiry, masking/reauthentication, AES-GCM backups นอก Git, permission/link checks, preview/version/conflict และ atomic replace. Backup key อยู่ใน private Root store จึงต้องรักษา OS permissions; ไม่ใช่ Application Super Admin. ไม่มีการลอง Save/Restore/Login จริงรอบนี้.
+
+`deploy.sh` ปัจจุบัน **ไม่รัน Migration/Init/Reset** แต่ยังเป็น mutating deployment: git pull, build/up/recreate, renew anonymous volumes และ health/model-projection checks. ห้ามใช้เป็น read-only probe; ไม่ได้รัน. Named DB/Storage volumes ต้องคงไว้; current Source / health ไม่ยืนยัน Production/MFA/HTTPS/backup restore/operational readiness. คู่มือ Setup ที่ยังใช้ได้อยู่ด้านล่าง; คำสั่ง reset/init/provision เป็นคำสั่งมีผลต่อข้อมูล ต้องอนุญาตเฉพาะงาน ห้ามรันตาม historical audit.
+
+รายละเอียดต่อเนื่อง: [Current Handoff](HANDOFF_fitm-intern.md). ก่อน Phase2 ต้องรับ ทก.01 ใหม่และหารือ actor workflows, templates/rubrics, advisor prerequisites, department/data scopes, integration/test data และ acceptance; **ยังไม่มีแผนพัฒนาที่อนุมัติ**.
+
+<details>
+<summary>ประวัติ Phase 1.5 — 4 พฤศจิกายน 2026 เวลา19:33; ผล tests/build ด้านล่างไม่ได้รันใหม่ใน Full Audit</summary>
+
+## สถานะงานล่าสุด — Phase 1.5: Co-op Only — 4 พฤศจิกายน 2026
+
+**Option A — Disable Internship: IMPLEMENTED / FOCUSED SYNTHETIC PASS / REAL E2E NOT VERIFIED.** รองรับ Student เฉพาะ `track=co_op`. บัญชี `internship` ถูกปฏิเสธจาก Unified/Legacy/Google Login ที่ออก Student session, Protected Student APIs แม้ถือ JWT เดิมที่ยังไม่หมดอายุ และ Student Dashboard. Backend ใช้ eligibility กลางกับ live Student record ไม่เชื่อ track จาก JWT/Client. การตรวจหลาย Actor ยังคง `409 AUTH_CONTEXT_AMBIGUOUS` ก่อนพิจารณา eligibility ไม่เลือกบัญชีอื่นแทน Internship.
+
+เก็บ Student Internship, historical data, Schema/ENUM ทั้งสองค่า และ Shared Code ไว้ทั้งหมด; ไม่แปลง track ไม่ลบตาราง ไม่เปลี่ยนคิว Teacher/Head/Staff หรือยอดบัญชี Admin. การปิดสิทธิ์ Student ไม่ได้ลบประวัติหรือเปลี่ยน account statistics. `internship_*` และ **`/api/internship-logs` ยังเป็นระบบ Daily Logs/Weekly Mentor Review ของ Co-op** ห้ามลบตามชื่อ.
+
+| ส่วน | สถานะปัจจุบัน | หลักฐานและข้อจำกัด |
+| --- | --- | --- |
+| Student Auth / Dashboard | Co-op Only; Registration และ Google onboarding สร้าง `co_op` ตามเดิม | Actual controllers/services/JWT และ Dashboard functions กับ synthetic Models/DOM; real accounts/Provider ยัง NOT VERIFIED |
+| Protected Student APIs | Profile/PDF, Resume/Matching, company search, requests, Mentor/Advisor, logs, supervision, project/book/poster, evaluation, calendar/account คงอยู่ | Actual routers 18 endpoints ผ่าน JWT middleware กับ substituted handlers/services; ไม่ใช่ functional E2E ของแต่ละโมดูล |
+| Public Mentor Verification | อ่าน/แก้ไข/ยืนยันต้องมีเจ้าของ Co-op จาก DB; คง Mentor-first locks/rotation/expiry/rollback | Synthetic capability/concurrency tests; PostgreSQL concurrency และ SMTP จริงยัง NOT VERIFIED |
+| Phase 1 Issues 2–4 | Mentor race, expired jobs และ Overview binding คงอยู่ | Focused backend/frontend regression ผ่าน; live workflow/browser ยัง NOT VERIFIED |
+| Other Roles / Data | สิทธิ์, ownership/department/advisor scope, Company recruitment และข้อมูลเก่าคงเดิม | Teacher/Head/Staff password/Google sessions ผ่านแบบ synthetic; Super Admin eligibility ตรวจแบบ isolated; ไม่ Query/แก้ Database รอบนี้ |
+
+ผลรอบนี้: Backend **17 PASS /0 FAIL /0 SKIP**, Frontend **8 PASS /0 FAIL /0 SKIP**, JavaScript syntax **10 ไฟล์ PASS**, UTF-8 และ `git diff --check` PASS; Frontend build ด้วย `--configLoader native` **152 modules PASS**. ผลเหล่านี้ไม่ใช่ Production Ready. ประวัติ Phase 1 Issue 1 ที่อนุญาต Internship ถูกแทนที่ด้วย Co-op Only; ไม่ย้อนเปิดสิทธิ์เพื่อให้ positive tests เก่าผ่าน. ดู [Handoff](HANDOFF_fitm-intern.md).
+
+**NEXT TASK: Phase 2 — WAITING FOR USER APPROVAL.** งาน Real PostgreSQL/Browser/Google/SMTP acceptance ยังเหลือ; ไม่เริ่มหรือเปลี่ยน feature flags อัตโนมัติ.
+
+</details>
+
+<details>
+<summary>ประวัติสถานะ 16–18 ตุลาคม 2026 — จำนวนบัญชีและผลตรวจเป็น snapshot เดิม ไม่ใช่ผลตรวจปัจจุบัน</summary>
 
 ## สถานะงานล่าสุด — 18 ตุลาคม 2026
 
@@ -22,6 +398,8 @@ Local PostgreSQL `127.0.0.1:5432 / intern_system.public` เตรียม4ต�
 
 อ่าน [เทคโนโลยี](#ระบบและเทคโนโลยี), [Development setup](#development-environment), [Compose services](#บริการและผล-smoke-ล่าสุด), [Schema source](#โครงสร้างและแหล่งกำหนด-schema) และ [ข้อจำกัด](#ข้อจำกัดและงานต่อไป) ประกอบกับสรุปปัจจุบันด้านล่าง. บันทึกวันที่เก่าถูกเก็บเป็นประวัติ; หากขัดกันให้ยึด Source และข้อตกลงล่าสุดใน Handoff.
 
+</details>
+
 ## Repository Structure
 
 ```text
@@ -40,6 +418,8 @@ HANDOFF_fitm-intern.md Project continuity, evidence scopes และลำดั
 
 Shared Authentication Middleware ตรวจ signature/expiry/claim shape แล้ว lookup live account ทุก protected request ที่ใช้ middleware นี้; deleted/missing account ถูกปฏิเสธ และสถานะ/บทบาทต้องยังอนุญาต. Deleted-account authorization **PASS เฉพาะ focused routes และหลักฐานที่ระบุใน Handoff** ไม่ใช่ JWT revocation coverage ทั้งระบบ. JWT ที่คัดลอกไปของบัญชียังมีสิทธิ์อาจใช้ได้จนหมดอายุหลัง Logout/เปลี่ยน Password ตามข้อจำกัดเดิม.
 
+Student eligibility ปัจจุบันอนุญาตเฉพาะ live `track=co_op` และ workflow status ที่ระบบอนุญาต. Unified Login, Legacy `/api/auth/login`, Google Student session และ Shared JWT middleware ใช้ `authorizeActor` กลาง; Internship JWT เดิมจึงไม่ผ่าน Protected Student APIs. Dashboard `/src/student_coop/student_coop.html` ยังคงเดิม แต่รับเฉพาะ Co-op หลังตรวจ `/api/auth/me`; เมื่อถูกปฏิเสธล้าง session แล้วกลับ `/login.html`, network/5xx คง session และให้ Retry. Remember Me/cross-tab และ draft keys คงเดิม.
+
 ## Google OAuth Development Configuration
 
 - CORS และ Google POST Origin Guard ใช้ `backend/src/config/allowedOrigins.js` ร่วมกัน: FRONTEND_URL เป็น explicit origin หลัก และเพิ่ม `http://localhost:5173`, `http://127.0.0.1:5173` เฉพาะ `NODE_ENV=development`. ไม่มี wildcard/สะท้อน Origin ทุกค่า; origin อื่นถูกปฏิเสธ และคง CORS credentials เดิม.
@@ -47,16 +427,17 @@ Shared Authentication Middleware ตรวจ signature/expiry/claim shape แ�
 - Frontend อ่าน `/api/auth/google/config`; ต้องมีปุ่ม Google เสมอ และ disabled ไม่โหลด Provider/เรียก challenge/login. Google อยู่เหนือ Email/Password ตามดีไซน์ที่ตกลงไว้. ไม่ใส่ Secret ใน Frontend และไม่เปิด flags/เปลี่ยน domain/hosted-domain/identity policy เอง.
 - Token verification, nonce, verified email/domain/hd และ secure subject mapping คงเดิม. Google-only registration ใช้ Student ID จาก `^s([0-9]{13})@email\.kmutnb\.ac\.th$`, สร้าง Student (`password_hash=NULL`) + mapping ภายใน transaction แล้วออก JWT; returning mapped account ใช้ identity เดิม. Development onboarding ยังต้องผ่าน flags และ local DB guard เดิม.
 - บัญชีเว็บไซต์ Student เดิมที่ชน email/Student ID ต้อง Email/Password Login → Student Dashboard → จัดการบัญชี → เชื่อม Google; ยืนยัน ownership/รหัสผ่านปัจจุบันและ explicit confirmation. ไม่เชื่อมจากหน้า Login/Register และไม่ Auto-Link จาก email เพียงอย่างเดียว.
+- ขั้นตอน Student ด้านบนใช้กับ Co-op เท่านั้น. Google auto และ legacy role=student ตรวจบัญชี mapped จริงก่อนออก JWT; Internship ไม่มีสิทธิ์ session/linking ผ่าน Dashboard. Onboarding ยังคง `co_op`/`pending`, flags/Development guard และ identity policy เดิม ไม่เปิด flags ใน Phase 1.5.
 
 ## Student Registration Flow
 
-Website Register รับชื่อ/นามสกุล, university email และ Password/Confirm Password โดยไม่มีช่อง Student ID; normalize email แล้ว Backend ดึงรหัส 13 หลักจาก `^s([0-9]{13})@email\.kmutnb\.ac\.th$` ด้วย helper ร่วมกับ Google และไม่รับ Student ID จาก Client. ตรวจ required fields, bounds, password/confirmation และ duplicate email/Student ID ใช้ bcrypt/unique constraints เดิม; รูปแบบ email ไม่ใช่การยืนยัน ownership/Google Verification. Backend สร้าง Student และ Application session ภายใน transaction แล้วตอบ 201 พร้อม JWT → Frontend ใช้ session adapter เข้า Student Dashboard โดยไม่ Login ซ้ำ (`remember:false`). หากออก JWT ไม่สำเร็จ transaction rollback.
+Website Register รับชื่อ/นามสกุล, university email และ Password/Confirm Password โดยไม่มีช่อง Student ID หรือ Track Selector; normalize email แล้ว Backend ดึงรหัส 13 หลักจาก `^s([0-9]{13})@email\.kmutnb\.ac\.th$` ด้วย helper ร่วมกับ Google และไม่รับ Student ID/track จาก Client. ตรวจ required fields, bounds, password/confirmation และ duplicate email/Student ID ใช้ bcrypt/unique constraints เดิม; รูปแบบ email ไม่ใช่การยืนยัน ownership/Google Verification. Backend สร้าง Student `co_op`/`pending` และ Application session ภายใน transaction แล้วตอบ 201 พร้อม JWT → Frontend ใช้ session adapter เข้า Student Dashboard โดยไม่ Login ซ้ำ (`remember:false`). หากออก JWT ไม่สำเร็จ transaction rollback.
 
-มีปุ่มสมัครด้วย Google ใช้ Google flow ด้านบน; Google-only Student ไม่ต้องตั้ง Password และ Password Login ปฏิเสธ NULL hash อย่างปลอดภัย. **Register Page Improvement เป็นงานถัดไปอันดับ 1**; ต้องตรวจ Source และรับรายละเอียดจากผู้ใช้ก่อนปรับ Validation/Student ID/UI ไม่ถือว่า real-account E2E ผ่านแล้ว.
+มีปุ่มสมัครด้วย Google ใช้ Google flow ด้านบน; Google-only Co-op Student ไม่ต้องตั้ง Password และ Password Login ปฏิเสธ NULL hash อย่างปลอดภัย. Registration defaults ผ่าน synthetic controller tests ใน Phase 1.5; real-account persistence/Browser/Provider E2E ยัง NOT VERIFIED. งานปรับ Register เพิ่มเติมเป็น backlog ที่ต้องมอบหมายแยก ไม่ใช่งานถัดไปอัตโนมัติ.
 
 ## การเปิด Developer Console สำหรับจัดการ .env
 
-`dev-env-manager/` ใช้ Node.js built-ins ไม่มี dependencies เพิ่มสำหรับ Console, bind เฉพาะ **http://127.0.0.1:5379/**. Root Authentication แยกจาก Unified Login/Database ไม่มี Root role ใน PostgreSQL หรือ RBAC ของเว็บหลัก. **ผู้ใช้รายงานว่าเริ่มใช้งาน Console ได้แล้ว**; ไม่ได้เปิด Browser/ตรวจยืนยันซ้ำในงานเอกสารนี้.
+`dev-env-manager/` ใช้ Node.js built-ins ไม่มี dependencies เพิ่มสำหรับ Console, bind เฉพาะ **http://127.0.0.1:5379/**. Root Authentication แยกจาก Unified Login/Database ไม่มี Root role ใน PostgreSQL หรือ RBAC ของเว็บหลัก. ผู้ใช้เคยรายงานว่าเริ่มใช้งาน Console ได้แล้ว; เป็น historical user report. Full Audit วันที่4 พ.ย. Local GETไม่ตอบจึงเป็น NOT VERIFIED ไม่ restart/bootstrap หรือเปิด Browser เพื่อสร้างผลผ่าน.
 
 รองรับ Backend/Frontend/NLP `.env` ตาม allowlist ตายตัว, Search/Filter, Unsaved Changes, Change Preview, Validation, Save/Cancel, Secret Masking, encrypted Backup/Restore, Atomic Replace, Conflict Detection, Session Security, CSRF, Rate Limiting และ Restart Notification. ค่า Secret เดิมไม่ส่ง Browser; reauthentication ก่อน Save/Restore และ Backup เก็บนอก Git พร้อม OS permissions. ไม่สั่ง Docker/restart/Database operations และไม่เปิด Production. รายละเอียดความปลอดภัย/ข้อจำกัด conflict กับ external writers อยู่ใน [คู่มือ Console](dev-env-manager/README.md).
 
@@ -78,6 +459,8 @@ Root Login แยกจาก Website Login และ Application Super Admin. B
 
 ## Application Super Admin
 
+Queryจริงวันที่4 พ.ย.2026 เวลา20:16:38 พบ **active Teacher-linked membership1 / standalone0**. Grantไม่ใช่บัญชีบุคคลเพิ่มและไม่รับรองว่าทดสอบ privileged Login/Browser แล้ว. คำสั่งเตรียมด้านล่างเป็นคู่มือเมื่อมีงานอนุญาต ไม่ต้อง rerun Grant/rotate credentials เพื่อ Audit; CLIคง idempotency guards เดิม.
+
 ใช้ `http://localhost:5173/login.html` เดิม → Unified Login ตรวจรหัสผ่าน Teacher → Teacher Dashboard → **เข้าสู่ระบบผู้ดูแล** → Super Admin Dashboard → **กลับไปหน้าอาจารย์**. ใช้ Teacher token เดียว ไม่มีการคัดลอก session ไปเป็นบัญชี Admin. ลิงก์ Admin แสดงหลัง `/api/teachers/admin-access` ตรวจสิทธิ์จาก Server เท่านั้น; Teacher อื่น/Student/Staff/Head ไม่ได้สิทธิ์เพิ่ม.
 
 `super_admins.teacher_id` เป็น unique FK ไป Teacher เดิม; แถวที่ผูก Teacher เป็น **grant** ที่ไม่มี email/name/password ของตัวเอง. Audit/Settings อ้าง principal/grant เดิมได้ จึงไม่เพิ่มบุคคลซ้ำในยอดผู้ใช้. เก็บ compatibility สำหรับ standalone rows เดิมแต่ CLI ไม่สร้างบัญชี standalone ใหม่. Membership session มี Teacher claims เดิม + signed grant ID/version อายุ15นาที; Backend ตรวจ live Teacher/password stamp/membership/permission ทุก Admin request. Token ก่อน Grant หรือ token จาก Google ที่ไม่มี password-verified grant evidence ไม่ได้สิทธิ์ใหม่. เปลี่ยนสิทธิ์ต้อง Login ใหม่; Logout/เปลี่ยนรหัสผ่านเพิกถอน session ฝั่ง Server. Remember Me/cross-tab ใช้ adapter เดิม.
@@ -98,7 +481,7 @@ CLI diagnostics (18 ตุลาคม 2026): หากล้มเหลวจ�
 
 | ส่วน | ความสามารถ / ขอบเขต |
 | --- | --- |
-| ภาพรวม | Counts จริงจาก Backend; TeacherรวมHead, นับ Teacher+Admin เป็นบุคคลเดียวใน total; แสดง Super Admin membership แยก (หลัง Grant สำเร็จ =1, ผู้ใช้ไม่ซ้ำยัง32) |
+| ภาพรวม | Backendนับ Actor accountsโดยไม่เพิ่ม Teacher-linked grantซ้ำ; Query20:16พบ32และgrant1. Admin active flag/count ไม่ใช่ Student Co-op eligibility จึงยังเก็บ Internship2ในยอดบัญชีเดิม |
 | บัญชีผู้ใช้งาน | ตารางทุก Role, search/filter/pagination, รายละเอียดพื้นฐานที่ปลอดภัย; แก้ชื่อ/ชื่ออังกฤษ/ตำแหน่งตาม Model ที่รองรับ |
 | สถานะ | Account Control แยกจาก Student workflow status; Teacher/Staff ใช้ native status เดิมร่วมด้วยเพื่อให้ legacy guards/รายชื่อ Advisor สอดคล้อง; ปิดแล้ว tokenเดิมถูกปฏิเสธและไม่กลับมาใช้ได้เมื่อเปิดใหม่; ปฏิเสธปิด Teacher ที่เป็น Head/Advisor/มีคำขอที่ปรึกษา และไม่เปิด native inactive เดิมที่ไม่ได้ปิดผ่าน Admin |
 | สิทธิ์ | Server-side permission allowlist ของ membership; ระงับ Admin grant โดยคง Teacher identity ได้เมื่อไม่ใช่ผู้ดูแลคนสุดท้าย; ไม่ย้าย Actor/เปลี่ยน Head/Advisor หรือ bypass ownership |
@@ -126,7 +509,9 @@ Console แสดง Pending Restart/คำแนะนำ และสถาน
 
 PostgreSQL 16 Development `intern_system.public` ใช้ Sequelize Model-driven initialization ใน `backend/src/db/initialize.js` รวม associations, `models/schemaIntegrity.js`, `db/postgresIntegrity.js`; Backend startup ไม่ force/alter/sync. Student Model รองรับ `password_hash=NULL` สำหรับ Google-only Account โดยไม่ลดข้อกำหนด Password ของ Website Register. ไม่มี migration-based workflow ปัจจุบัน; คำสั่ง migration/ledger ในเอกสารเก่าห้ามนำมารันตาม.
 
-ประวัติ Cleanup สำเร็จ **154 records** และเคยยืนยัน **42 ตาราง / 0 records** หลัง cleanup รอบสุดท้าย โดย Schema/constraints คงเดิม. **รอบ Developer Console ภายหลังรายงาน 42 ตาราง / 1 record และข้อมูลก่อน–หลังรอบนั้นตรงกัน**; รอบเอกสารนี้ไม่ query Database จึงไม่ยืนยันจำนวนปัจจุบันแบบ Real-time และไม่ลบ record ที่พบใหม่.
+Phase 1.5 ไม่เปลี่ยน Models/ENUM/Schema หรือข้อมูลจริง. `students.track` เก็บ `internship` ได้เพื่อรักษาประวัติ แต่ไม่อนุญาต Student access. ไม่แก้ Student status/track หรือ Admin counts อัตโนมัติ; existing fixtures อาจยังมี Internship สำหรับ negative/preservation checks และไม่ถูกรัน provision/seed ในงานนี้.
+
+**Snapshotปัจจุบันจาก Read-only Query4 พ.ย.2026 เวลา20:16:38: 46 tables /32 Actor accounts** ตามตาราง Auditด้านบน ไม่ใช่จำนวนคงที่. ประวัติ Cleanupเดือนตุลาคม154 records, 42ตาราง/0records และ Consoleรอบหลัง42ตาราง/1record เป็นค่าคนละเวลา ถูกแทนที่สำหรับสถานะปัจจุบันโดย snapshotใหม่นี้; ไม่ลบประวัติ/ข้อมูลที่มีเพิ่มและไม่ใช้ countsเพื่อสั่ง reset.
 
 มี Database dump และ Storage archive นอก Repository ตาม [Full Cleanup Handoff](HANDOFF_fitm-intern.md#current-handoff--full-development-database-cleanup--backup-first--2026-10-16). Database dump ผ่าน restore ลงฐานแยกและ integrity comparison; Storage archive ผ่านการตรวจอ่าน/hash/structure/permissions เทียบต้นฉบับ ไม่ได้ extract ทับ Storage จริง. เป็นหลักฐานเดิม ไม่ได้ตรวจ Backup/Restore ซ้ำรอบนี้. ห้าม Reset/เปลี่ยน Schema/ลบข้อมูลหรือ Volumes โดยไม่มีอนุญาตเฉพาะงาน.
 
@@ -144,7 +529,7 @@ PostgreSQL 16 Development `intern_system.public` ใช้ Sequelize Model-drive
 4. **Other Roles Authentication:** Teacher/Head/Staff Login/JWT/RBAC/Dashboard/Logout เมื่อมีบัญชีที่อนุญาต ห้ามสร้างบัญชีเพื่อให้รายงาน PASS.
 5. **Remaining Features:** Remember Me/cross-tab persistence, dynamic workflows, NLP env integration, server-side JWT revocation เมื่อมีข้อกำหนด และงานฝึกงาน/สหกิจคงเหลือตาม Handoff/ลำดับที่ผู้ใช้สั่ง.
 
-ลำดับข้างต้นเป็นประวัติแผนงานเอกสารวันที่16 ตุลาคม; งานปัจจุบันวันที่18 ตุลาคมคือ Application Super Admin ตามหัวข้อใหม่ด้านบนและ Current Handoff. ไม่เริ่ม Register/โมดูลถัดไปเอง และไม่เปลี่ยนสถานะ Teacher/Head/Staff เป็นพัฒนาเสร็จทั้งหมด.
+ลำดับข้างต้นเป็นประวัติแผนวันที่16 ตุลาคม ไม่ใช่คำสั่งงานปัจจุบัน. Phase1.5แทนที่ขอบเขต Student Internship แล้ว; ผู้ใช้อนุญาตเฉพาะ Phase2 Part1 Student Profile ตามสถานะล่าสุดด้านบน. ขอบเขต ทก.01/แผนพัฒนาส่วนอื่นยังรอหารือ ไม่เริ่ม Register/โมดูลใหม่และไม่อ้าง Teacher/Head/Staffพัฒนาเสร็จทั้งหมด.
 
 ## Documentation References
 
@@ -213,9 +598,9 @@ Remember Me ใช้ sessionStorage/localStorage ตามการเลือ
 
 ## ระบบและเทคโนโลยี
 
-ระบบฝึกงาน/สหกิจสำหรับนักศึกษา อาจารย์/Class Advisor หัวหน้าภาควิชา เจ้าหน้าที่ สถานประกอบการ และพี่เลี้ยง. คำร้องใช้ Student → Class Advisor → Department Head; Project Advisor ต้องยืนยันความสัมพันธ์แยกต่างหาก.
+ระบบจัดการสหกิจศึกษาสำหรับ Student `co_op`, อาจารย์/Class Advisor หัวหน้าภาควิชา เจ้าหน้าที่ สถานประกอบการ และพี่เลี้ยง. คำร้องใช้ Student → Class Advisor → Department Head; Project Advisor ต้องยืนยันความสัมพันธ์แยกต่างหาก. Shared Student architecture และประวัติ Internship คงอยู่ โดยการปิดสิทธิ์บังคับจาก Backend และ Dashboard admission.
 
-Frontend: Vite 8.2.2, Tailwind CSS 4.3.3, JavaScript multipage, Axios 1.19.0. Backend: Node.js (container 20.20.2), Express 5.2.1, Sequelize 6.37.8, pg, JWT, bcrypt. Database: PostgreSQL 16 (ตรวจจริง 16.15). NLP: Python 3.11, FastAPI 0.115.0, scikit-learn/PyThaiNLP, PyMuPDF, Tesseract tha+eng/pytesseract และ Pillow; เป็น classical NLP. Umzug, pytest และ httpx ถูกนำออกจาก dependency declarations; lockfile backend ในเครื่องอัปเดตแล้ว แต่ repository ignore package-lock.json อยู่เดิม.
+Declarationsปัจจุบัน: Vite ^8.2.2, Tailwind ^4.3.3, JavaScript multipage, Axios ^1.19.0; Express ^5.2.1, Sequelize ^6.37.8, pg/JWT/bcrypt. Dockerfilesใช้ Backend Node20 และ Frontend Node22; ไม่ query runtime patch versions รอบนี้. PostgreSQLตรวจจริง16.15. NLPใช้ Python3.11 image, FastAPI0.115.0, scikit-learn1.6.1, PyThaiNLP5.0.4, NumPy2.2.6, PyMuPDF1.24.14, pytesseract0.3.13, Pillow11.0.0 และ Tesseract tha+eng. เป็น classical NLPตามรายละเอียด Auditด้านบน; ไม่พบ embedding/LLM. Umzug/pytest/httpxไม่มีใน declarationsปัจจุบัน; package-lock.jsonถูกignoreเดิม จึงไม่รับรอง reproducible dependency resolutionจากSourceอย่างเดียว.
 
 ```text
 Browser/Vite → Express → Sequelize Models → PostgreSQL 16
@@ -299,13 +684,13 @@ Production/Staging schema provisioning ยังไม่ได้ออกแ�
 
 ## ตารางและความสัมพันธ์ปัจจุบัน
 
-| กลุ่ม | ตาราง (รวม 42) |
+| กลุ่ม | ตารางหลักจาก Model-driven baseline (ไม่ใช่การนับ live DB รอบนี้; Admin extensions ดูหัวข้อ Application Super Admin) |
 | --- | --- |
 | บัญชีและข้อมูลนักศึกษา | `teachers`, `students`, `department_staffs`, `student_profiles`, `student_addresses`, `student_education_records`, `student_training_records`, `student_skills`, `student_files` |
 | บริษัทและประกาศงาน | `companies`, `job_submissions`, `job_postings`, `job_posting_work_modes`, `company_access_tokens`, `job_posting_reviews` |
 | คำร้องและโครงการ | `coop_requests`, `coop_request_delivery_methods`, `coop_request_prerequisite_courses`, `coop_request_reviews`, `coop_projects`, `coop_project_advisor_requests` |
 | เอกสารและบริษัทตอบรับ | `coop_documents`, `coop_document_revisions`, `company_responses`, `company_response_history`, `company_evaluations` |
-| พี่เลี้ยงและบันทึกฝึกงาน | `mentors`, `mentor_tokens`, `internship_daily_logs`, `internship_weeks`, `internship_week_events`, `internship_review_tokens` |
+| พี่เลี้ยงและบันทึกงานสหกิจ | `mentors`, `mentor_tokens`, `internship_daily_logs`, `internship_weeks`, `internship_week_events`, `internship_review_tokens` |
 | นิเทศ | `supervision_appointments`, `supervision_events`, `supervision_tokens`, `supervision_images`, `supervision_results`, `supervision_result_revisions` |
 | กิจกรรม | `coop_activities`, `coop_activity_history` |
 | Google | `google_identities`, `google_auth_requests` |
@@ -314,9 +699,9 @@ Students เชื่อม Teachers สองบทบาท, Profile/Mentor �
 
 ## Google OAuth และ Student Profile
 
-**Google implementation พร้อมตามขอบเขต / provider E2E NOT TESTED:** ตาราง google_identities/google_auth_requests รวม integrity definitions อยู่ใน Model-driven schema ปัจจุบัน. Google-only Student/nullable password และ Dashboard linking มี implementation แล้วตามสรุปด้านบน; ข้อความปิด flags/รอนโยบายในประวัติ 14 ต.ค. ถูกแทนที่ด้วยการอนุมัติ Development และงาน 15–16 ต.ค. ไม่ยืนยันค่าจริงของ flags แบบ Real-time ในงานเอกสารนี้ และไม่เปลี่ยน linking/domain policy หรือสร้างบัญชี Teacher/Head/Staff.
+**Google implementation มี / provider E2E NOT VERIFIED:** ตาราง google_identities/google_auth_requests อยู่ใน Model-driven schema. Google-only Co-op/nullable password และ Dashboard linkingมี Sourceแล้ว. Public config GETวันที่4 พ.ย.รอบFull Auditตอบ enabled/linking/onboarding=true เป็นค่าที่สังเกตขณะตรวจ ไม่เปลี่ยน flags/domain/identity policy; ไม่ทดลอง Providerหรือสร้างบัญชี. ข้อความ disabled/รอนโยบายในประวัติ14 ต.ค.ไม่ใช่สถานะconfigล่าสุด.
 
-**Student Profile schema/imports PASS / functional acceptance รอบนี้ NOT TESTED:** 5 Tabs, aggregate revision, addresses/education/training/skills, private documents, file version/current indexes และ field types อยู่ครบ. ขอบเขต Phase 1–5 เดิมยัง ACCEPTED WITH LIMITATIONS ตาม [ประวัติ Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md); OCR scan มี limited support และ national ID/encryption/acknowledgement/signature ยังมี policy blockers. ไม่เปิด Student Calendar และไม่แก้ UI/menus.
+**Student Profile baseline schema/imports มีหลักฐานเดิม / Part1 contact schema รออนุญาต:** Source ปัจจุบันมี 4 แท็บหลัก + 2 แท็บ Modal แก้ไข, aggregate revision, addresses/education/training/skills, private documents, file version/current indexes และ field types เดิม. ผล synthetic Part1 และข้อจำกัด live acceptance ดูสถานะล่าสุดด้านบน. ขอบเขต Phase 1–5 เดิมยัง ACCEPTED WITH LIMITATIONS ตาม [ประวัติ Phase 5](docs/audits/FITM_STUDENT_PROFILE_PHASE5_FINAL_ACCEPTANCE.md); OCR scan มี limited support และ national ID/encryption/acknowledgement/signature ยังมี policy blockers. ไม่เปิด Student Calendar หรือเปลี่ยนเมนู.
 
 ## บริการและผล smoke ล่าสุด
 
@@ -338,9 +723,20 @@ Auth smoke ในงาน cleanup ก่อนหน้า: Student /me แล�
 
 ## Automated tests หลัง cleanup
 
-**Main application automated suites เดิมถูกลบ; ไม่มี full application regression coverage ปัจจุบัน.** ประวัติ Cleanup ลบ test suites 89 ไฟล์: backend/test 57, frontend/test 25, nlp-service/tests 6 และ linking-guards.test.cjs 1 พร้อมตัวรัน/validators 38 และ fixtures/helpers/package marker 13 ไฟล์; [รายชื่อทั้งหมดใน Handoff](HANDOFF_fitm-intern.md#รายการไฟล์ที่ลบในการ-cleanup-นี้). ลบเครื่องมือ/helpers ของ workflow เดิมอีก 14 ไฟล์. ภายหลังเพิ่มเฉพาะ `dev-env-manager/test/console.test.js` และ optional browser fixture smoke สำหรับ Console; 29/29 PASS เดิมไม่ใช่ coverage ของเว็บหลัก และไม่ได้รันใหม่รอบนี้.
+**ไม่มี Full Application Regression Coverage.** Suites เดิมถูกลบใน Cleanup ตาม [ประวัติ Handoff](HANDOFF_fitm-intern.md#รายการไฟล์ที่ลบในการ-cleanup-นี้). ภายหลังมี focused suites สำหรับบัญชี/Admin และ Phase 1; Phase 1.5 ปรับ `backend/test/phase1.test.js` และ `frontend/test/phase1.test.js` ให้ตรง Co-op Only โดยรักษา Issues 2–4. ไม่ใช้ `npm test` หรือ runners เก่าที่ถูกลบ.
 
-เก็บ application source, development seed utilities, NLP training data, environment files, historical logs/reports และ manual Google diagnostic. ไม่ได้สร้างชุดทดสอบเว็บหลักทดแทน; ผล PASS เก่าเป็นประวัติและไม่เท่ากับผลตรวจใหม่หลัง cleanup.
+**Historical execution — Phase1.5 วันที่4 พ.ย.เวลา19:33:** Backend17 PASS/Frontend8 PASS ไม่มีfail/skip. Actual controllers/services/middleware/routersใช้ synthetic Models/transactions/provider; Router checks18 endpointsใช้ substituted business handlers จึงไม่ใช่ Profile/PDF/NLP/ไฟล์/Database E2E. Frontendใช้ functions/storageกับDOM/session substitutes ไม่ใช่Browser. มี Express Promise-like deprecation warningจากVM realm ไม่มีtest failureในรอบนั้น. **Full Auditไม่รัน tests/buildใหม่**; ตรวจsyntax JS248/Python AST32/PowerShell4 และrelative JS importsแบบไม่executeแทน ไม่รวมเป็นRegression PASS.
+
+รันจาก Repository root (ตรวจว่ามีไฟล์จริงแล้ว):
+
+```powershell
+node backend/test/phase1.test.js
+node frontend/test/phase1.test.js
+cd frontend
+npm.cmd run build -- --configLoader native
+```
+
+**Build152modules/changed-JS10syntaxเป็นผลPhase1.5เดิม ไม่ได้รันใหม่ในFull Audit.** การเลือกCo-op fixtureใน `teacherAdminGrant.test.js` เป็นงานPhase1.5; SQL modeไม่ถูกรันรอบนี้. Commandsข้างต้นตรวจว่ามีไฟล์/scriptsจริง แต่ไม่ได้execute; Console testsสร้างtempfilesและAdmin SQL modeอาจเขียนในtransaction จึงไม่รันเพื่อauditเอกสาร. ต้องใช้isolated/authorized targetเมื่อมีงานacceptance ห้ามเปิดflagsหรือprovisionเพื่อทำให้ผลผ่าน.
 
 ใช้ smoke/manual checks:
 
@@ -356,7 +752,7 @@ npm.cmd run build
 
 Full regression, authenticated role workflows, Profile CRUD/PDF/OCR E2E, SMTP acceptance, Google provider E2E, browser/mobile จริง และ Production/Staging deployment **NOT TESTED ในงานนี้**. ไม่รายงาน Full Regression PASS. Schema readiness ไม่ยืนยัน feature acceptance.
 
-งานถัดไปตามคำสั่ง 16 ต.ค. คือ **Register Page Improvement ก่อน**, แล้ว Register E2E → Google OAuth E2E → Other Roles → Remaining Features ตามลำดับด้านบน. Google-only/Dashboard linking มี implementation แล้ว แต่ต้องมีการอนุญาตบัญชีจริงก่อน Provider E2E. Manual acceptance ของ supervision/activity/Profile persistence/PDF/OCR และ Production schema provisioning ยังเป็นงานคงเหลือ ไม่เริ่มเอง. ตรวจ git status/diff ก่อนทำงาน; ไม่ Commit/Push/Reset/Clean.
+**Phase2 Part1 Student Profile: SOURCE IMPLEMENTED / LIVE SCHEMA PENDING APPROVAL.** ขอบเขต ทก.01/แผนโมดูลอื่นยังรอหารือ; รายการmissing/riskไม่ใช่Requirementsใหม่. Runtime acceptanceที่ยังเหลือคือ PostgreSQL concurrency/rollback, authenticated workflows, Browser/session/responsive, Google/SMTP, Storage/PDF/OCR/NLP และProduction. Public Mentor saveยังหมุนtoken; responseหายใช้Student resendเดิม. เก็บInternship history/role queues/Admin counts ไม่แปลงข้อมูล. ไม่เริ่มRegister/โมดูลใหม่ ไม่Commit/Push/Reset/Clean และไม่แก้ทก.01รอบนี้.
 
 
 ## การแก้ไขเฉพาะจุดหลังตรวจ cleanup — 14 ตุลาคม 2026

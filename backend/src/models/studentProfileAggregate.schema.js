@@ -18,7 +18,7 @@ const extensions = {
   },
   student_profiles: {
     columns: {
-      english_first_name: text(), english_last_name: text(), gender: text(32),
+      english_prefix: text(), english_first_name: text(), english_last_name: text(), gender: text(32),
       national_id_ciphertext: column("bytea"), national_id_key_version: text(80),
       national_id_issue_date: column("date"), national_id_expiry_date: column("date"),
       has_driving_license: column("boolean"), driving_license_number: text(64),
@@ -26,6 +26,8 @@ const extensions = {
       military_status: text(32), father_address: column("text"), father_phone: text(32),
       mother_address: column("text"), mother_phone: text(32),
       emergency_contact_occupation: text(), emergency_contact_workplace: text(),
+      // Optional owner-only contacts; deploy these nullable columns only after DB approval.
+      student_line_id: text(100), student_facebook: text(500),
     },
     checks: {
       phase2a_national_id_pair: "(national_id_ciphertext IS NULL) = (national_id_key_version IS NULL)",
@@ -62,6 +64,13 @@ const base = (deleteBehavior = "CASCADE") => ({
 });
 const order = () => column("integer", { nullable: false, defaultSql: "0" });
 const tables = {
+  student_close_friends: {
+    modelName: "StudentCloseFriend", association: "profileCloseFriends",
+    columns: { ...base(), nickname: text(100), full_name: text(), phone: text(32),
+      line_id: text(100), facebook_url: text(500), display_order: order() },
+    checks: { display_order: "display_order >= 0" },
+    indexes: [["student_id", "display_order", "id"]],
+  },
   student_addresses: {
     modelName: "StudentAddress", association: "profileAddresses",
     columns: { ...base(), address_type: text(16, { nullable: false }), house_no: text(100), road: text(),

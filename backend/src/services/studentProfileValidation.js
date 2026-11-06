@@ -1,12 +1,15 @@
 const { PROFILE_FIELDS, isCalendarDate, todayInBangkok } = require("./studentProfileIntegrity");
 const specs = require("../models/studentProfileAggregate.schema");
+const { CONTACT_FIELDS, normalizeContact, normalizeFriendContact } = require("./studentProfileContacts");
 const { MAX_PERSON_NAME_LENGTH, isThaiPersonName } = require("../validators/personName.validator");
+const { normalizeNationalId } = require("./studentProfileNationalId");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRIVATE_PROFILE_FIELDS = ["national_id_ciphertext", "national_id_key_version"];
 const EXTRA_PROFILE_FIELDS = Object.keys(specs.extensions.student_profiles.columns).filter(key => !PRIVATE_PROFILE_FIELDS.includes(key));
-const EDITABLE_PROFILE_FIELDS = [...PROFILE_FIELDS, ...EXTRA_PROFILE_FIELDS];
+const EDITABLE_PROFILE_FIELDS = [...PROFILE_FIELDS, ...EXTRA_PROFILE_FIELDS, "national_id"];
 const STUDENT_FIELDS = ["first_name", "last_name", "major", "year_level", "gpa", "advisor_teacher_id", "department", "faculty", "last_semester_gpa"];
 const RELATIONS = {
+  close_friends: { table: "student_close_friends", model: "StudentCloseFriend" },
   addresses: { table: "student_addresses", model: "StudentAddress" },
   education: { table: "student_education_records", model: "StudentEducationRecord" },
   training: { table: "student_training_records", model: "StudentTrainingRecord" },
@@ -55,7 +58,9 @@ function normalizeProfile(body) {
   for (const [field, value] of Object.entries(body)) {
     if (value === undefined) continue;
     const spec = specs.extensions.student_profiles.columns[field];
-    if (field === "birth_date" || spec?.type === "date") result[field] = date(value, field);
+    if (field === "national_id") result[field] = normalizeNationalId(value);
+    else if (CONTACT_FIELDS.includes(field)) result[field] = normalizeContact(value, field);
+    else if (field === "birth_date" || spec?.type === "date") result[field] = date(value, field);
     else if (field.endsWith("_phone")) result[field] = phone(value, field, spec?.length || 255);
     else if (["father_age", "mother_age"].includes(field)) result[field] = integer(value, field, 1, 2147483647);
     else if (["height_cm", "weight_kg"].includes(field)) {
@@ -108,7 +113,8 @@ function normalizeChild(kind, body, creating = false) {
   for (const [field, value] of Object.entries(body)) {
     if (value === undefined) continue;
     const column = spec.columns[field];
-    if (field === "gpa") result[field] = gpa(value, field);
+    if (kind === "close_friends" && field !== "display_order") result[field] = normalizeFriendContact(value, field);
+    else if (field === "gpa") result[field] = gpa(value, field);
     else if (field === "graduation_year") result[field] = integer(value, field, 1, 9999);
     else if (field === "display_order") result[field] = integer(value, field, 0, 2147483647, false);
     else result[field] = text(value, field, column.length);

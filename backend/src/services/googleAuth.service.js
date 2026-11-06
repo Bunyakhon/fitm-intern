@@ -46,7 +46,8 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
     if (!row?.ready) fail(503, "GOOGLE_SCHEMA_REQUIRED", "Google Login รอการติดตั้งที่ได้รับอนุมัติ");
   }
   function active(actor, role) {
-    if (!actor || (role === "student" && !["pending", "searching", "placed", "in_progress", "completed"].includes(actor.status))
+    if (role === "student") authorizeActor(actor, "student");
+    if (!actor
       || (actorType(role) === "teacher" && actor.status !== "active")
       || (role === "department_staff" && actor.is_active !== true)
       || (role === "department_head" && actor.is_department_head !== true)
@@ -56,6 +57,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
   }
   function session(actor, role) {
     if (role === "student") {
+      authorizeActor(actor, "student");
       const fields = ["id", "student_id", "first_name", "last_name", "email", "track", "status"];
       return { success: true, role: "student", token: jwt.sign({ id: actor.id, student_id: actor.student_id,
         email: actor.email, track: actor.track, actor_type: "student", role: "student" }, process.env.JWT_SECRET,

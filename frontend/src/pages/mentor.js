@@ -216,6 +216,11 @@ async function saveProfile(event) {
 
   try {
     const result = await updateMentorProfile(verificationToken, profile);
+    if (typeof result?.data?.verification_token !== "string" || !result.data.verification_token) throw new Error("กรุณาเปิดลิงก์ยืนยันล่าสุดอีกครั้ง");
+    verificationToken = result.data.verification_token;
+    const updatedUrl = new URL(window.location.href);
+    updatedUrl.searchParams.set("token", verificationToken);
+    window.history.replaceState({}, document.title, updatedUrl.pathname + updatedUrl.search + updatedUrl.hash);
     populateProfile(result?.data?.mentor || profile);
     setState("success", "บันทึกการแก้ไขข้อมูลพี่เลี้ยงสำเร็จ");
   } catch (error) {

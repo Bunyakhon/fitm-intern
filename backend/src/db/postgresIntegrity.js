@@ -845,4 +845,10 @@ module.exports = {
   ]
 };
 // Additive Application Super Admin contracts; no startup schema mutation.
+// Profile relation checks derive from the same source as its Sequelize model.
+for (const [name, expression] of Object.entries(require('../models/studentProfileAggregate.schema').tables.student_close_friends.checks)) {
+  module.exports.constraints.push({ table_name: 'student_close_friends', name: 'student_close_friends_' + name,
+    type: 'c', definition: 'CHECK (' + expression + ')', key_count: 1 });
+}
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./superAdminIntegrity')[key]);
+for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopTopicExamIntegrity')[key]);

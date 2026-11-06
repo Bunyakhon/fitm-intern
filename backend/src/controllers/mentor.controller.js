@@ -298,14 +298,19 @@ exports.updateMyMentor = async (
     // หา Mentor ของ Student
     // ==============================
 
+    transaction = await sequelize.transaction();
     const mentor =
       await Mentor.findOne({
         where: {
           student_id: studentId,
         },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
       });
 
     if (!mentor) {
+      await transaction.rollback();
+      transaction = null;
       return res.status(404).json({
         success: false,
         message:
@@ -319,8 +324,6 @@ exports.updateMyMentor = async (
     // เมื่อข้อมูลถูกแก้
     // ต้องกลับไปรอยืนยันใหม่
     // ==============================
-
-    transaction = await sequelize.transaction();
 
     mentor.email =
       email

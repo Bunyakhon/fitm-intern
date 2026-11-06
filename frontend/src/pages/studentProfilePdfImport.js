@@ -5,6 +5,7 @@ import { profileMessage, profileFieldError, clearProfileErrors, notifyProfileCha
 const mounted = new WeakMap();
 const titles = { addresses: "ที่อยู่", education: "ประวัติการศึกษา", training: "ฝึกอบรม / ดูงาน / ฝึกงาน", skills: "ทักษะ" };
 const warningLabels = {
+  ENGLISH_TITLE_STORAGE_PENDING: "BLOCKED: ยังไม่นำเข้า Title (English) เพราะคอลัมน์จัดเก็บยังไม่พร้อม ข้อมูลส่วนอื่นนำเข้าได้ตามเดิม",
   LICENSE_CHECKBOX_REVIEW_REQUIRED: "Checkbox ใบขับขี่ยังอ่านไม่ได้อย่างแน่นอน กรุณาตรวจและกรอกเอง",
   MILITARY_CHECKBOX_REVIEW_REQUIRED: "Checkbox ภาวะทหารยังอ่านไม่ได้อย่างแน่นอน กรุณาตรวจและกรอกเอง",
   SKILL_RATING_REVIEW_REQUIRED: "บางทักษะอ่านระดับไม่ได้ เครื่องหมายข้างชื่อทักษะไม่ถูกถือเป็นระดับความสามารถ",

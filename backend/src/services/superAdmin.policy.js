@@ -1,5 +1,6 @@
 const { object, text, uuid, WorkflowError } = require('../validators/roleWorkflow.validator');
 const PERMISSIONS = Object.freeze({
+  'topic-exams.manage': 'จัดการเอกสารและตารางสอบหัวข้อโครงการ CO-09',
   'overview.read': 'ดูภาพรวมระบบ', 'accounts.read': 'ดูข้อมูลบัญชีพื้นฐาน',
   'accounts.write': 'แก้ไขชื่อและตำแหน่งบัญชีที่รองรับ', 'accounts.status': 'เปิด/ปิดบัญชี',
   'permissions.write': 'จัดการสิทธิ์ Super Admin', 'settings.write': 'แก้ไขค่าระบบที่อนุญาต',

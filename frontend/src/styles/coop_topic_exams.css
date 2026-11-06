@@ -1,0 +1,19 @@
+.co09-widget { margin-block: 1.5rem; padding: 1.25rem; border: 1px solid var(--border-color, #dbe5ef); border-radius: 12px; background: var(--card-bg, #fff); color: var(--text-color, #23354b); font-family: inherit; min-width: 0; }
+.co09-widget [hidden] { display: none !important; }
+.co09-widget *, .co09-widget *::before, .co09-widget *::after { box-sizing: border-box; }
+.co09-widget .co09-heading, .co09-widget .co09-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.co09-widget h2 { font-size: 1.2rem; } .co09-widget h3, .co09-widget h4 { margin-block: 1rem .5rem; }
+.co09-widget p, .co09-widget a, .co09-widget h3 { overflow-wrap: anywhere; }
+.co09-widget .co09-grid, .co09-widget .co09-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.co09-widget label { display: flex; flex-direction: column; gap: .35rem; min-width: 0; margin-block: .6rem; }
+.co09-widget input, .co09-widget textarea, .co09-widget select { width: 100%; min-width: 0; padding: .6rem; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; background: #fff; }
+.co09-widget button { padding: .55rem .8rem; border: 1px solid #cbd5e1; border-radius: 8px; background: var(--primary-color, #2563eb); color: #fff; font: inherit; cursor: pointer; max-width: 100%; }
+.co09-widget button:disabled { opacity: .55; cursor: default; }
+.co09-widget :focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.co09-widget fieldset, .co09-widget .co09-card { min-width: 0; margin-block: 1rem; padding: 1rem; border: 1px solid #dbe5ef; border-radius: 12px; }
+.co09-widget legend { padding-inline: .25rem; font-weight: 600; max-width: 100%; }
+.co09-widget .co09-wide { grid-column: 1 / -1; }
+.co09-widget .co09-committee-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: .6rem; margin-block: .75rem; }
+.co09-widget iframe { display: block; width: 100%; height: 65vh; border: 1px solid #dbe5ef; margin-top: .75rem; }
+.co09-widget [role=alert] { color: #b91c1c; }
+@media (max-width: 640px) { .co09-widget { padding: .75rem; } .co09-widget .co09-grid, .co09-widget .co09-list, .co09-widget .co09-committee-row { grid-template-columns: minmax(0,1fr); } }

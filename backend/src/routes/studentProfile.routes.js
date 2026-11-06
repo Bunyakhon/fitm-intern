@@ -43,7 +43,7 @@ router.get("/pdf-import/history", authenticateToken, privateImportResponse, pdfI
 router.get("/aggregate", authenticateToken, aggregate.getProfile);
 router.patch("/aggregate", authenticateToken, aggregate.saveAggregate);
 router.put("/aggregate", authenticateToken, aggregate.saveAggregate);
-for (const kind of ["addresses", "education", "training", "skills"]) {
+for (const kind of ["addresses", "education", "training", "skills", "close_friends"]) {
   router.get("/" + kind, authenticateToken, aggregate.children(kind, "read"));
   router.get("/" + kind + "/:id", authenticateToken, aggregate.children(kind, "read"));
   router.post("/" + kind, authenticateToken, aggregate.children(kind, "create"));

@@ -2,12 +2,14 @@ const {
   MentorToken,
   Mentor,
   Student,
-  sequelize,
 } = require("../models");
 
 const {
   hashVerificationToken,
+  createMentorVerificationToken,
+  withMentorVerification,
 } = require("../services/mentorToken.service");
+const { authorizeActor } = require("../services/unifiedAuth.service");
 
 /**
  * ค้นหา Verification Token ที่ยังใช้งานได้
@@ -44,6 +46,7 @@ async function findValidVerification(token, options = {}) {
         as: "mentor",
         attributes: [
           "id",
+          "student_id",
           "email",
           "first_name",
           "last_name",
@@ -107,6 +110,11 @@ async function findValidVerification(token, options = {}) {
     };
   }
 
+  const student = await Student.findByPk(verification.mentor.student_id, {
+    attributes: ["id", "track", "status"], transaction: options.transaction,
+  });
+  authorizeActor(student, "student");
+
   return {
     verification,
   };
@@ -140,14 +148,15 @@ async function verifyMentorToken(req, res) {
       success: true,
       message: "Verification Token ถูกต้อง",
       data: {
-        mentor: verification.mentor,
+        // student_id is loaded only for eligibility; retain the public response fields.
+        mentor: Object.fromEntries(["id", "email", "first_name", "last_name", "position", "status", "verified_at", "student"].map(key => [key, verification.mentor[key]])),
         expires_at: verification.expires_at,
       },
     });
   } catch (error) {
+    if (error.status === 403) return res.status(403).json({ success: false, message: error.message });
     console.error(
       "Verify mentor token error:",
-      error,
     );
 
     return res.status(500).json({
@@ -163,7 +172,7 @@ async function verifyMentorToken(req, res) {
  *
  * Mentor แก้ไขข้อมูลของตัวเองผ่าน Verification Token
  *
- * Token ยังไม่ถูกใช้ทิ้งในขั้นตอนนี้
+ * บันทึกและหมุน Token ใน Transaction เดียวกัน; Token เก่ายืนยันข้อมูลฉบับใหม่ไม่ได้
  */
 async function updateMentorProfile(req, res) {
   try {
@@ -174,22 +183,6 @@ async function updateMentorProfile(req, res) {
       last_name,
       position,
     } = req.body;
-
-    const result =
-      await findValidVerification(token);
-
-    if (result.error) {
-      return res
-        .status(result.error.status)
-        .json({
-          success: false,
-          message: result.error.message,
-        });
-    }
-
-    const { verification } = result;
-
-    const mentor = verification.mentor;
 
     const cleanEmail =
       typeof email === "string"
@@ -234,29 +227,34 @@ async function updateMentorProfile(req, res) {
       });
     }
 
-    await mentor.update({
-      email: cleanEmail,
-      first_name: cleanFirstName,
-      last_name: cleanLastName,
-      position: cleanPosition,
+    const saved = await withMentorVerification(token, async ({ mentor, verification, transaction }) => {
+      await mentor.update({
+        email: cleanEmail,
+        first_name: cleanFirstName,
+        last_name: cleanLastName,
+        position: cleanPosition,
 
-      // ยังไม่ถือว่ายืนยัน
-      status: "pending",
-      verified_at: null,
+        // ยังไม่ถือว่ายืนยัน
+        status: "pending",
+        verified_at: null,
+      }, { transaction });
+      const rotated = await createMentorVerificationToken(mentor.id, { transaction, expiresAt: verification.expires_at });
+      return { mentor, verification_token: rotated.token, expires_at: rotated.record.expires_at };
     });
 
+    res.set("Cache-Control", "no-store");
     return res.status(200).json({
       success: true,
       message:
         "แก้ไขข้อมูลพี่เลี้ยงสำเร็จ",
       data: {
-        mentor,
+        ...saved,
       },
     });
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
     console.error(
       "Update mentor verification profile error:",
-      error,
     );
 
     return res.status(500).json({
@@ -277,152 +275,20 @@ async function updateMentorProfile(req, res) {
  * mentor_tokens.used_at = NOW()
  */
 async function confirmMentor(req, res) {
-  const transaction = await sequelize.transaction();
-
   try {
-    const { token } = req.body;
-
-    if (
-      !token ||
-      typeof token !== "string" ||
-      !token.trim()
-    ) {
-      await transaction.rollback();
-
-      return res.status(400).json({
-        success: false,
-        message: "ไม่พบ Verification Token",
-      });
-    }
-
-    const tokenHash = hashVerificationToken(
-      token.trim(),
-    );
-
-    /*
-     * Lock เฉพาะ mentor_tokens
-     *
-     * ห้าม include Mentor ตรงนี้
-     * เพราะ PostgreSQL ไม่อนุญาต FOR UPDATE
-     * บน nullable side ของ LEFT OUTER JOIN
-     */
-    const verification = await MentorToken.findOne({
-      where: {
-        token_hash: tokenHash,
-      },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
+    const mentor = await withMentorVerification(req.body?.token, async ({ mentor, verification, transaction }) => {
+      const now = new Date();
+      await mentor.update({ status: "verified", verified_at: now }, { transaction });
+      await verification.update({ used_at: now }, { transaction });
+      return mentor;
     });
-
-    if (!verification) {
-      await transaction.rollback();
-
-      return res.status(404).json({
-        success: false,
-        message: "Verification Token ไม่ถูกต้อง",
-      });
-    }
-
-    if (verification.used_at) {
-      await transaction.rollback();
-
-      return res.status(410).json({
-        success: false,
-        message:
-          "Verification Token นี้ถูกใช้งานแล้วหรือถูกยกเลิก",
-      });
-    }
-
-    if (
-      new Date(verification.expires_at) <=
-      new Date()
-    ) {
-      await transaction.rollback();
-
-      return res.status(410).json({
-        success: false,
-        message: "Verification Token หมดอายุแล้ว",
-      });
-    }
-
-    /*
-     * Query Mentor แยกจาก Token
-     */
-    const mentor = await Mentor.findByPk(
-      verification.mentor_id,
-      {
-        transaction,
-      },
-    );
-
-    if (!mentor) {
-      await transaction.rollback();
-
-      return res.status(404).json({
-        success: false,
-        message: "ไม่พบข้อมูลพี่เลี้ยง",
-      });
-    }
-
-    const now = new Date();
-
-    /*
-     * Mentor ยืนยันข้อมูล
-     */
-    await mentor.update(
-      {
-        status: "verified",
-        verified_at: now,
-      },
-      {
-        transaction,
-      },
-    );
-
-    /*
-     * Token ถูกใช้แล้ว
-     */
-    await verification.update(
-      {
-        used_at: now,
-      },
-      {
-        transaction,
-      },
-    );
-
-    await transaction.commit();
-
-    return res.status(200).json({
-      success: true,
-      message: "ยืนยันข้อมูลพี่เลี้ยงสำเร็จ",
-      data: {
-        mentor: {
-          id: mentor.id,
-          email: mentor.email,
-          first_name: mentor.first_name,
-          last_name: mentor.last_name,
-          position: mentor.position,
-          status: "verified",
-          verified_at: now,
-        },
-      },
-    });
+    return res.status(200).json({ success: true, message: "ยืนยันข้อมูลพี่เลี้ยงสำเร็จ", data: {
+      mentor: Object.fromEntries(["id", "email", "first_name", "last_name", "position", "status", "verified_at"].map(key => [key, mentor[key]])),
+    } });
   } catch (error) {
-    if (!transaction.finished) {
-      await transaction.rollback();
-    }
-
-    console.error(
-      "Confirm mentor error:",
-      error,
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "เกิดข้อผิดพลาดในการยืนยันข้อมูลพี่เลี้ยง",
-    });
+    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+    console.error("Confirm mentor error");
+    return res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดในการยืนยันข้อมูลพี่เลี้ยง" });
   }
 }
 

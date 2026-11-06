@@ -80,7 +80,7 @@ test('actual SQL/API Teacher+Admin assignment is atomic, unique, and entirely ro
     stage = 'all other actors denied';
     const teachers = await models.Teacher.findAll({ where: { id: { [Op.ne]: teacherId } }, attributes: ['id', 'email', 'status', 'department', 'is_department_head'] }); assert.equal(teachers.length, 22);
     for (const teacher of teachers) assert.equal((await http('/api/admin/overview', applicationSession(teacher, 'teacher').token)).status, 403);
-    const student = await models.Student.findOne({ attributes: ['id', 'email', 'student_id', 'track', 'status'] }); assert.equal((await http('/api/admin/overview', applicationSession(student, 'student').token)).status, 403);
+    const student = await models.Student.findOne({ where: { track: 'co_op' }, attributes: ['id', 'email', 'student_id', 'track', 'status'] }); assert.ok(student, 'An authorized Co-op fixture is required'); assert.equal((await http('/api/admin/overview', applicationSession(student, 'student').token)).status, 403);
     for (const staff of await models.DepartmentStaff.findAll({ attributes: ['id', 'email', 'is_active'] })) assert.equal((await http('/api/admin/overview', applicationSession(staff, 'department_staff').token)).status, 403);
     const me = await http('/api/admin/me', token), confirmation = { password, confirmed: true };
     stage = 'last admin, versions, settings and audit';

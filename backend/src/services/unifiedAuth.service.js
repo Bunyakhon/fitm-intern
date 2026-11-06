@@ -16,7 +16,8 @@ const fail = (status, code, message) => {
   throw Object.assign(new Error(message), { status, code });
 };
 function authorizeActor(actor, type) {
-  if (!actor || (type === "student" && !["pending", "searching", "placed", "in_progress", "completed"].includes(actor.status))
+  if (!actor || (type === "student" && (actor.track !== "co_op"
+      || !["pending", "searching", "placed", "in_progress", "completed"].includes(actor.status)))
     || (type === "teacher" && (actor.status !== "active" || (actor.is_department_head && !actor.department?.trim())))
     || (type === "department_staff" && actor.is_active !== true)
     || (type === 'super_admin' && (actor.is_active !== true || process.env.NODE_ENV !== 'development'))) {

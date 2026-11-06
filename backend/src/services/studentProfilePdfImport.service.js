@@ -1,5 +1,7 @@
 const crypto = require("node:crypto"), fs = require("node:fs/promises"), path = require("node:path");
 const rules = require("./studentProfileValidation");
+const { CONTACT_FIELDS } = require("./studentProfileContacts");
+const PDF_PROFILE_FIELDS = rules.EDITABLE_PROFILE_FIELDS.filter(key => !CONTACT_FIELDS.includes(key) && key !== "national_id");
 const storageDefault = require("../config/storage");
 const { createStudentProfileFilesService, signature } = require("./studentProfileFiles.service");
 const { extractProfilePdf } = require("./studentProfilePdf.client");
@@ -50,7 +52,7 @@ function safeExtraction(data) {
   if (data?.template !== "TGDE-COOP-02" || !Number.isInteger(data.page_count) || data.page_count < 1 || data.page_count > 4 || !["pdf_text", "ocr"].includes(data.method)) rules.fail("ผลอ่าน PDF ไม่ตรงข้อกำหนด", 502);
   const candidates = [];
   for (const item of (Array.isArray(data.candidates) ? data.candidates : []).slice(0, 100)) {
-    if (!(item.scope === "profile" && rules.EDITABLE_PROFILE_FIELDS.includes(item.key) || item.scope === "student" && STUDENT.includes(item.key))) continue;
+    if (!(item.scope === "profile" && PDF_PROFILE_FIELDS.includes(item.key) || item.scope === "student" && STUDENT.includes(item.key))) continue;
     if (item.value === null || item.value === undefined || item.value === "") continue;
     const result = { scope: item.scope, key: item.key, value: item.value, page: item.page, source: item.source, review_required: true };
     try { result.value = normalizeField(item.scope, item.key, item.value); }
@@ -58,7 +60,7 @@ function safeExtraction(data) {
     candidates.push(result);
   }
   const records = {};
-  for (const kind of Object.keys(rules.RELATIONS)) {
+  for (const kind of Object.keys(IDENTITY_KEYS)) {
     const seen = new Set(); records[kind] = [];
     for (const item of (Array.isArray(data.records?.[kind]) ? data.records[kind] : []).slice(0, 100)) {
       const values = {}, errors = {};
@@ -105,6 +107,10 @@ function createStudentProfilePdfImportService(models, aggregate, { extract = ext
   async function preview(owner, file) {
     const info = fileInfo(file), snapshot = await aggregate.read(owner);
     const result = safeExtraction(await extract(file.buffer));
+    if (!snapshot.profile_english_prefix_available && result.candidates.some(field => field.scope === "profile" && field.key === "english_prefix")) {
+      result.candidates = result.candidates.filter(field => field.scope !== "profile" || field.key !== "english_prefix");
+      result.warnings.push("ENGLISH_TITLE_STORAGE_PENDING");
+    }
     if (result.warnings.includes("STUDENT_ID_UNREADABLE")) rules.fail("อ่านรหัสนักศึกษาไม่ได้ จึงยังตรวจเจ้าของเอกสารไม่ได้", 422, "PDF_STUDENT_ID_UNREADABLE");
     if (result.identity.student_id && result.identity.student_id !== String(snapshot.student.student_id).trim()) rules.fail("รหัสนักศึกษาใน PDF ไม่ตรงบัญชี ไม่อนุญาตให้นำเข้า", 422, "PDF_STUDENT_ID_MISMATCH");
     const token = sign({ kind: "profile-pdf-v1", owner, id: crypto.randomUUID(), sha256: info.sha256, name: info.name, revision: snapshot.profile_revision, method: result.method, issued: now() });
@@ -127,11 +133,15 @@ function createStudentProfilePdfImportService(models, aggregate, { extract = ext
     const data = receipt(owner, body.receipt), info = fileInfo(file);
     if (expected !== data.revision) rules.fail("Revision ต้องตรงฉบับ Preview กรุณาตรวจใหม่", 409, "PDF_PREVIEW_REVISION_CHANGED");
     if (info.sha256 !== data.sha256 || info.name !== data.name) rules.fail("ไฟล์เปลี่ยนจากฉบับ Preview กรุณาอ่านใหม่");
-    rules.object(body.changes, ["student", "profile", ...Object.keys(rules.RELATIONS)]);
+    rules.object(body.changes, ["student", "profile", ...Object.keys(IDENTITY_KEYS)]);
     if (body.changes.student) rules.object(body.changes.student, STUDENT);
+    if (body.changes.profile) rules.object(body.changes.profile, PDF_PROFILE_FIELDS);
     const prepared = aggregate.prepareAggregate(body.changes);
     if (prepared.operations.some(op => op.action === "delete")) rules.fail("PDF Import ไม่ลบรายการเดิม");
     const prior = await committed(owner, data); if (prior) return prior;
+    if (Object.hasOwn(prepared.profile || {}, "english_prefix") && !(await aggregate.read(owner)).profile_english_prefix_available) {
+      rules.fail("BLOCKED: คอลัมน์ Title (English) ยังไม่พร้อม จึงยังไม่นำเข้าฟิลด์นี้", 503, "PROFILE_ENGLISH_TITLE_SCHEMA_PENDING");
+    }
     const paths = await storage.ensureStudentStorage(owner);
     const [realRoot, realDirectory] = await Promise.all([fs.realpath(storage.STORAGE_ROOT), fs.realpath(paths.profileDocuments)]);
     if (path.relative(realRoot, realDirectory) !== path.relative(storage.STORAGE_ROOT, paths.profileDocuments)) rules.fail("ตำแหน่งเก็บ PDF ส่วนตัวไม่ถูกต้อง", 503);

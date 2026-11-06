@@ -84,6 +84,9 @@ a {
   color: inherit;
 }
 
+/* Track/state visibility must override authored grid and panel display rules. */
+#coopOverview [hidden], .dashboard-content > .content-panel[hidden], #studentSupervisionSection[hidden] { display: none; }
+
 /* ==============================
    Navbar
    ============================== */

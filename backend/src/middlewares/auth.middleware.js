@@ -19,7 +19,7 @@ function createAuthenticateToken({
   resolveTeacherAdmin = claims => resolveAdminPrincipal(models, claims),
 } = {}) {
   const actors = {
-    student: { Model: StudentModel, fields: ["id", "student_id", "status"] },
+    student: { Model: StudentModel, fields: ["id", "student_id", "status", "track"] },
     teacher: { Model: TeacherModel, fields: ["id", "status", "is_department_head", "department"] },
     department_staff: { Model: StaffModel, fields: ["id", "is_active"] },
     super_admin: { Model: SuperAdminModel, fields: ['id', 'email', 'first_name', 'last_name', 'is_active', 'permissions', 'session_version', 'teacher_id'] },
@@ -95,7 +95,7 @@ function createAuthenticateToken({
         return res.status(401).json({ success: false, message: "Token ไม่ถูกต้อง" });
       }
 
-      req.user = { ...decoded, actor_type: type, role };
+      req.user = { ...decoded, actor_type: type, role, ...(type === "student" ? { track: actor.track } : {}) };
       if (type === 'super_admin') req.superAdmin = actor;
       if (type === 'teacher' && decoded.admin_grant_id !== undefined) req.superAdmin = await resolveTeacherAdmin(req.user);
       return next();
@@ -180,6 +180,14 @@ function authenticateStudentToken(req, res, next) {
   return authenticateToken(req, res, () => requireStudentActor(req, res, next));
 }
 
+// Called after authenticateToken: track comes from the live Student row, not JWT/UI flags.
+function requireCoopStudent(req, res, next) {
+  return requireStudentActor(req, res, () => {
+    if (req.user.track !== "co_op") return res.status(403).json({ success: false, code: "COOP_REQUIRED", message: "สำหรับนักศึกษาสหกิจศึกษาเท่านั้น" });
+    return next();
+  });
+}
+
 module.exports = {
   createAuthenticateToken,
   authenticateToken,
@@ -187,4 +195,5 @@ module.exports = {
   requireDepartmentStaff,
   requireStudentActor,
   authenticateStudentToken,
+  requireCoopStudent,
 };

@@ -11,7 +11,7 @@ const legacy = [field("prefix", "คำนำหน้า", "select", { options:
   ...[["father_name", "ชื่อบิดา"], ["father_occupation", "อาชีพบิดา"], ["mother_name", "ชื่อมารดา"], ["mother_occupation", "อาชีพมารดา"], ["emergency_contact_name", "ชื่อผู้ติดต่อฉุกเฉิน"], ["emergency_contact_relation", "ความเกี่ยวข้อง"]].map(([key, label]) => field(key, label)),
   field("father_age", "อายุบิดา", "integer", { min: 1, limit: 2147483647 }), field("mother_age", "อายุมารดา", "integer", { min: 1, limit: 2147483647 })];
 export const pdfFieldSpecs = {
-  profile: Object.fromEntries([...legacy, ...workspaceFields.personal, ...workspaceFields.family].map(spec => [spec.key, spec])),
+  profile: Object.fromEntries([...legacy, ...workspaceFields.personal.filter(spec => spec.key !== "national_id"), ...workspaceFields.family].map(spec => [spec.key, spec])),
   student: Object.fromEntries([field("major", "สาขาวิชา"), field("year_level", "ชั้นปี", "integer", { min: 1, limit: 4 }), field("gpa", "GPA สะสม", "gpa"), ...workspaceFields.academic].map(spec => [spec.key, spec])),
   addresses: [field("address_type", "ประเภทที่อยู่", "select", { required: true, options: [["registered", "ทะเบียนบ้าน"], ["current", "ปัจจุบัน"]] }), ...workspaceFields.addresses],
   education: workspaceFields.education, training: workspaceFields.training, skills: workspaceFields.skills,

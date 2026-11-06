@@ -10,6 +10,7 @@ const {
   requestJobMatches,
 } = require("../services/nlpMatching.client");
 const { isUsableResumeText } = require("../services/resumeText.service");
+const { publishedJobWhere } = require("../services/jobEligibility");
 
 const SCHEMA_VERSION = "job-matching.v1";
 const TOP_K = 5;
@@ -221,7 +222,7 @@ function createJobMatchingHandler(dependencies = {}) {
       }
 
       const jobPostings = await JobPostingModel.findAll({
-        where: { status: "published" },
+        where: publishedJobWhere(),
         attributes: [
           "id",
           "title",

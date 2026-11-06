@@ -2,8 +2,11 @@ const crypto = require("crypto");
 
 const {
   MentorToken,
+  Mentor,
+  Student,
   sequelize,
 } = require("../models");
+const { authorizeActor } = require("./unifiedAuth.service");
 
 const TOKEN_EXPIRES_HOURS = 24;
 
@@ -58,6 +61,9 @@ async function createMentorVerificationToken(
     await sequelize.transaction();
 
   try {
+    // Every writer locks Mentor before any token row, including resend/rotation.
+    const mentor = await Mentor.findByPk(mentorId, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!mentor) throw Object.assign(new Error("ไม่พบข้อมูลพี่เลี้ยง"), { status: 404 });
     const now = new Date();
 
     // ปิด Token เก่าที่ยังไม่ได้ใช้
@@ -77,7 +83,7 @@ async function createMentorVerificationToken(
     const token = generateVerificationToken();
     const tokenHash = hashVerificationToken(token);
 
-    const expiresAt = new Date(
+    const expiresAt = options.expiresAt || new Date(
       Date.now() +
         TOKEN_EXPIRES_HOURS * 60 * 60 * 1000,
     );
@@ -110,8 +116,32 @@ async function createMentorVerificationToken(
   }
 }
 
+async function withMentorVerification(token, action) {
+  const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
+  if (typeof token !== "string" || !token.trim()) fail(400, "ไม่พบ Verification Token");
+  const tokenHash = hashVerificationToken(token.trim());
+  // This lookup only locates the parent. Recheck the capability after acquiring locks.
+  const candidate = await MentorToken.findOne({ where: { token_hash: tokenHash }, attributes: ["id", "mentor_id"] });
+  if (!candidate) fail(404, "Verification Token ไม่ถูกต้อง");
+  return sequelize.transaction(async transaction => {
+    const mentor = await Mentor.findByPk(candidate.mentor_id, { transaction, lock: transaction.LOCK.UPDATE });
+    if (!mentor) fail(404, "ไม่พบข้อมูลพี่เลี้ยง");
+    // No outer join under FOR UPDATE (PostgreSQL rejects locking its nullable side).
+    const verification = await MentorToken.findOne({ where: { id: candidate.id, mentor_id: mentor.id, token_hash: tokenHash }, transaction, lock: transaction.LOCK.UPDATE });
+    if (!verification) fail(404, "Verification Token ไม่ถูกต้อง");
+    if (verification.used_at) fail(410, "Verification Token นี้ถูกใช้งานแล้วหรือถูกยกเลิก");
+    const expiry = new Date(verification.expires_at).getTime();
+    if (!Number.isFinite(expiry) || expiry <= Date.now()) fail(410, "Verification Token หมดอายุแล้ว");
+    // Keep the Mentor -> token lock order; eligibility comes from the live owner.
+    const student = await Student.findByPk(mentor.student_id, { attributes: ["id", "track", "status"], transaction });
+    authorizeActor(student, "student");
+    return action({ mentor, verification, transaction });
+  });
+}
+
 module.exports = {
   generateVerificationToken,
   hashVerificationToken,
   createMentorVerificationToken,
+  withMentorVerification,
 };

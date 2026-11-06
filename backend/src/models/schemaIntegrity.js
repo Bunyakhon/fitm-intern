@@ -231,7 +231,12 @@ function registerSchemaIntegrity(sequelize) {
       references: { model: item.target, key: item.key }, onDelete: item.onDelete, onUpdate: item.onUpdate,
     });
   }
-  for (const item of definitions.defaults) attribute(item.table, item.field).defaultValue = literal(item.sql);
+  for (const item of definitions.defaults) {
+    // Skills validate display_order before INSERT. Keep its SQL default 0 as a
+    // JS integer too; a Literal("0") fails Number.isInteger in validDraftValues.
+    attribute(item.table, item.field).defaultValue = item.table === "student_skills" && item.field === "display_order" && item.sql === "0"
+      ? 0 : literal(item.sql);
+  }
   for (const [table, fields] of Object.entries(definitions.required)) for (const field of fields) attribute(table, field).allowNull = false;
   for (const item of definitions.indexes) {
     const model = byTable[item.table_name];

@@ -1,0 +1,113 @@
+/* Student project ownership: every selector is contained by the actual panel root. */
+#panel-coop {
+  container-type: inline-size;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.65;
+  min-width: 0;
+}
+
+#panel-coop [hidden] { display: none !important; }
+#panel-coop :is(h2, h3, h4, p, a, dd, li, summary) { overflow-wrap: anywhere; }
+#panel-coop :is(h2, h3, h4) { color: var(--text); }
+#panel-coop .panel-header { padding: 0; margin-bottom: 24px; background: none; border: 0; box-shadow: none; overflow: visible; }
+#panel-coop .panel-header::before { content: none; }
+#panel-coop .panel-header h2 { margin: 0 0 6px; font-size: 24px; line-height: 1.5; color: var(--primary-dark); }
+#panel-coop .panel-header p { color: var(--muted); font-size: 16px; line-height: 1.7; }
+
+#panel-coop :is(.coop-project-card, .project-upload-card, .co09-card) {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+#panel-coop :is(.coop-project-card, .project-upload-card) { gap: 20px; margin: 0; }
+#panel-coop .section-card-header { margin: 0; padding: 0; border: 0; }
+#panel-coop :is(.section-card-header h3, .co09-card h3) { display: flex; align-items: flex-start; gap: 10px; font-size: 20px; line-height: 1.55; margin: 0; }
+#panel-coop :is(.section-card-header h3, .co09-card h3) > i { flex: 0 0 auto; margin-top: 5px; color: var(--primary); }
+#panel-coop :is(.section-card-header p, .project-help, .coop-help) { font-size: 14px; line-height: 1.7; color: var(--muted); }
+#panel-coop .section-card-header p { margin-top: 6px; }
+#panel-coop .project-advisor-field { padding-bottom: 20px; }
+#panel-coop .project-advisor-field > .project-help { margin: 0 0 12px; }
+#panel-coop .project-advisor-field > #projectAdvisorHelp { margin: 10px 0 0; }
+#panel-coop :is(.form-group label, .co09-widget label) { font-size: 15px; font-weight: 600; color: var(--text); }
+#panel-coop .project-advisor-status { font-size: 15px; line-height: 1.7; gap: 8px; }
+#panel-coop .project-advisor-badge { font-size: 14px; padding: 5px 12px; }
+#panel-coop .project-help { margin-top: 8px; }
+
+#panel-coop :is(input, select, button) { font: inherit; }
+#panel-coop :is(.form-group input, .form-group select, .co09-widget input) { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--text); font-size: 16px; padding: 10px 12px; }
+#panel-coop :is(input, select):disabled { color: var(--muted); background: var(--bg); }
+#panel-coop :is(button, .project-file-preview) { min-height: 44px; max-width: 100%; font-size: 15px; border-radius: 10px; padding: 10px 16px; line-height: 1.5; }
+#panel-coop :is(.coop-primary, .btn-primary) { background: var(--primary); color: var(--white); border: 1px solid var(--primary); box-shadow: none; }
+#panel-coop :is(.coop-primary, .btn-primary):hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
+#panel-coop :is(.coop-secondary, .btn-secondary) { background: var(--white); color: var(--primary); border: 1px solid var(--border); box-shadow: none; }
+#panel-coop :is(.coop-secondary, .btn-secondary):hover:not(:disabled) { background: var(--primary-soft); border-color: var(--primary); }
+#panel-coop :is(button, input, select, a, summary):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+#panel-coop button:disabled { opacity: .6; cursor: default; }
+#panel-coop .project-actions { gap: 12px; padding-top: 16px; }
+#panel-coop .message { font-size: 14px; line-height: 1.7; }
+#panel-coop :is(.message, .coop-operation-message):empty { display: none; }
+
+#panel-coop #co09Student { margin: 20px 0; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text); }
+#panel-coop .co09-heading { gap: 12px; margin-bottom: 10px; }
+#panel-coop .coop-section-caption { margin: 0; color: var(--muted); font-size: 14px; }
+#panel-coop .co09-heading button { font-size: 14px; }
+#panel-coop .coop-operation-message { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
+#panel-coop .coop-operation-message[role="alert"] { color: var(--text); padding: 12px; border: 1px solid var(--danger); border-radius: 10px; background: var(--danger-light); }
+#panel-coop .coop-exam-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
+#panel-coop .co09-card { margin: 0; }
+#panel-coop .coop-state-chip { display: inline-block; padding: 4px 12px; margin: 14px 0 16px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg); color: var(--text); font-size: 14px; font-weight: 600; }
+#panel-coop .coop-state-chip:is([data-state="approved"], [data-state="completed"], [data-state="scheduled"]) { background: var(--primary-soft); border-color: var(--border); color: var(--primary-dark); }
+#panel-coop .coop-state-chip:is([data-state="needs_revision"], [data-state="cancelled"]) { background: var(--danger-light); border-color: var(--danger); color: var(--text); }
+#panel-coop .coop-document-file { padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); margin-bottom: 12px; }
+#panel-coop .coop-file-name { font-size: 15px; font-weight: 600; }
+#panel-coop .co09-widget a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; }
+#panel-coop .coop-detail-note { padding: 12px 14px; margin-top: 12px; border-left: 3px solid var(--primary); background: var(--primary-soft); border-radius: 0 8px 8px 0; font-size: 14px; white-space: pre-wrap; }
+#panel-coop .coop-file-actions { justify-content: flex-start; margin-top: 16px; gap: 10px; }
+#panel-coop .co09-widget form { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+#panel-coop .co09-widget fieldset { border: 0; border-radius: 0; padding: 0; margin: 0; min-width: 0; }
+#panel-coop .co09-widget legend { padding: 0; font-size: 15px; color: var(--text); }
+#panel-coop .co09-widget label { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+#panel-coop .co09-widget .coop-help { margin: 8px 0 12px; }
+#panel-coop input[type="file"] { padding: 0; font-size: 14px; line-height: 44px; overflow: hidden; }
+#panel-coop input[type="file"]::file-selector-button { margin-right: 10px; min-height: 44px; padding: 8px 12px; border: 0; border-right: 1px solid var(--border); background: var(--primary-soft); color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
+
+#panel-coop .coop-exam-facts { display: grid; gap: 16px; margin: 0; }
+#panel-coop .coop-exam-facts > div { display: grid; gap: 4px; }
+#panel-coop .coop-exam-facts dt { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+#panel-coop .coop-exam-facts dt i { width: 18px; text-align: center; color: var(--primary); }
+#panel-coop .coop-exam-facts dd { margin: 0; font-size: 16px; font-weight: 500; }
+#panel-coop .coop-exam-empty { padding: 20px 16px; border: 1px dashed var(--border); border-radius: 12px; background: var(--bg); }
+#panel-coop .coop-exam-empty > p:first-child { font-weight: 600; }
+#panel-coop .co09-card .coop-committee-title { margin: 20px 0 10px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 16px; }
+#panel-coop .coop-committee-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+#panel-coop .coop-committee-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 10px 12px; border-radius: 10px; background: var(--bg); font-size: 15px; }
+#panel-coop .coop-committee-role { color: var(--muted); font-size: 14px; }
+#panel-coop .coop-exam-history { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; }
+#panel-coop .coop-exam-history summary { cursor: pointer; color: var(--primary); font-weight: 600; padding-block: 6px; }
+#panel-coop .coop-exam-history ol { padding-left: 22px; margin-top: 12px; }
+#panel-coop .coop-exam-history li { margin-block: 10px; }
+
+#panel-coop .project-upload-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+#panel-coop .project-file-card { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--white); }
+#panel-coop .project-file-card label { font-size: 16px; }
+#panel-coop .project-current-file { padding: 14px; border-radius: 10px; background: var(--bg); font-size: 14px; }
+#panel-coop .project-file-name { font-size: 15px; }
+#panel-coop .project-file-date { font-size: 14px; }
+
+@container (min-width: 760px) {
+  #panel-coop .coop-exam-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #panel-coop .project-upload-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 480px) {
+  #panel-coop :is(.coop-project-card, .project-upload-card, .co09-card) { padding: 20px; border-radius: 12px; }
+  #panel-coop :is(.section-card-header h3, .co09-card h3) { font-size: 20px; }
+  #panel-coop .project-file-card { padding: 16px; }
+  #panel-coop :is(.project-actions, .coop-file-actions) { align-items: stretch; }
+  #panel-coop :is(.project-actions, .coop-file-actions) > button { flex: 1 1 100%; }
+  #panel-coop .co09-widget form button { width: 100%; }
+  #panel-coop .project-current-file { flex-direction: column; align-items: stretch; }
+}

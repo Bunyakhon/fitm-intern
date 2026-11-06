@@ -1,4 +1,9 @@
 import { revealNavigationItem } from "../ui/navigationScroll.js";
+import { mountTopicExams } from './coopTopicExams.js';
+import { studentTopicExamView } from './studentCoopProjectView.js';
+import { supportsStudentDashboard, canUseCoopFeatures, canOpenStudentPanel, applyStudentDashboardAccess } from "./studentDashboardAccess.js";
+import { mountStudentOverview } from "./studentOverview.js";
+import { renderProfileAdvisors } from "./studentProfileAdvisors.js";
 import { mountCoopActivities } from "./coopActivities.js";
 import { mountStudentGoogleAccount } from "./studentGoogleAccount.js";
 import { renderAccountProfile, accountProfileState } from "./studentAccountOverview.js";
@@ -44,6 +49,8 @@ import { setButtonLoading, showActionModal, showConfirmModal, showToast } from "
 console.log("KIWI student cooperative dashboard loaded");
 
 const companyEvaluation = initCompanyEvaluation({ document, getEvaluation: getMyCompanyEvaluation, saveEvaluation: saveMyCompanyEvaluation, showToast, setButtonLoading, formatDate });
+const topicExams = mountTopicExams({ document, container: document.getElementById('co09Student'), view: studentTopicExamView });
+const studentOverview = mountStudentOverview({ document, list: getMyCoopRequests, getToken: getStudentToken, statusLabel: value => getCoopRequestStatusMeta(value).label, formatDate });
 
 // ==============================
 // Elements
@@ -65,8 +72,6 @@ const logoutBtn =
 const profileFullName =
   document.getElementById("profileFullName");
 
-const profilePrefix =
-  document.getElementById("profilePrefix");
 
 const profileStudentId =
   document.getElementById("profileStudentId");
@@ -105,53 +110,17 @@ const studentStatus =
 // Profile - StudentProfile
 // ==============================
 
-const profileBirthDate =
-  document.getElementById("profileBirthDate");
 
-const profileAge =
-  document.getElementById("profileAge");
 
-const profileHeight =
-  document.getElementById("profileHeight");
 
-const profileWeight =
-  document.getElementById("profileWeight");
 
-const profileNationality =
-  document.getElementById("profileNationality");
 
-const profileEthnicity =
-  document.getElementById("profileEthnicity");
 
-const profileReligion =
-  document.getElementById("profileReligion");
 
-const profileBloodType =
-  document.getElementById("profileBloodType");
 
-const profileMedicalConditions =
-  document.getElementById("profileMedicalConditions");
 
-const profileAllergies =
-  document.getElementById("profileAllergies");
 
-const profileSpecialAbilities =
-  document.getElementById("profileSpecialAbilities");
 
-const profileRelatedSkills =
-  document.getElementById("profileRelatedSkills");
-
-const profileHometownAddress =
-  document.getElementById("profileHometownAddress");
-
-const profileHometownPhone =
-  document.getElementById("profileHometownPhone");
-
-const profileCurrentAddress =
-  document.getElementById("profileCurrentAddress");
-
-const profileCurrentPhone =
-  document.getElementById("profileCurrentPhone");
 
 const profileFatherName =
   document.getElementById("profileFatherName");
@@ -204,9 +173,6 @@ let selectedProfileImageFile = null;
 let selectedProfileImageRevision = null;
 let profileImageObjectUrl = null;
 
-const btnEditProfile =
-  document.getElementById("btnEditProfile");
-
 const profileEditModal =
   document.getElementById("profileEditModal");
 
@@ -250,6 +216,7 @@ let hasAdvisorSelectionChanged = false;
 let isProfileImageUploading = false;
 let isStudentProfileSaving = false;
 let studentGoogleAccount;
+let coopWidgetsInitialized = false;
 
 // ==============================
 // Authentication
@@ -257,6 +224,7 @@ let studentGoogleAccount;
 
 async function checkAuthentication() {
   const token = getStudentToken();
+  studentOverview.clear();
   let authenticated = false;
 
   if (!token) {
@@ -276,11 +244,8 @@ async function checkAuthentication() {
 
     const student = result.data;
 
-    // ตรวจว่าเป็นนักศึกษาสหกิจ
-    if (student.track !== "co_op") {
-      console.warn(
-        "This account is not cooperative education."
-      );
+    // Admit only Co-op after live backend verification; shared workflows stay intact.
+    if (!supportsStudentDashboard(student)) {
 
       clearAuthentication();
 
@@ -295,13 +260,23 @@ async function checkAuthentication() {
 
     // แสดงข้อมูลจาก students
     renderStudent(student);
+    applyStudentDashboardAccess(document, student);
+    studentOverview.load(student);
+    if (!canOpenStudentPanel(student, document.querySelector(".content-panel.active")?.id)) activateDashboardPanel("panel-overview");
     studentGoogleAccount ||= mountStudentGoogleAccount({ document });
     if (document.getElementById("panel-google-account")?.classList.contains("active")) studentGoogleAccount?.load();
 
     // โหลดข้อมูลเพิ่มเติมจาก student_profiles
     const studentProfile = await loadStudentProfile();
     await loadTeachers(studentProfile?.advisor_teacher_id);
-    await loadStudentCoopProjectSections();
+    if (canUseCoopFeatures(student)) {
+      if (!coopWidgetsInitialized) {
+        coopWidgetsInitialized = true;
+        initStudentInternshipLog();
+        initStudentSupervision();
+      }
+      await loadStudentCoopProjectSections();
+    }
   } catch (error) {
     if (getStudentToken() !== token) { handleStudentSessionChange(); return; }
     if (error.status === 401 || (!authenticated && [403, 404].includes(error.status))) {
@@ -322,6 +297,7 @@ async function checkAuthentication() {
 async function loadStudentProfile() {
   const loadSequence = typeof studentProfileLoadSequence === "number" ? ++studentProfileLoadSequence : null;
   setProfileLoading(true);
+  profilePanel.dataset.loadState = "loading";
   accountProfileState(document, "loading");
   showMessage(profileLoadMessage, "กำลังโหลดข้อมูลประวัตินักศึกษา...", "loading");
 
@@ -373,6 +349,7 @@ async function loadStudentProfile() {
       showMessage(profileLoadMessage, "ยังไม่มีรายละเอียดประวัติเพิ่มเติม", "info");
     }
 
+    profilePanel.dataset.loadState = "ready";
     await loadProfileImage(Boolean(result.student.profile_image));
 
     return result.student;
@@ -385,6 +362,7 @@ async function loadStudentProfile() {
     if (loadSequence !== null && loadSequence !== studentProfileLoadSequence) return null;
     // A failed refresh must not turn an existing profile/draft into an empty form.
     accountProfileState(document, "error");
+    profilePanel.dataset.loadState = "error";
 
     if (error.status === 401) {
       clearAuthentication();
@@ -438,6 +416,15 @@ function initProfileTabs(tablist, defaultTabId) {
         const content = document.getElementById(tab.getAttribute("aria-controls"));
         if (content) content.hidden = !active;
       }
+      if (tablist.id === "studentProfileTabs") {
+        const shortcuts = document.querySelectorAll('[data-profile-section]');
+        for (const shortcut of shortcuts) {
+          const panel = document.getElementById(shortcut.dataset.profileSection)?.closest('[role="tabpanel"]');
+          shortcut.hidden = panel?.id !== selected.getAttribute("aria-controls");
+        }
+        const navigation = document.querySelector("#panel-profile .profile-section-nav");
+        if (navigation) navigation.hidden = ![...shortcuts].some(shortcut => !shortcut.hidden);
+      }
       if (focus) selected.focus();
       if (focus) selected.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     },
@@ -462,21 +449,40 @@ const studentProfileEditTabs = initProfileTabs(document.getElementById("studentP
 let profilePdfImport = null;
 const profileWorkspace = typeof mountStudentProfileWorkspace === "function" ? mountStudentProfileWorkspace({
   document, reload: loadStudentProfile,
+  prepareLegacy: prepareUnifiedLegacyDraft,
+  beginMutation: () => { ++studentProfileLoadSequence; },
+  reveal: revealProfileSection,
+  syncLegacyProfile: syncProfileModalDraft,
+  rebaseLegacy: rebaseUnifiedLegacyDraft,
   externalBusy: () => isStudentProfileSaving || isStudentInfoSaving || isProfileImageUploading || profilePdfImport?.busy,
-  onSnapshot: result => { profilePdfImport?.acceptSnapshot(result); renderAccountProfile(document, result); },
+  onSnapshot: result => { profilePdfImport?.acceptSnapshot(result); renderAccountProfile(document, result); syncProfileModalDraft(); },
   onUnauthorized: () => { clearAuthentication(); redirectToLogin(); },
   onCommit: applyProfileWorkspaceCommit,
 }) : null;
 let profileOutcome = "ready";
-const profileFocus = profileModalFocus(profileEditModal, btnEditProfile);
+const profileFocus = profileModalFocus(profileEditModal, document.getElementById("profileChangePhoto"));
 function refreshProfileSaveState() {
+  const age = document.getElementById("editAge");
+  if (age) { const birthDate = profileWorkspace?.profileValues().birth_date; age.value = birthDate ? calculateAge(birthDate) : ""; }
   const target = document.getElementById("profileSaveState");
   if (!target) return;
   const saving = isStudentInfoSaving || isStudentProfileSaving || isProfileImageUploading || profileWorkspace?.busy || profilePdfImport?.busy;
+  if (saveProfileBtn) saveProfileBtn.disabled = saving || !hasLoadedStudentProfile;
   const dirty = hasUnsavedStudentProfile();
-  const state = saving ? "saving" : profileOutcome === "error" ? "error" : !hasLoadedStudentProfile ? "loading" : dirty ? "unsaved" : profileOutcome === "saved" ? "saved" : "ready";
+  const loadFailed = profilePanel?.dataset.loadState === "error";
+  const retry = document.getElementById("profileRetryLoad");
+  if (retry) { retry.hidden = !loadFailed; retry.disabled = saving || profilePanel?.dataset.loadState === "loading"; }
+  const review = document.getElementById("profileReviewAll");
+  if (review) { review.hidden = !profileWorkspace?.hasConflict; review.disabled = saving; }
+  const mainSave = document.getElementById("profileSaveAll");
+  if (mainSave) mainSave.disabled = saving || !hasLoadedStudentProfile;
+  const state = profileWorkspace?.savingProfile || isStudentInfoSaving || isStudentProfileSaving ? "saving" : saving ? "working"
+    : loadFailed ? "load-error" : profileWorkspace?.saveFailed ? "error" : profileOutcome === "error" ? "attention"
+    : !hasLoadedStudentProfile ? "loading" : dirty ? "unsaved" : profileOutcome === "saved" ? "saved" : "ready";
   target.dataset.state = state;
-  target.textContent = { saving: "กำลังบันทึก · กรุณารอสักครู่", error: "โปรดตรวจข้อความแจ้งเตือน · ข้อมูลที่กำลังแก้ไขยังอยู่", loading: "กำลังโหลดประวัติ", unsaved: "มีข้อมูลที่ยังไม่บันทึก · บันทึกแยกแต่ละหมวด", saved: "บันทึกแล้ว · ไม่มีข้อมูลที่แก้ไขค้าง", ready: "ข้อมูลพร้อมแก้ไข" }[state];
+  target.textContent = { saving: "กำลังบันทึก", working: "กำลังดำเนินการ", error: "บันทึกไม่สำเร็จ · Draft ยังอยู่", "load-error": "โหลดไม่สำเร็จ · ลองอีกครั้งได้", attention: "โปรดตรวจข้อความแจ้งเตือน", loading: "กำลังโหลดประวัติ", unsaved: "มีข้อมูลที่ยังไม่บันทึก", saved: "บันทึกแล้ว", ready: "ข้อมูลพร้อมแก้ไข" }[state];
+  const actionState = document.getElementById("profileSaveActionState");
+  if (actionState) { actionState.dataset.state = state; actionState.textContent = target.textContent; }
 }
 document.addEventListener("student-profile-state", event => {
   if (event.detail?.outcome) profileOutcome = event.detail.outcome;
@@ -484,10 +490,16 @@ document.addEventListener("student-profile-state", event => {
 });
 for (const type of ["input", "change"]) document.addEventListener(type, event => {
   if (!profilePanel?.contains(event.target) && !profileEditModal?.contains(event.target)) return;
+  if (profilePanel?.contains(event.target) && PROFILE_INPUTS[event.target.name]) {
+    setInputElementValue(document.getElementById(PROFILE_INPUTS[event.target.name]), event.target.value);
+  } else if (profileEditModal?.contains(event.target)) {
+    const field = Object.keys(PROFILE_INPUTS).find(key => PROFILE_INPUTS[key] === event.target.id);
+    if (field) profileWorkspace?.setProfileField(field, event.target.value);
+  }
   clearProfileFieldError(event.target);
   profileOutcome = "edit";
   if (studentInfoForm?.contains(event.target)) showMessage(studentInfoMessage, "มีการแก้ไขที่ยังไม่บันทึก", "info");
-  if (document.getElementById("profileEditForm")?.contains(event.target)) showMessage(profileEditMessage, "มีการแก้ไขที่ยังไม่บันทึก · บันทึกทั้งสองหมวดด้วยปุ่มด้านล่าง", "info");
+  if (document.getElementById("profileEditForm")?.contains(event.target)) showMessage(profileEditMessage, "รูปโปรไฟล์ใช้ปุ่มอัปโหลดรูปเพื่อบันทึกแยก", "info");
   queueMicrotask(refreshProfileSaveState);
 });
 profilePdfImport = typeof mountStudentProfilePdfImport === "function" ? mountStudentProfilePdfImport({
@@ -496,6 +508,68 @@ profilePdfImport = typeof mountStudentProfilePdfImport === "function" ? mountStu
   onUnauthorized: () => { clearAuthentication(); redirectToLogin(); },
   onCommit: (result, revision) => { profileWorkspace?.acceptSnapshot(result, { ownRevision: revision }); applyProfileWorkspaceCommit(result, revision); },
 }) : null;
+function revealProfileSection(element) {
+  const panel = element?.closest('[role="tabpanel"]');
+  if (panel?.id) {
+    const tab = document.querySelector('#studentProfileTabs [aria-controls="' + panel.id + '"]');
+    if (tab) { if (profileEditModal?.classList.contains("open")) closeProfileModal(); studentProfileTabs?.select(tab.id); }
+  }
+  element?.scrollIntoView?.({ block: "center" });
+}
+document.querySelectorAll('[data-profile-section]').forEach(button => button.addEventListener("click", () => {
+  const section = document.getElementById(button.dataset.profileSection);
+  revealProfileSection(section); section?.querySelector("input, select, textarea")?.focus();
+}));
+function rebaseUnifiedLegacyDraft() {
+  const target = document.getElementById("profileAcademicConflict");
+  if (target) {
+    target.replaceChildren();
+    for (const [field, input, label] of [["first_name", studentFirstNameInput, "ชื่อ"], ["last_name", studentLastNameInput, "นามสกุล"],
+      ["major", studentMajorInput, "สาขา"], ["year_level", studentYearLevelInput, "ชั้นปี"], ["gpa", studentGpaInput, "GPA สะสม"], ["advisor_teacher_id", studentAdvisorInput, "อาจารย์ที่ปรึกษาประจำชั้น"]]) {
+      const mine = input.value.trim(), latest = String(currentStudent?.[field] ?? "").trim();
+      if (mine === latest || field === "gpa" && mine && latest && Number(mine) === Number(latest)) continue;
+      const item = document.createElement("p");
+      const value = field === "advisor_teacher_id" ? input.selectedOptions?.[0]?.textContent || "ยังไม่กำหนด" : mine || "ว่าง";
+      const stored = field === "advisor_teacher_id" ? formatTeacherName(currentStudent?.advisorTeacher) : latest || "ว่าง";
+      item.textContent = label + " · ค่าที่คุณแก้: " + value + " · ฉบับล่าสุด: " + stored; target.append(item);
+    }
+    target.hidden = !target.children.length;
+  }
+  studentInfoRevision = studentProfileRevision;
+  if (studentProfileDraft) studentProfileDraft.revision = studentProfileRevision;
+}
+function syncProfileModalDraft() {
+  if (!studentProfileDraft || !profileWorkspace?.snapshot) return;
+  fillProfileEditForm(profileWorkspace.snapshot.profile);
+  studentProfileDraft = new StudentProfileDraft(readProfileInputs(document), profileWorkspace.snapshot.profile_revision);
+  writeProfileInputs(document, profileWorkspace.profileValues());
+}
+function prepareUnifiedLegacyDraft() {
+  const controls = { first_name: studentFirstNameInput, last_name: studentLastNameInput, major: studentMajorInput,
+    year_level: studentYearLevelInput, gpa: studentGpaInput, advisor_teacher_id: studentAdvisorInput };
+  const sentStudent = Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value]));
+  const student = prepareStudentInfoPatch();
+  if (!student) { revealProfileSection(studentInfoForm); studentInfoForm?.querySelector('[aria-invalid="true"]')?.focus(); throw new Error("โปรดแก้ไขข้อมูลนักศึกษาที่ระบุ"); }
+  const sentProfile = studentProfileDraft ? readProfileInputs(document) : null;
+  // Modal inputs mirror the inline drafts, which validate and save these fields.
+  // Keeping one owner for each field prevents stale modal values overwriting a
+  // section that was explicitly reviewed or discarded in the unified editor.
+  const revisions = [];
+  if (Object.keys(student).length) revisions.push(studentInfoRevision);
+  return { student, revisions, accept(result) {
+    document.getElementById("profileAcademicConflict")?.replaceChildren();
+    const laterStudent = Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value]));
+    currentStudent = result.student; currentStudentProfile = result.profile;
+    populateStudentInfoForm(result.student);
+    for (const [key, value] of Object.entries(laterStudent)) if (value !== sentStudent[key]) controls[key].value = value;
+    hasAdvisorSelectionChanged = (studentAdvisorInput.value || null) !== (result.student.advisor_teacher_id || null);
+    studentInfoRevision = result.profile_revision;
+    if (studentProfileDraft) {
+      const laterProfile = readProfileInputs(document); fillProfileEditForm(result.profile);
+      writeProfileInputs(document, studentProfileDraft.acceptSaved(readProfileInputs(document), result.profile_revision, sentProfile, laterProfile));
+    }
+  } };
+}
 function applyProfileWorkspaceCommit(result, previousRevision) {
   ++studentProfileLoadSequence;
   setProfileLoading(false);
@@ -517,7 +591,6 @@ function applyProfileWorkspaceCommit(result, previousRevision) {
   renderStudent(currentStudent); renderStudentProfile(currentStudentProfile); syncCoopPrerequisiteProgram();
 }
 document.querySelector('.sidebar-item[data-target="panel-profile"]')?.addEventListener("click", () => studentProfileTabs?.select("profilePersonalTab"));
-document.getElementById("profileEditLegacySkills")?.addEventListener("click", () => { openProfileEditModal(); studentProfileEditTabs?.select("profileEditPersonalTab"); document.getElementById("editRelatedSkills")?.focus(); });
 
 function captureStudentInfoDraft() {
   if (!currentStudent || !studentInfoForm || (typeof hasLoadedStudentProfile !== "undefined" && !hasLoadedStudentProfile)) return null;
@@ -869,18 +942,7 @@ async function uploadSelectedProfileImage() {
   }
 }
 
-async function saveStudentInfo(event) {
-  event.preventDefault();
-  if (isStudentInfoSaving || (typeof isStudentProfileSaving !== "undefined" && isStudentProfileSaving) || (typeof isProfileImageUploading !== "undefined" && isProfileImageUploading) || (typeof profileWorkspace !== "undefined" && profileWorkspace?.busy) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.busy)) {
-    return;
-  }
-
-  const token = getStudentToken();
-  if (!token) {
-    redirectToLogin();
-    return;
-  }
-
+function prepareStudentInfoPatch() {
   const major = studentMajorInput?.value.trim() || "";
   const yearLevel = studentYearLevelInput?.value ? Number(studentYearLevelInput.value) : null;
   const gpaValue = studentGpaInput?.value.trim() || "";
@@ -928,6 +990,23 @@ async function saveStudentInfo(event) {
   if (isTeacherDirectoryLoaded && hasAdvisorSelectionChanged) {
     payload.advisor_teacher_id = studentAdvisorInput.value || null;
   }
+  return payload;
+}
+
+async function saveStudentInfo(event) {
+  event.preventDefault();
+  if (isStudentInfoSaving || (typeof isStudentProfileSaving !== "undefined" && isStudentProfileSaving) || (typeof isProfileImageUploading !== "undefined" && isProfileImageUploading) || (typeof profileWorkspace !== "undefined" && profileWorkspace?.busy) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.busy)) {
+    return;
+  }
+
+  const token = getStudentToken();
+  if (!token) {
+    redirectToLogin();
+    return;
+  }
+
+  const payload = prepareStudentInfoPatch();
+  if (!payload) return;
   if (!Object.keys(payload).length) {
     showMessage(studentInfoMessage, "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info");
     return;
@@ -1025,10 +1104,11 @@ document.getElementById("editBirthDate")?.addEventListener("change", () => {
 });
 
 uploadProfileImageBtn?.addEventListener("click", uploadSelectedProfileImage);
-studentInfoForm?.addEventListener("submit", saveStudentInfo);
+studentInfoForm?.addEventListener("submit", event => { event.preventDefault(); profileWorkspace?.saveAll(); });
 window.addEventListener("beforeunload", clearProfileImageObjectUrl);
 
 function renderStudent(student) {
+  renderProfileAdvisors(document, student, { loaded: isAdvisorLoaded, request: projectAdvisorRequest, confirmed: confirmedProjectAdvisor });
   currentStudent = student;
   renderJobMatchingSource();
   const firstName =
@@ -1086,9 +1166,10 @@ function renderStudent(student) {
     profileEmail,
     email
   );
+  setText(document.getElementById("profileSummaryMajor"), [student.major, student.year_level ? "ชั้นปี " + student.year_level : null].filter(Boolean).join(" · ") || "ยังไม่ระบุ");
+  setText(document.getElementById("profileSummaryStatus"), status);
 
   renderStudentAccountInfo(student);
-  setText(document.getElementById("profileContactEmail"), email);
 
   // Profile details
   setText(
@@ -1128,7 +1209,7 @@ function renderStudent(student) {
 
   setText(
     profileTrack,
-    "สหกิจศึกษา"
+    student.track === "internship" ? "ฝึกงาน" : "สหกิจศึกษา"
   );
 
   setText(
@@ -1162,97 +1243,6 @@ function renderStudentProfile(profile) {
 
     return;
   }
-
-  setText(profilePrefix, profile.prefix || "-");
-
-  setText(
-    profileBirthDate,
-    formatProfileDate(
-      profile.birth_date
-    )
-  );
-
-  setText(
-    profileAge,
-    calculateAge(
-      profile.birth_date
-    )
-  );
-
-  setText(
-    profileHeight,
-    profile.height_cm
-      ? `${profile.height_cm} ซม.`
-      : "-"
-  );
-
-  setText(
-    profileWeight,
-    profile.weight_kg
-      ? `${profile.weight_kg} กก.`
-      : "-"
-  );
-
-  setText(
-    profileNationality,
-    profile.nationality || "-"
-  );
-
-  setText(
-    profileEthnicity,
-    profile.ethnicity || "-"
-  );
-
-  setText(
-    profileReligion,
-    profile.religion || "-"
-  );
-
-  setText(
-    profileBloodType,
-    profile.blood_type || "-"
-  );
-
-  setText(
-    profileMedicalConditions,
-    profile.medical_conditions || "-"
-  );
-
-  setText(
-    profileAllergies,
-    profile.allergies || "-"
-  );
-
-  setText(
-    profileSpecialAbilities,
-    profile.special_abilities || "-"
-  );
-
-  setText(
-    profileRelatedSkills,
-    profile.related_skills || "-"
-  );
-
-  // ที่อยู่
-  setText(
-    profileHometownAddress,
-    profile.hometown_address || "-"
-  );
-
-  setText(
-    profileHometownPhone,
-    profile.hometown_phone || "-"
-  );
-
-  setText(
-    profileCurrentAddress,
-    profile.current_address || "-"
-  );
-
-  setText(
-    profileCurrentPhone,
-    profile.current_phone || "-"
-  );
 
   // บิดา
   setText(
@@ -1413,10 +1403,9 @@ function openProfileEditModal() {
     showMessage(profileLoadMessage, "กรุณาโหลดข้อมูลประวัติให้สำเร็จก่อนแก้ไข", "error");
     return;
   }
-  if (!studentProfileDraft) {
-    fillProfileEditForm(currentStudentProfile);
-    studentProfileDraft = new StudentProfileDraft(readProfileInputs(document), studentProfileRevision);
-  }
+  fillProfileEditForm(currentStudentProfile);
+  studentProfileDraft = new StudentProfileDraft(readProfileInputs(document), studentProfileRevision);
+  writeProfileInputs(document, profileWorkspace?.profileValues() || {});
 
   studentProfileEditTabs?.select(studentProfileTabs?.activeId === "profileContactTab" ? "profileEditContactTab" : "profileEditPersonalTab");
 
@@ -1764,15 +1753,15 @@ window.addEventListener("beforeunload", event => {
   }
 });
 
-btnEditProfile?.addEventListener(
-  "click",
-  openProfileEditModal
-);
-
-document.getElementById("btnEditProfileContacts")?.addEventListener("click", () => { openProfileEditModal(); studentProfileEditTabs?.select("profileEditContactTab"); });
-document.getElementById("profileEditForm")?.addEventListener("submit", event => { event.preventDefault(); saveStudentProfile(); });
+document.getElementById("profileEditForm")?.addEventListener("submit", event => event.preventDefault());
+document.getElementById("profileModalContactLink")?.addEventListener("click", () => {
+  closeProfileModal(); studentProfileTabs?.select("profileContactTab");
+  const section = document.getElementById("profileContactExtras");
+  revealProfileSection(section); section?.querySelector("input, select, textarea")?.focus();
+});
 
 profileAvatarButton?.addEventListener("click", openProfileImageEditor);
+document.getElementById("profileChangePhoto")?.addEventListener("click", openProfileImageEditor);
 
 profileAvatarButton?.addEventListener("keydown", (event) => {
   if (event.key === "Enter" || event.key === " ") {
@@ -1789,11 +1778,6 @@ closeProfileEditModal?.addEventListener(
 cancelProfileEditBtn?.addEventListener(
   "click",
   closeProfileModal
-);
-
-saveProfileBtn?.addEventListener(
-  "click",
-  saveStudentProfile
 );
 
 profileEditModal?.addEventListener(
@@ -1870,10 +1854,12 @@ function logout() {
 }
 
 function clearAuthentication() {
+  studentOverview.clear();
   clearStudentSession();
 }
 
 function handleStudentSessionChange() {
+  studentOverview.clear();
   renderStudentAccountInfo(null);
   renderAccountProfile(document, null);
   if (hasUnsavedStudentProfile()) {
@@ -1914,6 +1900,7 @@ const contentPanels =
 function activateDashboardPanel(targetId) {
   // The former upload destination now opens the combined project panel.
   if (targetId === "panel-report-upload") targetId = "panel-coop";
+  if (!canOpenStudentPanel(currentStudent, targetId)) return Promise.resolve(false);
   sidebarItems.forEach((item) => item.classList.toggle("active", item.dataset.target === targetId));
   revealNavigationItem(document.querySelector('.sidebar-menu'), [...sidebarItems].find(item => item.dataset.target === targetId));
   contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
@@ -2131,6 +2118,7 @@ function renderJobMatches(matches) {
     coopRequestButton.className = "btn-primary job-matching-coop-request";
     coopRequestButton.dataset.jobPostingId = match.job_posting_id;
     coopRequestButton.textContent = "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้";
+    coopRequestButton.disabled = !canUseCoopFeatures(currentStudent);
     card.append(coopRequestButton);
     return card;
   });
@@ -2802,16 +2790,23 @@ function getCoopRequestErrorMessage(error, action) {
 }
 
 async function loadCoopRequests() {
+  if (!canUseCoopFeatures(currentStudent)) return false;
   if (coopRequestsLoading || coopRequestSubmitting || coopRequestCancelling) return false;
+  const token = getStudentToken();
   coopRequestsLoading = true;
   renderCoopRequests();
   showMessage(coopRequestMessage, "กำลังโหลดคำร้องสหกิจศึกษา...", "loading");
   try {
     const result = await getMyCoopRequests();
-    coopRequests = Array.isArray(result?.data) ? result.data : [];
+    if (!token || token !== getStudentToken()) return false;
+    if (!Array.isArray(result?.data)) throw new Error("ข้อมูลคำร้องไม่ถูกต้อง");
+    coopRequests = result.data;
+    studentOverview.accept(coopRequests, token);
     clearMessage(coopRequestMessage);
     return true;
   } catch (error) {
+    if (token !== getStudentToken()) return false;
+    studentOverview.fail(token);
     coopRequests = [];
     showMessage(coopRequestMessage, getCoopRequestErrorMessage(error, "โหลด"), "error");
     return false;
@@ -2874,6 +2869,7 @@ function applyCoopCompany(company) {
 }
 
 function openCoopRequestModal() {
+  if (!canUseCoopFeatures(currentStudent)) return;
   if (currentCoopRequest) {
     showDuplicateCoopRequestAlert();
     return false;
@@ -3245,6 +3241,9 @@ const uploadProjectBtn = document.getElementById("uploadProjectBtn");
 const projectUploadMessage = document.getElementById("projectUploadMessage");
 const projectBookCurrent = document.getElementById("projectBookCurrent");
 const posterCurrent = document.getElementById("posterCurrent");
+const retryProjectBtn = document.getElementById("retryProjectBtn");
+const retryProjectAdvisorBtn = document.getElementById("retryProjectAdvisorBtn");
+const retryProjectFilesBtn = document.getElementById("retryProjectFilesBtn");
 let isProjectSaving = false;
 let isProjectUploading = false;
 let isProjectLoaded = false;
@@ -3257,6 +3256,7 @@ let confirmedProjectAdvisor = null;
 const projectPreviewUrls = new Map();
 
 function renderProjectAdvisor() {
+  renderProfileAdvisors(document, currentStudent, { loaded: isAdvisorLoaded, request: projectAdvisorRequest, confirmed: confirmedProjectAdvisor });
   if (!projectAdvisor) return;
   const advisor = confirmedProjectAdvisor || projectAdvisorRequest.teacher;
   const teachers = projectAdvisorTeachers;
@@ -3305,22 +3305,27 @@ function renderProjectAdvisor() {
 }
 
 async function loadStudentCoopProjectSections() {
-  await Promise.all([loadCoopProject(), loadCoopProjectFiles()]);
+  await Promise.all([loadCoopProject(), loadCoopProjectFiles(), topicExams?.refresh()]);
   await loadProjectAdvisorRequest();
 }
 
 async function loadCoopProject() {
   isProjectLoaded = false;
   if (saveProjectBtn) saveProjectBtn.disabled = true;
+  if (retryProjectBtn) retryProjectBtn.hidden = true;
+  showMessage(projectMessage, "กำลังโหลดหัวข้อโครงการ...", "");
+  // A read retry must not overwrite text entered while that read was pending.
+  const titleBeforeRead = projectTitle?.value;
   try {
     const project = await getMyCoopProject();
     confirmedProjectAdvisor = project.confirmed_advisor || project.coop_advisor_teacher || null;
-    if (projectTitle) projectTitle.value = project.topic || "";
+    if (projectTitle && projectTitle.value === titleBeforeRead) projectTitle.value = project.topic || "";
     renderProjectAdvisor();
     isProjectLoaded = true;
     clearMessage(projectMessage);
   } catch (error) {
     showMessage(projectMessage, error.message || "ไม่สามารถโหลดโครงการได้", "error");
+    if (retryProjectBtn) retryProjectBtn.hidden = false;
   } finally {
     if (saveProjectBtn) saveProjectBtn.disabled = !isProjectLoaded || isProjectSaving;
   }
@@ -3329,6 +3334,7 @@ async function loadCoopProject() {
 async function loadProjectAdvisorRequest() {
   isAdvisorLoaded = false;
   isAdvisorDirectoryLoaded = false;
+  if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.hidden = true;
   renderProjectAdvisor();
   const [request, directory] = await Promise.allSettled([getMyProjectAdvisorRequest(), getTeachers()]);
   const errors = [];
@@ -3342,6 +3348,7 @@ async function loadProjectAdvisorRequest() {
     isAdvisorDirectoryLoaded = true;
   } else errors.push("โหลดรายชื่ออาจารย์ไม่สำเร็จ");
   if (projectAdvisorHelp) projectAdvisorHelp.textContent = errors.length ? errors.join(" • ") : "เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที";
+  if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.hidden = !errors.length;
   renderProjectAdvisor();
   return isAdvisorLoaded && isAdvisorDirectoryLoaded;
 }
@@ -3429,17 +3436,27 @@ function renderCurrentProjectFile(container, file) {
 }
 
 async function loadCoopProjectFiles() {
+  if (retryProjectFilesBtn) retryProjectFilesBtn.hidden = true;
   try {
     const result = await getMyCoopProjectFiles();
     if (!Array.isArray(result?.files)) throw new Error("ไม่สามารถโหลดไฟล์โครงการได้");
     renderCurrentProjectFile(projectBookCurrent, result.files.find(file => file.file_type === "coop_project_book"));
     renderCurrentProjectFile(posterCurrent, result.files.find(file => file.file_type === "coop_poster"));
+    clearMessage(projectUploadMessage);
     return true;
   } catch (error) {
     showMessage(projectUploadMessage, error.message || "ไม่สามารถโหลดไฟล์โครงการได้", "error");
+    for (const container of [projectBookCurrent, posterCurrent]) {
+      if (container && !container.dataset.hasFile) container.textContent = "โหลดรายการไฟล์ไม่สำเร็จ";
+    }
+    if (retryProjectFilesBtn) retryProjectFilesBtn.hidden = false;
     return false;
   }
 }
+
+retryProjectBtn?.addEventListener("click", () => loadCoopProject());
+retryProjectAdvisorBtn?.addEventListener("click", () => loadProjectAdvisorRequest());
+retryProjectFilesBtn?.addEventListener("click", () => loadCoopProjectFiles());
 
 function validateProjectUpload(file, category) {
   const types = category === "project-book" ? { "application/pdf": ["pdf"] } : { "application/pdf": ["pdf"], "image/png": ["png"], "image/jpeg": ["jpg", "jpeg"] };
@@ -3999,8 +4016,6 @@ document.addEventListener(
     subscribeStudentSession(handleStudentSessionChange);
     checkAuthentication();
 
-    initStudentInternshipLog();
-    initStudentSupervision();
     const activityPanel = document.getElementById("panel-activities");
     if (activityPanel && !activityPanel.hidden) {
       mountCoopActivities({ document, container: document.getElementById("activityCalendar"), storage: { getItem: key => key === "token" ? getStudentToken() : null } });

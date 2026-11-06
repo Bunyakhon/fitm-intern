@@ -14,6 +14,7 @@ function errorResponse(res, error) {
 }
 function handler(action) {
   return async (req, res) => {
+    res.set("Cache-Control", "private, no-store");
     try {
       const result = await action(req);
       res.set("Cache-Control", "private, no-store");
@@ -31,7 +32,8 @@ function children(kind, action) {
       const snapshot = await aggregate.read(req.user.id);
       const record = req.params.id ? snapshot[kind].find(row => row.id === req.params.id) : undefined;
       if (req.params.id && !record) rules.fail("ไม่พบรายการของนักศึกษา", 404);
-      return { body: { records: snapshot[kind], ...(record ? { record } : {}), profile_revision: snapshot.profile_revision } };
+      return { body: { records: snapshot[kind], ...(record ? { record } : {}), profile_revision: snapshot.profile_revision,
+        ...(kind === "close_friends" ? { close_friends_available: snapshot.close_friends_available, close_friends_legacy_pending: snapshot.close_friends_legacy_pending } : {}) } };
     }
     return aggregate.saveChild(req.user.id, kind, action, req.params.id, req.body ?? {}, req.get("If-Match"));
   });

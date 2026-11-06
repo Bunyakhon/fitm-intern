@@ -242,7 +242,7 @@
               </div>
 
               <div>
-                <b id="requestCount">0</b>
+                <b id="requestCount">—</b>
                 <span>คำร้องที่ยื่นแล้ว</span>
               </div>
             </div>
@@ -270,7 +270,7 @@
             </div>
           </div>
 
-          <div class="section-card">
+          <div class="section-card" id="coopOverview" aria-busy="true">
             <div class="section-card-header">
               <div>
                 <h3>
@@ -282,7 +282,10 @@
               </div>
             </div>
 
-            <div class="empty-state" id="coopOverviewEmpty">
+            <p id="coopOverviewStatus" role="status" aria-live="polite">กำลังตรวจสอบบัญชีนักศึกษา</p>
+            <button id="coopOverviewRetry" type="button" class="btn-secondary" hidden>ลองโหลดข้อมูลอีกครั้ง</button>
+            <div id="coopOverviewDetails" class="info-grid" hidden></div>
+            <div class="empty-state" id="coopOverviewEmpty" hidden>
               <i class="fa-solid fa-building-circle-exclamation"></i>
 
               <h4>ยังไม่มีข้อมูลสหกิจศึกษา</h4>
@@ -293,7 +296,7 @@
               </p>
             </div>
           </div>
-          <section class="section-card" aria-labelledby="studentSupervisionHeading">
+          <section class="section-card" id="studentSupervisionSection" aria-labelledby="studentSupervisionHeading">
             <div class="section-card-header"><h3 id="studentSupervisionHeading">นัดนิเทศครั้งที่ 1–2</h3><button id="studentSupervisionReload" type="button" class="btn-secondary">โหลดนัดล่าสุด</button></div>
             <p id="studentSupervisionStatus" role="status" aria-live="polite"></p>
             <div id="studentSupervisionAppointments"></div>
@@ -305,17 +308,41 @@
      ============================== -->
 
         <section class="content-panel" id="panel-profile">
-          <div class="panel-header">
-            <h2>ประวัตินักศึกษา</h2>
-            <p>จัดการข้อมูลของคุณ เพื่อเตรียมความพร้อมสำหรับสหกิจศึกษา</p>
+          <div class="panel-header profile-editor-header">
+            <div class="profile-heading"><h2>ประวัตินักศึกษา</h2><p>จัดการข้อมูลส่วนตัวและประวัติของคุณ</p></div>
+            <div class="profile-header-actions">
+              <p id="profileSaveState" class="profile-save-state" role="status" aria-live="polite" data-state="loading">กำลังโหลดประวัติ</p>
+              <a class="profile-save-jump" href="#profileSaveAll">ไปยังบันทึก</a>
+            </div>
           </div>
 
-          <section class="info-card profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading">
-            <div class="profile-section-header"><h3 id="profilePdfHeading"><i class="fa-solid fa-file-import" aria-hidden="true"></i> เลือกวิธีกรอกประวัติ</h3></div>
-            <p class="profile-tab-help">เลือกวิธีเริ่มต้น ข้อมูลทั้งสองวิธีอยู่ในประวัติชุดเดียวกัน และแก้ไขต่อได้ใน 4 แท็บด้านล่าง</p>
-            <div class="profile-methods">
-              <button id="profilePdfChooseManual" type="button" class="btn-secondary profile-method" aria-controls="profilePersonalPanel" aria-pressed="true"><i class="fa-solid fa-keyboard" aria-hidden="true"></i><span><strong>กรอกข้อมูลด้วยตัวเอง</strong><small>เลือกหมวด กรอกข้อมูล และบันทึกทีละส่วน</small></span><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
-              <button id="profilePdfChooseImport" type="button" class="btn-secondary profile-method" aria-controls="profilePdfBody" aria-expanded="false" aria-pressed="false"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span><strong>นำเข้าจาก Profile PDF</strong><small>TGDE-COOP–02 · ตรวจและแก้ข้อมูลก่อนยืนยัน</small></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <section class="profile-card profile-student-summary" aria-labelledby="profileFullName">
+            <div class="profile-summary-photo">
+              <div class="profile-avatar profile-avatar-editable" id="profileAvatarButton" role="button" tabindex="0" aria-label="เปลี่ยนรูปโปรไฟล์" aria-haspopup="dialog">
+                <i id="profileAvatarPlaceholder" class="fa-solid fa-user" aria-hidden="true"></i>
+                <img id="profileAvatarImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
+                <div class="profile-avatar-overlay" aria-hidden="true"><i class="fa-solid fa-camera"></i></div>
+              </div>
+              <button id="profileChangePhoto" type="button" class="btn-secondary" aria-haspopup="dialog">เปลี่ยนรูปโปรไฟล์</button>
+            </div>
+            <div class="profile-main">
+              <h3 id="profileFullName">-</h3>
+              <div class="profile-summary-details">
+                <p><span>รหัสนักศึกษา</span><strong id="profileStudentId">-</strong></p>
+                <p><span>สาขา / ชั้นปี</span><strong id="profileSummaryMajor">กำลังโหลดข้อมูล</strong></p>
+                <p><span>สถานะจากระบบ</span><strong id="profileSummaryStatus">กำลังโหลดข้อมูล</strong></p>
+                <p><span>อีเมล</span><strong id="profileEmail">-</strong></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading">
+            <div class="profile-method-row">
+              <h3 id="profilePdfHeading">วิธีกรอกข้อมูล</h3>
+              <div class="profile-methods" role="group" aria-labelledby="profilePdfHeading">
+                <button id="profilePdfChooseManual" type="button" class="btn-secondary profile-method" aria-controls="profilePersonalPanel" aria-pressed="true"><i class="fa-solid fa-keyboard" aria-hidden="true"></i>กรอกด้วยตนเอง</button>
+                <button id="profilePdfChooseImport" type="button" class="btn-secondary profile-method" aria-controls="profilePdfBody" aria-expanded="false" aria-pressed="false"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i>นำเข้าจาก PDF</button>
+              </div>
             </div>
             <div id="profilePdfBody" hidden>
               <ol class="profile-import-steps" aria-label="ขั้นตอนนำเข้า PDF">
@@ -328,9 +355,9 @@
               <div id="profilePdfPreview" aria-live="polite"></div>
               <p class="profile-tab-help">ยังไม่มีการบันทึกอัตโนมัติ ฟิลด์ที่ไม่เลือกหรือ PDF ไม่มีค่าจะคงเดิม หลังยืนยันจะเก็บต้นฉบับในพื้นที่ส่วนตัว</p>
               <div class="profile-entry-actions"><button id="profilePdfSave" type="button" class="btn-primary" disabled>ยืนยันข้อมูลที่เลือกและเก็บต้นฉบับ</button><button id="profilePdfReview" type="button" class="btn-secondary" hidden>ตรวจข้อมูลล่าสุด / เปรียบเทียบใหม่</button><button id="profilePdfVerify" type="button" class="btn-secondary" hidden>ตรวจสถานะการบันทึก</button><button id="profilePdfCancel" type="button" class="btn-secondary">ยกเลิกนำเข้า</button></div>
+              <details><summary>ประวัตินำเข้า PDF</summary><div id="profilePdfHistory"></div></details>
             </div>
             <p id="profilePdfMessage" class="message" role="status" aria-live="polite"></p>
-            <div id="profilePdfHistory"></div>
           </section>
 
           <p
@@ -340,6 +367,7 @@
             aria-live="polite"
           ></p>
 
+          <div class="profile-form-card">
           <div class="profile-tabs" id="studentProfileTabs" role="tablist" aria-label="หมวดข้อมูลประวัตินักศึกษา">
             <button type="button" class="profile-tab" id="profilePersonalTab" role="tab" aria-selected="true" aria-controls="profilePersonalPanel" tabindex="0"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
             <button type="button" class="profile-tab" id="profileContactTab" role="tab" aria-selected="false" aria-controls="profileContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
@@ -347,61 +375,27 @@
             <button type="button" class="profile-tab" id="profileDocumentsTab" role="tab" aria-selected="false" aria-controls="profileDocumentsPanel" tabindex="-1"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>เอกสารประกอบ</span></button>
           </div>
 
-          <div class="profile-workspace-notice" role="note">บันทึกทีละหมวดด้วยปุ่มท้ายฟอร์ม · สลับแท็บได้โดยไม่เสียข้อมูลที่กำลังกรอก · กรุณาบันทึกก่อนรีเฟรชหรือปิดหน้า ไม่มีการบันทึกอัตโนมัติ</div>
-          <div class="profile-workspace-toolbar"><p id="profileSaveState" class="profile-save-state" role="status" aria-live="polite" data-state="loading">กำลังโหลดประวัติ</p><button id="profileWorkspaceReload" class="btn-secondary" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>โหลดข้อมูลล่าสุด</button></div>
+          <div class="profile-recovery-actions">
+            <button id="profileRetryLoad" class="btn-secondary" type="button" hidden>ลองโหลดประวัติอีกครั้ง</button>
+            <button id="profileReviewAll" class="btn-secondary" type="button" hidden>ตรวจฉบับล่าสุดและเก็บค่าที่แก้</button>
+          </div>
           <div id="profileWorkspaceStatus" class="message" role="status" aria-live="polite"></div>
+          <nav class="profile-section-nav" aria-label="หัวข้อย่อยในแท็บปัจจุบัน">
+            <span class="profile-section-caption">หมวดในแท็บนี้</span>
+            <button type="button" class="btn-secondary" data-profile-section="studentInfoForm">ข้อมูลนักศึกษา</button>
+            <button type="button" class="btn-secondary" data-profile-section="profilePersonalExtras">ข้อมูลส่วนตัว</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileContactExtras" hidden>การติดต่อ</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileStructuredAddresses" hidden>ที่อยู่</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileFamilyExtras" hidden>ครอบครัว / ผู้ปกครอง</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileEmergencyExtras" hidden>ฉุกเฉิน</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileFriendContact" hidden>เพื่อนสนิท</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileAcademicExtras" hidden>การศึกษา</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileTrainingRecords" hidden>การอบรม</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileComputerSkills" hidden>ทักษะ / ความสามารถ</button>
+            <button type="button" class="btn-secondary" data-profile-section="profileHealthExtras" hidden>สุขภาพ / เพิ่มเติม</button>
+          </nav>
 
           <div id="profilePersonalPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profilePersonalTab" tabindex="0">
-
-          <!-- ==============================
-       Profile Header
-       ============================== -->
-
-          <div class="profile-card">
-            <div
-              class="profile-avatar profile-avatar-editable"
-              id="profileAvatarButton"
-              role="button"
-              tabindex="0"
-              aria-label="เปลี่ยนรูปโปรไฟล์"
-            >
-              <i
-                id="profileAvatarPlaceholder"
-                class="fa-solid fa-user"
-                aria-hidden="true"
-              ></i>
-              <img id="profileAvatarImage" alt="รูปโปรไฟล์นักศึกษา" hidden />
-              <div class="profile-avatar-overlay" aria-hidden="true">
-                <i class="fa-solid fa-camera"></i>
-                <span>เปลี่ยนรูป</span>
-              </div>
-            </div>
-
-            <div class="profile-main">
-              <span class="profile-label"> นักศึกษาสหกิจศึกษา </span>
-
-              <h3 id="profileFullName">-</h3>
-
-              <p>
-                คำนำหน้า:
-                <strong id="profilePrefix"> - </strong>
-              </p>
-
-              <p>
-                รหัสประจำตัวนักศึกษา:
-                <strong id="profileStudentId"> - </strong>
-              </p>
-
-              <p>
-                อีเมล:
-                <strong id="profileEmail"> - </strong>
-              </p>
-              <button type="button" class="btn-primary" id="btnEditProfile">
-                <i class="fa-solid fa-pen-to-square"></i>
-                แก้ไขประวัติ
-              </button>
-            </div>
-          </div>
 
           <!-- ==============================
        ข้อมูลนักศึกษา
@@ -412,10 +406,13 @@
               <i class="fa-solid fa-graduation-cap"></i>
               ข้อมูลนักศึกษา
             </h3>
-            <p class="profile-tab-help" id="studentInfoHelp">ชื่อที่แก้ไขต้องเป็นภาษาไทย · ข้อมูลการศึกษาที่ยังไม่ทราบเว้นว่างได้ · รหัสนักศึกษาและอีเมลเป็นข้อมูลบัญชีที่อ่านอย่างเดียว</p>
+            <p class="profile-tab-help" id="studentInfoHelp">เมื่อแก้ไขชื่อ–นามสกุล ต้องกรอกภาษาไทย · ข้อมูลการศึกษาเว้นว่างได้ · รหัสและอีเมลอ่านอย่างเดียว</p>
 
             <form id="studentInfoForm" class="student-info-form" novalidate aria-describedby="studentInfoHelp">
+              <div id="profileAcademicConflict" class="profile-difference" role="status" aria-live="polite" hidden></div>
               <div class="student-info-form-grid">
+                <div id="profileThaiPrefixSlot"></div>
+                <div id="profileThaiGenderSlot"></div>
                 <div class="form-group">
                   <label for="studentFirstNameInput">ชื่อ (ภาษาไทย)</label>
                   <input type="text" id="studentFirstNameInput" maxlength="255" autocomplete="given-name" aria-describedby="studentInfoMessage" />
@@ -476,6 +473,7 @@
                   type="submit"
                   class="btn-primary"
                   id="saveStudentInfoBtn"
+                  hidden
                 >
                   <i class="fa-solid fa-floppy-disk"></i>
                   บันทึกข้อมูลนักศึกษา
@@ -489,134 +487,34 @@
             </form>
           </div>
 
-          <div id="profileAcademicExtras"></div>
+          <section class="info-card" aria-labelledby="profileAdvisorsTitle">
+            <h3 id="profileAdvisorsTitle" class="card-title">อาจารย์ที่ปรึกษา</h3>
+            <div class="info-grid">
+              <div class="info-item"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="profileClassAdvisor">กำลังโหลดข้อมูล</strong></div>
+              <div class="info-item"><span>อาจารย์ที่ปรึกษาโครงการสหกิจศึกษา</span><strong id="profileProjectAdvisor" role="status" aria-live="polite">กำลังโหลดข้อมูล</strong></div>
+            </div>
+          </section>
           <div id="profilePersonalExtras"></div>
+          <div id="profileAgeSource" hidden><div class="form-group">
+                  <label for="editAge">อายุ</label>
 
-          <!-- ==============================
-       ข้อมูลส่วนตัว
-       ============================== -->
-
-          <div class="info-card">
-            <div class="card-title">
-              <i class="fa-solid fa-circle-user"></i>
-              ข้อมูลส่วนตัว
-            </div>
-
-            <div class="info-grid">
-              <div class="info-item">
-                <span>วันเกิด</span>
-                <strong id="profileBirthDate"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>อายุ</span>
-                <strong id="profileAge"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ส่วนสูง</span>
-                <strong id="profileHeight"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>น้ำหนัก</span>
-                <strong id="profileWeight"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>สัญชาติ</span>
-                <strong id="profileNationality"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>เชื้อชาติ</span>
-                <strong id="profileEthnicity"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ศาสนา</span>
-                <strong id="profileReligion"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ความสามารถพิเศษ</span>
-                <strong id="profileSpecialAbilities"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span>
-                <strong id="profileRelatedSkills"> - </strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-card">
-            <div class="card-title">
-              <i class="fa-solid fa-heart-pulse"></i>
-              ข้อมูลสุขภาพ
-            </div>
-
-            <div class="info-grid">
-              <div class="info-item">
-                <span>กรุ๊ปเลือด</span>
-                <strong id="profileBloodType"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>โรคประจำตัว</span>
-                <strong id="profileMedicalConditions"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>อาการแพ้</span>
-                <strong id="profileAllergies"> - </strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- ==============================
-       ข้อมูลที่อยู่
-       ============================== -->
+                  <input type="text" id="editAge" readonly />
+                </div></div>
 
           </div>
 
           <div id="profileContactPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileContactTab" tabindex="0" hidden>
+            <div id="profileContactExtras">
+            </div>
             <div id="profileStructuredAddresses"></div>
             <div id="profileFamilyExtras"></div>
+            <div id="profileEmergencyExtras"></div>
+            <div id="profileFriendContact"></div>
+            <details class="profile-saved-summary"><summary>สรุปข้อมูลครอบครัวและผู้ติดต่อฉุกเฉินที่บันทึกไว้</summary>
             <div class="profile-section-header">
               <div><h3>ติดต่อ / ครอบครัว / ฉุกเฉิน</h3><p>ข้อมูลการติดต่อและบุคคลที่สามารถติดต่อได้ของนักศึกษา</p></div>
-              <button type="button" class="btn-primary" id="btnEditProfileContacts"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขข้อมูลติดต่อ</button>
+
             </div>
-
-          <div class="info-card">
-            <div class="card-title">
-              <i class="fa-solid fa-location-dot"></i>
-              ข้อมูลการติดต่อ
-            </div>
-
-            <div class="info-grid">
-              <div class="info-item">
-                <span>ภูมิลำเนา</span>
-                <strong id="profileHometownAddress"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>โทรศัพท์ภูมิลำเนา</span>
-                <strong id="profileHometownPhone"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>ที่อยู่ปัจจุบัน</span>
-                <strong id="profileCurrentAddress"> - </strong>
-              </div>
-
-              <div class="info-item">
-                <span>โทรศัพท์ปัจจุบัน</span>
-                <strong id="profileCurrentPhone"> - </strong>
-              </div>
-              <div class="info-item"><span>อีเมลติดต่อ (ข้อมูลบัญชี อ่านอย่างเดียว)</span><strong id="profileContactEmail">-</strong></div>
-            </div>
-          </div>
 
           <!-- ==============================
        ข้อมูลบิดา
@@ -736,20 +634,31 @@
               </div>
             </div>
           </div>
+            </details>
           </div>
 
           <div id="profileEducationPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileEducationTab" tabindex="0" hidden>
             <div class="profile-section-header"><div><h3>การศึกษา / ทักษะ</h3><p>เพิ่มประวัติได้หลายรายการ เลือกระดับความสามารถตามข้อมูลของคุณ</p></div></div>
+            <div id="profileAcademicExtras"></div>
             <div id="profileEducationRecords"></div>
             <div id="profileTrainingRecords"></div>
             <div id="profileComputerSkills"></div>
             <div id="profileLanguageSkills"></div>
-            <section class="info-card"><h3 class="card-title">ความสามารถและทักษะเดิม</h3><p class="profile-tab-help">ข้อความที่เคยบันทึกยังคงอยู่ และแยกจากรายการทักษะด้านบน</p><div class="info-grid"><div class="info-item"><span>ความสามารถพิเศษ</span><strong id="profileLegacyAbilities">-</strong></div><div class="info-item"><span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span><strong id="profileLegacySkills">-</strong></div></div><button type="button" id="profileEditLegacySkills" class="btn-secondary">แก้ไขข้อความทักษะเดิม</button></section>
+            <div id="profileAbilities"></div>
+            <div id="profileHealthExtras"></div>
+            <section class="info-card"><h3 class="card-title">ความสามารถและทักษะที่บันทึกแล้ว</h3><p class="profile-tab-help">ข้อความที่เคยบันทึกยังคงอยู่ และแยกจากรายการทักษะด้านบน</p><div class="info-grid"><div class="info-item"><span>ความสามารถพิเศษ</span><strong id="profileLegacyAbilities">-</strong></div><div class="info-item"><span>ทักษะที่เกี่ยวข้องกับสหกิจศึกษา</span><strong id="profileLegacySkills">-</strong></div></div></section>
           </div>
           <div id="profileDocumentsPanel" class="profile-tab-panel" role="tabpanel" aria-labelledby="profileDocumentsTab" tabindex="0" hidden>
             <div class="profile-section-header"><div><h3>เอกสารประกอบ</h3><p>เก็บเอกสารส่วนตัวและดาวน์โหลดได้เฉพาะบัญชีของคุณ</p></div></div>
             <div id="profileDocumentCards"></div>
             <p class="profile-workspace-notice">การรับรองข้อมูลและลายเซ็นยังไม่เปิดใช้งาน อยู่ระหว่างยืนยันข้อกำหนด การอัปโหลดเอกสารไม่ได้หมายถึงการรับรองสำเนา</p>
+          </div>
+          </div>
+          <div class="profile-workspace-toolbar profile-unified-actions" role="group" aria-label="บันทึกประวัติ" aria-describedby="profileSaveState">
+            <p id="profileSaveActionState" class="profile-save-state" aria-live="off" data-state="loading">กำลังโหลดประวัติ</p>
+            <p class="profile-save-help">ไม่มีการบันทึกอัตโนมัติ · รูป Resume เอกสาร และ PDF ยืนยันแยก</p>
+
+            <button id="profileSaveAll" class="btn-primary" type="button" disabled>บันทึกประวัติ</button>
           </div>
         </section>
 
@@ -1030,28 +939,29 @@
           <div class="panel-header">
             <h2>โครงการสหกิจศึกษา</h2>
 
-            <p>จัดการข้อมูลโครงการสหกิจศึกษา อัปโหลดรูปเล่มและโปสเตอร์ในหน้าเดียว</p>
+            <p>จัดการหัวข้อโครงการ เอกสาร และกำหนดการสอบหัวข้อโครงการสหกิจศึกษา</p>
           </div>
 
           <section class="section-card coop-project-card" aria-labelledby="coopProjectInfoTitle">
             <div class="section-card-header">
               <div>
                 <h3 id="coopProjectInfoTitle"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> ข้อมูลโครงการสหกิจศึกษา</h3>
-                <p>บันทึกหัวข้อโครงการและส่งคำขอให้อาจารย์ที่ปรึกษายืนยัน</p>
+                <p>ดูแลอาจารย์ที่ปรึกษาและหัวข้อโครงการของคุณ</p>
               </div>
             </div>
             <div class="form-group project-advisor-field">
               <label for="projectAdvisor">อาจารย์ที่ปรึกษาโครงการ</label>
-
-              <select id="projectAdvisor" disabled aria-describedby="projectAdvisorStatus projectAdvisorHelp">
+              <p id="projectAdvisorSelectionHelp" class="project-help">เมื่อเลือกอาจารย์ ระบบจะส่งคำขอยืนยันทันที การยืนยันอาจารย์แยกจากผลตรวจเอกสารและสถานะสอบ</p>
+              <select id="projectAdvisor" disabled aria-describedby="projectAdvisorSelectionHelp projectAdvisorStatus projectAdvisorHelp">
                 <option value="">-- เลือกอาจารย์ --</option>
               </select>
               <p id="projectAdvisorStatus" class="project-advisor-status" role="status"><span class="coop-status-badge project-advisor-badge">ยังไม่ได้เลือกอาจารย์</span></p>
               <p id="projectAdvisorHelp" class="project-help">เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที</p>
               <p class="message" id="projectAdvisorMessage" role="status"></p>
+              <button type="button" class="btn-secondary" id="retryProjectAdvisorBtn" hidden>ลองโหลดข้อมูลอาจารย์อีกครั้ง</button>
             </div>
 
-            <div class="form-group">
+            <div class="form-group project-topic-field">
               <label for="projectTitle">หัวข้อโครงการ</label>
 
               <input
@@ -1067,18 +977,21 @@
             <div class="project-actions">
               <button type="button" class="btn-primary" id="saveProjectBtn" disabled>
                 <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-                บันทึกหัวข้อโครงการ
+                บันทึกหัวข้อ
               </button>
 
               <p class="message" id="projectMessage" role="status"></p>
+              <button type="button" class="btn-secondary" id="retryProjectBtn" hidden>ลองโหลดหัวข้ออีกครั้ง</button>
             </div>
           </section>
+
+          <section id="co09Student" aria-label="การสอบหัวข้อโครงการสหกิจศึกษา CO-09"></section>
 
           <!-- Retain the upload section ID for existing anchors and navigation callers. -->
           <section id="panel-report-upload" class="section-card project-upload-card" aria-labelledby="coopProjectUploadTitle">
             <div class="section-card-header">
               <div>
-                <h3 id="coopProjectUploadTitle"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปโหลดโครงการ</h3>
+                <h3 id="coopProjectUploadTitle"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> เอกสารผลงานโครงการ</h3>
                 <p>อัปโหลดรูปเล่มและโปสเตอร์ เปิดดูไฟล์ปัจจุบัน หรือเลือกไฟล์ใหม่เพื่อเปลี่ยนไฟล์เดิม</p>
               </div>
             </div>
@@ -1117,6 +1030,7 @@
               </button>
 
               <p class="message" id="projectUploadMessage" role="status"></p>
+              <button type="button" class="btn-secondary" id="retryProjectFilesBtn" hidden>ลองโหลดรายการไฟล์อีกครั้ง</button>
             </div>
           </section>
         </section>
@@ -1411,37 +1325,18 @@
 
     <div class="modal-overlay" id="profileEditModal" aria-hidden="true">
       <div class="modal-box profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle" aria-describedby="profileEditHelp" tabindex="-1">
-        <!-- Header -->
         <div class="modal-header">
-          <div>
-            <h3 id="profileEditModalTitle">
-              <i class="fa-solid fa-user-pen"></i>
-              แก้ไขประวัตินักศึกษา
-            </h3>
-
-            <p id="profileEditHelp">ปุ่มบันทึกข้อมูลจะบันทึกการแก้ไขทั้งสองหมวด ส่วนรูปโปรไฟล์ใช้ปุ่มอัปโหลดแยก</p>
-          </div>
-
-          <button
-            type="button"
-            class="modal-close"
-            id="closeProfileEditModal"
-            aria-label="ปิด"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+          <div><h3 id="profileEditModalTitle">รูปโปรไฟล์</h3><p id="profileEditHelp">เลือกรูปและยืนยันอัปโหลดแยก ส่วนข้อมูลประวัติกรอกได้โดยตรงในหน้าหลัก</p></div>
+          <button type="button" class="modal-close" id="closeProfileEditModal" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
         </div>
-
-        <!-- Body -->
         <div class="modal-body">
           <form id="profileEditForm" novalidate>
-            <div class="profile-tabs" id="studentProfileEditTabs" role="tablist" aria-label="หมวดข้อมูลที่แก้ไข">
-              <button type="button" class="profile-tab" id="profileEditPersonalTab" role="tab" aria-selected="true" aria-controls="profileEditPersonalPanel" tabindex="0"><i class="fa-solid fa-user" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
-              <button type="button" class="profile-tab" id="profileEditContactTab" role="tab" aria-selected="false" aria-controls="profileEditContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
+            <div class="profile-tabs" id="studentProfileEditTabs" role="tablist" aria-label="ประวัตินักศึกษาและการติดต่อ">
+              <button type="button" class="profile-tab" id="profileEditPersonalTab" role="tab" aria-selected="true" aria-controls="profileEditPersonalPanel" tabindex="0"><span>ประวัตินักศึกษา</span></button>
+              <button type="button" class="profile-tab" id="profileEditContactTab" role="tab" aria-selected="false" aria-controls="profileEditContactPanel" tabindex="-1"><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
             </div>
-            <p class="profile-tab-help">สลับหมวดได้โดยข้อมูลที่แก้ไขยังอยู่ ปุ่มบันทึกข้อมูลจะบันทึกทั้งสองหมวด</p>
             <div id="profileEditPersonalPanel" class="profile-edit-tab-panel" role="tabpanel" aria-labelledby="profileEditPersonalTab" tabindex="0">
-            <div
+<div
               class="profile-form-section profile-image-form-section"
               id="profileImageEditorSection"
             >
@@ -1491,453 +1386,49 @@
                 </div>
               </div>
             </div>
-
-            <!-- ==============================
-             ข้อมูลส่วนตัว
-             ============================== -->
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-circle-user"></i>
-
-                <div>
-                  <h4>ข้อมูลส่วนตัว</h4>
-                  <p>ข้อมูลทั่วไปและข้อมูลสุขภาพของนักศึกษา</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group">
-                  <label for="editPrefix">คำนำหน้า</label>
-
-                  <select id="editPrefix" name="prefix">
-                    <option value="">-- เลือกคำนำหน้า --</option>
-                    <option value="นาย">นาย</option>
-                    <option value="นางสาว">นางสาว</option>
-                    <option value="นาง">นาง</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="editBirthDate"> วันเกิด </label>
-
-                  <input type="date" id="editBirthDate" name="birth_date" />
-                </div>
-
-                <div class="form-group">
-                  <label for="editAge">อายุ</label>
-
-                  <input type="text" id="editAge" readonly />
-                </div>
-
-                <div class="form-group">
-                  <label for="editHeight"> ส่วนสูง (ซม.) </label>
-
-                  <input
-                    type="number"
-                    id="editHeight"
-                    name="height_cm"
-                    min="1"
-                    placeholder="เช่น 172"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editWeight"> น้ำหนัก (กก.) </label>
-
-                  <input
-                    type="number"
-                    id="editWeight"
-                    name="weight_kg"
-                    min="1"
-                    step="0.1"
-                    placeholder="เช่น 67"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editNationality"> สัญชาติ </label>
-
-                  <input
-                    type="text"
-                    id="editNationality"
-                    name="nationality"
-                    placeholder="เช่น ไทย"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editEthnicity"> เชื้อชาติ </label>
-
-                  <input
-                    type="text"
-                    id="editEthnicity"
-                    name="ethnicity"
-                    placeholder="เช่น ไทย"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editReligion"> ศาสนา </label>
-
-                  <input
-                    type="text"
-                    id="editReligion"
-                    name="religion"
-                    placeholder="เช่น พุทธ"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editBloodType"> กรุ๊ปเลือด </label>
-
-                  <select id="editBloodType" name="blood_type">
-                    <option value="">-- เลือกกรุ๊ปเลือด --</option>
-
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="AB">AB</option>
-                    <option value="O">O</option>
-                    <option value="ไม่ทราบ">ไม่ทราบ</option>
-                  </select>
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editMedicalConditions"> โรคประจำตัว </label>
-
-                  <textarea
-                    id="editMedicalConditions"
-                    name="medical_conditions"
-                    rows="3"
-                    placeholder="ระบุโรคประจำตัว หากไม่มีสามารถเว้นว่าง"
-                  ></textarea>
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editAllergies"> อาการแพ้ </label>
-
-                  <textarea
-                    id="editAllergies"
-                    name="allergies"
-                    rows="3"
-                    placeholder="ระบุยา อาหาร หรือสิ่งที่แพ้"
-                  ></textarea>
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editSpecialAbilities"> ความสามารถพิเศษ </label>
-
-                  <textarea
-                    id="editSpecialAbilities"
-                    name="special_abilities"
-                    rows="3"
-                    placeholder="ระบุความสามารถพิเศษ"
-                  ></textarea>
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editRelatedSkills">
-                    ทักษะที่เกี่ยวข้องกับสหกิจศึกษา
-                  </label>
-
-                  <textarea
-                    id="editRelatedSkills"
-                    name="related_skills"
-                    rows="3"
-                    placeholder="เช่น HTML, CSS, JavaScript, React, SQL"
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- ==============================
-             ข้อมูลที่อยู่
-             ============================== -->
-
             </div>
             <div id="profileEditContactPanel" class="profile-edit-tab-panel" role="tabpanel" aria-labelledby="profileEditContactTab" tabindex="0" hidden>
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-location-dot"></i>
-
-                <div>
-                  <h4>ข้อมูลที่อยู่</h4>
-                  <p>ภูมิลำเนาและที่อยู่ปัจจุบัน</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group profile-form-full">
-                  <label for="editHometownAddress"> ภูมิลำเนา </label>
-
-                  <textarea
-                    id="editHometownAddress"
-                    name="hometown_address"
-                    rows="3"
-                    placeholder="กรอกที่อยู่ภูมิลำเนา"
-                  ></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editHometownPhone"> โทรศัพท์ภูมิลำเนา </label>
-
-                  <input
-                    type="tel"
-                    id="editHometownPhone"
-                    name="hometown_phone"
-                    placeholder="เช่น 0812345678"
-                  />
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editCurrentAddress"> ที่อยู่ปัจจุบัน </label>
-
-                  <textarea
-                    id="editCurrentAddress"
-                    name="current_address"
-                    rows="3"
-                    placeholder="กรอกที่อยู่ปัจจุบัน"
-                  ></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editCurrentPhone"> โทรศัพท์ปัจจุบัน </label>
-
-                  <input
-                    type="tel"
-                    id="editCurrentPhone"
-                    name="current_phone"
-                    placeholder="เช่น 0812345678"
-                  />
-                </div>
-              </div>
+              <p class="profile-tab-help">ข้อมูลติดต่อ ครอบครัว ฉุกเฉิน และเพื่อนสนิท กรอกต่อเนื่องได้ในหน้าประวัติโดยตรง</p>
+              <button id="profileModalContactLink" type="button" class="btn-secondary">ไปยังแบบฟอร์มติดต่อ</button>
             </div>
-
-            <!-- ==============================
-             ข้อมูลบิดา
-             ============================== -->
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-person"></i>
-
-                <div>
-                  <h4>ข้อมูลบิดา</h4>
-                  <p>ข้อมูลพื้นฐานของบิดา</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group">
-                  <label for="editFatherName"> ชื่อบิดา </label>
-
-                  <input
-                    type="text"
-                    id="editFatherName"
-                    name="father_name"
-                    placeholder="ชื่อ-นามสกุล"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editFatherAge"> อายุบิดา </label>
-
-                  <input
-                    type="number"
-                    id="editFatherAge"
-                    name="father_age"
-                    min="1"
-                    placeholder="อายุ"
-                  />
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editFatherOccupation"> อาชีพบิดา </label>
-
-                  <input
-                    type="text"
-                    id="editFatherOccupation"
-                    name="father_occupation"
-                    placeholder="อาชีพ"
-                  />
-                </div>
-              </div>
+            <!-- Non-editable compatibility state for the existing draft adapter; one visible editor per field. -->
+            <div hidden>
+<input type="hidden" id="editPrefix" name="prefix" />
+<input type="hidden" id="editBirthDate" name="birth_date" />
+<input type="hidden" id="editHeight" name="height_cm" />
+<input type="hidden" id="editWeight" name="weight_kg" />
+<input type="hidden" id="editNationality" name="nationality" />
+<input type="hidden" id="editEthnicity" name="ethnicity" />
+<input type="hidden" id="editReligion" name="religion" />
+<input type="hidden" id="editBloodType" name="blood_type" />
+<input type="hidden" id="editMedicalConditions" name="medical_conditions" />
+<input type="hidden" id="editAllergies" name="allergies" />
+<input type="hidden" id="editSpecialAbilities" name="special_abilities" />
+<input type="hidden" id="editRelatedSkills" name="related_skills" />
+<input type="hidden" id="editHometownAddress" name="hometown_address" />
+<input type="hidden" id="editHometownPhone" name="hometown_phone" />
+<input type="hidden" id="editCurrentAddress" name="current_address" />
+<input type="hidden" id="editCurrentPhone" name="current_phone" />
+<input type="hidden" id="editFatherName" name="father_name" />
+<input type="hidden" id="editFatherAge" name="father_age" />
+<input type="hidden" id="editFatherOccupation" name="father_occupation" />
+<input type="hidden" id="editMotherName" name="mother_name" />
+<input type="hidden" id="editMotherAge" name="mother_age" />
+<input type="hidden" id="editMotherOccupation" name="mother_occupation" />
+<input type="hidden" id="editParentAddress" name="parent_address" />
+<input type="hidden" id="editParentPhone" name="parent_phone" />
+<input type="hidden" id="editEmergencyName" name="emergency_name" />
+<input type="hidden" id="editEmergencyRelation" name="emergency_relation" />
+<input type="hidden" id="editEmergencyAddress" name="emergency_address" />
+<input type="hidden" id="editEmergencyPhone" name="emergency_phone" />
+              <button id="saveProfileBtn" type="button" disabled>บันทึกประวัติ</button>
             </div>
-
-            <!-- ==============================
-             ข้อมูลมารดา
-             ============================== -->
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-person-dress"></i>
-
-                <div>
-                  <h4>ข้อมูลมารดา</h4>
-                  <p>ข้อมูลพื้นฐานของมารดา</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group">
-                  <label for="editMotherName"> ชื่อมารดา </label>
-
-                  <input
-                    type="text"
-                    id="editMotherName"
-                    name="mother_name"
-                    placeholder="ชื่อ-นามสกุล"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editMotherAge"> อายุมารดา </label>
-
-                  <input
-                    type="number"
-                    id="editMotherAge"
-                    name="mother_age"
-                    min="1"
-                    placeholder="อายุ"
-                  />
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editMotherOccupation"> อาชีพมารดา </label>
-
-                  <input
-                    type="text"
-                    id="editMotherOccupation"
-                    name="mother_occupation"
-                    placeholder="อาชีพ"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- ==============================
-             ข้อมูลผู้ปกครอง
-             ============================== -->
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-people-roof"></i>
-
-                <div>
-                  <h4>ข้อมูลผู้ปกครอง</h4>
-                  <p>ข้อมูลสำหรับติดต่อผู้ปกครอง</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group profile-form-full">
-                  <label for="editParentAddress">
-                    ที่อยู่ที่สามารถติดต่อได้
-                  </label>
-
-                  <textarea
-                    id="editParentAddress"
-                    name="parent_address"
-                    rows="3"
-                    placeholder="กรอกที่อยู่ผู้ปกครอง"
-                  ></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editParentPhone"> โทรศัพท์ </label>
-
-                  <input
-                    type="tel"
-                    id="editParentPhone"
-                    name="parent_phone"
-                    placeholder="เช่น 0812345678"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- ==============================
-             ผู้ติดต่อกรณีฉุกเฉิน
-             ============================== -->
-
-            <div class="profile-form-section">
-              <div class="profile-form-title">
-                <i class="fa-solid fa-phone-volume"></i>
-
-                <div>
-                  <h4>บุคคลที่สามารถติดต่อได้กรณีฉุกเฉิน</h4>
-
-                  <p>ข้อมูลบุคคลสำหรับติดต่อในกรณีฉุกเฉิน</p>
-                </div>
-              </div>
-
-              <div class="profile-form-grid">
-                <div class="form-group">
-                  <label for="editEmergencyName"> ชื่อ-นามสกุล </label>
-
-                  <input
-                    type="text"
-                    id="editEmergencyName"
-                    name="emergency_name"
-                    placeholder="ชื่อ-นามสกุล"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="editEmergencyRelation"> ความเกี่ยวข้อง </label>
-
-                  <input
-                    type="text"
-                    id="editEmergencyRelation"
-                    name="emergency_relation"
-                    placeholder="เช่น บิดา มารดา พี่สาว"
-                  />
-                </div>
-
-                <div class="form-group profile-form-full">
-                  <label for="editEmergencyAddress"> ที่อยู่ </label>
-
-                  <textarea
-                    id="editEmergencyAddress"
-                    name="emergency_address"
-                    rows="3"
-                    placeholder="กรอกที่อยู่"
-                  ></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label for="editEmergencyPhone"> โทรศัพท์ </label>
-
-                  <input
-                    type="tel"
-                    id="editEmergencyPhone"
-                    name="emergency_phone"
-                    placeholder="เช่น 0812345678"
-                  />
-                </div>
-              </div>
-            </div>
-
-            </div>
-            <p class="message" id="profileEditMessage" role="status" aria-live="polite"></p>
+            <p class="message" id="profileEditMessage" aria-live="polite"></p>
           </form>
         </div>
-
-        <!-- Footer -->
         <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="cancelProfileEditBtn">
-            <i class="fa-solid fa-xmark"></i>
-            ปิด / เก็บข้อมูลที่กำลังแก้
-          </button>
-
-          <button type="button" class="btn-primary" id="saveProfileBtn">
-            <i class="fa-solid fa-floppy-disk"></i>
-            บันทึกข้อมูล
-          </button>
-          <button type="button" class="btn-secondary" id="reloadProfileConflictBtn" hidden>
-            ทิ้งการแก้ไขและโหลดข้อมูลล่าสุด
-          </button>
+          <button id="cancelProfileEditBtn" type="button" class="btn-secondary">ปิดหน้าต่าง</button>
+          <button id="reloadProfileConflictBtn" type="button" class="btn-secondary" hidden>ทิ้งการแก้ไขและโหลดล่าสุด</button>
         </div>
       </div>
     </div>

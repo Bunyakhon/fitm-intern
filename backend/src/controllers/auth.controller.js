@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { Student, sequelize } = require("../models");
-const { applicationSession } = require("../services/unifiedAuth.service");
+const { applicationSession, authorizeActor } = require("../services/unifiedAuth.service");
 const { studentIdFromEmail } = require("../services/studentIdentity");
 const { MAX_PERSON_NAME_LENGTH, isThaiPersonName } = require("../validators/personName.validator");
 
@@ -166,6 +166,9 @@ exports.loginStudent = async (req, res) => {
       });
     }
 
+    // The live Student row must satisfy the same eligibility as Unified Login.
+    authorizeActor(student, "student");
+
     // สร้าง JWT
     const token = jwt.sign(
       {
@@ -190,7 +193,7 @@ exports.loginStudent = async (req, res) => {
       data: student,
     });
   } catch (error) {
-
+    if (error.status === 403) return res.status(403).json({ success: false, code: error.code, message: error.message });
     return res.status(500).json({
       success: false,
       message: "เกิดข้อผิดพลาดภายในระบบ",

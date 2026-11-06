@@ -35,6 +35,13 @@ function defineRelationModels(sequelize) {
       tableName, underscored: true, timestamps: true, createdAt: "created_at", updatedAt: "updated_at",
       validate: {
         validDraftValues() {
+          if (tableName === "student_close_friends") {
+            const { normalizeFriendContact } = require("../services/studentProfileContacts");
+            for (const field of ["nickname", "full_name", "phone", "line_id", "facebook_url"]) {
+              const value = this.get(field);
+              if (value != null) normalizeFriendContact(value, field);
+            }
+          }
           // Mirror stable DB constraints. Nullable draft fields remain nullable.
           const allowed = {
             address_type: ["registered", "current"],
