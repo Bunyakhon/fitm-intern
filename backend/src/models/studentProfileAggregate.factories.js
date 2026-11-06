@@ -43,9 +43,12 @@ function defineRelationModels(sequelize) {
             }
           }
           // Mirror stable DB constraints. Nullable draft fields remain nullable.
+          const moo = this.get("moo");
+          if (moo != null && (typeof moo !== "string" || !/^[0-9]{1,2}$/.test(moo))) throw new Error("INVALID_moo");
           const allowed = {
             address_type: ["registered", "current"],
             education_level: ["bachelor", "high_vocational", "high_school_vocational"],
+            education_status: ["studying", "graduated"],
             category: ["computer", "language"], proficiency: ["very_good", "good", "moderate", "fair"],
           };
           for (const [field, values] of Object.entries(allowed)) {

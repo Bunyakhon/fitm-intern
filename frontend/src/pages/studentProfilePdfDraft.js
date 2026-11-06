@@ -14,7 +14,7 @@ export const pdfFieldSpecs = {
   profile: Object.fromEntries([...legacy, ...workspaceFields.personal.filter(spec => spec.key !== "national_id"), ...workspaceFields.family].map(spec => [spec.key, spec])),
   student: Object.fromEntries([field("major", "สาขาวิชา"), field("year_level", "ชั้นปี", "integer", { min: 1, limit: 4 }), field("gpa", "GPA สะสม", "gpa"), ...workspaceFields.academic].map(spec => [spec.key, spec])),
   addresses: [field("address_type", "ประเภทที่อยู่", "select", { required: true, options: [["registered", "ทะเบียนบ้าน"], ["current", "ปัจจุบัน"]] }), ...workspaceFields.addresses],
-  education: workspaceFields.education, training: workspaceFields.training, skills: workspaceFields.skills,
+  education: workspaceFields.education.filter(field => field.key !== "education_status"), training: workspaceFields.training, skills: workspaceFields.skills,
 };
 export const importIdentityKeys = { addresses: ["address_type"], education: ["education_level", "institution_name", "qualification", "major"], training: ["course_name", "institution"], skills: ["category", "skill_name"] };
 export const importRecordIdentity = (kind, row) => JSON.stringify(importIdentityKeys[kind].map(key => String(row[key] ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("en")));

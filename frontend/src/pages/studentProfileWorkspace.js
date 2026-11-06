@@ -1,9 +1,10 @@
-import { workspaceFields, ProfileSectionDraft, validateProfileDocument, canonicalWorkspaceValue, safeFriendFacebookUrl } from "./studentProfileWorkspaceDraft.js";
+import { workspaceFields, ProfileSectionDraft, validateProfileDocument, canonicalWorkspaceValue, safeFriendFacebookUrl, profileGenderForPrefix, profilePrefixGenderError } from "./studentProfileWorkspaceDraft.js";
 import { updateMyStudentProfile, updateStudentInfo, createStudentProfileRecord, updateStudentProfileRecord, deleteStudentProfileRecord,
   uploadStudentProfileDocument, updateStudentProfileDocument, deleteStudentProfileDocument, downloadStudentProfileDocument, updateStudentProfileAggregate } from "../api/studentProfile.api.js";
 import { showToast, showConfirmModal, setButtonLoading } from "../ui/feedback.js";
-import { profileMessage, profileFieldError, clearProfileErrors, notifyProfileChange } from "./studentProfileFeedback.js";
+import { profileMessage, profileFieldError, clearProfileFieldError, clearProfileErrors, notifyProfileChange } from "./studentProfileFeedback.js";
 import { mountProfileBirthCalendar } from "./studentProfileBirthCalendar.js";
+import { mountProfileAddressSearch } from "./studentProfileAddress.js";
 
 // Presentation choices only: keep API values, draft normalization and PDF rules intact.
 const profileChoices = {
@@ -18,20 +19,28 @@ const englishGenderLabel = value => ({ ชาย: "Male", หญิง: "Female"
 const mounted = new WeakMap();
 const profileKinds = ["personal", "family", "contacts", "basics", "household", "emergency", "legacyAddresses"];
 const documentTypes = [["transcript", "ใบแสดงผลการเรียน", "fa-file-contract"], ["national_id_copy", "สำเนาบัตรประชาชน", "fa-id-card"],
-  ["student_id_copy", "สำเนาบัตรนักศึกษา", "fa-address-card"], ["supporting_other", "เอกสารอื่น", "fa-paperclip"], ["external_profile_pdf", "Profile PDF ต้นฉบับ", "fa-file-pdf"]];
+  ["student_id_copy", "สำเนาบัตรนักศึกษา", "fa-address-card"], ["external_profile_pdf", "Profile PDF ต้นฉบับ", "fa-file-pdf"], ["supporting_other", "เอกสารอื่น", "fa-paperclip"]];
 export function mountStudentProfileWorkspace({ document, onCommit, reload, externalBusy = () => false, onUnauthorized = () => {}, onSnapshot,
   prepareLegacy = () => ({}), reveal = () => {}, beginMutation = () => {}, rebaseLegacy = () => {}, syncLegacyProfile = () => {} }) {
   const root = document.getElementById("panel-profile");
   if (!root) return null;
   if (mounted.has(root)) return mounted.get(root);
   const entries = new Map(), uploads = new Map(), lists = new Map();
-  let titleInput, titleHelp, englishGender, thaiIdentity;
+  let titleInput, titleHelp, englishGender, thaiIdentity, renderedPrefix;
   let snapshot = null, busy = false, serial = 0, savingProfile = false, saveFailed = false, legacyConflict = false;
   const node = (tag, text, className) => { const element = document.createElement(tag); if (text !== undefined) element.textContent = text; if (className) element.className = className; return element; };
   const button = (label, action, className = "btn-secondary") => { const element = node("button", label, className); element.type = "button"; element.addEventListener("click", action); return element; };
   const status = profileMessage;
   const globalStatus = document.getElementById("profileWorkspaceStatus");
   const mainSave = document.getElementById("profileSaveAll");
+  const saveButtons = [mainSave, document.getElementById("profileSaveAllTop")].filter(Boolean);
+  let documentsLoading = false, documentsError = false;
+  const documentPreviews = new Map();
+  function clearDocumentPreviews() {
+    for (const url of documentPreviews.values()) URL.revokeObjectURL(url);
+    documentPreviews.clear();
+  }
+  document.defaultView?.addEventListener?.("pagehide", clearDocumentPreviews);
   const getRow = entry => {
     if (profileKinds.includes(entry.kind)) {
       const profile = snapshot?.profile || {};
@@ -46,16 +55,23 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     for (const [key, input] of entry.inputs) entry.draft.values[key] = input.value;
     if (entry === thaiIdentity) syncEnglishGender();
   }
-  // Only existing current-address fields participate; never infer from registered
-  // addresses or parse legacy free text. Keep unmatched legacy text in its draft.
+  // Format explicit structured fields only. Never infer one address from the
+  // other or parse legacy free text. Keep unmatched legacy text in its draft.
   const addressPart = value => value == null ? "" : String(value).trim().replace(/\s+/gu, " ");
-  function fullCurrentAddress(values) {
-    return [["house_no", ""], ["road", "ถนน"], ["subdistrict", "ตำบล/แขวง"],
-      ["district", "อำเภอ/เขต"], ["province", "จังหวัด"], ["postal_code", ""]]
-      .map(([key, prefix]) => { const value = addressPart(values[key]); return value ? prefix + value : ""; }).filter(Boolean).join(" ");
+  function fullCurrentAddress(values, legacyFormat = false) {
+    const bangkok = addressPart(values.province).replace(/^(?:จังหวัด\s*|จ\.\s*)/u, "") === "กรุงเทพมหานคร";
+    return [["house_no", ""], ["moo", "หมู่ "], ["road", "ถนน"], ["subdistrict", legacyFormat ? "ตำบล/แขวง" : bangkok ? "แขวง" : "ตำบล"],
+      ["district", legacyFormat ? "อำเภอ/เขต" : bangkok ? "เขต" : "อำเภอ"], ["province", "จังหวัด"], ["postal_code", ""]]
+      .map(([key, prefix]) => {
+        const value = addressPart(values[key]);
+        const alreadyPrefixed = !legacyFormat && ({ subdistrict: /^(?:ตำบล|แขวง)/u, district: /^(?:อำเภอ|เขต)/u, province: /^จังหวัด/u })[key]?.test(value);
+        return value ? (alreadyPrefixed ? "" : prefix) + value : "";
+      }).filter(Boolean).join(" ");
   }
-  let currentPreview, currentAddressHelp, lastGeneratedAddress, rebasingCurrentAddress = false;
+  let currentPreview, registeredPreview, currentAddressHelp, lastGeneratedAddress, rebasingCurrentAddress = false;
   function syncCurrentAddress() {
+    const registered = entries.get("address-registered");
+    if (registeredPreview && registered) { capture(registered); registeredPreview.value = fullCurrentAddress(registered.draft.values); }
     const source = entries.get("address-current"), text = entries.get("address-text-current");
     if (rebasingCurrentAddress || !currentPreview || !source || !text) return;
     capture(source);
@@ -63,7 +79,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const savedText = text.draft.baseline.current_address;
     const currentText = text.draft.values.current_address;
     const generatedDraft = canonicalWorkspaceValue(text.fields[0], currentText) === lastGeneratedAddress;
-    const baselineMatches = !savedText || savedText === fullCurrentAddress(source.draft.baseline);
+    const baselineMatches = !savedText || savedText === fullCurrentAddress(source.draft.baseline) || savedText === fullCurrentAddress(source.draft.baseline, true);
     const safe = baselineMatches && (!text.draft.dirty() || generatedDraft);
     // A 409 review may reveal previously unseen free text. Preserve it rather
     // than reapplying an automatically generated draft over the remote value.
@@ -98,22 +114,41 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     writeChoices(englishGender, [...input.children].filter(option => option.value !== "").map(option => [option.value, englishGenderLabel(option.value)]), value);
     englishGender.disabled = input.disabled;
   }
+  function identityFeedback() {
+    if (!thaiIdentity) return;
+    const prefix = thaiIdentity.inputs.get("prefix"), gender = thaiIdentity.inputs.get("gender");
+    const message = profilePrefixGenderError(prefix.value, gender.value);
+    for (const input of [gender, englishGender].filter(Boolean)) {
+      if (message) profileFieldError(input, message, false); else clearProfileFieldError(input);
+    }
+    return message;
+  }
+  function afterIdentityEvent() {
+    // The shared document listener clears old field errors after input bubbling.
+    // Render this pair's current validation afterwards without dispatching events.
+    if (document.defaultView?.queueMicrotask) document.defaultView.queueMicrotask(identityFeedback);
+    else identityFeedback();
+  }
+  function updateChoice(input, key, value) {
+    const options = profileChoices[key].map(([choice, label]) => key === "gender" && value && genderLabel(value) === label ? [value, label] : [choice, label]);
+    if (value !== "" && !options.some(([choice]) => choice === value)) options.push([value, key === "gender" ? genderLabel(value) : value]);
+    input.replaceChildren();
+    for (const [choice, title] of [["", key === "blood_type" ? "เลือกกรุ๊ปเลือด" : "ยังไม่ระบุ"], ...options]) { const option = node("option", title); option.value = choice; input.append(option); }
+    input.value = value;
+  }
   function updateInputs(entry) {
     for (const [key, input] of entry.inputs) {
       const value = entry.draft.values[key] ?? "";
       // Preserve stored free-text choices (including legacy blood types) verbatim.
-      if (profileChoices[key]) {
-        const options = profileChoices[key].map(([choice, label]) => key === "gender" && value && genderLabel(value) === label ? [value, label] : [choice, label]);
-        if (value !== "" && !options.some(([choice]) => choice === value)) options.push([value, key === "gender" ? genderLabel(value) : value]);
-        input.replaceChildren();
-        for (const [choice, title] of [["", key === "blood_type" ? "เลือกกรุ๊ปเลือด" : "ยังไม่ระบุ"], ...options]) { const option = node("option", title); option.value = choice; input.append(option); }
-      }
+      if (profileChoices[key]) updateChoice(input, key, value);
       input.value = value;
       entry.calendars?.get(key)?.refresh();
     }
     updateLicense(entry);
     updateFriendLink(entry);
-    if (entry === thaiIdentity) syncEnglishGender();
+    updateRecord(entry);
+    entry.addressSearch?.refresh();
+    if (entry === thaiIdentity) { renderedPrefix = entry.inputs.get("prefix").value; syncEnglishGender(); identityFeedback(); }
     notifyProfileChange(document);
   }
   function updateFriendLink(entry) {
@@ -123,6 +158,23 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const name = node(url ? "a" : "span", label);
     if (url) { name.href = url; name.target = "_blank"; name.rel = "noopener noreferrer"; }
     entry.friendName.replaceChildren(name);
+  }
+  function updateRecord(entry) {
+    if (!entry.summary) return;
+    const values = entry.draft.baseline;
+    entry.summary.replaceChildren();
+    const pairs = entry.kind === "education" ? [
+      ["ระดับการศึกษา", workspaceFields.education[0].options.find(([value]) => value === values.education_level)?.[1]],
+      ["สถานศึกษา", values.institution_name], ["วุฒิการศึกษา", values.qualification], ["สาขาวิชา", values.major],
+      ...(values.gpa != null ? [["GPA", values.gpa]] : []),
+      ["สถานะการศึกษา", ({ studying: "กำลังศึกษาอยู่", graduated: "สำเร็จการศึกษาแล้ว" })[values.education_status] || "ยังไม่ระบุสถานะ"],
+      ...(values.graduation_year != null ? [[values.education_status === "studying" ? "ปีที่ระบุไว้ (ค.ศ.)" : "ปีสำเร็จการศึกษา (ค.ศ.)", values.graduation_year]] : []),
+    ] : [["ชื่อหลักสูตร / การดูงาน / การฝึกงาน", values.course_name], ["สถาบันหรือหน่วยงาน", values.institution], ["วุฒิ / ประกาศนียบัตร", values.qualification], ["ระยะเวลา", values.period_text]];
+    for (const [label, value] of pairs) { const item = node("div"); item.append(node("dt", label), node("dd", value ?? "ยังไม่ระบุ")); entry.summary.append(item); }
+    entry.editor.hidden = !entry.editing; entry.summary.hidden = !!entry.editing; entry.edit.hidden = !!entry.editing;
+    if (entry.kind === "education") {
+      const input = entry.inputs.get("education_status"); input.disabled = !!entry.deleted || snapshot?.education_status_available === false;
+    }
   }
   function updateLicense(entry) {
     if (entry.kind !== "personal") return;
@@ -170,12 +222,13 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       },
     });
   }
-  async function perform(target, message, revision, action, after) {
+  async function perform(target, message, revision, action, after, successMessage = "บันทึกข้อมูลประวัติเรียบร้อยแล้ว") {
     if (busy || externalBusy()) { status(message, "กำลังบันทึกข้อมูลส่วนอื่น กรุณารอสักครู่", "info"); return false; }
     if (!revision) { status(message, "กรุณาโหลดข้อมูลประวัติล่าสุดก่อนบันทึก Draft ยังอยู่", "error"); return false; }
     busy = true; savingProfile = target === mainSave;
     if (savingProfile) saveFailed = false;
-    setButtonLoading(target, true, "กำลังบันทึก...");
+    for (const control of savingProfile ? saveButtons : [target]) setButtonLoading(control, true, "กำลังบันทึก...");
+    syncDocumentControls();
     beginMutation();
     notifyProfileChange(document);
     status(message, "กำลังบันทึก...", "loading");
@@ -184,7 +237,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       if (!result?.student || !result.profile_revision) throw new Error("ยังยืนยันผลบันทึกไม่ได้ กรุณาโหลดข้อมูลล่าสุดก่อนลองอีกครั้ง");
       after?.(result); controller.acceptSnapshot(result, { ownRevision: revision }); onCommit?.(result, revision);
       if (savingProfile) { saveFailed = false; legacyConflict = false; }
-      status(message, "บันทึกเรียบร้อยแล้ว · หากแก้ไขเพิ่มระหว่างบันทึก กรุณาบันทึกส่วนนั้นอีกครั้ง", "success"); notifyProfileChange(document, "saved"); showToast("บันทึกข้อมูลประวัติเรียบร้อยแล้ว", "success"); return true;
+      status(message, "บันทึกเรียบร้อยแล้ว · หากแก้ไขเพิ่มระหว่างบันทึก กรุณาบันทึกส่วนนั้นอีกครั้ง", "success"); notifyProfileChange(document, "saved"); showToast(successMessage, "success"); return true;
     } catch (error) {
       if (savingProfile) saveFailed = true;
       if ([401, 403].includes(error.status)) { onUnauthorized(error); return false; }
@@ -198,7 +251,13 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       }
       status(message, error.status === 409 ? "ประวัติเปลี่ยนจากหน้าต่างอื่น Draft ยังอยู่ โปรดตรวจความแตกต่างก่อนบันทึก" : error.status === 428 ? "ต้องโหลดประวัติล่าสุดก่อนบันทึก Draft ยังอยู่" : !error.status || error.status >= 500 ? "ยังยืนยันผลบันทึกไม่ได้ กรุณาโหลดประวัติล่าสุดและตรวจค่าก่อนลองอีกครั้ง Draft ยังอยู่" : error.message || "ไม่สามารถบันทึกข้อมูลได้", "error");
       return false;
-    } finally { busy = false; savingProfile = false; setButtonLoading(target, false); renderLists(); notifyProfileChange(document); }
+    } finally {
+      const targets = savingProfile ? saveButtons : [target];
+      busy = false; savingProfile = false;
+      for (const control of targets) setButtonLoading(control, false);
+      for (const control of saveButtons) control.disabled = !snapshot || externalBusy();
+      syncDocumentControls(); renderLists(); notifyProfileChange(document);
+    }
   }
   function fieldControl(entry, spec) {
     const group = node("div", undefined, "form-group");
@@ -219,6 +278,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     }
     if (Number.isFinite(spec.max)) input.maxLength = spec.max;
     if (spec.type === "nationalId") { input.inputMode = "numeric"; input.autocomplete = "off"; input.pattern = "[0-9]{13}"; input.spellcheck = false; }
+    if (spec.type === "moo") { input.inputMode = "numeric"; input.pattern = "[0-9]{1,2}"; input.autocomplete = "off"; input.spellcheck = false; }
     if (["contacts", "close_friends"].includes(entry.kind)) {
       input.autocomplete = "off";
       input.setAttribute("aria-describedby", "profileContactPrivacy-" + entry.key);
@@ -237,6 +297,11 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const icons = { academic: "fa-graduation-cap", personal: "fa-circle-user", family: "fa-people-roof", contacts: "fa-address-card", close_friends: "fa-user-group", addresses: "fa-location-dot", education: "fa-school", training: "fa-certificate", skills: "fa-star", documents: "fa-file-lines", basics: "fa-circle-user", household: "fa-people-roof", emergency: "fa-phone", legacyAddresses: "fa-location-dot" };
     const icon = node("i", undefined, "fa-solid " + icons[kind]); icon.setAttribute("aria-hidden", "true"); heading.prepend(icon);
     for (const spec of fields) grid.append(fieldControl(entry, spec));
+    if (addressType) entry.addressSearch = mountProfileAddressSearch({ document, inputs: entry.inputs, onChange: changed => {
+      for (const key of changed) { clearProfileFieldError(entry.inputs.get(key)); clearProfileFieldError(entry.addressSearch.control(key)); }
+      capture(entry); syncCurrentAddress();
+      status(entry.message, entry.draft.dirty() ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); notifyProfileChange(document, "edit");
+    } });
     entry.message = node("p", embedded ? "" : "โหลดข้อมูลประวัติก่อนเริ่มแก้ไข", "message"); entry.message.setAttribute("role", "status"); entry.message.setAttribute("aria-live", "polite");
     entry.save = node("button", "บันทึก" + title, "btn-primary"); entry.save.type = "submit"; entry.save.disabled = !snapshot;
     entry.save.hidden = kind !== "documents";
@@ -244,10 +309,17 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     entry.discard = button("โหลดล่าสุด / ทิ้งการแก้ไข", () => review(entry, false)); entry.discard.hidden = true;
     entry.difference = node("div", undefined, "profile-difference"); entry.difference.hidden = true;
     const actions = node("div", undefined, "profile-entry-actions"); actions.append(entry.save);
+    if (["education", "training"].includes(kind)) {
+      entry.editing = isNew; entry.editor = grid;
+      entry.summary = node("dl", undefined, "profile-record-summary");
+      entry.edit = button("แก้ไข", () => { if (busy || externalBusy() || entry.deleted) return; entry.editing = true; updateRecord(entry); entry.inputs.values().next().value?.focus(); });
+      actions.append(entry.edit);
+    }
     if (kind !== "documents" && (isNew || (id && !addressType))) { entry.remove = button(isNew ? "ยกเลิกรายการใหม่" : "ลบรายการ", () => removeEntry(entry), "btn-secondary profile-danger"); actions.append(entry.remove); }
     actions.append(entry.review, entry.discard);
     if (!embedded) form.append(heading);
     if (kind === "documents") form.append(node("p", "บันทึกชื่อกำกับเอกสารแยกจากประวัติ", "profile-tab-help"));
+    if (entry.summary) form.append(entry.summary);
     form.append(grid, entry.difference, actions, entry.message);
     if (["contacts", "close_friends"].includes(kind)) {
       const privacy = node("p", kind === "close_friends" ? "ใช้ข้อมูลเพื่อนสนิทเพื่อติดต่อกรณีจำเป็นเมื่อไม่สามารถติดต่อนักศึกษาได้ ควรแจ้งเจ้าของข้อมูลก่อนบันทึก" : "ข้อมูลติดต่อส่วนตัว ใช้เพื่อการติดต่อกรณีจำเป็น ช่องทั้งหมดเว้นว่างได้", "profile-tab-help");
@@ -256,12 +328,12 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     form.addEventListener("input", event => {
       if (event?.target && ![...entry.inputs.values()].includes(event.target)) return;
       capture(entry); updateFriendLink(entry); status(entry.message, entry.draft.dirty() || entry.isNew ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info");
-      if (entry.addressType === "current") syncCurrentAddress();
+      if (entry.addressType) syncCurrentAddress();
     });
     form.addEventListener("change", event => {
       if (event?.target && ![...entry.inputs.values()].includes(event.target)) return;
       capture(entry); updateLicense(entry);
-      if (entry.addressType === "current") syncCurrentAddress();
+      if (entry.addressType) syncCurrentAddress();
       if (event.target.name === "has_driving_license" && event.target.value === "false" && fields.some(spec => spec.license && entry.draft.values[spec.key])) {
         showConfirmModal({ title: "ล้างรายละเอียดใบขับขี่?", message: "คุณเลือกไม่มีใบขับขี่ รายละเอียดเดิมยังไม่ได้ลบ หากยืนยันจะล้างเลขที่ ประเภท และวันหมดอายุใน Draft แล้วกดบันทึกเพื่อยืนยันอีกครั้ง",
           confirmLabel: "ล้างรายละเอียดใน Draft", onConfirm: () => { for (const spec of fields.filter(spec => spec.license)) entry.draft.values[spec.key] = null; updateInputs(entry); } });
@@ -300,8 +372,17 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
         try {
           for (const [field, input] of entry.inputs) if (!entry.deleted && input.validity?.badInput) throw Object.assign(new Error("กรุณากรอกวันที่หรือตัวเลขให้ถูกต้อง"), { field });
           patch = entry.deleted ? {} : entry.draft.patch(entry.isNew || (entry.addressType && !entry.id));
+          if (entry.kind === "education" && snapshot.education_status_available === false && Object.hasOwn(patch, "education_status")) {
+            if (patch.education_status != null) throw Object.assign(new Error("สถานะการศึกษายังไม่พร้อมใช้งาน Draft ยังอยู่"), { field: "education_status" });
+            delete patch.education_status;
+          }
+          if (entry.addressType && snapshot.address_moo_available === false && Object.hasOwn(patch, "moo")) {
+            if (patch.moo != null) throw Object.assign(new Error("ช่องหมู่ที่ยังไม่พร้อมใช้งาน Draft ยังอยู่ กรุณาติดตั้งคอลัมน์ moo ก่อนบันทึก"), { field: "moo" });
+            delete patch.moo;
+          }
         } catch (error) {
-          reveal(entry.form); if (error.field) profileFieldError(entry.inputs.get(error.field), error.message);
+          if (entry.summary) { entry.editing = true; updateRecord(entry); }
+          reveal(entry.form); if (error.field) profileFieldError(entry.addressSearch?.control(error.field) || entry.inputs.get(error.field), error.message);
           status(entry.message, error.message, "error"); throw error;
         }
         if (entry.kind === "contacts" && snapshot.profile_contacts_available === false || entry.kind === "close_friends" && snapshot.close_friends_available === false) {
@@ -324,6 +405,12 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
         }
       }
       const state = { ...(snapshot.profile || {}), ...payload.profile };
+      const identityError = profilePrefixGenderError(state.prefix, state.gender);
+      if (identityError) {
+        const gender = thaiIdentity.inputs.get("gender");
+        reveal(gender); identityFeedback(); profileFieldError(gender, identityError);
+        throw new Error(identityError);
+      }
       for (const [field, message] of [
         [state.national_id_issue_date && state.national_id_expiry_date && state.national_id_expiry_date < state.national_id_issue_date ? "national_id_expiry_date" : null, "วันหมดอายุบัตรต้องไม่ก่อนวันออกบัตร"],
         [state.has_driving_license === false && ["driving_license_number", "driving_license_type", "driving_license_expiry_date"].some(key => state[key] != null) ? "has_driving_license" : null, "กรุณายืนยันล้างรายละเอียดใบขับขี่"]
@@ -361,6 +448,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       for (const { entry, sent } of submitted) {
         if (entry.deleted) continue;
         capture(entry); entry.draft.accept(getRow(entry) || {}, result.profile_revision, { ownRevision: revision, sent });
+        if (entry.summary) entry.editing = entry.draft.dirty();
         updateInputs(entry); clearConflict(entry); status(entry.message, entry.draft.dirty() ? "มีการแก้ไขระหว่างบันทึก กรุณาบันทึกอีกครั้ง" : "บันทึกเรียบร้อยแล้ว", "success");
       }
       snapshot = previous;
@@ -432,11 +520,16 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   function renderLists(ownRevision) {
     for (const section of lists.values()) {
       section.add.disabled = !snapshot || busy || section.kind === "close_friends" && snapshot.close_friends_available === false;
-      const rows = (snapshot?.[section.kind] || []).filter(row => !section.category || row.category === section.category);
+      let rows = (snapshot?.[section.kind] || []).filter(row => !section.category || row.category === section.category);
+      if (section.kind === "education") {
+        const rank = { bachelor: 0, high_vocational: 1, high_school_vocational: 2 };
+        rows = rows.map((row, index) => ({ row, index })).sort((a, b) => (rank[a.row.education_level] ?? 3) - (rank[b.row.education_level] ?? 3)
+          || (a.row.display_order ?? 0) - (b.row.display_order ?? 0) || a.index - b.index).map(item => item.row);
+      }
       for (const row of rows) {
         let entry = [...entries.values()].find(entry => entry.kind === section.kind && entry.id === row.id);
         if (!entry) entry = makeEntry({ key: section.kind + "-" + row.id, kind: section.kind, title: section.title, fields: workspaceFields[section.kind], row, id: row.id, container: section.list });
-        else if (entry.form.parentElement !== section.list) section.list.append(entry.form);
+        else if (section.kind === "education" || entry.form.parentElement !== section.list) section.list.append(entry.form);
       }
       section.empty.hidden = section.list.children.length > 0;
       if (section.kind === "close_friends" && snapshot?.close_friends_available === false) {
@@ -446,22 +539,51 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     }
   }
   function renderDocuments() {
+    clearDocumentPreviews();
     for (const entry of uploads.values()) {
       const rows = (snapshot?.documents || []).filter(row => row.file_type === entry.type);
       entry.list.replaceChildren();
-      if (!rows.length) entry.list.append(node("p", "ยังไม่มีเอกสาร", "profile-empty-state"));
+      entry.list.setAttribute("aria-busy", String(documentsLoading || !snapshot && !documentsError));
+      const state = node("p", documentsLoading || !snapshot && !documentsError ? "กำลังโหลดเอกสาร…" : documentsError ? "โหลดเอกสารไม่สำเร็จ ข้อมูลที่แสดงอาจยังไม่ใช่ฉบับล่าสุด" : rows.length ? "อัปโหลดแล้ว" : "ยังไม่มีเอกสาร", "profile-document-state");
+      state.setAttribute("role", "status"); entry.list.append(state);
+      if (documentsError && !documentsLoading) entry.list.append(button("ลองโหลดเอกสารอีกครั้ง", refreshDocuments));
+      entry.replace.hidden = !rows.length || entry.type === "supporting_other";
       for (const file of rows) {
         const row = node("article", undefined, "profile-document-row");
         const meta = node("div", undefined, "profile-document-meta");
-        meta.append(node("strong", file.document_label || file.original_name), node("span", file.original_name), node("small", "อัปโหลดแล้ว · รุ่น " + file.document_version + " · " + new Date(file.createdAt).toLocaleDateString("th-TH")));
+        meta.append(node("strong", file.original_name));
+        if (file.document_label) meta.append(node("span", file.document_label));
+        const size = Number(file.file_size);
+        const date = file.createdAt ? new Date(file.createdAt) : null;
+        meta.append(node("small", [({ "application/pdf": "PDF", "image/jpeg": "JPEG", "image/png": "PNG" })[file.mime_type] || "เอกสาร",
+          Number.isFinite(size) && size > 0 ? (size >= 1024 * 1024 ? (size / (1024 * 1024)).toFixed(1) + " MB" : Math.ceil(size / 1024) + " KB") : null,
+          file.document_version ? "รุ่น " + file.document_version : null,
+          date && !Number.isNaN(date.valueOf()) ? "อัปโหลด " + date.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" }) : null].filter(Boolean).join(" · ")));
         const actions = node("div", undefined, "profile-entry-actions");
+        actions.append(button("ดูเอกสาร", async event => {
+          const target = event.currentTarget; if (target.disabled || documentPreviews.has(file.id)) return;
+          setButtonLoading(target, true, "กำลังเปิด…");
+          try {
+            const blob = await downloadStudentProfileDocument(file.id);
+            if (!row.parentElement) return;
+            // Only a protected response becomes a local Blob URL; never link storage paths.
+            const prior = documentPreviews.get(file.id); if (prior) URL.revokeObjectURL(prior);
+            const url = URL.createObjectURL(new Blob([blob], { type: file.mime_type })); documentPreviews.set(file.id, url);
+            const preview = node("section", undefined, "profile-document-preview");
+            const media = node(file.mime_type === "application/pdf" ? "iframe" : "img");
+            media.src = url; media.title = "เอกสาร " + file.original_name; media.alt = file.original_name;
+            const close = button("ปิดเอกสาร", () => { URL.revokeObjectURL(url); documentPreviews.delete(file.id); preview.remove(); target.disabled = false; target.focus(); });
+            preview.append(close, media); row.append(preview); close.focus();
+          } catch (error) { status(entry.message, error.message || "เปิดเอกสารไม่สำเร็จ", "error"); if ([401, 403].includes(error.status)) onUnauthorized(error); }
+          finally { setButtonLoading(target, false); }
+        }));
         actions.append(button("ดาวน์โหลด", async event => {
           const target = event.currentTarget; setButtonLoading(target, true, "กำลังดาวน์โหลด...");
           try { const blob = await downloadStudentProfileDocument(file.id); const url = URL.createObjectURL(blob); const link = node("a"); link.href = url; link.download = file.original_name; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
           catch (error) { status(entry.message, error.message || "ดาวน์โหลดไม่สำเร็จ", "error"); if ([401, 403].includes(error.status)) onUnauthorized(error); }
           finally { setButtonLoading(target, false); }
         }));
-        actions.append(button("แก้ชื่อกำกับ", () => {
+        if (entry.type === "supporting_other" || file.document_label) actions.append(button("แก้ชื่อเอกสาร", () => {
           const key = "documents-" + file.id;
           let editor = entries.get(key);
           if (!editor) editor = makeEntry({ key, kind: "documents", title: "ชื่อกำกับเอกสาร", fields: [{ key: "document_label", label: "ชื่อกำกับเอกสาร", type: "text", max: 255 }], row: file, id: file.id, container: row });
@@ -479,6 +601,33 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       for (const editor of entries.values()) if (editor.kind === "documents" && editor.documentType === entry.type && !rows.some(row => row.id === editor.id)) entry.list.append(editor.form);
     }
   }
+  function syncDocumentControls() {
+    for (const entry of uploads.values()) {
+      const locked = busy || externalBusy() || documentsLoading || !snapshot;
+      entry.input.disabled = locked; entry.labelInput.disabled = locked; entry.replace.disabled = locked;
+      entry.save.disabled = locked || !entry.file || !!entry.validationError;
+    }
+  }
+  async function refreshDocuments() {
+    if (busy || externalBusy() || documentsLoading) return false;
+    documentsLoading = true; documentsError = false; renderDocuments(); syncDocumentControls();
+    try {
+      // Existing full-snapshot loader captures/reconciles drafts at response time.
+      const revision = snapshot?.profile_revision;
+      const result = await reload();
+      const ready = !!result || !!revision && snapshot?.profile_revision !== revision;
+      documentsError = !ready; return ready;
+    } catch (error) {
+      documentsError = true; if ([401, 403].includes(error.status)) onUnauthorized(error); return false;
+    } finally { documentsLoading = false; renderDocuments(); syncDocumentControls(); }
+  }
+  function reviewDocument(entry) {
+    showConfirmModal({ title: "เอกสารมีการเปลี่ยนแปลง", message: "โหลดฉบับล่าสุดและเก็บไฟล์ที่เลือกไว้ ตรวจรายการเอกสารแล้วกดอัปโหลดอีกครั้งเมื่อพร้อม", confirmLabel: "โหลดล่าสุดและเก็บไฟล์", onConfirm: async () => {
+      if (!await refreshDocuments()) throw new Error("โหลดไม่สำเร็จ ไฟล์และ Draft ยังอยู่");
+      entry.revision = snapshot.profile_revision; entry.conflict = false;
+      status(entry.message, "โหลดฉบับล่าสุดแล้ว ไฟล์ที่เลือกยังอยู่ กรุณาตรวจเอกสารก่อนอัปโหลดอีกครั้ง", "info");
+    } });
+  }
   function documentSection(type, title, icon) {
     const container = document.getElementById("profileDocumentCards"); if (!container) return;
     const form = node("section", undefined, "info-card profile-document-card"); form.dataset.documentType = type;
@@ -486,36 +635,61 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     const heading = node("h3", title, "card-title"); const symbol = node("i", undefined, "fa-solid " + icon); symbol.setAttribute("aria-hidden", "true"); heading.prepend(symbol);
     const list = node("div", undefined, "profile-document-list");
     const label = node("label", "เลือกไฟล์" + title); const input = node("input"); input.type = "file"; input.disabled = true; input.accept = type === "external_profile_pdf" ? ".pdf" : ".pdf,.jpg,.jpeg,.png"; input.id = "profileDocument-" + type; label.htmlFor = input.id;
-    const labelInput = node("input"); labelInput.type = "text"; labelInput.maxLength = 255; labelInput.placeholder = "ชื่อกำกับเอกสาร"; labelInput.id = input.id + "-label";
-    const caption = node("label", type === "supporting_other" ? "ชื่อเอกสารอื่น (จำเป็น)" : "ชื่อกำกับ"); caption.htmlFor = labelInput.id;
-    const save = node("button", "อัปโหลด" + title, "btn-primary"); save.type = "submit"; save.disabled = true;
-    const message = node("p", "โหลดข้อมูลก่อนอัปโหลด", "message"); message.setAttribute("role", "status"); message.setAttribute("aria-live", "polite");
-    const reviewButton = button("ตรวจข้อมูลล่าสุดก่อนอัปโหลด", () => {
-      if (busy || externalBusy()) return;
-      showConfirmModal({ title: "โหลดฉบับล่าสุดก่อนอัปโหลด?", message: "ไฟล์ที่เลือกยังอยู่ เมื่อโหลดแล้วโปรดตรวจเอกสารปัจจุบันและกดอัปโหลดอีกครั้ง", confirmLabel: "โหลดล่าสุดและเก็บไฟล์", onConfirm: async () => {
-        if (!await reload()) throw new Error("โหลดไม่สำเร็จ ไฟล์ที่เลือกยังอยู่"); entry.revision = snapshot.profile_revision; status(message, "โหลดข้อมูลแล้ว ตรวจเอกสารก่อนกดอัปโหลดอีกครั้ง");
-      } });
-    });
-    const entry = { type, form, list, input, labelInput, save, message, revision: null, file: null };
-    input.addEventListener("change", () => { entry.file = input.files?.[0] || null; entry.revision = snapshot?.profile_revision; status(message, entry.file ? "เลือกไฟล์แล้ว ยังไม่อัปโหลด" : "ยังไม่เลือกไฟล์"); });
+    const labelInput = node("input"); labelInput.type = "text"; labelInput.maxLength = 255; labelInput.id = input.id + "-label";
+    labelInput.required = type === "supporting_other";
+    const caption = node("label", "ชื่อเอกสาร (จำเป็น)"); caption.htmlFor = labelInput.id;
+    const save = node("button", "อัปโหลดเอกสาร", "btn-primary"); save.type = "submit"; save.disabled = true;
+    const message = node("p", "เลือกไฟล์เพื่ออัปโหลด", "message"); message.id = input.id + "-status"; message.setAttribute("role", "status"); message.setAttribute("aria-live", "polite");
+    const help = node("p", type === "external_profile_pdf" ? "PDF ไม่เกิน 10 MB · เก็บต้นฉบับเท่านั้น ไม่มีการนำเข้าข้อมูล" : "PDF/JPEG/PNG ไม่เกิน 10 MB ต่อไฟล์", "profile-tab-help"); help.id = input.id + "-help";
+    const selected = node("p", "ยังไม่เลือกไฟล์", "profile-selected-file");
+    input.setAttribute("aria-describedby", help.id + " " + message.id);
+    labelInput.setAttribute("aria-describedby", message.id);
+    const replace = button("อัปโหลดฉบับใหม่", () => { input.focus(); input.click(); }); replace.hidden = true;
+    const entry = { type, form, list, input, labelInput, save, message, selected, replace, revision: null, file: null, validationError: false, conflict: false };
+    function validateSelection() {
+      clearProfileErrors(uploadForm); entry.validationError = false;
+      selected.textContent = entry.file ? "ไฟล์ที่เลือก: " + entry.file.name : "ยังไม่เลือกไฟล์";
+      if (entry.file) {
+        try { validateProfileDocument(entry.file, type, labelInput.value); status(message, "เลือกไฟล์แล้ว ยังไม่อัปโหลด"); }
+        catch (error) { entry.validationError = true; profileFieldError(error.message === "กรุณาระบุชื่อเอกสารอื่น" ? labelInput : input, error.message); status(message, error.message, "error"); }
+      } else status(message, "เลือกไฟล์เพื่ออัปโหลด");
+      syncDocumentControls(); notifyProfileChange(document, "edit");
+    }
+    input.addEventListener("change", () => { entry.file = input.files?.[0] || null; if (!entry.conflict) entry.revision = snapshot?.profile_revision; validateSelection(); });
+    labelInput.addEventListener("input", validateSelection);
     uploadForm.addEventListener("submit", async event => {
       event.preventDefault();
+      if (busy || externalBusy() || documentsLoading || !snapshot) return;
       clearProfileErrors(uploadForm);
       try { validateProfileDocument(entry.file, type, labelInput.value); }
-      catch (error) { profileFieldError(entry.file && type === "supporting_other" && !labelInput.value.trim() ? labelInput : input, error.message); status(message, error.message, "error"); return; }
+      catch (error) { profileFieldError(error.message === "กรุณาระบุชื่อเอกสารอื่น" ? labelInput : input, error.message); status(message, error.message, "error"); return; }
+      if (entry.conflict || entry.revision !== snapshot.profile_revision) { reviewDocument(entry); return; }
       const body = new FormData(); body.append("document", entry.file); if (labelInput.value.trim()) body.append("document_label", labelInput.value.trim());
       input.disabled = true; labelInput.disabled = true;
-      try { await perform(save, message, entry.revision, () => uploadStudentProfileDocument(type, body, entry.revision, progress => {
-        status(message, progress.total ? "ส่งไฟล์ " + Math.round(progress.loaded / progress.total * 100) + "% · รอระบบยืนยันการบันทึก" : "กำลังส่งไฟล์และรอระบบยืนยันการบันทึก", "loading");
-      }), () => { entry.file = null; input.value = ""; labelInput.value = ""; }); }
-      finally { input.disabled = false; labelInput.disabled = false; }
+      try {
+        const saved = await perform(save, message, entry.revision, async () => {
+          try {
+            const result = await uploadStudentProfileDocument(type, body, entry.revision, progress => {
+              status(message, progress.total ? "ส่งไฟล์ " + Math.round(progress.loaded / progress.total * 100) + "% · รอระบบยืนยันการบันทึก" : "กำลังส่งไฟล์และรอระบบยืนยันการบันทึก", "loading");
+            });
+            if (!result?.document?.id || !result.documents?.some(file => file.id === result.document.id && file.file_type === type)) throw new Error("ยังยืนยันเอกสารที่อัปโหลดไม่ได้ ไฟล์ที่เลือกยังอยู่");
+            return result;
+          } catch (error) { if (error.status === 409) entry.conflict = true; throw error; }
+        }, () => { entry.file = null; input.value = ""; labelInput.value = ""; selected.textContent = "ยังไม่เลือกไฟล์"; }, "อัปโหลดเอกสารเรียบร้อยแล้ว");
+        if (saved) status(message, "อัปโหลดเอกสารเรียบร้อยแล้ว", "success");
+        else if (entry.conflict) reviewDocument(entry);
+      } finally { syncDocumentControls(); }
     });
-    uploadForm.append(label, input, caption, labelInput, node("p", type === "external_profile_pdf" ? "PDF ไม่เกิน 10MB · เก็บต้นฉบับเท่านั้น ไม่มีการนำเข้าข้อมูล" : "PDF/JPEG/PNG ไม่เกิน 10MB · หนึ่งไฟล์ต่อการอัปโหลด", "profile-tab-help"), save, reviewButton);
+    uploadForm.append(label, input, selected, help);
+    if (type === "supporting_other") uploadForm.append(caption, labelInput);
+    uploadForm.append(save, replace);
     form.append(heading, list, uploadForm, message);
     uploads.set(type, entry); container.append(form);
   }
   const controller = {
     saveAll,
+    refreshDocuments,
+    refreshControls: syncDocumentControls,
     profileValues() {
       syncCurrentAddress();
       const values = {};
@@ -544,6 +718,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       syncCurrentAddress();
       rebasingCurrentAddress = true;
       snapshot = result;
+      documentsError = false;
       titleHelp.hidden = result.profile_english_prefix_available === true;
       if (titleHelp.hidden) clearProfileErrors(titleInput.closest(".form-group"));
       for (const entry of [...entries.values()]) {
@@ -559,6 +734,8 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
         if (entry.addressType) entry.id = row?.id;
         entry.save.disabled = false; if (entry.message.textContent === "โหลดข้อมูลประวัติก่อนเริ่มแก้ไข") status(entry.message, "ข้อมูลพร้อมแก้ไข");
         for (const input of entry.inputs.values()) input.disabled = !!entry.deleted;
+        entry.addressSearch?.refresh();
+        updateRecord(entry);
         for (const calendar of entry.calendars.values()) calendar.refresh();
         if (entry.kind === "contacts" && result.profile_contacts_available === false) {
           entry.save.disabled = true;
@@ -567,11 +744,12 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
           status(entry.message, "ข้อมูลพร้อมแก้ไข");
         }
       }
-      for (const entry of uploads.values()) { if (!entry.file || entry.revision === ownRevision) entry.revision = result.profile_revision; entry.save.disabled = false; if (!busy) entry.input.disabled = false; if (entry.message.textContent === "โหลดข้อมูลก่อนอัปโหลด") status(entry.message, "เลือกไฟล์เพื่ออัปโหลด"); }
+      for (const entry of uploads.values()) { if (!entry.file || entry.revision === ownRevision) entry.revision = result.profile_revision; }
+      syncDocumentControls();
       renderLists(ownRevision); renderDocuments();
       rebasingCurrentAddress = false;
-      syncEnglishGender(); syncCurrentAddress();
-      if (mainSave) mainSave.disabled = busy;
+      syncEnglishGender(); identityFeedback(); syncCurrentAddress();
+      for (const control of saveButtons) control.disabled = busy || externalBusy();
       document.getElementById("profileLegacyAbilities").textContent = result.profile?.special_abilities || "ยังไม่ระบุ";
       document.getElementById("profileLegacySkills").textContent = result.profile?.related_skills || "ยังไม่ระบุ";
       onSnapshot?.(result);
@@ -587,7 +765,17 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   for (const [key, target] of [["prefix", "profileThaiPrefixSlot"], ["gender", "profileThaiGenderSlot"]]) {
     const input = basics.inputs.get(key), slot = document.getElementById(target);
     if (slot) slot.append(input.closest(".form-group"));
-    const changed = () => { capture(basics); status(basics.message, basics.draft.dirty() ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); notifyProfileChange(document); };
+    const changed = () => {
+      capture(basics);
+      if (key === "prefix" && input.value !== renderedPrefix) {
+        renderedPrefix = input.value;
+        const gender = basics.inputs.get("gender"), value = profileGenderForPrefix(input.value, gender.value);
+        basics.draft.values.gender = value;
+        updateChoice(gender, "gender", value); syncEnglishGender();
+      }
+      afterIdentityEvent();
+      status(basics.message, basics.draft.dirty() ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); notifyProfileChange(document, "edit");
+    };
     input.addEventListener("input", changed); input.addEventListener("change", changed);
   }
   const age = document.getElementById("editAge")?.closest(".form-group");
@@ -603,7 +791,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   genderGroup.append(genderLabelNode, englishGender); english.inputs.get("english_first_name").closest(".form-group").before(genderGroup);
   const changeEnglishGender = () => {
     const canonical = basics.inputs.get("gender"); canonical.value = englishGender.value;
-    capture(basics); status(basics.message, basics.draft.dirty() ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); notifyProfileChange(document);
+    capture(basics); afterIdentityEvent(); status(basics.message, basics.draft.dirty() ? "มีการแก้ไขที่ยังไม่บันทึก" : "ไม่มีข้อมูลที่เปลี่ยนแปลง", "info"); notifyProfileChange(document, "edit");
   };
   englishGender.addEventListener("input", changeEnglishGender); englishGender.addEventListener("change", changeEnglishGender); syncEnglishGender();
   makeEntry({ key: "household", kind: "household", title: "ข้อมูลครอบครัว / ผู้ปกครอง", fields: workspaceFields.household, container: document.getElementById("profileFamilyExtras") });
@@ -614,7 +802,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   makeEntry({ key: "contacts", kind: "contacts", title: "LINE / Facebook", fields: workspaceFields.contacts, container: contact.form, embedded: true });
   listSection("profileFriendContact", "close_friends", "เพื่อนสนิท");
   for (const [addressType, title, legacyField] of [["registered", "ที่อยู่ตามทะเบียนบ้าน", "hometown_address"], ["current", "ที่อยู่ปัจจุบัน", "current_address"]]) {
-    const address = makeEntry({ key: "address-" + addressType, kind: "addresses", title, fields: workspaceFields.addresses, addressType, container: document.getElementById("profileStructuredAddresses") });
+    const address = makeEntry({ key: "address-" + addressType, kind: "addresses", title, fields: ["house_no", "moo", "road", "province", "district", "subdistrict", "postal_code"].map(key => workspaceFields.addresses.find(field => field.key === key)), addressType, container: document.getElementById("profileStructuredAddresses") });
     const text = makeEntry({ key: "address-text-" + addressType, kind: "legacyAddresses", title: title + " (ข้อความ)", fields: workspaceFields.legacyAddresses.filter(field => field.key === legacyField), container: address.form, embedded: true });
     if (addressType === "current") {
       const original = text.inputs.get(legacyField), group = original.closest(".form-group");
@@ -627,6 +815,12 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
       currentPreview.setAttribute("aria-describedby", currentAddressHelp.id);
       previewGroup.append(label, currentPreview, currentAddressHelp); group.before(previewGroup);
       syncCurrentAddress();
+    } else {
+      const previewGroup = node("div", undefined, "form-group"), label = node("label", "ตัวอย่างที่อยู่ตามทะเบียนบ้าน");
+      registeredPreview = node("textarea"); registeredPreview.id = "profileRegisteredAddressPreview"; registeredPreview.rows = 3; registeredPreview.readOnly = true; label.htmlFor = registeredPreview.id;
+      const help = node("p", "สร้างจากช่องย่อยด้านบน โดยไม่เขียนทับข้อความที่อยู่เดิม", "profile-tab-help"); help.id = "profileRegisteredAddressHelp";
+      registeredPreview.setAttribute("aria-describedby", help.id); previewGroup.append(label, registeredPreview, help);
+      text.form.before(previewGroup);
     }
   }
   listSection("profileEducationRecords", "education", "ประวัติการศึกษา"); listSection("profileTrainingRecords", "training", "ประวัติฝึกอบรม / ดูงาน / ฝึกงาน");
@@ -635,7 +829,7 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   makeEntry({ key: "health", kind: "basics", title: "ข้อมูลสุขภาพ", fields: workspaceFields.basics.filter(field => ["blood_type", "medical_conditions", "allergies"].includes(field.key)), container: document.getElementById("profileHealthExtras") });
   makeEntry({ key: "personal", kind: "personal", title: "ข้อมูลเพิ่มเติม / ใบขับขี่ / ทหาร", fields: workspaceFields.personal.filter(field => ![...identity, ...thaiPersonal].includes(field.key)), container: document.getElementById("profileHealthExtras") });
   for (const type of documentTypes) documentSection(...type);
-  mainSave?.addEventListener("click", saveAll);
+  for (const control of saveButtons) control.addEventListener("click", saveAll);
   document.getElementById("profileReviewAll")?.addEventListener("click", () => {
     if (busy || externalBusy() || !snapshot) return;
     showConfirmModal({ title: "ตรวจฉบับล่าสุดและเก็บค่าที่แก้?", message: "โหลดประวัติล่าสุดแล้วคงเฉพาะค่าที่คุณแก้ไว้ รวมรายการรอลบ กรุณาตรวจความต่างก่อนกดบันทึกอีกครั้ง", confirmLabel: "โหลดและตรวจความต่าง", onConfirm: async () => {
@@ -666,5 +860,6 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
     if (result || committedDuringReload) notifyProfileChange(document, "ready");
   }
   document.getElementById("profileRetryLoad")?.addEventListener("click", reloadPreservingDraft);
+  renderDocuments();
   mounted.set(root, controller); return controller;
 }

@@ -1,11 +1,12 @@
 // Current PostgreSQL-only constraints and history guards. No migration ledger or runner.
 module.exports = {
   "constraints": [
+    ...require('./coopPrerequisiteCatalog').CHECKS.map(([table_name, name, definition]) => ({ table_name, name, definition, type: 'c' })),
     {
       "table_name": "coop_request_prerequisite_courses",
-      "name": "coop_prerequisites_program_code_check",
+      "name": "coop_prerequisites_program_code_format_check",
       "type": "c",
-      "definition": "CHECK (((((program)::text = 'IT'::text) AND ((course_code)::text = ANY (ARRAY[('060243102'::character varying)::text, ('060243104'::character varying)::text, ('060243108'::character varying)::text, ('060243112'::character varying)::text, ('060243122'::character varying)::text]))) OR (((program)::text = 'INE'::text) AND ((course_code)::text = ANY (ARRAY[('060233107'::character varying)::text, ('060233112'::character varying)::text, ('060233113'::character varying)::text, ('060233202'::character varying)::text, ('060233204'::character varying)::text])))))",
+      "definition": "CHECK (program IN ('IT','INE') AND course_code ~ '^[0-9]{9}$')",
       "key_count": 2
     },
     {
@@ -415,10 +416,24 @@ module.exports = {
       "key_count": 1
     },
     {
+      "table_name": "student_addresses",
+      "name": "student_addresses_moo_check",
+      "type": "c",
+      "definition": "CHECK (((moo)::text ~ '^[0-9]{1,2}$'::text))",
+      "key_count": 1
+    },
+    {
       "table_name": "student_education_records",
       "name": "student_education_records_education_level_check",
       "type": "c",
       "definition": "CHECK (((education_level)::text = ANY (ARRAY[('bachelor'::character varying)::text, ('high_vocational'::character varying)::text, ('high_school_vocational'::character varying)::text])))",
+      "key_count": 1
+    },
+    {
+      "table_name": "student_education_records",
+      "name": "student_education_records_education_status_check",
+      "type": "c",
+      "definition": "CHECK (((education_status)::text = ANY ((ARRAY['studying'::character varying, 'graduated'::character varying])::text[])))",
       "key_count": 1
     },
     {

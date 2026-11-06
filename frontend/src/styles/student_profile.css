@@ -52,6 +52,18 @@
 #panel-profile .profile-document-card .card-title { margin: 0; }
 #panel-profile .profile-document-upload { display: grid; gap: 12px; }
 #panel-profile .profile-document-card .card-title i { color: var(--primary); margin-right: 8px; }
+#panel-profile .profile-document-card[data-document-type="supporting_other"] { grid-column: 1 / -1; }
+#panel-profile .profile-document-upload { margin-top: auto; }
+#panel-profile .profile-document-card :is(.profile-selected-file, .message, label, button) { overflow-wrap: anywhere; min-width: 0; }
+#panel-profile .profile-document-card input[type="file"] { padding: 8px; background: var(--bg); }
+#panel-profile .profile-document-card input[type="file"]::file-selector-button { min-height: 44px; margin-right: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); color: var(--text); font: inherit; cursor: pointer; }
+#panel-profile .profile-document-state, #panel-profile .profile-selected-file { color: var(--muted); font-size: var(--ui-text-sm); overflow-wrap: anywhere; }
+#panel-profile .profile-document-preview { display: grid; gap: 12px; min-width: 0; }
+#panel-profile .profile-document-preview :is(iframe, img) { width: 100%; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+#panel-profile .profile-document-preview iframe { height: 360px; }
+#panel-profile .profile-document-preview img { height: auto; object-fit: contain; }
+#panel-profile :is(.profile-document-card, .profile-save-top) :is(button, input):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+#panel-profile .profile-document-card button[hidden] { display: none; }
 #panel-profile .profile-entry button, #panel-profile .profile-document-card button { min-height: 44px; }
 #panel-profile #profileStructuredAddresses { margin-top: 20px; }
 #panel-profile .profile-pdf-import { border-top: 3px solid var(--primary); }
@@ -245,6 +257,24 @@
 #panel-profile .profile-friend-name { min-width: 0; overflow-wrap: anywhere; font-size: 1.125rem; }
 #panel-profile .profile-friend-name a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 #panel-profile .profile-record-list { min-width: 0; gap: 0; }
+#panel-profile .profile-record-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; margin: 16px 0; }
+#panel-profile .profile-record-summary > div { min-width: 0; overflow-wrap: anywhere; }
+#panel-profile .profile-record-summary dt { color: var(--muted); font-size: var(--ui-text-sm); }
+#panel-profile .profile-record-summary dd { margin: 4px 0 0; color: var(--text); }
+#panel-profile .profile-record-summary[hidden], #panel-profile .profile-entry-grid[hidden] { display: none; }
+/* Address search is local and uses the existing field grid and design tokens. */
+#panel-profile .profile-address-search { position: relative; min-width: 0; }
+#panel-profile .profile-address-search > input { width: 100%; padding-right: 44px; box-sizing: border-box; }
+#panel-profile .profile-address-toggle { position: absolute; top: 0; right: 0; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0 9px 9px 0; background: transparent; color: var(--primary); cursor: pointer; font: inherit; }
+#panel-profile .profile-address-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+#panel-profile .profile-address-popup { position: absolute; top: calc(100% + 4px); inset-inline: 0; z-index: 20; max-height: 264px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--border); border-radius: 9px; background: var(--white); box-shadow: 0 5px 15px #0002; }
+#panel-profile .profile-address-option { min-height: 44px; box-sizing: border-box; padding: 11px 12px; cursor: pointer; overflow-wrap: anywhere; }
+#panel-profile .profile-address-option:hover, #panel-profile .profile-address-option[aria-selected="true"] { background: var(--primary-soft); color: var(--primary); }
+#panel-profile .profile-address-help { margin: 6px 0 0; overflow-wrap: anywhere; }
+#panel-profile .profile-address-popup[hidden], #panel-profile #profileStructuredAddresses input[hidden] { display: none; }
+@media (max-width: 768px) {
+  #panel-profile .profile-record-summary { grid-template-columns: minmax(0, 1fr); }
+}
 #panel-profile .profile-unified-actions { position: static; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px 14px; margin-top: 16px; padding: 16px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--white); box-shadow: var(--shadow-sm); }
 #panel-profile .profile-unified-actions .profile-save-state { flex: 1 1 220px; background: transparent; padding: 0; }
 #panel-profile .profile-save-help { flex: 1 0 100%; order: 4; color: var(--muted); font-size: .8125rem; line-height: 1.6; }
@@ -284,4 +314,20 @@
   #panel-profile .profile-student-summary { grid-template-columns: minmax(0, 1fr); }
   #panel-profile .profile-summary-photo { flex-direction: row; justify-content: flex-start; }
   #panel-profile #profileChangePhoto { width: auto; padding-inline: 10px; }
+}
+
+/* Top Save toolbar; state and Save All continue to use the existing controller. */
+#panel-profile .profile-workspace-toolbar.profile-save-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, auto); align-items: center; gap: 20px 28px; margin: 0; padding: 20px; border-bottom: 1px solid var(--border); }
+#panel-profile .profile-toolbar-copy, #panel-profile .profile-toolbar-actions { min-width: 0; }
+#panel-profile .profile-toolbar-copy h3 { margin: 0 0 6px; font-size: 1.125rem; line-height: 1.5; color: var(--text); }
+#panel-profile .profile-toolbar-copy p { margin: 0; font-size: .875rem; line-height: 1.65; color: var(--muted); }
+#panel-profile .profile-toolbar-actions { display: grid; justify-items: end; gap: 10px; }
+#panel-profile .profile-save-top .profile-save-state { max-width: 100%; }
+#panel-profile .profile-save-top .profile-save-state[data-state="conflict"] { background: var(--danger-light); color: #a52f2f; }
+#panel-profile .profile-save-top .btn-primary { min-height: 44px; min-width: 160px; }
+@media (max-width: 768px) {
+  #panel-profile .profile-workspace-toolbar.profile-save-top { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 14px; }
+  #panel-profile .profile-toolbar-actions { justify-items: stretch; }
+  #panel-profile .profile-save-top .profile-save-state { justify-self: start; }
+  #panel-profile .profile-save-top .btn-primary { width: 100%; min-width: 0; }
 }

@@ -45,6 +45,8 @@ function numericValue(scope, key, value) {
   return value;
 }
 function normalizeField(scope, key, value) {
+  // Education status is a new manual field; preserve the existing PDF contract.
+  if (scope === "education" && key === "education_status") rules.fail("มีฟิลด์ที่ไม่อนุญาตให้แก้ไข");
   value = numericValue(scope, key, value);
   return (scope === "profile" ? rules.normalizeProfile({ [key]: value }) : scope === "student" ? rules.normalizeStudent({ [key]: value }) : rules.normalizeChild(scope, { [key]: value }))[key];
 }
@@ -137,6 +139,7 @@ function createStudentProfilePdfImportService(models, aggregate, { extract = ext
     if (body.changes.student) rules.object(body.changes.student, STUDENT);
     if (body.changes.profile) rules.object(body.changes.profile, PDF_PROFILE_FIELDS);
     const prepared = aggregate.prepareAggregate(body.changes);
+    if (prepared.operations.some(op => op.kind === "education" && Object.hasOwn(op.patch || {}, "education_status"))) rules.fail("PDF Import ไม่แก้สถานะการศึกษา");
     if (prepared.operations.some(op => op.action === "delete")) rules.fail("PDF Import ไม่ลบรายการเดิม");
     const prior = await committed(owner, data); if (prior) return prior;
     if (Object.hasOwn(prepared.profile || {}, "english_prefix") && !(await aggregate.read(owner)).profile_english_prefix_available) {

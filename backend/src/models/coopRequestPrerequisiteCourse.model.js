@@ -1,4 +1,5 @@
 const {DataTypes, Model} = require('sequelize');
+const { normalizeNewCourseGrade } = require('../services/coopPrerequisites');
 module.exports = sequelize => {
   class CoopRequestPrerequisiteCourse extends Model {
     static associate(models) {
@@ -16,7 +17,10 @@ module.exports = sequelize => {
     grade: {type: DataTypes.STRING(10), allowNull: true},
   }, {sequelize, modelName: 'CoopRequestPrerequisiteCourse', tableName: 'coop_request_prerequisite_courses', underscored: true, timestamps: true,
     indexes: [{name: 'coop_prerequisites_request_code_unique', unique: true, fields: ['coop_request_id', 'course_code']}],
-    validate: {gradeMatchesStatus() { if (this.status === 'passed' ? !this.grade?.trim() : this.grade != null) throw new Error('Grade does not match prerequisite status'); }},
+    validate: {gradeMatchesStatus() {
+      // Read-only legacy snapshots keep their original grades, including old free text.
+      if (this.isNewRecord || this.changed('grade') || this.changed('status')) normalizeNewCourseGrade(this.status, this.grade);
+    }},
   });
   return CoopRequestPrerequisiteCourse;
 };

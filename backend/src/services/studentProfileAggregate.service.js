@@ -56,6 +56,12 @@ function createStudentProfileAggregateService(models, nationalId = createNationa
     if (data.profile && !titleAvailable) delete data.profile.english_prefix;
     data.profile_contacts_available = contactsAvailable;
     data.profile_english_prefix_available = titleAvailable;
+    const educationColumns = await sequelize.getQueryInterface().describeTable("student_education_records", { transaction });
+    const educationStatus = educationColumns.education_status;
+    data.education_status_available = !!educationStatus && educationStatus.allowNull === true && /(?:CHARACTER VARYING|VARCHAR)\(16\)/i.test(educationStatus.type);
+    const addressColumns = await sequelize.getQueryInterface().describeTable("student_addresses", { transaction });
+    const moo = addressColumns.moo;
+    data.address_moo_available = !!moo && moo.allowNull === true && /^(?:CHARACTER VARYING|VARCHAR)\(2\)$/i.test(moo.type) && moo.defaultValue == null;
     // A legacy layout requires an explicitly approved inspection/backfill plan.
     // Never infer that legacy columns are empty, or query PII just for readiness.
     data.close_friends_legacy_pending = LEGACY_FRIEND_FIELDS.some(field => Object.hasOwn(columns, field));
@@ -68,7 +74,7 @@ function createStudentProfileAggregateService(models, nationalId = createNationa
     // Counter is server-managed metadata and is used only to derive an opaque validator.
     const internal = { ...data, student: { ...data.student, profile_data_revision: student.profile_data_revision ?? "0" } };
     for (const [kind, spec] of Object.entries(rules.RELATIONS)) {
-      const attributes = Object.keys(specs.tables[spec.table].columns);
+      const attributes = relationAttributes(kind, data);
       data[kind] = kind === "close_friends" && !Object.keys(friendTable.columns).every(field => Object.hasOwn(friendColumns, field)) ? []
         : (await models[spec.model].findAll({ where: { student_id: studentId }, attributes, transaction, order: [["id", "ASC"]] })).map(row => pick(row, attributes));
       internal[kind] = data[kind];
@@ -143,9 +149,16 @@ function createStudentProfileAggregateService(models, nationalId = createNationa
   }
   async function ownedChild(context, kind, id) {
     if (!rules.UUID.test(id || "")) rules.fail("รหัสรายการไม่ถูกต้อง");
-    const record = await models[rules.RELATIONS[kind].model].findOne({ where: { id, student_id: context.student.id }, transaction: context.transaction, lock: context.transaction.LOCK.UPDATE });
+    const pending = kind === "education" && context.before.education_status_available === false || kind === "addresses" && context.before.address_moo_available === false;
+    const attributes = pending ? relationAttributes(kind, context.before) : undefined;
+    const record = await models[rules.RELATIONS[kind].model].findOne({ where: { id, student_id: context.student.id }, ...(attributes ? { attributes } : {}), transaction: context.transaction, lock: context.transaction.LOCK.UPDATE });
     if (!record) rules.fail("ไม่พบรายการของนักศึกษา", 404);
     return record;
+  }
+  function relationAttributes(kind, state) {
+    return Object.keys(specs.tables[rules.RELATIONS[kind].table].columns).filter(field =>
+      !(kind === "education" && state.education_status_available === false && field === "education_status")
+      && !(kind === "addresses" && state.address_moo_available === false && field === "moo"));
   }
   async function childOperation(context, kind, action, id, patch) {
     if (kind === "close_friends" && !context.before.close_friends_available) {
@@ -153,8 +166,13 @@ function createStudentProfileAggregateService(models, nationalId = createNationa
         context.before.close_friends_legacy_pending ? "CLOSE_FRIENDS_LEGACY_REVIEW_REQUIRED" : "CLOSE_FRIENDS_SCHEMA_PENDING");
     }
     const model = models[rules.RELATIONS[kind].model];
+    const educationPending = kind === "education" && context.before.education_status_available === false;
+    if (educationPending && Object.hasOwn(patch, "education_status")) rules.fail("สถานะการศึกษายังไม่พร้อมใช้งาน Draft ยังอยู่", 503, "EDUCATION_STATUS_SCHEMA_PENDING");
+    if (kind === "addresses" && context.before.address_moo_available === false && Object.hasOwn(patch, "moo")) rules.fail("ช่องหมู่ที่ยังไม่พร้อมใช้งาน Draft ยังอยู่ กรุณาติดตั้งคอลัมน์ moo ก่อนบันทึก", 503, "ADDRESS_MOO_SCHEMA_PENDING");
     if (action === "create") {
-      const record = await model.create({ ...patch, student_id: context.student.id }, { transaction: context.transaction });
+      const pending = educationPending || kind === "addresses" && context.before.address_moo_available === false;
+      const attributes = pending ? relationAttributes(kind, context.before) : undefined;
+      const record = await model.create({ ...patch, student_id: context.student.id }, { transaction: context.transaction, ...(attributes ? { fields: attributes, returning: attributes } : {}) });
       return { changed: true, status: 201, response: { record: plain(record) } };
     }
     const record = await ownedChild(context, kind, id);

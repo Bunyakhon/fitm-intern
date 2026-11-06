@@ -37,7 +37,7 @@
 
         <section id="mentorContent" class="mentor-content" hidden>
           <section class="student-context" aria-labelledby="studentContextTitle">
-            <h2 id="studentContextTitle">ข้อมูลการดูแลนักศึกษา</h2>
+            <h2 id="studentContextTitle">ข้อมูลนักศึกษาที่ท่านจะดูแล</h2>
 
             <dl class="student-context-list">
               <div>
@@ -105,7 +105,7 @@
               </div>
             </fieldset>
 
-            <div class="form-actions">
+            <div id="verificationActions" class="form-actions">
               <button id="saveProfileButton" class="button button-secondary" type="submit">
                 บันทึกการแก้ไข
               </button>
@@ -114,7 +114,20 @@
               </button>
             </div>
           </form>
+          <section id="mentorVerifiedSummary" class="student-context mentor-summary" aria-labelledby="mentorSummaryTitle" hidden>
+            <h2 id="mentorSummaryTitle">ข้อมูลพี่เลี้ยงที่ยืนยันแล้ว</h2>
+            <dl class="student-context-list">
+              <div><dt>ชื่อ–นามสกุล</dt><dd id="verifiedMentorName"></dd></div>
+              <div><dt>อีเมล</dt><dd id="verifiedMentorEmail"></dd></div>
+              <div><dt>ตำแหน่ง</dt><dd id="verifiedMentorPosition"></dd></div>
+            </dl>
+          </section>
         </section>
+
+        <div class="verification-recovery">
+          <button id="retryVerificationButton" class="button button-secondary" type="button" hidden>ลองตรวจสอบอีกครั้ง</button>
+          <button id="closeVerificationButton" class="button button-primary" type="button" hidden>ปิดหน้าต่าง</button>
+        </div>
 
         <section id="mentorReview" class="internship-review" hidden>
           <p id="mentorReviewStudent"></p>

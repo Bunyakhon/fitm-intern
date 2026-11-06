@@ -17,6 +17,10 @@ const positionInput = document.getElementById("mentorPosition");
 const saveButton = document.getElementById("saveProfileButton");
 const confirmButton = document.getElementById("confirmVerificationButton");
 const studentName = document.getElementById("studentName");
+const actions = document.getElementById("verificationActions");
+const summary = document.getElementById("mentorVerifiedSummary");
+const closeButton = document.getElementById("closeVerificationButton");
+const retryButton = document.getElementById("retryVerificationButton");
 
 import { initMentorInternshipReview } from "./mentorInternshipReview.js";
 import { initMentorSupervision } from "./mentorSupervision.js";
@@ -26,6 +30,9 @@ let verificationToken = null;
 let isSaving = false;
 let isConfirming = false;
 let isVerified = false;
+let isLoading = false;
+let confirmationModal = false;
+const closeTimers = new Set();
 
 const defaultSaveLabel = "บันทึกการแก้ไข";
 const defaultConfirmLabel = "ยืนยันข้อมูล";
@@ -33,6 +40,7 @@ const defaultConfirmLabel = "ยืนยันข้อมูล";
 function setState(type, message) {
   state.className = `verification-state is-${type}`;
   stateMessage.textContent = message;
+  state.setAttribute("aria-busy", String(type === "loading"));
 }
 
 function setFormEnabled(enabled) {
@@ -136,7 +144,7 @@ function handleTerminalTokenError(error) {
 }
 
 function disableAfterTerminalTokenError(error) {
-  if (handleTerminalTokenError(error)) {
+  if (handleTerminalTokenError(error) || error?.status === 401 || error?.status === 403) {
     verificationToken = null;
     setFormEnabled(false);
   }
@@ -153,18 +161,16 @@ function clearTokenFromAddressBar() {
 }
 
 function startAutoClose() {
-  setState("verified", "ยืนยันข้อมูลเรียบร้อย ระบบกำลังปิดหน้านี้...");
-
-  window.setTimeout(() => {
-    window.close();
-
-    window.setTimeout(() => {
+  closeTimers.add(window.setTimeout(() => {
+    try { window.close(); } catch { /* Browsers may only close script-opened tabs. */ }
+    closeTimers.add(window.setTimeout(() => {
       setState("verified", "ยืนยันข้อมูลเรียบร้อยแล้ว สามารถปิดหน้านี้ได้");
-    }, 250);
-  }, 1800);
+    }, 250));
+  }, 1800));
 }
 
 async function loadVerification() {
+  if (isLoading || isVerified) return;
   const token = new URLSearchParams(window.location.search).get("token")?.trim();
 
   if (!token) {
@@ -174,6 +180,9 @@ async function loadVerification() {
   }
 
   verificationToken = token;
+  isLoading = true;
+  retryButton.hidden = true;
+  setFormEnabled(false);
   setState("loading", "กำลังตรวจสอบลิงก์ยืนยันข้อมูล...");
 
   try {
@@ -192,6 +201,9 @@ async function loadVerification() {
   } catch (error) {
     setState("error", getErrorMessage(error));
     disableAfterTerminalTokenError(error);
+    retryButton.hidden = [400, 401, 403, 404, 410].includes(error?.status);
+  } finally {
+    isLoading = false;
   }
 }
 
@@ -229,11 +241,7 @@ async function saveProfile(event) {
   } finally {
     isSaving = false;
     setButtonLoading(saveButton, false, "", defaultSaveLabel);
-
-    if (!isVerified && verificationToken) {
-      fieldset.disabled = false;
-      confirmButton.disabled = false;
-    }
+    setFormEnabled(Boolean(verificationToken) && !isVerified);
   }
 }
 
@@ -249,12 +257,20 @@ async function submitConfirmation() {
 
   try {
     const result = await confirmMentorVerification(verificationToken);
-    populateProfile(result?.data?.mentor || getProfileData());
+    const mentor = result?.data?.mentor;
+    if (result?.success !== true || mentor?.status !== "verified") throw new Error("Confirmation was not verified by the server");
+    populateProfile(mentor);
     isVerified = true;
     verificationToken = null;
     clearTokenFromAddressBar();
-    saveButton.textContent = defaultSaveLabel;
-    confirmButton.textContent = "ยืนยันข้อมูลแล้ว";
+    for (const [id, value] of Object.entries({ verifiedMentorName: [mentor.first_name, mentor.last_name].filter(Boolean).join(" "), verifiedMentorEmail: mentor.email, verifiedMentorPosition: mentor.position })) {
+      document.getElementById(id).textContent = value || "ยังไม่ระบุ";
+    }
+    form.hidden = true;
+    summary.hidden = false;
+    actions.hidden = true;
+    closeButton.hidden = false;
+    setState("verified", "ยืนยันข้อมูลเรียบร้อยแล้ว");
     showToast("ยืนยันข้อมูลพี่เลี้ยงเรียบร้อยแล้ว", "success");
     startAutoClose();
   } catch (error) {
@@ -262,33 +278,38 @@ async function submitConfirmation() {
     disableAfterTerminalTokenError(error);
   } finally {
     isConfirming = false;
-
-    if (!isVerified) {
-      setButtonLoading(confirmButton, false, "", defaultConfirmLabel);
-
-      if (verificationToken) {
-        setFormEnabled(true);
-      }
-    }
+    // Always clear shared loading state, including success and terminal errors.
+    setButtonLoading(confirmButton, false, "", defaultConfirmLabel);
+    setButtonLoading(saveButton, false, "", defaultSaveLabel);
+    setFormEnabled(Boolean(verificationToken) && !isVerified);
   }
 }
 
 function confirmProfile() {
-  if (!verificationToken || isSaving || isConfirming || isVerified) {
+  if (!verificationToken || isSaving || isConfirming || isVerified || confirmationModal) {
     return;
   }
 
+  confirmationModal = true;
   showConfirmModal({
     title: "ยืนยันข้อมูลพี่เลี้ยง",
     message: "โปรดตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน การยืนยันนี้ไม่สามารถย้อนกลับได้",
     confirmLabel: "ยืนยันข้อมูล",
     loadingLabel: "กำลังยืนยัน...",
+    onClose: () => { confirmationModal = false; },
+    fallbackFocus: closeButton,
     onConfirm: submitConfirmation,
   });
 }
 
 form.addEventListener("submit", saveProfile);
 confirmButton.addEventListener("click", confirmProfile);
+retryButton.addEventListener("click", loadVerification);
+closeButton.addEventListener("click", () => {
+  try { window.close(); } catch { /* Keep the manual close instructions visible. */ }
+  setState("verified", "ยืนยันข้อมูลเรียบร้อยแล้ว หากหน้าต่างยังเปิดอยู่ กรุณาปิดแท็บนี้ได้เลย");
+});
+window.addEventListener("pagehide", () => { for (const timer of closeTimers) window.clearTimeout(timer); closeTimers.clear(); });
 
 if (appointmentToken) {
   window.history.replaceState({}, "", window.location.pathname);
@@ -296,4 +317,7 @@ if (appointmentToken) {
 } else if (reviewToken) {
   window.history.replaceState(null, document.title, window.location.pathname);
   initMentorInternshipReview(reviewToken);
-} else loadVerification();
+} else {
+  document.querySelector(".mentor-verification-page").dataset.workflow = "verification";
+  loadVerification();
+}

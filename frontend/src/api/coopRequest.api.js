@@ -1,4 +1,7 @@
 import { apiRequest } from "./client.js";
+export function getCoopPrerequisiteCatalog() {
+  return apiRequest('/api/coop-requests/prerequisite-catalog', { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
+}
 
 export function getMyCoopRequests() {
   return apiRequest("/api/coop-requests/me", { method: "GET" });

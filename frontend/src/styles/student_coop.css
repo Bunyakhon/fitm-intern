@@ -2926,6 +2926,25 @@ textarea::placeholder {
   margin: 0 0 16px;
 }
 
+/* Compact Mentor panel only; other Student panels retain their layout. */
+#panel-mentor [hidden] { display: none !important; }
+#panel-mentor .section-card { margin-top: 12px; padding: 20px; }
+#panel-mentor .info-grid { gap: 16px 24px; padding: 18px 0; }
+#panel-mentor .mentor-verification-status { grid-column: 1 / -1; padding: 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fafbfc; }
+#panel-mentor .mentor-empty { padding: 24px 8px; text-align: center; }
+#panel-mentor .mentor-empty > i { font-size: 28px; color: #1d4ed8; }
+#panel-mentor .mentor-empty h3 { margin: 12px 0 6px; font-size: var(--ui-text-card); }
+#panel-mentor .mentor-empty p, #panel-mentor .mentor-sync-note { color: #6b7280; font-size: var(--ui-text-sm); line-height: 1.6; }
+#panel-mentor .mentor-sync-note { margin: 0 0 12px; }
+#panel-mentor button { min-height: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+#panel-mentor button:focus-visible { outline: 3px solid #2771cb; outline-offset: 3px; }
+#panel-mentor .mentor-message:empty { display: none; }
+#panel-mentor .mentor-status-badge span { color: inherit; }
+@media (max-width: 767px) {
+  #panel-mentor .section-card { padding: 16px; }
+  #panel-mentor .info-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 #panel-mentor .mentor-verification-status {
   gap: 8px;
 }

@@ -74,9 +74,12 @@ function buildVerificationUrl(token) {
   return `${frontendUrl.replace(/\/$/, "")}${MENTOR_PAGE_PATH}?token=${encodeURIComponent(token)}`;
 }
 
-async function sendMentorVerificationEmail({ to, firstName, lastName, token }) {
+async function sendMentorVerificationEmail({ to, firstName, lastName, token, student }) {
   if (!to || !token) {
     throw new Error("Recipient email and verification token are required.");
+  }
+  if (!student || typeof student !== "object" || Array.isArray(student)) {
+    throw new Error("Student details are required for a mentor verification email.");
   }
 
   const verificationUrl = buildVerificationUrl(token);
@@ -84,11 +87,24 @@ async function sendMentorVerificationEmail({ to, firstName, lastName, token }) {
     [firstName, lastName].filter(Boolean).join(" ") || "พี่เลี้ยง";
   const safeMentorName = escapeHtml(mentorName);
   const safeVerificationUrl = escapeHtml(verificationUrl);
+  const value = raw => String(raw ?? "").trim();
+  const unspecified = "ยังไม่ระบุ";
+  const names = [value(student.firstName), value(student.lastName)];
+  const studentName = value(student.prefix) + (names.some(Boolean) ? names.map(name => name || unspecified).join(" ") : unspecified);
+  const studentMajor = value(student.major) || unspecified;
+  const studentFaculty = value(student.faculty) || unspecified;
 
-  const text = `เรียน ${mentorName}
+  const text = `เรียน คุณ${mentorName}
 
-นักศึกษาได้ระบุข้อมูลของท่านเป็นพี่เลี้ยงสหกิจศึกษา กรุณาตรวจสอบ แก้ไข และยืนยันข้อมูลผ่านลิงก์ด้านล่าง
+นักศึกษาได้ระบุข้อมูลของท่านเป็นพี่เลี้ยงสหกิจศึกษา กรุณาตรวจสอบ แก้ไข และยืนยันข้อมูล
 
+ข้อมูลนักศึกษาที่ท่านจะดูแล
+
+ชื่อ–นามสกุล: ${studentName}
+สาขาวิชา: ${studentMajor}
+คณะ: ${studentFaculty}
+
+ตรวจสอบและยืนยันข้อมูล:
 ${verificationUrl}
 
 ลิงก์นี้มีอายุจำกัดและใช้สำหรับการยืนยันข้อมูลเท่านั้น
@@ -96,11 +112,19 @@ ${verificationUrl}
 FITM Internship System`;
 
   const html = `
-    <p>เรียน ${safeMentorName}</p>
-    <p>นักศึกษาได้ระบุข้อมูลของท่านเป็นพี่เลี้ยงสหกิจศึกษา กรุณาตรวจสอบ แก้ไข และยืนยันข้อมูล</p>
-    <p><a href="${safeVerificationUrl}">ตรวจสอบและยืนยันข้อมูล</a></p>
-    <p>ลิงก์นี้มีอายุจำกัดและใช้สำหรับการยืนยันข้อมูลเท่านั้น</p>
-    <p>FITM Internship System</p>
+    <div lang="th" style="max-width:600px;margin:0 auto;padding:24px 16px;font-family:Tahoma,Arial,sans-serif;font-size:16px;line-height:1.7;color:#1f2937;background-color:#ffffff;overflow-wrap:anywhere;">
+      <p style="margin:0 0 16px;">เรียน คุณ${safeMentorName}</p>
+      <p style="margin:0 0 20px;">นักศึกษาได้ระบุข้อมูลของท่านเป็นพี่เลี้ยงสหกิจศึกษา กรุณาตรวจสอบ แก้ไข และยืนยันข้อมูล</p>
+      <div style="border:1px solid #d1d5db;border-radius:8px;padding:16px;margin:0 0 20px;">
+        <h2 style="font-size:18px;line-height:1.5;margin:0 0 12px;">ข้อมูลนักศึกษาที่ท่านจะดูแล</h2>
+        <p style="margin:0 0 8px;"><strong>ชื่อ–นามสกุล:</strong> ${escapeHtml(studentName)}</p>
+        <p style="margin:0 0 8px;"><strong>สาขาวิชา:</strong> ${escapeHtml(studentMajor)}</p>
+        <p style="margin:0;"><strong>คณะ:</strong> ${escapeHtml(studentFaculty)}</p>
+      </div>
+      <p style="margin:0 0 20px;"><a href="${safeVerificationUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:6px;">ตรวจสอบและยืนยันข้อมูล</a></p>
+      <p style="margin:0 0 16px;">ลิงก์นี้มีอายุจำกัดและใช้สำหรับการยืนยันข้อมูลเท่านั้น</p>
+      <p style="margin:0;">FITM Internship System</p>
+    </div>
   `;
 
   const { from, fromName } = getRequiredSmtpConfig();

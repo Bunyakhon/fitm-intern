@@ -1,0 +1,12 @@
+.prerequisite-catalog { min-width: 0; overflow-wrap: anywhere; }
+.prerequisite-catalog [hidden] { display: none !important; }
+.prerequisite-catalog .catalog-toolbar, .prerequisite-catalog .catalog-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 16px 0; }
+.prerequisite-catalog label { display: grid; gap: 6px; }
+.prerequisite-catalog input, .prerequisite-catalog select, .prerequisite-catalog button { min-height: 44px; max-width: 100%; font: inherit; }
+.prerequisite-catalog input, .prerequisite-catalog select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.prerequisite-catalog input[type="checkbox"] { width: 22px; }
+.prerequisite-catalog :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.prerequisite-catalog .teacher-request-card { margin: 12px 0; }
+.prerequisite-catalog .teacher-request-card button { margin: 8px 8px 0 0; }
+.prerequisite-catalog form { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 18px; }
+@media(max-width:767px) { .prerequisite-catalog .catalog-toolbar, .prerequisite-catalog .catalog-fields { grid-template-columns: minmax(0,1fr); } }

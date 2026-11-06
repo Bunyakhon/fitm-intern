@@ -2,6 +2,50 @@
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
+## รายวิชาก่อนออกสหกิจ / ความเห็นหัวหน้าภาควิชา — อัปเดต 7 พฤศจิกายน 2026
+
+ปรับหัวข้อในฟอร์มและรายละเอียด Student Request เป็น “รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกปฏิบัติงานสหกิจศึกษา”. ผลการเรียนใช้ Select ตามลำดับ A, B+, B, C+, C, D+, D, F พร้อม Backend/Model Validation สำหรับข้อมูลใหม่; ตามนโยบายที่ผู้ใช้ยืนยัน **F + ผ่านแล้วไม่อนุญาต**, กำลังศึกษาไม่ต้องกรอกเกรด. Snapshot เก่าและเกรดเดิมนอกตัวเลือกยังแสดงได้ ไม่แก้ข้อมูลย้อนหลัง.
+
+เพิ่ม Catalog จากฐานข้อมูลและหน้าจัดการในส่วนคำร้องของ Staff: เพิ่ม/แก้ไข/กำหนดสาขา/เปิด–ปิดวิชา ใช้เฉพาะเจ้าหน้าที่ active ที่มี `coop_prerequisite_catalog.manage` และ Grant แยก IT/INE จาก Backend; **ไม่อิงข้อความ department และไม่ให้สิทธิ์อัตโนมัติ**. จำนวนวิชาของคำร้องใหม่ตาม active Catalog พร้อม Revision; คำร้องเดิมคง Snapshot. Detail แสดงความเห็น Head จาก `coop_request_reviews` และ Teacher Association จริง แยก “รอพิจารณา” ออกจาก “ยังไม่ถึงขั้นตอน” โดยไม่แก้ Workflow อนุมัติ/A01.
+
+**Source implemented / Pending schema installation:** เตรียม `backend/src/db/coopPrerequisiteCatalog.js` เพิ่ม3ตาราง Catalog/Program/Grant และเปลี่ยนเฉพาะ fixed-code CHECK ของ Snapshot เป็น program/code-format CHECK. ยังไม่รัน Migration หรือให้ Grant บัญชีใด. ก่อนติดตั้งใช้ Catalog เดิมผ่าน Backend compatibility fallback; Staff Catalog แจ้งยังไม่พร้อม. คำสั่งติดตั้งแบบ explicit target และขอบเขต API อยู่ใน [Handoff](HANDOFF_fitm-intern.md); ไม่ใช้ db:init/reset/sync เพื่อทดลองงานนี้.
+
+**ตรวจต่อหลังโควตาหมด (7 พฤศจิกายน 2026, Asia/Bangkok):** หัวข้อ/Grade Dropdown+Backend Validation/ความเห็น Head **Implemented ใน Source**. Catalog IT/INE และ RBAC มี Source ครบ แต่สถานะใช้งานจริง **Partial** เพราะ Read-only metadata ยังไม่พบ3ตารางและยังไม่มอบ Grant ใด. **Not Implemented:** ไม่พบฟีเจอร์ในขอบเขตที่ยังไม่มีโค้ด; การติดตั้งและ provision สิทธิ์ยัง **NOT APPLIED** และไม่ถือว่าใช้งานจริงผ่านแล้ว. อ่านหลักฐานแยกส่วนใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+รอบตรวจต่อแก้ `staffPrerequisiteCatalog.js` ให้เพิ่มวิชาในสาขาที่กำลังดู เพื่อใช้ Revision ของสาขาถูกต้อง (การแก้ไขยังย้ายสาขาได้ตามสิทธิ์). ปรับ installer ให้เทียบ expression ของ CHECK ที่มีอยู่และ validate CHECK ก่อนยอมรับ แทนการตรวจชื่อเพียงอย่างเดียว; ไม่ติดตั้ง Schema หรือแก้ข้อมูลจริง. ไม่มีงานรอบก่อนถูกคืน/ลบทิ้ง.
+
+**ผลตรวจ:** Syntax16ไฟล์ JS, การโหลด Models/Associations/Routes โดยไม่เรียก SQL และ Docker Frontend Build **166 modules / 5.68s / exit0 PASS** (มี bundle-size/plugin-timing warnings). Health `/` และ `/health/db` HTTP200; ไม่ใช่หลักฐาน protected API ทำงานครบ. API/Schema ตรวจแบบ Source review และอ่าน metadata แบบ Read-only เท่านั้น. Git **35 modified/24 untracked/0 deleted** ก่อน/หลังเท่าเดิม; รอบตรวจต่อเปลี่ยนเฉพาะ2Source+2เอกสาร อีก812จากBaseline816ไฟล์ byte-identical; UTF-8/diff-check PASS. **Regression/Unit/Integration/Browser/Real Database Write E2E: NOT TESTED / DEFERRED ตามคำสั่งผู้ใช้**; ผล PASS ในประวัติด้านล่างไม่ใช่ผลทดสอบโค้ดใหม่นี้. NEXT TASK: เมื่อผู้ใช้สั่งทดสอบเพิ่มเติมจึงตรวจ Migration/RBAC/Revision/เกรด/Legacy Snapshot บนฐานแยก ก่อนยืนยัน target/backup ติดตั้งและมอบสิทธิ์ให้บัญชีที่ระบุ. ไม่รัน Regression อัตโนมัติเมื่อโควตารีเซ็ต.
+
+## Student Coop Request — Read-only Audit — 6 พฤศจิกายน 2026
+
+ตรวจระบบคำร้องจาก Working Tree, API/Workflow/สิทธิ์, Models และ Development PostgreSQL catalog แบบ Read-only แล้ว ผล **PARTIAL / NEEDS VERIFICATION** ยังไม่รับรอง Production. พบว่า POST ยังสร้าง `advisor_review` ได้เมื่อไม่มี Class Advisor; อาจารย์โครงการ (`coop_advisor_teacher_id`) ไม่ได้สิทธิ์พิจารณาแทน Class Advisor (`advisor_teacher_id`). พบเพิ่มเติมเรื่อง legacy stage, Error/Empty state, approval placeholder, keyboard focus, job/company binding และ policy risks ที่ต้องยืนยันก่อนแก้.
+
+รายงานฉบับเต็มพร้อม API Matrix, State Transition, Findings A01–A14, Roadmap และ Acceptance Checklist: [STUDENT_COOP_REQUEST_AUDIT_2026-11-06.md](docs/audits/STUDENT_COOP_REQUEST_AUDIT_2026-11-06.md). รอบนี้ **ไม่แก้ Logic/UI/Schema/ข้อมูลคำร้อง**; แก้เอกสารเท่านั้น. ผลใหม่: Backend Mock Regression **25/25**, Frontend **97/97**, Audit Mock Probes **13/13**, Chrome + Mock HTTP 4ขนาดจอ และ Docker Build **163 modules PASS**. Catalog compare core44columns/9FK/7indexes/5defaultsตรงSource; Review CHECKสองรายการยัง NOT VALIDตามSource จึงไม่รับรองข้อมูลเก่าทั้งหมด. Real Student→Teacher→Head PostgreSQL write E2E **BLOCKED โดย Read-only scope**; SMTP/real accounts NOT TESTED. Testsที่ผ่านรวมการพิสูจน์ Bugs ไม่ได้แปลว่า Findingsถูกแก้แล้ว.
+
+**Mentor closure:** UI ACCEPTED ตามผลตรวจรับที่ผู้ใช้รายงาน (Verifiedสีเขียว/ข้อมูลครบ/ไม่มีResend/มีEdit+Delete); Automated Testsรันใหม่ผ่านดังข้างต้น. ตรวจหลักฐาน Chrome+Mock รอบก่อนแล้ว แยกจาก Browser Audit คำร้องรอบนี้; ไม่อ้าง SMTP/Gmail/PG E2Eจริง. NEXT TASK “Audit คำร้อง” ทำแล้ว; **Suggested next implementation: A01 ป้องกันยื่นคำร้องเมื่อไม่มี eligible Class Advisor พร้อม focused tests** โดยไม่เดาหรือเปลี่ยนนโยบาย assignment เอง.
+
+ส่วนปัจจุบันนี้ให้ใช้แทนข้อสรุป/คำสั่ง migration-based ในประวัติ READMEเก่า: workflowปัจจุบันเป็น Model-driven initialization ตาม AGENTS/Handoff ไม่รันmigrations/ledger/db:init/resetเพื่อAudit. ประวัติเดิมคงไว้สำหรับ continuity.
+
+## สถานะ Mentor Verification และ Student Mentor Panel — 6 พฤศจิกายน 2026
+
+แก้ Spinner ค้างหลังยืนยันสำเร็จ โดยคืน Loading Class/`aria-busy` ทุกเส้นทางและแสดง Success View แบบอ่านอย่างเดียวจาก `verified` ที่ Server ยืนยัน พร้อมปุ่มปิดหน้าและ Auto Close/Fallback เดิม. หน้ายืนยันใช้การ์ดข้อมูลนักศึกษา/พี่เลี้ยง รองรับ Noto Sans Thai และ Mobile โดยแยก CSS จากหน้าตรวจฝึกงานและนัดนิเทศที่ใช้หน้าเดียวกัน.
+
+Student → ข้อมูลพี่เลี้ยง โหลดสถานะใหม่เมื่อเข้าเมนู/กลับมา Focus/Visible และตรวจทุก 10 วินาทีเฉพาะเมนูที่เปิดอยู่และสถานะ pending. หยุดเมื่อ verified/ออกจากเมนู/ซ่อนแท็บ ไม่ยิง Request ซ้อน; Network Error รักษาข้อมูลเดิมและมี Retry. GET ใช้ `Cache-Control: no-store` ฝั่ง Backend โดยคง JWT/RBAC/API shape/Token expiry และขั้นตอนเพิ่ม/แก้ไข/ลบ/ส่งซ้ำเดิม.
+
+ผลรอบนี้: Docker Frontend Regression **97/97**, Backend Email/Mentor **25/25**, Syntax/Production Build และ Chrome + Mock HTTP ที่ **1280/768/390/320px PASS** รวมยืนยันจากอีกแท็บแล้ว Student เปลี่ยนเป็นสีเขียวเอง. ยังไม่ได้ทดสอบ SMTP/บัญชี Development/PostgreSQL E2E จริง; ไม่แก้ข้อมูลหรือ Schema. รายละเอียด Root Cause/ขอบเขตหลักฐานอยู่ใน [Handoff](HANDOFF_fitm-intern.md).
+
+## สถานะอีเมลยืนยันพี่เลี้ยง — 6 พฤศจิกายน 2026
+
+อีเมลหัวข้อ “ยืนยันข้อมูลพี่เลี้ยงนักศึกษาสหกิจศึกษา” แสดงชื่อ–นามสกุลนักศึกษาพร้อมคำนำหน้าถ้ามี สาขาวิชา และคณะ ในส่วน “ข้อมูลนักศึกษาที่ท่านจะดูแล” ก่อนลิงก์ยืนยัน ทั้ง HTML และ Plain Text. Backend อ่านจาก Student/Profile ผ่าน `Mentor.student_id` เท่านั้น ไม่ใช้ข้อมูลนักศึกษาจาก Request Body; ช่องที่ขาดแสดง “ยังไม่ระบุ” และ Escape ข้อมูลใน HTML.
+
+ครอบคลุมเพิ่ม/แก้ไข/ส่งยืนยันซ้ำผ่านเส้นทางเดิม โดยคง Subject/Token expiry/Verification workflow/API response เดิม. **Mock Email Transport + Mentor regression 24/24 PASS**, ตรวจ SQL projection/ownership/NULL/HTML Escape/log redaction และ HTML Preview 600/390/320px ผ่าน. ยังไม่ได้ส่ง SMTP จริงหรือทดสอบ Gmail client จริง; รายละเอียดอยู่ใน [Handoff](HANDOFF_fitm-intern.md). ไม่มี Schema/ข้อมูลนักศึกษาหรือ UI เมนูอื่นเปลี่ยนในงานนี้.
+
+## สถานะ Student Profile — 6 พฤศจิกายน 2026
+
+ส่วนเลือกวิธีกรอกข้อมูล (กรอกด้วยตนเอง / นำเข้าจาก PDF) ถูกซ่อนจาก UI ชั่วคราว โดยยังคงโค้ดและกระบวนการนำเข้า PDF ไว้สำหรับเปิดใช้งานในอนาคต ปัจจุบันผู้ใช้สามารถกรอกและบันทึกประวัตินักศึกษาด้วยตนเองได้ตามปกติ
+
+คงฟอร์ม 4 Tabs, ปุ่มบันทึกด้านบน/ล่าง, Draft/Revision/409 และ Element IDs ของ PDF Import เดิมไว้ครบ. เปิดกลับโดยนำ `hidden` ออกจาก `#profilePdfImport` ใน `frontend/src/student_coop/student_coop.html`; `#profilePdfBody` ยังคงเปิดผ่านปุ่มนำเข้า PDF ตามเดิม. ไม่เปลี่ยน Backend/Database หรือฟังก์ชัน PDF/OCR. ผลตรวจล่าสุดและข้อจำกัดอยู่ใน [Handoff](HANDOFF_fitm-intern.md).
+
 ## สถานะปัจจุบัน — Student Project UX/UI — 6 พฤศจิกายน 2026
 
 ปรับเฉพาะ Student **โครงการสหกิจศึกษา** (`#panel-coop`): Header กระชับ, Advisor/Topic การ์ดเดียว, CO-09/กำหนดสอบเป็นสองคอลัมน์เมื่อพื้นที่พอ, Book/Poster สอง subcards และ Mobile คอลัมน์เดียว. ปุ่มบันทึก/อัปโหลดแยกจากเปิดดู/ดาวน์โหลด พร้อม loading/retry/status จากผลจริง; สถานะอาจารย์ เอกสาร และการสอบแยกกันตามเดิม. ไม่เปลี่ยน Backend/API/Database/RBAC/Staff/Admin/เมนูอื่น.

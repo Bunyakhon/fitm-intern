@@ -1,0 +1,50 @@
+{
+  "version": "fitm-th-address-2026-11-06.1",
+  "sources": [
+    {
+      "repository": "kongvut/thai-province-data",
+      "revision": "07319ed40eb3440c9a1b17cc48fa223340ddce55",
+      "files": [
+        {
+          "path": "api/latest/province.json",
+          "sha256": "8696f01825cde1443f4dacb5efd4d16bd460cbc910870434a524496ef71065b0"
+        },
+        {
+          "path": "api/latest/district.json",
+          "sha256": "0682df1dd2d462f98526fde22343902eeeed7fbaff01cdd608090087412a3200"
+        },
+        {
+          "path": "api/latest/sub_district.json",
+          "sha256": "946d4db09db3b7f3026c6d050173332d71c1515f083a1a13c4a97244f140ee31"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "dd34a629e3b86890c98c54916b9aae5f1ad6d1c6e4b88f85f36282e2aa2f7c1d"
+        }
+      ]
+    },
+    {
+      "repository": "earthchie/jquery.Thailand.js",
+      "revision": "2f2737e560acc88e6bf1144e8fad3355a72d977d",
+      "files": [
+        {
+          "path": "jquery.Thailand.js/database/raw_database/raw_database.json",
+          "sha256": "2e4435d478f03b64f31e5cb5445210c27e7d9689863eb6e32d0ec6a9bd0facbb"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "96f17857f3eb28a7d93dad930bc099a3cb65a9a2afb37069bfd1ba5ec5964389"
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "provinces": 77,
+    "districts": 930,
+    "subdistricts": 7436,
+    "multiplePostalCodes": 20,
+    "unmatchedPostalCodes": 19,
+    "conflictingPostalCodes": 45
+  },
+  "sha256": "ae1c97aaef0a9120e308b308ee3eaecdbff983c7e639f660b38de6c64830c43e"
+}

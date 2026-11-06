@@ -15,7 +15,7 @@ MAX_PIXELS = 6_000_000
 PROFILE = set("prefix english_prefix english_first_name english_last_name birth_date gender height_cm weight_kg religion ethnicity nationality blood_type medical_conditions allergies special_abilities related_skills hometown_address hometown_phone current_address current_phone father_name father_age father_occupation father_address father_phone mother_name mother_age mother_occupation mother_address mother_phone parent_contact_address parent_phone emergency_contact_name emergency_contact_relation emergency_contact_occupation emergency_contact_workplace emergency_contact_address emergency_contact_phone national_id_issue_date national_id_expiry_date has_driving_license driving_license_number driving_license_type driving_license_expiry_date military_status".split())
 STUDENT = set("major department faculty year_level gpa last_semester_gpa".split())
 CHILD = {
-    "addresses": set("address_type house_no road subdistrict district province postal_code".split()),
+    "addresses": set("address_type house_no moo road subdistrict district province postal_code".split()),
     "education": set("education_level institution_name qualification major gpa graduation_year".split()),
     "training": set("course_name institution qualification period_text".split()),
     "skills": set("category skill_name proficiency".split()),
@@ -42,6 +42,12 @@ def clean(value):
 
 def meaningful(value):
     return bool(re.search(r"[A-Za-z0-9\u0e00-\u0e7f]", clean(value)))
+
+
+def moo_value(value):
+    # Keep invalid signs/decimals visible for API validation and human review.
+    # Generic clean() removes surrounding hyphens, which could turn -1 into 1.
+    return re.sub(r"\s+", " ", str(value or "")).strip()[:2000]
 
 
 def english_title_value(value):
@@ -179,6 +185,7 @@ def label_specs(context):
             names += [("profile", "emergency_contact_relation", r"ความเกี่ยวข้อง|\bRelationship\b"), ("profile", "emergency_contact_workplace", r"สถานที่ทำงาน|สถานที่ทํางาน|Place\s*of\s*work")]
     elif context in ["registered", "current"]:
         names += [("addresses", "house_no", r"(?:ที่อยู่ตามทะเบียนบ้าน|ที่อยู่ปัจจุบัน)?(?:เลขที่)|Registered\s*Address|\bAddress\b|House\s*(?:No\.?)?"),
+                  ("addresses", "moo", r"หมู่(?:ที่)?(?![ก-๙])|\bMoo\b(?:\s*No\.?)?"),
                   ("addresses", "road", r"ถนน|\bRoad\b"), ("addresses", "subdistrict", r"แขวง/?ตำบล|แขวง/?ตําบล|Sub\s*[-–]?\s*District"),
                   ("addresses", "district", r"อำเภอ/?เขต|อําเภอ/?เขต|(?<!Sub-)\bDistrict\b"),
                   ("addresses", "province", r"จังหวัด|\bProvince\b"), ("addresses", "postal_code", r"รหัสไปรษณีย์|\bPostcode\b|Postal\s*code"),
@@ -206,7 +213,7 @@ def labelled_values(text, specs):
         selected.append(item)
     for i, (_, end, scope, key) in enumerate(selected):
         stop = selected[i + 1][0] if i + 1 < len(selected) else len(text)
-        value = clean(text[end:stop]).lstrip("/").strip()
+        value = moo_value(text[end:stop].lstrip(" :")) if scope == "addresses" and key == "moo" else clean(text[end:stop]).lstrip("/").strip()
         residue = value
         for _, _, pattern in specs:
             residue = re.sub(thai_pattern(pattern), "", residue, flags=re.I)
@@ -384,7 +391,7 @@ def extract_document(data):
                 else:
                     match = re.fullmatch(r"(addresses|education|training|skills)\.(\d{1,2})\.([a-z_]+)", name)
                     if match and match[3] in CHILD[match[1]] and meaningful(value):
-                        form_rows[(match[1], match[2])][match[3]] = clean(value)
+                        form_rows[(match[1], match[2])][match[3]] = moo_value(value) if match[1] == "addresses" and match[3] == "moo" else clean(value)
         for (kind, _), row in form_rows.items():
             if kind == "addresses" and len(row) == 1 or kind == "education" and len(row) == 1 or kind == "skills" and not row.get("skill_name"): continue
             records[kind].append({"values": row, "page": None, "source": "acroform"})

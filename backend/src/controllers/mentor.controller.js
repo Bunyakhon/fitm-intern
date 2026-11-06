@@ -1,5 +1,7 @@
 const {
   Mentor,
+  Student,
+  StudentProfile,
   sequelize,
 } = require("../models");
 
@@ -10,6 +12,29 @@ const {
 const {
   sendMentorVerificationEmail,
 } = require("../services/email.service");
+
+async function sendVerificationForMentor(mentor, token) {
+  // Ownership comes from the persisted Mentor FK, never from request data.
+  // Explicit attributes include faculty, which the Student default scope omits.
+  const student = await Student.findByPk(mentor.student_id, {
+    attributes: ["id", "first_name", "last_name", "major", "faculty"],
+    include: [{ model: StudentProfile, as: "profile", attributes: ["prefix"], required: false }],
+  });
+  if (!student || student.id !== mentor.student_id) throw new Error("Mentor student owner not found");
+  return sendMentorVerificationEmail({
+    to: mentor.email,
+    firstName: mentor.first_name,
+    lastName: mentor.last_name,
+    token,
+    student: {
+      firstName: student.first_name,
+      lastName: student.last_name,
+      major: student.major,
+      faculty: student.faculty,
+      prefix: student.profile?.prefix,
+    },
+  });
+}
 
 // ==============================
 // Helper
@@ -42,6 +67,7 @@ const validateMentorInput = ({
 // ==============================
 
 exports.getMyMentor = async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
     const studentId = req.user.id;
 
@@ -182,12 +208,7 @@ exports.createMentor = async (req, res) => {
     let verificationEmailSent = true;
 
     try {
-      await sendMentorVerificationEmail({
-        to: mentor.email,
-        firstName: mentor.first_name,
-        lastName: mentor.last_name,
-        token,
-      });
+      await sendVerificationForMentor(mentor, token);
     } catch (emailError) {
       verificationEmailSent = false;
       console.error("MENTOR VERIFICATION EMAIL ERROR");
@@ -208,10 +229,7 @@ exports.createMentor = async (req, res) => {
       await transaction.rollback();
     }
 
-    console.error(
-      "CREATE MENTOR ERROR:",
-      error,
-    );
+    console.error("CREATE MENTOR ERROR");
 
     // ==============================
     // Sequelize Validation
@@ -357,12 +375,7 @@ exports.updateMyMentor = async (
     let verificationEmailSent = true;
 
     try {
-      await sendMentorVerificationEmail({
-        to: mentor.email,
-        firstName: mentor.first_name,
-        lastName: mentor.last_name,
-        token,
-      });
+      await sendVerificationForMentor(mentor, token);
     } catch (emailError) {
       verificationEmailSent = false;
       console.error("MENTOR VERIFICATION EMAIL ERROR");
@@ -383,10 +396,7 @@ exports.updateMyMentor = async (
       await transaction.rollback();
     }
 
-    console.error(
-      "UPDATE MENTOR ERROR:",
-      error,
-    );
+    console.error("UPDATE MENTOR ERROR");
 
     if (
       error.name ===

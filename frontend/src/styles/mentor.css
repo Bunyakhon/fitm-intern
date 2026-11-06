@@ -357,6 +357,25 @@ fieldset:disabled input {
 }
 
 /* Noto Sans Thai screen sizing. Document/print sizes above remain unchanged. */
+/* Verification-only treatment: review and supervision keep their shared shell. */
+.mentor-verification-page[data-workflow="verification"] { padding: 32px 16px; }
+[data-workflow="verification"] .mentor-verification-card { width: min(100%, 720px); padding: 30px; box-shadow: 0 16px 48px rgba(15, 23, 42, .08); }
+[data-workflow="verification"] [hidden] { display: none !important; }
+[data-workflow="verification"] .mentor-verification-header { margin-bottom: 20px; }
+[data-workflow="verification"] .verification-state { margin-bottom: 20px; }
+[data-workflow="verification"] .student-context { padding: 18px; margin-bottom: 20px; }
+[data-workflow="verification"] .student-context-list { gap: 12px; }
+[data-workflow="verification"] .student-context-list dd { overflow-wrap: anywhere; }
+[data-workflow="verification"] #mentorVerificationForm { border: 1px solid #e6ecf3; border-radius: 12px; padding: 18px; }
+[data-workflow="verification"] .form-grid { gap: 16px; }
+[data-workflow="verification"] .form-actions { margin-top: 20px; padding-top: 18px; }
+[data-workflow="verification"] .mentor-summary { background: #ffffff; border-color: #b6e0cb; }
+[data-workflow="verification"] .verification-recovery:has(button:not([hidden])) { display: flex; justify-content: flex-end; margin-top: 18px; }
+[data-workflow="verification"] .button:focus-visible { outline: 3px solid #2771cb; outline-offset: 3px; }
+@media (max-width: 767px) {
+  .mentor-verification-page[data-workflow="verification"] { padding: 16px 12px; }
+  [data-workflow="verification"] .mentor-verification-card { padding: 20px 16px; }
+}
 @media screen {
   .eyebrow { font-size: var(--ui-text-sm); }
   .security-note { font-size: var(--ui-text-sm); }

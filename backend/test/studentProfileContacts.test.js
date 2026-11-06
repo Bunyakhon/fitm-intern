@@ -34,7 +34,7 @@ function fixture(ready = true, friendsReady = true, legacy = false, titleReady =
       return profiles.get(options.where.student_id) || null;
     }, create: async (values, options) => { assert.ok(options.transaction); const record = row({ id: randomUUID(), ...values }); profiles.set(values.student_id, record); return record; } },
     StudentFile: { findAll: async () => [] },
-    sequelize: { getQueryInterface: () => ({ tableExists: async () => friendsReady, describeTable: async table => table === 'student_close_friends' ? schema.tables.student_close_friends.columns : {
+    sequelize: { getQueryInterface: () => ({ tableExists: async () => friendsReady, describeTable: async table => table === 'student_close_friends' ? schema.tables.student_close_friends.columns : table === 'student_addresses' ? { moo: { type: 'CHARACTER VARYING(2)', allowNull: true, defaultValue: null } } : {
       ...Object.fromEntries([...(ready ? CONTACT_FIELDS : []), ...(legacy ? LEGACY_FRIEND_FIELDS : [])].map(key => [key, {}])),
       ...(titleReady ? { english_prefix: titleReady === true ? { type: 'CHARACTER VARYING(255)', allowNull: true, defaultValue: null } : titleReady } : {}),
     } }) } };
@@ -62,6 +62,60 @@ function fixture(ready = true, friendsReady = true, legacy = false, titleReady =
   return { a, b, models, students, profiles, collections, nationalId, service: createStudentProfileAggregateService(models, nationalId) };
 }
 const response = () => ({ code: 200, headers: {}, set(key, value) { this.headers[key] = value; return this; }, status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } });
+
+test('address moo validates nullable string digits at API/model layers and preserves leading zeroes', async () => {
+  const connection = new Sequelize('postgres://fixture:fixture@127.0.0.1/fixture', { logging: false });
+  const { StudentAddress } = require('../src/models/studentProfileAggregate.factories').defineRelationModels(connection);
+  assert.equal(StudentAddress.rawAttributes.moo.type.toSql(), 'VARCHAR(2)'); assert.equal(StudentAddress.rawAttributes.moo.allowNull, true);
+  for (const value of ['1', '3', '12', '01', '0', null, '']) {
+    const normalized = rules.normalizeChild('addresses', { address_type: 'current', house_no: '23/15', moo: value }, true); assert.equal(normalized.moo, value || null);
+    await StudentAddress.build({ student_id: randomUUID(), ...normalized }).validate();
+  }
+  assert.equal(Object.hasOwn(rules.normalizeChild('addresses', { house_no: '23/15' }), 'moo'), false);
+  for (const value of ['-1', '1.5', 'a', '123', '+1', '๑', 1, {}]) {
+    assert.throws(() => rules.normalizeChild('addresses', { moo: value }), { status: 400 });
+    await assert.rejects(() => StudentAddress.build({ student_id: randomUUID(), address_type: 'current', moo: value }).validate());
+  }
+  await connection.close();
+});
+test('address moo persists independently, clears to null and retains revision/owner/atomic error handling', async () => {
+  const f = fixture(), other = JSON.stringify(await f.service.read(f.b)); let state = await f.service.read(f.a);
+  assert.equal(state.address_moo_available, true);
+  for (const type of ['registered', 'current']) {
+    state = (await f.service.saveChild(f.a, 'addresses', 'create', null, { address_type: type, house_no: '23/15' }, state.profile_revision)).body;
+    const id = state.record.id; assert.equal(state.addresses.find(row => row.id === id).moo, null);
+    for (const moo of ['1', '3', '12', '01', '', null]) {
+      state = (await f.service.saveChild(f.a, 'addresses', 'update', id, { moo }, state.profile_revision)).body;
+      assert.equal((await f.service.read(f.a)).addresses.find(row => row.id === id).moo, moo || null);
+    }
+    await assert.rejects(() => f.service.saveChild(f.b, 'addresses', 'update', id, { moo: '1' }, JSON.parse(other).profile_revision), { status: 404 });
+  }
+  const before = JSON.stringify(await f.service.read(f.a));
+  assert.throws(() => f.service.saveAggregate(f.a, { addresses: { update: [{ id: state.record.id, changes: { house_no: '99', moo: '-1' } }] } }, state.profile_revision), { status: 400 });
+  assert.equal(JSON.stringify(await f.service.read(f.a)), before); assert.equal(JSON.stringify(await f.service.read(f.b)), other);
+});
+test('pending moo schema preserves old address reads/creates/updates/deletes and rejects explicit moo writes safely', async () => {
+  for (const moo of [undefined, { type: 'INTEGER', allowNull: true }, { type: 'VARCHAR(2)', allowNull: false }]) {
+    const f = fixture(), qi = f.models.sequelize.getQueryInterface(); f.models.sequelize.getQueryInterface = () => ({ ...qi, describeTable: async table => table === 'student_addresses' ? (moo ? { moo } : {}) : qi.describeTable(table) });
+    const model = f.models.StudentAddress, findAll = model.findAll, create = model.create;
+    model.findAll = options => { assert.equal(options.attributes.includes('moo'), false); return findAll(options); };
+    model.create = (values, options) => { assert.equal(options.fields.includes('moo'), false); assert.equal(options.returning.includes('moo'), false); return create(values, options); };
+    let state = await f.service.read(f.a); assert.equal(state.address_moo_available, false);
+    state = (await f.service.saveChild(f.a, 'addresses', 'create', null, { address_type: 'current', house_no: '23/15' }, state.profile_revision)).body; const id = state.record.id;
+    assert.equal(Object.hasOwn(state.addresses[0], 'moo'), false);
+    for (const value of ['3', null]) await assert.rejects(() => f.service.saveChild(f.a, 'addresses', 'update', id, { moo: value }, state.profile_revision), error => error.code === 'ADDRESS_MOO_SCHEMA_PENDING');
+    state = (await f.service.saveChild(f.a, 'addresses', 'update', id, { road: 'Preserved' }, state.profile_revision)).body;
+    state = (await f.service.saveChild(f.a, 'addresses', 'delete', id, {}, state.profile_revision)).body; assert.equal(state.addresses.length, 0);
+  }
+});
+test('PDF extraction maps only explicit moo text, validates it and never derives it from house number', () => {
+  const { safeExtraction } = require('../src/services/studentProfilePdfImport.service');
+  const parse = values => safeExtraction({ template: 'TGDE-COOP-02', page_count: 1, method: 'pdf_text', records: { addresses: [{ values }] } }).records.addresses[0];
+  for (const moo of ['1', '3', '12', '01']) assert.equal(parse({ address_type: 'current', house_no: '23/15', moo }).values.moo, moo);
+  assert.equal(Object.hasOwn(parse({ address_type: 'current', house_no: '23/15' }).values, 'moo'), false);
+  assert.equal(Object.hasOwn(parse({ address_type: 'current', moo: '' }).values, 'moo'), false);
+  assert.ok(parse({ address_type: 'current', moo: '-1' }).validation_errors.moo);
+});
 
 test('English Title persists nullable/standard/legacy values with owner isolation, If-Match and atomic rollback', async () => {
   const f = fixture(); f.profiles.get(f.a).english_prefix = 'Dr.';

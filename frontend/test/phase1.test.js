@@ -82,14 +82,15 @@ test('Co-op Only: actual Dashboard clears rejected sessions and retains sessions
 test('mentor rotation: actual save/confirm handlers replace the capability and keep existing response fields', async () => {
   const source = fs.readFileSync(new URL('../src/pages/mentor.js', import.meta.url), 'utf8');
   const start = source.indexOf('async function saveProfile(event)'), end = source.indexOf('\nfunction confirmProfile()', start);
-  const profile = { email: 'fixture@example.invalid', first_name: 'Fixture', last_name: 'Mentor', position: 'Fixture' };
+  const profile = { email: 'fixture@example.invalid', first_name: 'Fixture', last_name: 'Mentor', position: 'Fixture', status: 'verified' };
   const calls = [], sandbox = { verificationToken: 'old-fixture', isSaving: false, isConfirming: false, isVerified: false,
     getProfileData: () => profile, validateProfile: () => true, fieldset: {}, confirmButton: {}, saveButton: {}, defaultSaveLabel: 'save', defaultConfirmLabel: 'confirm',
     setButtonLoading() {}, setState() {}, populateProfile(value) { assert.equal(value, profile); }, setFormEnabled() {}, showToast() {}, startAutoClose() {}, clearTokenFromAddressBar() {},
-    disableAfterTerminalTokenError() {}, getErrorMessage: () => 'unexpected error', URL, document: { title: 'fixture' },
+    form: {}, summary: {}, actions: {}, closeButton: {},
+    disableAfterTerminalTokenError() {}, getErrorMessage: () => 'unexpected error', URL, document: { title: 'fixture', getElementById: () => ({}) },
     window: { location: { href: 'http://fixture.invalid/verify?token=old-fixture' }, history: { replaceState(_, __, url) { calls.push(url); } } },
     async updateMentorProfile(value) { assert.equal(value, 'old-fixture'); return { data: { mentor: profile, verification_token: 'new-fixture' } }; },
-    async confirmMentorVerification(value) { assert.equal(value, 'new-fixture'); return { data: { mentor: profile } }; },
+    async confirmMentorVerification(value) { assert.equal(value, 'new-fixture'); return { success: true, data: { mentor: profile } }; },
   };
   vm.runInNewContext(source.slice(start, end), sandbox);
   await sandbox.saveProfile({ preventDefault() {} }); assert.equal(sandbox.verificationToken, 'new-fixture'); assert.ok(calls[0].includes('token=new-fixture'));

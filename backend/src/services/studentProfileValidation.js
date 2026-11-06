@@ -119,10 +119,15 @@ function normalizeChild(kind, body, creating = false) {
     else if (field === "display_order") result[field] = integer(value, field, 0, 2147483647, false);
     else result[field] = text(value, field, column.length);
     if (!column.nullable && result[field] === null) fail(field + " ต้องมีค่า");
+    if (kind === "addresses" && field === "moo" && result.moo !== null && !/^[0-9]{1,2}$/.test(result.moo)) fail("หมู่ที่ต้องเป็นตัวเลข 1–2 หลัก");
   }
   for (const [field, allowed] of [["address_type", ["registered", "current"]], ["education_level", ["bachelor", "high_vocational", "high_school_vocational"]], ["category", ["computer", "language"]], ["proficiency", ["very_good", "good", "moderate", "fair"]]]) {
     if (result[field] != null && !allowed.includes(result[field])) fail(field + " ไม่อยู่ในค่าที่อนุญาต");
     if (creating && fields.includes(field) && !spec.columns[field].nullable && !result[field]) fail(field + " ต้องมีค่า");
+  }
+  if (result.education_status != null && !["studying", "graduated"].includes(result.education_status)) fail("education_status ไม่อยู่ในค่าที่อนุญาต");
+  if (creating && kind === "training" && !["course_name", "institution", "qualification", "period_text"].some(field => result[field] != null)) {
+    fail("กรุณากรอกข้อมูลหลักสูตร / การดูงาน / การฝึกงานอย่างน้อยหนึ่งช่อง", 400, "TRAINING_EMPTY");
   }
   // No country policy exists: keep a string of up to 16 characters, preserving leading zeroes.
   return result;

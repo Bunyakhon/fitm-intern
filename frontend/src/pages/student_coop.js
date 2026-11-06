@@ -1,4 +1,5 @@
 import { revealNavigationItem } from "../ui/navigationScroll.js";
+import { createMentorStatusSync } from "./studentMentorSync.js";
 import { mountTopicExams } from './coopTopicExams.js';
 import { studentTopicExamView } from './studentCoopProjectView.js';
 import { supportsStudentDashboard, canUseCoopFeatures, canOpenStudentPanel, applyStudentDashboardAccess } from "./studentDashboardAccess.js";
@@ -42,6 +43,7 @@ import {
   checkCompanyDuplicate,
   getPublishedJobPostingForCoopRequest,
   getCoopRequestById,
+  getCoopPrerequisiteCatalog,
   getMyCoopRequests,
 } from "../api/coopRequest.api.js";
 import { setButtonLoading, showActionModal, showConfirmModal, showToast } from "../ui/feedback.js";
@@ -396,9 +398,9 @@ function setProfileLoading(isLoading) {
   notifyProfileChange(document);
 }
 
-// Profile tabs only change visibility; inputs remain mounted and APIs are not reloaded.
+// Inputs stay mounted; the documents tab refreshes through the draft-preserving loader.
 const profileTabControllers = new WeakMap();
-function initProfileTabs(tablist, defaultTabId) {
+function initProfileTabs(tablist, defaultTabId, onSelect = () => {}) {
   if (!tablist) return null;
   if (profileTabControllers.has(tablist)) return profileTabControllers.get(tablist);
   const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
@@ -427,6 +429,7 @@ function initProfileTabs(tablist, defaultTabId) {
       }
       if (focus) selected.focus();
       if (focus) selected.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+      onSelect(id);
     },
   };
   for (const tab of tabs) {
@@ -444,7 +447,9 @@ function initProfileTabs(tablist, defaultTabId) {
   controller.select(defaultTabId);
   return controller;
 }
-const studentProfileTabs = initProfileTabs(document.getElementById("studentProfileTabs"), "profilePersonalTab");
+const studentProfileTabs = initProfileTabs(document.getElementById("studentProfileTabs"), "profilePersonalTab", id => {
+  if (id === "profileDocumentsTab") profileWorkspace?.refreshDocuments();
+});
 const studentProfileEditTabs = initProfileTabs(document.getElementById("studentProfileEditTabs"), "profileEditPersonalTab");
 let profilePdfImport = null;
 const profileWorkspace = typeof mountStudentProfileWorkspace === "function" ? mountStudentProfileWorkspace({
@@ -474,15 +479,20 @@ function refreshProfileSaveState() {
   if (retry) { retry.hidden = !loadFailed; retry.disabled = saving || profilePanel?.dataset.loadState === "loading"; }
   const review = document.getElementById("profileReviewAll");
   if (review) { review.hidden = !profileWorkspace?.hasConflict; review.disabled = saving; }
-  const mainSave = document.getElementById("profileSaveAll");
-  if (mainSave) mainSave.disabled = saving || !hasLoadedStudentProfile;
+  for (const id of ["profileSaveAll", "profileSaveAllTop"]) {
+    const control = document.getElementById(id);
+    if (control) control.disabled = saving || !hasLoadedStudentProfile;
+  }
+  profileWorkspace?.refreshControls();
   const state = profileWorkspace?.savingProfile || isStudentInfoSaving || isStudentProfileSaving ? "saving" : saving ? "working"
-    : loadFailed ? "load-error" : profileWorkspace?.saveFailed ? "error" : profileOutcome === "error" ? "attention"
+    : loadFailed ? "load-error" : profileWorkspace?.hasConflict ? "conflict" : profileWorkspace?.saveFailed ? "error" : profileOutcome === "error" ? "attention"
     : !hasLoadedStudentProfile ? "loading" : dirty ? "unsaved" : profileOutcome === "saved" ? "saved" : "ready";
   target.dataset.state = state;
-  target.textContent = { saving: "กำลังบันทึก", working: "กำลังดำเนินการ", error: "บันทึกไม่สำเร็จ · Draft ยังอยู่", "load-error": "โหลดไม่สำเร็จ · ลองอีกครั้งได้", attention: "โปรดตรวจข้อความแจ้งเตือน", loading: "กำลังโหลดประวัติ", unsaved: "มีข้อมูลที่ยังไม่บันทึก", saved: "บันทึกแล้ว", ready: "ข้อมูลพร้อมแก้ไข" }[state];
-  const actionState = document.getElementById("profileSaveActionState");
-  if (actionState) { actionState.dataset.state = state; actionState.textContent = target.textContent; }
+  target.textContent = { saving: "กำลังบันทึก", working: "กำลังดำเนินการ", conflict: "ข้อมูลขัดแย้ง · โปรดตรวจฉบับล่าสุด", error: "บันทึกไม่สำเร็จ · Draft ยังอยู่", "load-error": "โหลดไม่สำเร็จ · ลองอีกครั้งได้", attention: "โปรดตรวจข้อความแจ้งเตือน", loading: "กำลังโหลดประวัติ", unsaved: "มีข้อมูลที่ยังไม่บันทึก", saved: "บันทึกแล้ว", ready: "ข้อมูลพร้อมแก้ไข" }[state];
+  for (const id of ["profileSaveActionState", "profileSaveTopState"]) {
+    const actionState = document.getElementById(id);
+    if (actionState) { actionState.dataset.state = state; actionState.textContent = target.textContent; }
+  }
 }
 document.addEventListener("student-profile-state", event => {
   if (event.detail?.outcome) profileOutcome = event.detail.outcome;
@@ -1854,11 +1864,17 @@ function logout() {
 }
 
 function clearAuthentication() {
+  mentorStatusSync.setActive(false);
+  mentorLoadController?.abort();
   studentOverview.clear();
   clearStudentSession();
 }
 
 function handleStudentSessionChange() {
+  mentorStatusSync.setActive(false);
+  mentorLoadController?.abort();
+  currentMentor = null;
+  renderMentor();
   studentOverview.clear();
   renderStudentAccountInfo(null);
   renderAccountProfile(document, null);
@@ -1904,7 +1920,7 @@ function activateDashboardPanel(targetId) {
   sidebarItems.forEach((item) => item.classList.toggle("active", item.dataset.target === targetId));
   revealNavigationItem(document.querySelector('.sidebar-menu'), [...sidebarItems].find(item => item.dataset.target === targetId));
   contentPanels.forEach((panel) => panel.classList.toggle("active", panel.id === targetId));
-  if (targetId === "panel-mentor") loadMentor();
+  mentorStatusSync.setActive(targetId === "panel-mentor");
   if (targetId === "panel-evaluate") return companyEvaluation.load();
   if (targetId === "panel-request") return loadCoopRequests();
   if (targetId === "panel-job-matching") renderJobMatchingSource();
@@ -2482,26 +2498,34 @@ let coopRequestModalReturnFocus = null;
 let coopRequestDetailModalReturnFocus = null;
 
 // Student.major is the saved Profile source; unsaved Profile edits are not used.
-const COOP_PREREQUISITE_COURSES = {
-  IT: [
-    { course_code: "060243102", course_name: "การโปรแกรมคอมพิวเตอร์", english_name: "Computer Programming" },
-    { course_code: "060243104", course_name: "การเขียนโปรแกรมเชิงวัตถุ", english_name: "Object-oriented Programming" },
-    { course_code: "060243108", course_name: "ระบบฐานข้อมูล", english_name: "Database System" },
-    { course_code: "060243112", course_name: "การวิเคราะห์และออกแบบระบบ", english_name: "System Analysis and Design" },
-    { course_code: "060243122", course_name: "เว็บแอปพลิเคชัน", english_name: "Web Application" },
-  ],
-  INE: [
-    { course_code: "060233107", course_name: "ระบบฐานข้อมูล" },
-    { course_code: "060233112", course_name: "วิศวกรรมข้อมูล" },
-    { course_code: "060233113", course_name: "การเขียนโปรแกรมคอมพิวเตอร์ขั้นสูง" },
-    { course_code: "060233202", course_name: "ปฏิบัติการวิศวกรรมเครือข่าย 2" },
-    { course_code: "060233204", course_name: "การออกแบบและการจัดทำเครือข่ายคอมพิวเตอร์" },
-  ],
-};
+const COOP_PREREQUISITE_COURSES = { IT: [], INE: [] };
+const COOP_GRADE_OPTIONS = ["A", "B+", "B", "C+", "C", "D+", "D", "F"];
 const coopPrerequisiteCourses = document.getElementById("coopPrerequisiteCourses");
 const coopPrerequisiteContext = document.getElementById("coopPrerequisiteContext");
 let coopPrerequisiteProgram = null;
 let coopPrerequisiteState = new Map();
+let coopCatalogLoading = false;
+let coopCatalogError = null;
+let coopCatalogRevision = null;
+let coopCatalogSequence = 0;
+
+async function loadCoopPrerequisiteCatalog() {
+  const selectedProgram = coopPrerequisiteProgram, sequence = ++coopCatalogSequence;
+  if (!selectedProgram) { coopCatalogLoading = false; coopCatalogRevision = null; coopCatalogError = "กรุณาตรวจสอบสาขา IT / INE ในประวัตินักศึกษา"; renderCoopPrerequisiteCourses(); return; }
+  coopCatalogLoading = true; coopCatalogError = null; renderCoopPrerequisiteCourses();
+  try {
+    const result = await getCoopPrerequisiteCatalog(), catalog = result?.data;
+    if (sequence !== coopCatalogSequence || selectedProgram !== coopPrerequisiteProgram) return;
+    if (catalog?.program !== selectedProgram || !Array.isArray(catalog.courses) || typeof catalog.revision !== "string") throw new Error("ข้อมูลรายวิชาไม่ตรงกับสาขาปัจจุบัน กรุณาโหลดประวัติใหม่");
+    COOP_PREREQUISITE_COURSES[selectedProgram] = catalog.courses;
+    coopCatalogRevision = catalog.revision;
+  } catch (error) {
+    if (sequence !== coopCatalogSequence) return;
+    coopCatalogError = error.message || "ไม่สามารถโหลดรายวิชาได้ กรุณาลองอีกครั้ง";
+  } finally {
+    if (sequence === coopCatalogSequence) { coopCatalogLoading = false; renderCoopPrerequisiteCourses(); }
+  }
+}
 
 function syncCoopPrerequisiteProgram(reset = false) {
   const major = currentStudent?.major;
@@ -2510,7 +2534,9 @@ function syncCoopPrerequisiteProgram(reset = false) {
     coopPrerequisiteProgram = program;
     // Discard old course state rather than reusing positional values across programs.
     coopPrerequisiteState = new Map();
+    coopCatalogRevision = null;
     renderCoopPrerequisiteCourses();
+    loadCoopPrerequisiteCatalog();
   }
 }
 
@@ -2532,14 +2558,18 @@ function renderCoopPrerequisiteCourses() {
   if (!coopPrerequisiteCourses) return;
   coopPrerequisiteCourses.replaceChildren();
   const courses = COOP_PREREQUISITE_COURSES[coopPrerequisiteProgram] || [];
+  const retry = document.getElementById("coopCatalogRetry");
+  if (retry) { retry.hidden = !coopCatalogError; retry.disabled = coopCatalogLoading || coopRequestSubmitting; }
+  if (saveCoopRequestBtn) saveCoopRequestBtn.disabled = coopRequestSubmitting || coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
+  coopPrerequisiteCourses.setAttribute("aria-busy", String(coopCatalogLoading));
   setText(coopPrerequisiteContext, coopPrerequisiteProgram === "IT"
     ? "สำหรับหลักสูตรวิทยาศาสตรบัณฑิต (IT)"
     : coopPrerequisiteProgram === "INE" ? "สำหรับหลักสูตรวิศวกรรมศาสตรบัณฑิต (INE)" : "ไม่พบสาขา IT / INE ในข้อมูลประวัตินักศึกษา");
-  if (!courses.length) {
+  if (coopCatalogLoading || coopCatalogError || !courses.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 3;
-    cell.textContent = "กรุณาตรวจสอบสาขาในข้อมูลประวัตินักศึกษา";
+    cell.textContent = coopCatalogLoading ? "กำลังโหลดรายวิชาที่ใช้งาน..." : coopCatalogError || "ไม่มีรายวิชาที่เปิดใช้งานในสาขานี้";
     row.append(cell);
     coopPrerequisiteCourses.append(row);
     return;
@@ -2553,11 +2583,22 @@ function renderCoopPrerequisiteCourses() {
     const name = document.createElement("td");
     name.textContent = `${code} ${course.course_name}${course.english_name ? ` (${course.english_name})` : ""}`;
     const gradeCell = document.createElement("td");
-    const grade = document.createElement("input");
-    grade.type = "text";
+    const grade = document.createElement("select");
     grade.id = `coop-grade-${code}`;
-    grade.maxLength = 10;
     grade.setAttribute("aria-label", `ผลการเรียน ${code}`);
+    for (const value of ["", ...COOP_GRADE_OPTIONS]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value || "เลือกผลการเรียน";
+      grade.append(option);
+    }
+    if (state.grade && !COOP_GRADE_OPTIONS.includes(state.grade)) {
+      const legacy = document.createElement("option");
+      legacy.value = state.grade;
+      legacy.textContent = `${state.grade} (ข้อมูลเดิม · กรุณาตรวจสอบ)`;
+      legacy.disabled = true;
+      grade.append(legacy);
+    }
     grade.value = state.grade || "";
     const statusCell = document.createElement("td");
     const status = document.createElement("select");
@@ -2581,7 +2622,7 @@ function renderCoopPrerequisiteCourses() {
       if (state.status !== "passed") { state.grade = null; grade.value = ""; }
       updateGrade();
     });
-    grade.addEventListener("input", () => {
+    grade.addEventListener("change", () => {
       if (coopPrerequisiteState.get(code) === state && state.status === "passed") state.grade = grade.value;
     });
     status.disabled = coopRequestSubmitting;
@@ -2594,8 +2635,13 @@ function renderCoopPrerequisiteCourses() {
 }
 
 function validateCoopPrerequisites(courses) {
+  if (coopCatalogLoading || coopCatalogError || !coopCatalogRevision) return coopCatalogError || "กรุณารอให้โหลดรายวิชาสำเร็จก่อนยื่นคำร้อง";
   const missingGrade = courses.find((course) => course.status === "passed" && !course.grade?.trim());
-  return missingGrade ? `กรุณาระบุผลการเรียนของรายวิชา ${missingGrade.course_code} ที่ผ่านแล้ว` : null;
+  if (missingGrade) return `กรุณาระบุผลการเรียนของรายวิชา ${missingGrade.course_code} ที่ผ่านแล้ว`;
+  const invalidGrade = courses.find(course => course.status === "passed" && !COOP_GRADE_OPTIONS.includes(course.grade));
+  if (invalidGrade) return `ผลการเรียนของรายวิชา ${invalidGrade.course_code} เป็นข้อมูลเดิมที่ต้องตรวจสอบ กรุณาเลือกผลการเรียนที่รองรับก่อนยื่นคำร้องใหม่`;
+  const failedCourse = courses.find(course => course.status === "passed" && course.grade === "F");
+  return failedCourse ? `เกรด F ของรายวิชา ${failedCourse.course_code} ไม่สอดคล้องกับสถานะผ่านแล้ว กรุณาตรวจสอบผลการเรียน` : null;
 }
 
 function showDuplicateCoopRequestAlert() {
@@ -2848,6 +2894,7 @@ function setCoopRequestFormSubmitting(isSubmitting) {
     "กำลังยื่นคำร้อง...",
     "ยื่นคำร้อง",
   );
+  if (!isSubmitting) saveCoopRequestBtn.disabled = coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
 }
 
 function applyCoopCompany(company) {
@@ -2905,6 +2952,7 @@ function closeCoopRequestModal() {
 function getCoopRequestFormData() {
   return {
     prerequisite_courses: getCoopPrerequisiteData(),
+    prerequisite_catalog_revision: coopCatalogRevision,
     company_id: selectedCoopCompanyId,
     job_posting_id: selectedCoopJobPostingId,
     company_name: document.getElementById("coopCompanyName").value.trim(),
@@ -2954,6 +3002,16 @@ async function submitCoopRequestForm(event) {
       currentCard?.focus?.({ preventScroll: true });
     }
   } catch (error) {
+    if (error.data?.code === "COOP_PREREQUISITE_CATALOG_CHANGED") {
+      coopRequestSubmitting = false;
+      await loadCoopPrerequisiteCatalog();
+      showMessage(coopRequestFormMessage, "รายการรายวิชาเปลี่ยนแปลงแล้ว ข้อมูลที่กรอกยังอยู่ กรุณาตรวจสอบรายวิชาและยื่นอีกครั้ง", "error");
+      return;
+    }
+    if (error.data?.code === "COOP_PREREQUISITE_CATALOG_SCHEMA_REQUIRED") {
+      showMessage(coopRequestFormMessage, error.message || "Catalog ยังไม่พร้อม กรุณาติดต่อผู้ดูแล", "error");
+      return;
+    }
     if (error?.status === 409) {
       coopRequestSubmitting = false;
       setCoopRequestFormSubmitting(false);
@@ -2982,6 +3040,7 @@ function closeCoopRequestDetailModal() {
 
 function renderCoopRequestDetail(request) {
   renderCoopPrerequisiteSnapshot(request.prerequisite_courses);
+  renderCoopHeadApproval(request);
   const status = getCoopRequestStatusMeta(request.status);
   const student = request.student || {};
   const profile = student.profile || {};
@@ -3044,6 +3103,31 @@ function renderCoopRequestDetail(request) {
     coopDetailStatus.textContent = status.label;
   }
   renderCoopStepper(coopDetailStepper, request);
+}
+
+function renderCoopHeadApproval(request) {
+  const target = document.getElementById("coopDetailHeadApproval");
+  if (!target) return;
+  const reviews = Array.isArray(request.reviews) ? request.reviews : [];
+  // API orders the persisted history by created_at then id; never infer a vote.
+  const review = [...reviews].reverse().find(row => row.actor_role === "department_head" && ["approve", "reject"].includes(row.decision));
+  if (review) {
+    const name = review.teacher ? formatTeacherName(review.teacher) : "ไม่พบข้อมูลชื่อผู้พิจารณา";
+    target.replaceChildren(
+      createCoopDetailItem("สถานะการพิจารณา", "พิจารณาแล้ว"),
+      createCoopDetailItem("ผลการพิจารณา", review.decision === "approve" ? "อนุมัติ" : "ไม่อนุมัติ"),
+      createCoopDetailItem("หัวหน้าภาควิชาผู้พิจารณา", name),
+      createCoopDetailItem("วันที่พิจารณา", formatCoopDate(review.created_at || review.createdAt, true)),
+      createCoopDetailItem("เหตุผล / ความเห็น", typeof review.reason === "string" && review.reason.trim() ? review.reason : "ไม่ได้ระบุความเห็น", true),
+    );
+    return;
+  }
+  const message = request.status === "department_head_review" ? "รอการพิจารณาจากหัวหน้าภาควิชา"
+    : ["submitted", "staff_review", "advisor_review"].includes(request.status) ? "ยังไม่ถึงขั้นตอนพิจารณาของหัวหน้าภาควิชา"
+    : request.status === "cancelled" ? "คำร้องถูกยกเลิกแล้ว ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชา"
+    : request.status === "rejected" ? "คำร้องไม่ผ่านการอนุมัติ ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชา"
+    : "ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชาในข้อมูลคำร้องนี้";
+  target.replaceChildren(createCoopDetailItem("สถานะการพิจารณา", message, true));
 }
 
 function renderCoopPrerequisiteSnapshot(snapshot) {
@@ -3126,6 +3210,7 @@ function confirmCancelCoopRequest() {
 }
 
 createRequestBtn?.addEventListener("click", openCoopRequestModal);
+document.getElementById("coopCatalogRetry")?.addEventListener("click", loadCoopPrerequisiteCatalog);
 createAnotherCoopRequestBtn?.addEventListener("click", openCoopRequestModal);
 coopCompanySearch?.addEventListener("input", () => {
   window.clearTimeout(companySearchTimer);
@@ -3564,8 +3649,22 @@ let mentorSubmitting = false;
 let mentorDeleting = false;
 let mentorResending = false;
 let mentorFormMode = "create";
+let mentorLoadController = null;
+let mentorLoadError = false;
+const mentorStatusSync = createMentorStatusSync({
+  refresh: () => loadMentor({ quiet: true }),
+  isPending: () => currentMentor?.status === "pending",
+  isBusy: () => mentorLoading || mentorSubmitting || mentorDeleting || mentorResending || mentorModal?.classList.contains("open"),
+  window, document,
+});
 
 function renderMentor() {
+  const hasMentor = Boolean(currentMentor);
+  document.getElementById("mentorDetails").hidden = !hasMentor;
+  document.getElementById("mentorEmpty").hidden = hasMentor || mentorLoading || mentorLoadError;
+  document.getElementById("mentorRetry").hidden = !mentorLoadError;
+  document.getElementById("mentorRetry").disabled = mentorLoading;
+  document.getElementById("mentorSyncNote").hidden = !hasMentor || currentMentor.status !== "pending";
   setText(mentorEmail, currentMentor?.email || "-");
   setText(mentorFirstName, currentMentor?.first_name || "-");
   setText(mentorLastName, currentMentor?.last_name || "-");
@@ -3608,7 +3707,7 @@ function renderMentor() {
   if (mentorVerificationHint) {
     mentorVerificationHint.hidden = !shouldShowPendingActions;
     mentorVerificationHint.textContent = shouldShowPendingActions
-      ? "พี่เลี้ยงยังไม่ได้ยืนยันข้อมูล"
+      ? "รอพี่เลี้ยงยืนยันผ่านอีเมล ระบบจะตรวจสอบสถานะให้อัตโนมัติ"
       : "";
   }
 
@@ -3624,16 +3723,20 @@ function renderMentor() {
   }
 
   if (btnAddMentor) {
+    btnAddMentor.hidden = hasMentor;
     btnAddMentor.disabled = isBusy || Boolean(currentMentor);
   }
 
   if (btnEditMentor) {
+    btnEditMentor.hidden = !hasMentor;
     btnEditMentor.disabled = isBusy || !currentMentor;
   }
 
   if (btnDeleteMentor) {
+    btnDeleteMentor.hidden = !hasMentor;
     btnDeleteMentor.disabled = isBusy || !currentMentor;
   }
+  mentorStatusSync.update();
 }
 
 function getMentorErrorMessage(error, action) {
@@ -3653,18 +3756,22 @@ function getMentorErrorMessage(error, action) {
   return messages[error.status] || `ไม่สามารถ${action}ข้อมูลพี่เลี้ยงได้ กรุณาลองใหม่อีกครั้ง`;
 }
 
-async function loadMentor() {
+async function loadMentor({ quiet = false } = {}) {
   if (mentorLoading || mentorSubmitting || mentorDeleting || mentorResending) {
     return false;
   }
 
   mentorLoading = true;
+  const controller = new AbortController();
+  mentorLoadController = controller;
   renderMentor();
-  showMessage(mentorMessage, "กำลังโหลดข้อมูลพี่เลี้ยง...", "loading");
+  if (!quiet) showMessage(mentorMessage, "กำลังโหลดข้อมูลพี่เลี้ยง...", "loading");
 
   try {
-    const result = await getMyMentor();
+    const result = await getMyMentor({ signal: controller.signal });
+    if (controller.signal.aborted) return false;
     currentMentor = result?.data || null;
+    mentorLoadError = false;
     renderMentor();
 
     if (currentMentor) {
@@ -3675,11 +3782,13 @@ async function loadMentor() {
 
     return true;
   } catch (error) {
-    currentMentor = null;
+    if (controller.signal.aborted) return false;
+    mentorLoadError = true;
     renderMentor();
     showMessage(mentorMessage, getMentorErrorMessage(error, "โหลด"), "error");
     return false;
   } finally {
+    mentorLoadController = null;
     mentorLoading = false;
     renderMentor();
   }
@@ -3698,7 +3807,7 @@ function setMentorFormSubmitting(isSubmitting) {
 }
 
 function openMentorModal(mode) {
-  if (mentorSubmitting || (mode === "edit" && !currentMentor)) {
+  if (mentorLoading || mentorSubmitting || mentorDeleting || mentorResending || (mode === "edit" && !currentMentor)) {
     return;
   }
 
@@ -3723,7 +3832,7 @@ function openMentorModal(mode) {
 }
 
 function closeMentorModal() {
-  if (mentorSubmitting) {
+  if (mentorLoading || mentorSubmitting || mentorDeleting || mentorResending) {
     return;
   }
 
@@ -3755,7 +3864,7 @@ function validateMentorForm(data) {
 
 async function submitMentorForm(event) {
   event.preventDefault();
-  if (mentorSubmitting) {
+  if (mentorLoading || mentorSubmitting || mentorDeleting || mentorResending) {
     return;
   }
 
@@ -3773,11 +3882,9 @@ async function submitMentorForm(event) {
   showMessage(mentorMessage, "กำลังบันทึกข้อมูลพี่เลี้ยง...", "loading");
 
   try {
-    if (mentorFormMode === "edit") {
-      await updateMyMentor(data);
-    } else {
-      await createMentor(data);
-    }
+    const saved = mentorFormMode === "edit" ? await updateMyMentor(data) : await createMentor(data);
+    currentMentor = saved.data.mentor;
+    mentorLoadError = false;
 
     mentorSubmitting = false;
     closeMentorModal();
@@ -3799,6 +3906,7 @@ async function submitMentorForm(event) {
       getMentorErrorMessage(error, mentorFormMode === "edit" ? "แก้ไข" : "บันทึก"),
       "error"
     );
+    showMessage(mentorMessage, getMentorErrorMessage(error, mentorFormMode === "edit" ? "แก้ไข" : "บันทึก"), "error");
   } finally {
     mentorSubmitting = false;
     setMentorFormSubmitting(false);
@@ -3807,7 +3915,7 @@ async function submitMentorForm(event) {
 }
 
 async function deleteMentorAfterConfirmation() {
-  if (!currentMentor || mentorDeleting || mentorSubmitting || mentorResending) {
+  if (!currentMentor || mentorLoading || mentorDeleting || mentorSubmitting || mentorResending) {
     return;
   }
 
@@ -3830,7 +3938,7 @@ async function deleteMentorAfterConfirmation() {
 }
 
 function removeMentor() {
-  if (!currentMentor || mentorDeleting || mentorSubmitting || mentorResending) {
+  if (!currentMentor || mentorLoading || mentorDeleting || mentorSubmitting || mentorResending) {
     return;
   }
 
@@ -3846,6 +3954,7 @@ function removeMentor() {
 async function resendMentorVerificationAfterConfirmation() {
   if (
     currentMentor?.status !== "pending" ||
+    mentorLoading ||
     mentorResending ||
     mentorSubmitting ||
     mentorDeleting
@@ -3865,6 +3974,7 @@ async function resendMentorVerificationAfterConfirmation() {
       position: currentMentor.position,
     });
     const verificationEmailSent = result?.data?.verification_email_sent;
+    currentMentor = result.data.mentor;
 
     mentorResending = false;
     const wasLoaded = await loadMentor();
@@ -3893,6 +4003,7 @@ async function resendMentorVerificationAfterConfirmation() {
 function resendMentorVerification() {
   if (
     currentMentor?.status !== "pending" ||
+    mentorLoading ||
     mentorResending ||
     mentorSubmitting ||
     mentorDeleting
@@ -3910,6 +4021,7 @@ function resendMentorVerification() {
 }
 
 btnAddMentor?.addEventListener("click", () => openMentorModal("create"));
+document.getElementById("mentorRetry").addEventListener("click", () => loadMentor());
 btnEditMentor?.addEventListener("click", () => openMentorModal("edit"));
 btnDeleteMentor?.addEventListener("click", removeMentor);
 btnResendMentorVerification?.addEventListener("click", resendMentorVerification);

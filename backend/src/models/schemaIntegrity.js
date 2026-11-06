@@ -232,9 +232,9 @@ function registerSchemaIntegrity(sequelize) {
     });
   }
   for (const item of definitions.defaults) {
-    // Skills validate display_order before INSERT. Keep its SQL default 0 as a
+    // Profile records validate display_order before INSERT. Keep SQL default 0 as a
     // JS integer too; a Literal("0") fails Number.isInteger in validDraftValues.
-    attribute(item.table, item.field).defaultValue = item.table === "student_skills" && item.field === "display_order" && item.sql === "0"
+    attribute(item.table, item.field).defaultValue = ["student_skills", "student_education_records", "student_training_records"].includes(item.table) && item.field === "display_order" && item.sql === "0"
       ? 0 : literal(item.sql);
   }
   for (const [table, fields] of Object.entries(definitions.required)) for (const field of fields) attribute(table, field).allowNull = false;

@@ -8,6 +8,7 @@ const {
   searchCompanies,
   checkCompanyDuplicate,
   getPublishedJobPostingForCoopRequest,
+  getPrerequisiteCatalog,
 } = require("../controllers/coopRequest.controller");
 const { authenticateToken, requireCoopStudent } = require("../middlewares/auth.middleware");
 
@@ -24,6 +25,7 @@ router.use(authenticateToken, requireStudentActor);
 router.get("/companies/search", searchCompanies);
 router.get("/companies/duplicate-check", checkCompanyDuplicate);
 router.use(requireCoopStudent);
+router.get('/prerequisite-catalog', getPrerequisiteCatalog);
 router.get("/job-postings/:id", getPublishedJobPostingForCoopRequest);
 router.get("/me", getMyCoopRequests);
 router.get('/:id/company-response', require('../controllers/companyResponse.controller').createStudentCompanyResponseHandler(require('../models')));

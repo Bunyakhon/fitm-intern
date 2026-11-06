@@ -336,7 +336,9 @@
             </div>
           </section>
 
-          <section class="profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading">
+          <!-- ซ่อนส่วนเลือกวิธีกรอกข้อมูลชั่วคราว โดยคง Elements และ PDF/OCR workflow ไว้
+               เปิดกลับได้โดยนำ hidden ออกจาก profilePdfImport -->
+          <section class="profile-pdf-import" id="profilePdfImport" aria-labelledby="profilePdfHeading" hidden>
             <div class="profile-method-row">
               <h3 id="profilePdfHeading">วิธีกรอกข้อมูล</h3>
               <div class="profile-methods" role="group" aria-labelledby="profilePdfHeading">
@@ -368,6 +370,16 @@
           ></p>
 
           <div class="profile-form-card">
+          <div class="profile-workspace-toolbar profile-save-top" role="group" aria-label="บันทึกประวัติด้านบน">
+            <div class="profile-toolbar-copy">
+              <h3>แก้ไขประวัตินักศึกษา</h3>
+              <p>บันทึกข้อมูลทุกแท็บ<br />เอกสารอัปโหลดแยกต่างหาก</p>
+            </div>
+            <div class="profile-toolbar-actions">
+              <p id="profileSaveTopState" class="profile-save-state" aria-live="off" data-state="loading">กำลังโหลดประวัติ</p>
+              <button id="profileSaveAllTop" class="btn-primary" type="button" aria-describedby="profileSaveTopState profileWorkspaceStatus" disabled>บันทึกประวัติ</button>
+            </div>
+          </div>
           <div class="profile-tabs" id="studentProfileTabs" role="tablist" aria-label="หมวดข้อมูลประวัตินักศึกษา">
             <button type="button" class="profile-tab" id="profilePersonalTab" role="tab" aria-selected="true" aria-controls="profilePersonalPanel" tabindex="0"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><span>ประวัตินักศึกษา</span></button>
             <button type="button" class="profile-tab" id="profileContactTab" role="tab" aria-selected="false" aria-controls="profileContactPanel" tabindex="-1"><i class="fa-solid fa-house-user" aria-hidden="true"></i><span>ติดต่อ / ครอบครัว / ฉุกเฉิน</span></button>
@@ -658,7 +670,7 @@
             <p id="profileSaveActionState" class="profile-save-state" aria-live="off" data-state="loading">กำลังโหลดประวัติ</p>
             <p class="profile-save-help">ไม่มีการบันทึกอัตโนมัติ · รูป Resume เอกสาร และ PDF ยืนยันแยก</p>
 
-            <button id="profileSaveAll" class="btn-primary" type="button" disabled>บันทึกประวัติ</button>
+            <button id="profileSaveAll" class="btn-primary" type="button" aria-describedby="profileSaveState profileWorkspaceStatus" disabled>บันทึกประวัติ</button>
           </div>
         </section>
 
@@ -1057,7 +1069,12 @@
               </div>
             </div>
 
-            <div class="info-grid" style="margin-top: 14px">
+            <div id="mentorEmpty" class="mentor-empty" hidden>
+              <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+              <h3>ยังไม่มีข้อมูลพี่เลี้ยง</h3>
+              <p>เพิ่มข้อมูลติดต่อพี่เลี้ยงเพื่อส่งอีเมลให้ตรวจสอบและยืนยัน</p>
+            </div>
+            <div id="mentorDetails" class="info-grid" hidden>
               <div class="info-item">
                 <span>Email</span>
 
@@ -1105,6 +1122,8 @@
               role="status"
               aria-live="polite"
             ></p>
+            <button id="mentorRetry" class="btn-mock-sm" type="button" hidden>ลองโหลดข้อมูลอีกครั้ง</button>
+            <p id="mentorSyncNote" class="mentor-sync-note" hidden>ตรวจสอบสถานะทุก 10 วินาทีขณะเปิดเมนูนี้</p>
 
             <div class="request-actions">
               <button type="button" class="btn-mock-sm solid" id="btnAddMentor">
@@ -1487,8 +1506,9 @@
               </div>
             </fieldset>
             <section class="coop-form-section coop-course-section">
-              <h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกงาน / สหกิจศึกษา</h4>
+              <h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกปฏิบัติงานสหกิจศึกษา</h4>
               <p class="coop-unavailable" id="coopPrerequisiteContext"></p>
+              <button id="coopCatalogRetry" type="button" class="btn-secondary" hidden>ลองโหลดรายวิชาอีกครั้ง</button>
               <p class="coop-unavailable" id="coopPrerequisiteNotice">เลือกผ่านแล้วพร้อมผลการเรียน หรือกำลังศึกษา (กำลังลงทะเบียนเรียนในเทอมนี้) ข้อมูลรายวิชาจะบันทึกเป็นส่วนหนึ่งของคำร้องนี้</p>
               <div class="coop-course-table-wrap" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด"><table class="coop-course-table" aria-describedby="coopPrerequisiteContext coopPrerequisiteNotice"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopPrerequisiteCourses"></tbody></table></div>
             </section>
@@ -1506,7 +1526,7 @@
             </section>
             <section class="coop-form-section coop-approval-section">
               <h4>ความเห็นชอบของหัวหน้าภาควิชา</h4>
-              <p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p>
+              <p class="coop-unavailable">ยังไม่ถึงขั้นตอนพิจารณาของหัวหน้าภาควิชา</p>
             </section>
             <p class="message" id="coopRequestFormMessage" role="alert" aria-live="assertive"></p>
           </div>
@@ -1532,10 +1552,10 @@
             <section class="coop-form-section coop-student-section"><h4>ข้อมูลนักศึกษา</h4><div class="coop-readonly-grid" id="coopDetailStudent"></div></section>
             <section class="coop-form-section coop-company-section"><h4>ข้อมูลหน่วยงาน / สถานประกอบการ</h4><div class="coop-readonly-grid" id="coopDetailRequest"></div></section>
             <section class="coop-form-section coop-delivery-detail"><h4>การดำเนินการจัดส่งหนังสือ</h4><div class="coop-detail-chip-list" id="coopDetailDeliveryMethods"></div></section>
-            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
+            <section class="coop-form-section coop-course-section"><h4>รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกปฏิบัติงานสหกิจศึกษา</h4><p class="coop-unavailable" id="coopDetailPrerequisiteProgram"></p><div class="coop-course-table-wrap" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนแนวนอนเพื่อดูคอลัมน์ทั้งหมด"><table class="coop-course-table"><thead><tr><th>รายวิชา</th><th>ผลการเรียน</th><th>สถานะ</th></tr></thead><tbody id="coopDetailPrerequisites"></tbody></table></div></section>
             <section class="coop-form-section coop-signer-section"><h4>ลงชื่อผู้ยื่นคำร้อง</h4><div class="coop-readonly-grid" id="coopDetailSigner"></div></section>
             <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของอาจารย์ที่ปรึกษา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากอาจารย์ที่ปรึกษา</p><div class="coop-readonly-grid coop-advisor-grid"><div class="coop-readonly-full"><span>อาจารย์ที่ปรึกษาประจำชั้น</span><strong id="coopDetailAdvisorName">ยังไม่ได้กำหนดอาจารย์ที่ปรึกษาประจำชั้น</strong></div><div><span>วันที่</span><strong>ยังไม่มีข้อมูล</strong></div></div></section>
-            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><p class="coop-unavailable">ยังไม่มีข้อมูลการพิจารณาจากหัวหน้าภาควิชา</p></section>
+            <section class="coop-form-section coop-approval-section"><h4>ความเห็นชอบของหัวหน้าภาควิชา</h4><div id="coopDetailHeadApproval" class="coop-readonly-grid" aria-live="polite"></div></section>
             <section class="coop-form-section coop-progress-section"><h4>สถานะการดำเนินการ</h4><div class="coop-stepper" id="coopDetailStepper"></div></section>
           </div>
         </div>

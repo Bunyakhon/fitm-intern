@@ -1,8 +1,10 @@
 import { apiRequest } from "./client.js";
 
-export function getMyMentor() {
+export function getMyMentor({ signal } = {}) {
   return apiRequest("/api/mentors/me", {
     method: "GET",
+    signal,
+    headers: { "Cache-Control": "no-cache" },
   });
 }
 

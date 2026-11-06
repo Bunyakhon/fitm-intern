@@ -329,9 +329,11 @@ function mentorFixture(track = 'co_op') {
   }
   const models = {
     Student: { async findByPk(key, options) {
-      assert.ok(options.attributes.includes('track'));
-      return key === studentId ? { id: studentId, track, status: 'searching' } : null;
+      if (options.include?.some(include => include.as === 'profile')) assert.deepEqual(Array.from(options.attributes), ['id', 'first_name', 'last_name', 'major', 'faculty']);
+      else assert.ok(options.attributes.includes('track'));
+      return key === studentId ? { id: studentId, track, status: 'searching', first_name: 'Fixture', last_name: 'Student', major: 'Fixture major', faculty: 'Fixture faculty', profile: { prefix: 'นาย' } } : null;
     } },
+    StudentProfile: {},
     Mentor: {
       async findByPk(key, options = {}) { if (key !== id) return null; if (options.lock) await lock(`mentor:${id}`, options.transaction); return row(profile, options.transaction); },
       async findOne(options) { if (options.where.student_id !== studentId) return null; return this.findByPk(id, options); },

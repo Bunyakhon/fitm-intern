@@ -11,8 +11,11 @@ const {
   sequelize,
 } = require("../models");
 const {normalizePrerequisites, prerequisiteInclude} = require('../services/coopPrerequisites');
+const { readStudentCatalog } = require('../services/coopPrerequisiteCatalog.service');
 const PREREQUISITE_INCLUDE = prerequisiteInclude(require('../models'));
-const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'], separate: true, order: [['created_at','ASC'],['id','ASC']]};
+const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'],
+  include: [{model: Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'], required: false}],
+  separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
 const { publishedJobWhere, isPublishedJobAvailable } = require("../services/jobEligibility");
 
@@ -47,6 +50,7 @@ const INPUT_FIELDS = new Set([
   "company_id",
   "job_posting_id",
   "prerequisite_courses",
+  "prerequisite_catalog_revision",
 ]);
 
 const DELIVERY_METHOD_INCLUDE = {
@@ -194,6 +198,7 @@ function normalizeRequestPayload(body) {
 }
 
 function toErrorResponse(error, res, fallbackMessage) {
+  if (error.status === 409 && error.code?.startsWith('COOP_PREREQUISITE_')) return res.status(409).json({ success: false, code: error.code, message: error.message });
   if (error.status === 400) {
     return res.status(400).json({ success: false, message: error.message });
   }
@@ -300,7 +305,12 @@ exports.createCoopRequest = async (req, res) => {
       transaction = null;
       return res.status(404).json({ success: false, message: "ไม่พบข้อมูลนักศึกษา" });
     }
-    const prerequisiteRows = normalizePrerequisites(student.major, req.body.prerequisite_courses);
+    const catalog = await readStudentCatalog(require('../models'), student.major, transaction);
+    if (req.body.prerequisite_catalog_revision !== undefined && String(req.body.prerequisite_catalog_revision) !== catalog.revision) {
+      throw Object.assign(new Error('รายการรายวิชาเปลี่ยนแปลงแล้ว กรุณาตรวจสอบ Catalog ล่าสุดก่อนยื่นคำร้อง'), { status: 409, code: 'COOP_PREREQUISITE_CATALOG_CHANGED' });
+    }
+    const prerequisiteRows = normalizePrerequisites(student.major, req.body.prerequisite_courses,
+      catalog.courses.map(course => [course.course_code, course.course_name, course.english_name]));
 
     const activeRequest = await CoopRequest.findOne({
       where: {
@@ -360,6 +370,15 @@ exports.createCoopRequest = async (req, res) => {
     }
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการยื่นคำร้องสหกิจศึกษา");
   }
+};
+
+exports.getPrerequisiteCatalog = async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const student = await Student.findByPk(req.user.id, { attributes: ['id', 'major'] });
+    if (!student) return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลนักศึกษา' });
+    return res.json({ success: true, data: await readStudentCatalog(require('../models'), student.major) });
+  } catch (error) { return toErrorResponse(error, res, 'ไม่สามารถโหลดรายวิชาที่ต้องผ่านเกณฑ์ได้'); }
 };
 
 exports.searchCompanies = async (req, res) => {

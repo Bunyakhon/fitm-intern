@@ -1,6 +1,20 @@
 import { validateProfileBirthDate } from "./studentProfileDraft.js";
 // Field names and limits follow the installed Phase 3A API, not PDF row counts.
 const field = (key, label, type = "text", extra = {}) => ({ key, label, type, max: 255, ...extra });
+// Form consistency only. Keep stored representations and all other identities intact.
+const prefixGenders = new Map([["นาย", "male"], ["นาง", "female"], ["นางสาว", "female"]]);
+const genderCategories = new Map([["male", "male"], ["female", "female"], ["ชาย", "male"], ["หญิง", "female"]]);
+const binaryGender = value => genderCategories.get(String(value ?? "").trim().toLowerCase());
+export function profileGenderForPrefix(prefix, current) {
+  const expected = prefixGenders.get(String(prefix ?? "").trim());
+  if (!expected || (String(current ?? "").trim() && !binaryGender(current))) return current;
+  if (binaryGender(current) === expected) return current;
+  return ["ชาย", "หญิง"].includes(current) ? expected === "male" ? "ชาย" : "หญิง" : expected;
+}
+export function profilePrefixGenderError(prefix, gender) {
+  const expected = prefixGenders.get(String(prefix ?? "").trim()), actual = binaryGender(gender);
+  return expected && actual && expected !== actual ? "คำนำหน้าและเพศไม่สอดคล้องกัน กรุณาตรวจสอบข้อมูล" : null;
+}
 export const proficiencyOptions = [["very_good", "ดีมาก"], ["good", "ดี"], ["moderate", "ปานกลาง"], ["fair", "พอใช้"]];
 export const workspaceFields = {
   basics: [field("prefix", "คำนำหน้า"), field("birth_date", "วันเกิด", "date"),
@@ -28,9 +42,10 @@ export const workspaceFields = {
   contacts: [field("student_line_id", "LINE ID นักศึกษา", "line", { max: 100 }), field("student_facebook", "Facebook นักศึกษา (ชื่อบัญชีหรือลิงก์โปรไฟล์)", "facebook", { max: 500 })],
   close_friends: [field("nickname", "ชื่อ", "person", { max: 100, placeholder: "กรอกชื่อ" }),
     field("phone", "เบอร์โทรศัพท์", "phone", { max: 32 }), field("line_id", "LINE ID", "line", { max: 100 }), field("facebook_url", "Facebook Profile URL (HTTPS)", "facebookUrl", { max: 500 })],
-  addresses: [field("house_no", "บ้านเลขที่", "text", { max: 100 }), field("road", "ถนน"), field("subdistrict", "แขวง / ตำบล", "text", { max: 100 }),
+  addresses: [field("house_no", "บ้านเลขที่", "text", { max: 100 }), field("moo", "หมู่ที่", "moo", { max: 2, placeholder: "เช่น 3" }), field("road", "ถนน"), field("subdistrict", "แขวง / ตำบล", "text", { max: 100 }),
     field("district", "อำเภอ / เขต", "text", { max: 100 }), field("province", "จังหวัด", "text", { max: 100 }), field("postal_code", "รหัสไปรษณีย์", "text", { max: 16 })],
   education: [field("education_level", "ระดับการศึกษา", "select", { required: true, options: [["bachelor", "ปริญญาตรี"], ["high_vocational", "อนุปริญญา / ปวส."], ["high_school_vocational", "มัธยมปลาย / ปวช."]] }),
+    field("education_status", "สถานะการศึกษา", "select", { options: [["studying", "กำลังศึกษาอยู่"], ["graduated", "สำเร็จการศึกษาแล้ว"]] }),
     field("institution_name", "สถานศึกษา"), field("qualification", "วุฒิการศึกษา"), field("major", "วิชาเอก"), field("gpa", "GPA", "gpa"), field("graduation_year", "ปีสำเร็จการศึกษา (ค.ศ.)", "integer", { min: 1, limit: 9999 })],
   training: [field("course_name", "ชื่อหลักสูตร / การดูงาน / การฝึกงาน"), field("institution", "สถาบัน"), field("qualification", "วุฒิ / ประกาศนียบัตร"), field("period_text", "ระยะเวลา")],
   skills: [field("category", "ประเภททักษะ", "select", { required: true, options: [["computer", "คอมพิวเตอร์"], ["language", "ภาษา"]] }), field("skill_name", "ชื่อทักษะ / ภาษา"), field("proficiency", "ระดับความสามารถ", "select", { options: proficiencyOptions })],
@@ -56,11 +71,13 @@ export function canonicalWorkspaceValue(spec, raw, validate = false) {
       : spec.type === "phone" ? spec.label + " ต้องมีตัวเลข 7–20 หลัก ใช้ + เว้นวรรค วงเล็บ หรือขีดได้"
       : spec.type === "date" ? spec.label + " ต้องเป็นวันที่ที่มีอยู่จริง"
       : spec.type === "integer" ? spec.label + ` ต้องเป็นจำนวนเต็มตั้งแต่ ${spec.min} ถึง ${spec.limit}`
+      : spec.type === "moo" ? "หมู่ที่ต้องเป็นตัวเลข 1–2 หลัก"
       : spec.options ? "กรุณาเลือก" + spec.label + "จากรายการ"
       : spec.label + " มีอักขระที่ไม่รองรับ กรุณาตรวจข้อมูลอีกครั้ง";
     throw Object.assign(new Error(help), { field: spec.key });
   };
   if (!text) { if (validate && spec.required) invalid(); return null; }
+  if (validate && spec.type === "moo" && (typeof raw !== "string" || !/^[0-9]{1,2}$/.test(text))) invalid();
   if (spec.type === "boolean") { if (!["true", "false"].includes(text)) invalid(); return text === "true"; }
   if (spec.type === "integer") {
     const number = Number(text);
@@ -117,11 +134,15 @@ export class ProfileSectionDraft {
   }
   dirty() { return this.fields.some(spec => !Object.is(canonicalWorkspaceValue(spec, this.values[spec.key]), this.baseline[spec.key])); }
   patch(creating = false) {
-    return Object.fromEntries(this.fields.flatMap(spec => {
+    const patch = Object.fromEntries(this.fields.flatMap(spec => {
       if (!creating && Object.is(canonicalWorkspaceValue(spec, this.values[spec.key]), this.baseline[spec.key])) return [];
       const value = canonicalWorkspaceValue(spec, this.values[spec.key], true);
       return creating || !Object.is(value, this.baseline[spec.key]) ? [[spec.key, value]] : [];
     }));
+    if (creating && this.fields.some(spec => spec.key === "course_name") && !["course_name", "institution", "qualification", "period_text"].some(field => patch[field] != null)) {
+      throw Object.assign(new Error("กรุณากรอกข้อมูลหลักสูตร / การดูงาน / การฝึกงานอย่างน้อยหนึ่งช่อง"), { field: "course_name" });
+    }
+    return patch;
   }
   accept(row, revision, { ownRevision, sent } = {}) {
     const current = { ...this.values }, baseline = { ...this.baseline };

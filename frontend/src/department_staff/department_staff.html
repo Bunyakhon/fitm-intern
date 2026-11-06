@@ -1,8 +1,27 @@
 <!doctype html>
-<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>จัดการเอกสาร · เจ้าหน้าที่ | KIWI</title><link rel="stylesheet" href="/src/styles/main.css"><link rel="stylesheet" href="/src/styles/student_coop.css"><link rel="stylesheet" href="/src/styles/teacher_coop.css"><link rel="stylesheet" href="/src/styles/staff_documents.css"><link rel="stylesheet" href="/src/styles/coop_activities.css"></head>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>จัดการเอกสาร · เจ้าหน้าที่ | KIWI</title><link rel="stylesheet" href="/src/styles/main.css"><link rel="stylesheet" href="/src/styles/student_coop.css"><link rel="stylesheet" href="/src/styles/teacher_coop.css"><link rel="stylesheet" href="/src/styles/staff_documents.css"><link rel="stylesheet" href="/src/styles/coop_activities.css"><link rel="stylesheet" href="/src/styles/coop_prerequisite_catalog.css"></head>
 <body class="teacher-page" data-workflow-role="department_staff"><header class="navbar"><div class="nav-container"><a href="/index.html" class="brand"><img src="/images/logo_kiwi.png" alt="KIWI" class="brand-logo"><span>ระบบจัดการสหกิจศึกษา</span></a><div class="nav-right"><span id="staffName">กำลังตรวจสอบผู้ใช้งาน...</span><button class="btn-logout" id="staffLogout" type="button">ออกจากระบบ</button></div></div></header>
 <div class="dashboard-layout"><aside class="dashboard-sidebar"><div class="sidebar-header"><span class="sidebar-title">เมนูเจ้าหน้าที่</span></div><nav class="sidebar-menu"><a class="sidebar-item active" href="#documents" aria-current="page">จัดการเอกสาร</a><a class="sidebar-item" href="#activities">ปฏิทินกิจกรรม</a></nav></aside>
 <main class="dashboard-content"><section id="documents">
+<section id="staffPrerequisiteCatalog" class="teacher-detail prerequisite-catalog" aria-labelledby="staffCatalogHeading">
+  <h2 id="staffCatalogHeading">รายวิชาก่อนออกสหกิจศึกษา</h2>
+  <p>เพิ่ม แก้ไข และเปิด/ปิดรายวิชาเฉพาะสาขาที่ได้รับสิทธิ์ คำร้องที่ยื่นแล้วเก็บรายการเดิม</p>
+  <div class="catalog-toolbar"><label for="staffCatalogProgram">สาขาที่ได้รับมอบหมาย<select id="staffCatalogProgram" disabled></select></label><button id="staffCatalogRefresh" class="teacher-button" type="button">โหลดรายการ / สิทธิ์ใหม่</button></div>
+  <p id="staffCatalogMessage" role="status" aria-live="polite"></p><div id="staffCatalogCourses"></div>
+  <form id="staffCatalogForm" novalidate hidden>
+    <h3 id="staffCatalogFormTitle">เพิ่มรายวิชา</h3>
+    <div class="catalog-fields">
+      <label for="staffCatalogCourseProgram">กำหนดให้สาขา<select id="staffCatalogCourseProgram" required></select></label>
+      <label for="staffCatalogCode">รหัสรายวิชา<input id="staffCatalogCode" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" required></label>
+      <label for="staffCatalogName">ชื่อรายวิชา<input id="staffCatalogName" maxlength="255" required></label>
+      <label for="staffCatalogEnglishName">ชื่อภาษาอังกฤษ (ไม่บังคับ)<input id="staffCatalogEnglishName" maxlength="255"></label>
+      <label for="staffCatalogOrder">ลำดับแสดงผล<input id="staffCatalogOrder" type="number" min="0" max="10000" step="1" value="0" required></label>
+      <label for="staffCatalogActive">เปิดใช้งาน<input id="staffCatalogActive" type="checkbox" checked></label>
+    </div>
+    <button id="staffCatalogSave" class="teacher-button teacher-button--accept" type="submit">บันทึกรายวิชา</button><button id="staffCatalogNew" class="teacher-button" type="button">เริ่มเพิ่มรายวิชาใหม่</button>
+  </form>
+</section>
+<script type="module" src="/src/pages/staffPrerequisiteCatalog.js"></script>
 <section id="staffCoopRequests" class="teacher-detail" aria-labelledby="staffCoopHeading">
 <div class="teacher-heading"><div><h2 id="staffCoopHeading">ตรวจสอบคำร้อง / ยกเลิกคำร้องสหกิจศึกษา</h2><p>เจ้าหน้าที่ตรวจสอบและยกเลิกคำร้องที่ยังรอพิจารณาได้ โดยต้องระบุเหตุผล</p></div><button id="staffCoopRefresh" class="teacher-button" type="button" disabled>รีเฟรชคำร้อง</button></div>
 <form id="staffCoopSearchForm" class="staff-filters"><label>ค้นหานักศึกษา / สถานประกอบการ<input id="staffCoopSearch" maxlength="100" disabled></label><label>สถานะคำร้อง<select id="staffCoopStatus" disabled><option value="">ทุกสถานะ</option><option value="submitted">ยื่นคำร้องแล้ว</option><option value="staff_review">รอตรวจสอบ (เดิม)</option><option value="advisor_review">รออาจารย์ที่ปรึกษา</option><option value="department_head_review">รอหัวหน้าภาควิชา</option><option value="approved">อนุมัติแล้ว</option><option value="document_issued">ออกเอกสารแล้ว</option><option value="in_progress">กำลังปฏิบัติงาน</option><option value="rejected">ไม่ได้รับการอนุมัติ</option><option value="cancelled">ยกเลิกแล้ว</option></select></label><button id="staffCoopSearchButton" class="teacher-button" type="submit" disabled>ค้นหาคำร้อง</button></form>
