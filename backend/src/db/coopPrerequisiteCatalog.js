@@ -11,7 +11,11 @@ const CHECKS = [
 const SNAPSHOT_CHECK = "CHECK (program IN ('IT','INE') AND course_code ~ '^[0-9]{9}$')";
 async function installCatalog(models, { expectedDatabase, env = process.env } = {}) {
   const db = models.sequelize;
-  if (env.NODE_ENV !== 'development' || !expectedDatabase || db.config.database !== expectedDatabase || db.getDialect() !== 'postgres'
+  // Test installs require an explicit opt-in and a dedicated database name.
+  // Never let NODE_ENV=test authorize the normal development database.
+  const isolatedTest = env.NODE_ENV === 'test' && env.FITM_CATALOG_POSTGRES_TESTS === '1'
+    && /^fitm_catalog_test_[a-z0-9_]+$/.test(expectedDatabase || '') && env.FITM_CATALOG_TEST_DATABASE === expectedDatabase;
+  if (!(env.NODE_ENV === 'development' || isolatedTest) || !expectedDatabase || db.config.database !== expectedDatabase || db.getDialect() !== 'postgres'
     || Number(db.config.port || 5432) !== 5432
     || !(['localhost', '127.0.0.1', '::1'].includes(db.config.host) || db.config.host === 'postgres' && fs.existsSync('/.dockerenv'))) throw Error('Explicit local development PostgreSQL target required');
   const catalogModels = [models.CoopPrerequisiteCatalogProgram, models.CoopPrerequisiteCatalogCourse, models.CoopPrerequisiteCatalogGrant];
@@ -51,6 +55,9 @@ async function installCatalog(models, { expectedDatabase, env = process.env } = 
         const column = columns.find(row => row.field === attribute.field);
         if (!column || type(column.type) !== type(attribute.type.toSql()) || column.not_null !== (attribute.primaryKey === true || attribute.allowNull === false)) throw Error('Catalog type/nullability drift');
       }
+      const [primaryKeys] = await db.query("SELECT array_agg(a.attname::text ORDER BY k.position) fields FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY k(attnum,position) JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum WHERE c.conrelid=CAST(:table AS regclass) AND c.contype='p' GROUP BY c.oid", { replacements: { table: 'public.' + model.tableName }, transaction });
+      const expectedPrimaryKey = Object.values(model.rawAttributes).filter(a => a.primaryKey).map(a => a.field);
+      if (primaryKeys.length !== 1 || primaryKeys[0].fields.join(',') !== expectedPrimaryKey.join(',')) throw Error('Catalog primary key drift');
       const [foreignKeys] = await db.query("SELECT pg_get_constraintdef(oid) definition FROM pg_constraint WHERE conrelid=CAST(:table AS regclass) AND contype='f'", { replacements: { table: 'public.' + model.tableName }, transaction });
       for (const attribute of Object.values(model.rawAttributes).filter(a => a.references)) {
         const reference = attribute.references, referencedTable = typeof reference.model === 'string' ? reference.model : reference.model.tableName;
@@ -61,9 +68,12 @@ async function installCatalog(models, { expectedDatabase, env = process.env } = 
         })) throw Error('Catalog foreign key drift');
       }
       const indexes = await qi.showIndex(model.tableName, { transaction });
+      const [indexStates] = await db.query("SELECT c.relname name,i.indisvalid valid,i.indisready ready,i.indpred IS NULL full_table,i.indexprs IS NULL plain_columns FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid WHERE i.indrelid=CAST(:table AS regclass)", { replacements: { table: 'public.' + model.tableName }, transaction });
       for (const index of model.options.indexes) {
         const existing = indexes.find(row => row.name === index.name);
-        if (existing && (!existing.unique || existing.fields.map(f => f.attribute).join(',') !== index.fields.join(','))) throw Error('Catalog index drift');
+        const state = indexStates.find(row => row.name === index.name);
+        if (existing && (!existing.unique || existing.fields.map(f => f.attribute).join(',') !== index.fields.join(',')
+          || !state?.valid || !state.ready || !state.full_table || !state.plain_columns)) throw Error('Catalog index drift');
         if (!existing) await qi.addIndex(model.tableName, index.fields, { name: index.name, unique: index.unique, transaction });
       }
     }

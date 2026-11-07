@@ -45,8 +45,11 @@ import {
   getCoopRequestById,
   getCoopPrerequisiteCatalog,
   getMyCoopRequests,
+  getClassAdvisorReadiness,
 } from "../api/coopRequest.api.js";
 import { setButtonLoading, showActionModal, showConfirmModal, showToast } from "../ui/feedback.js";
+import { academicSummaryNode, mountAcademicCourses } from './coopAcademicCourses.js';
+import '../styles/coop_academic.css';
 
 console.log("KIWI student cooperative dashboard loaded");
 
@@ -1871,6 +1874,17 @@ function clearAuthentication() {
 }
 
 function handleStudentSessionChange() {
+  coopClassAdvisorSequence++;
+  coopClassAdvisor = null;
+  coopClassAdvisorLoading = false;
+  coopRequestHasDraft = false;
+  coopRequestForm?.reset();
+  coopPrerequisiteState = new Map();
+  coopRequests = [];
+  coopRequestsLoaded = false;
+  coopRequestsLoadError = false;
+  coopAcademicDetail?.dispose();
+  document.getElementById('coopAcademicDetail')?.replaceChildren();
   mentorStatusSync.setActive(false);
   mentorLoadController?.abort();
   currentMentor = null;
@@ -2471,6 +2485,8 @@ const coopSelectedJobPosting = document.getElementById("coopSelectedJobPosting")
 let selectedCoopCompanyId = null;
 let selectedCoopJobPostingId = null;
 let companySearchTimer = null;
+let companySearchSequence = 0;
+let companyDuplicateSequence = 0;
 const saveCoopRequestBtn = document.getElementById("saveCoopRequestBtn");
 const coopRequestDetailModal = document.getElementById("coopRequestDetailModal");
 const closeCoopRequestDetailModalBtn = document.getElementById("closeCoopRequestDetailModal");
@@ -2485,12 +2501,15 @@ const coopDetailSigner = document.getElementById("coopDetailSigner");
 const coopDetailStepper = document.getElementById("coopDetailStepper");
 const coopDetailStatus = document.getElementById("coopDetailStatus");
 const coopAdvisorName = document.getElementById("coopAdvisorName");
-const coopDetailAdvisorName = document.getElementById("coopDetailAdvisorName");
 const closeCoopRequestDetailFooterBtn = document.getElementById("closeCoopRequestDetailFooterBtn");
+const coopCreateFocus = profileModalFocus(coopRequestModal, createRequestBtn);
+const coopDetailFocus = profileModalFocus(coopRequestDetailModal, viewCurrentCoopRequestBtn);
 
 let coopRequests = [];
 let currentCoopRequest = null;
 let coopRequestsLoading = false;
+let coopRequestsLoaded = false;
+let coopRequestsLoadError = false;
 let coopRequestSubmitting = false;
 let coopRequestCancelling = false;
 let coopRequestDetailLoading = false;
@@ -2504,10 +2523,56 @@ const coopPrerequisiteCourses = document.getElementById("coopPrerequisiteCourses
 const coopPrerequisiteContext = document.getElementById("coopPrerequisiteContext");
 let coopPrerequisiteProgram = null;
 let coopPrerequisiteState = new Map();
+let coopAcademicDetail;
 let coopCatalogLoading = false;
 let coopCatalogError = null;
 let coopCatalogRevision = null;
 let coopCatalogSequence = 0;
+let coopClassAdvisor = null;
+let coopClassAdvisorLoading = false;
+let coopClassAdvisorSequence = 0;
+let coopRequestHasDraft = false;
+
+function coopAdvisorWarning() {
+  if (hasAdvisorSelectionChanged) return 'มีการเปลี่ยนอาจารย์ที่ยังไม่ได้บันทึก กรุณาบันทึกในเมนูประวัตินักศึกษาก่อนยื่นคำร้อง ข้อมูลคำร้องที่กรอกยังอยู่';
+  if (coopClassAdvisorLoading) return 'กำลังตรวจสอบอาจารย์ที่ปรึกษาประจำชั้นที่บันทึกไว้...';
+  return coopClassAdvisor?.ready ? null : coopClassAdvisor?.message || 'กรุณาโหลดข้อมูลอาจารย์ที่ปรึกษาประจำชั้นก่อนยื่นคำร้อง';
+}
+
+function renderCoopClassAdvisor() {
+  setText(coopAdvisorName, coopClassAdvisor?.advisor ? formatTeacherName(coopClassAdvisor.advisor) : coopClassAdvisorLoading ? 'กำลังตรวจสอบข้อมูลที่บันทึกไว้' : 'ยังไม่มีข้อมูลอาจารย์ที่พร้อมพิจารณา');
+  setText(document.getElementById('coopClassAdvisorStatus'), coopAdvisorWarning() || coopClassAdvisor.message);
+  const retry = document.getElementById('coopClassAdvisorRetry');
+  if (retry) { retry.hidden = Boolean(coopClassAdvisor?.ready); retry.disabled = coopClassAdvisorLoading || coopRequestSubmitting; }
+  if (saveCoopRequestBtn) saveCoopRequestBtn.disabled = coopRequestSubmitting || Boolean(coopAdvisorWarning()) || coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
+}
+
+async function loadCoopClassAdvisor() {
+  const sequence = ++coopClassAdvisorSequence, token = getStudentToken();
+  coopClassAdvisorLoading = true; coopClassAdvisor = null; renderCoopClassAdvisor();
+  try {
+    const result = await getClassAdvisorReadiness();
+    if (sequence !== coopClassAdvisorSequence || token !== getStudentToken()) return;
+    if (typeof result?.data?.ready !== 'boolean') throw Error('ข้อมูลอาจารย์ที่ปรึกษาไม่ถูกต้อง กรุณาลองอีกครั้ง');
+    coopClassAdvisor = result.data;
+  } catch (error) {
+    if (sequence !== coopClassAdvisorSequence || token !== getStudentToken()) return;
+    coopClassAdvisor = { ready: false, message: error.message || 'ตรวจสอบอาจารย์ที่ปรึกษาไม่สำเร็จ กรุณาลองอีกครั้ง' };
+  } finally {
+    if (sequence === coopClassAdvisorSequence) { coopClassAdvisorLoading = false; renderCoopClassAdvisor(); }
+  }
+}
+
+document.getElementById('coopClassAdvisorRetry')?.addEventListener('click', loadCoopClassAdvisor);
+document.getElementById('coopClassAdvisorProfile')?.addEventListener('click', async () => {
+  if (coopRequestSubmitting) return;
+  closeCoopRequestModal();
+  await activateDashboardPanel('panel-profile');
+  studentProfileTabs?.select('profilePersonalTab');
+  studentAdvisorInput?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  studentAdvisorInput?.focus?.({ preventScroll: true });
+  showToast('เลือกและบันทึกอาจารย์ในประวัตินักศึกษา แล้วกลับมาที่คำร้อง ข้อมูลที่กรอกยังอยู่', 'info');
+});
 
 async function loadCoopPrerequisiteCatalog() {
   const selectedProgram = coopPrerequisiteProgram, sequence = ++coopCatalogSequence;
@@ -2544,12 +2609,12 @@ function getCoopPrerequisiteData() {
   syncCoopPrerequisiteProgram();
   return (COOP_PREREQUISITE_COURSES[coopPrerequisiteProgram] || []).map((course) => {
     const state = coopPrerequisiteState.get(course.course_code);
-    const status = state?.status === "passed" || state?.status === "studying" ? state.status : null;
+    const status = ['passed', 'studying', 'failed', 'unselected'].includes(state?.status) ? state.status : null;
     return {
       course_code: course.course_code,
       course_name: course.course_name,
       status,
-      grade: status === "passed" ? String(state?.grade || "").trim() || null : null,
+      grade: ['passed', 'failed'].includes(status) ? String(state?.grade || "").trim() || null : null,
     };
   });
 }
@@ -2560,7 +2625,7 @@ function renderCoopPrerequisiteCourses() {
   const courses = COOP_PREREQUISITE_COURSES[coopPrerequisiteProgram] || [];
   const retry = document.getElementById("coopCatalogRetry");
   if (retry) { retry.hidden = !coopCatalogError; retry.disabled = coopCatalogLoading || coopRequestSubmitting; }
-  if (saveCoopRequestBtn) saveCoopRequestBtn.disabled = coopRequestSubmitting || coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
+  renderCoopClassAdvisor();
   coopPrerequisiteCourses.setAttribute("aria-busy", String(coopCatalogLoading));
   setText(coopPrerequisiteContext, coopPrerequisiteProgram === "IT"
     ? "สำหรับหลักสูตรวิทยาศาสตรบัณฑิต (IT)"
@@ -2604,26 +2669,26 @@ function renderCoopPrerequisiteCourses() {
     const status = document.createElement("select");
     status.id = `coop-status-${code}`;
     status.setAttribute("aria-label", `สถานะ ${code}`);
-    [["", "ยังไม่เลือก"], ["passed", "ผ่านแล้ว"], ["studying", "กำลังศึกษา"]].forEach(([value, label]) => {
+    [["unselected", "ยังไม่ระบุ"], ["passed", "ผ่านแล้ว"], ["studying", "กำลังศึกษา"], ["failed", "ไม่ผ่าน"]].forEach(([value, label]) => {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
       status.append(option);
     });
-    status.value = state.status || "";
+    status.value = state.status || "unselected";
     const updateGrade = () => {
-      grade.required = state.status === "passed";
-      grade.disabled = coopRequestSubmitting || state.status !== "passed";
+      grade.required = ['passed', 'failed'].includes(state.status);
+      grade.disabled = coopRequestSubmitting || !grade.required;
     };
     status.addEventListener("change", () => {
       // Ignore detached rows if Profile reloaded while an event was pending.
       if (coopPrerequisiteState.get(code) !== state) return;
       state.status = status.value || null;
-      if (state.status !== "passed") { state.grade = null; grade.value = ""; }
+      if (!['passed', 'failed'].includes(state.status) || state.status === 'passed' && state.grade === 'F' || state.status === 'failed' && state.grade !== 'F') { state.grade = null; grade.value = ""; }
       updateGrade();
     });
     grade.addEventListener("change", () => {
-      if (coopPrerequisiteState.get(code) === state && state.status === "passed") state.grade = grade.value;
+      if (coopPrerequisiteState.get(code) === state && ['passed', 'failed'].includes(state.status)) state.grade = grade.value;
     });
     status.disabled = coopRequestSubmitting;
     updateGrade();
@@ -2636,6 +2701,7 @@ function renderCoopPrerequisiteCourses() {
 
 function validateCoopPrerequisites(courses) {
   if (coopCatalogLoading || coopCatalogError || !coopCatalogRevision) return coopCatalogError || "กรุณารอให้โหลดรายวิชาสำเร็จก่อนยื่นคำร้อง";
+  if (courses.some(course => course.status === 'failed' && course.grade !== 'F')) return 'สถานะไม่ผ่านต้องระบุผลการเรียน F';
   const missingGrade = courses.find((course) => course.status === "passed" && !course.grade?.trim());
   if (missingGrade) return `กรุณาระบุผลการเรียนของรายวิชา ${missingGrade.course_code} ที่ผ่านแล้ว`;
   const invalidGrade = courses.find(course => course.status === "passed" && !COOP_GRADE_OPTIONS.includes(course.grade));
@@ -2661,6 +2727,7 @@ function showDuplicateCoopRequestAlert() {
 }
 
 function resetCoopRequestCreateForm() {
+  coopRequestHasDraft = false;
   coopRequestForm?.reset();
   syncCoopPrerequisiteProgram(true);
   selectedCoopCompanyId = null;
@@ -2758,11 +2825,14 @@ function renderCoopRequests() {
   });
   currentCoopRequest = history.find((request) => COOP_ACTIVE_STATUSES.has(request.status)) || null;
 
-  if (coopRequestEmpty) coopRequestEmpty.hidden = Boolean(currentCoopRequest) || coopRequestsLoading;
+  const unavailable = !coopRequestsLoaded || coopRequestsLoadError;
+  if (coopRequestEmpty) coopRequestEmpty.hidden = Boolean(currentCoopRequest) || coopRequestsLoading || unavailable;
   if (coopRequestCurrent) coopRequestCurrent.hidden = !currentCoopRequest;
-  if (coopRequestHistory) coopRequestHistory.hidden = coopRequestsLoading;
-  if (createRequestBtn) createRequestBtn.disabled = isBusy;
-  if (createAnotherCoopRequestBtn) createAnotherCoopRequestBtn.disabled = isBusy;
+  if (coopRequestHistory) coopRequestHistory.hidden = !coopRequestsLoaded;
+  if (createRequestBtn) createRequestBtn.disabled = isBusy || unavailable;
+  if (createAnotherCoopRequestBtn) createAnotherCoopRequestBtn.disabled = isBusy || unavailable;
+  const refresh = document.getElementById('coopRequestsRefresh');
+  if (refresh) refresh.disabled = isBusy;
 
   if (currentCoopRequest) {
     const status = getCoopRequestStatusMeta(currentCoopRequest.status);
@@ -2784,6 +2854,7 @@ function renderCoopRequests() {
     setText(coopCurrentEndDate, formatCoopDate(currentCoopRequest.work_end_date));
     setText(coopCurrentDeliveryMethods, getCoopDeliveryMethods(currentCoopRequest));
     renderCoopStepper(coopCurrentStepper, currentCoopRequest);
+    document.getElementById('coopCurrentAcademic')?.replaceChildren(academicSummaryNode(document, currentCoopRequest.academic));
     if (cancelCoopRequestBtn) {
       cancelCoopRequestBtn.hidden = !COOP_CANCELLABLE_STATUSES.has(currentCoopRequest.status);
       cancelCoopRequestBtn.disabled = isBusy;
@@ -2847,14 +2918,16 @@ async function loadCoopRequests() {
     if (!token || token !== getStudentToken()) return false;
     if (!Array.isArray(result?.data)) throw new Error("ข้อมูลคำร้องไม่ถูกต้อง");
     coopRequests = result.data;
+    coopRequestsLoaded = true;
+    coopRequestsLoadError = false;
     studentOverview.accept(coopRequests, token);
     clearMessage(coopRequestMessage);
     return true;
   } catch (error) {
     if (token !== getStudentToken()) return false;
     studentOverview.fail(token);
-    coopRequests = [];
-    showMessage(coopRequestMessage, getCoopRequestErrorMessage(error, "โหลด"), "error");
+    coopRequestsLoadError = true;
+    showMessage(coopRequestMessage, `${getCoopRequestErrorMessage(error, "โหลด")} ${coopRequestsLoaded ? 'ยังแสดงข้อมูลครั้งล่าสุด กรุณากดรีเฟรชคำร้อง' : 'กรุณากดรีเฟรชคำร้องก่อนยื่นคำร้องใหม่'}`, "error");
     return false;
   } finally {
     coopRequestsLoading = false;
@@ -2894,10 +2967,16 @@ function setCoopRequestFormSubmitting(isSubmitting) {
     "กำลังยื่นคำร้อง...",
     "ยื่นคำร้อง",
   );
-  if (!isSubmitting) saveCoopRequestBtn.disabled = coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
+  renderCoopClassAdvisor();
 }
 
-function applyCoopCompany(company) {
+function applyCoopCompany(company, { preserveJob = false } = {}) {
+  companySearchSequence++;
+  companyDuplicateSequence++;
+  if (!preserveJob) {
+    selectedCoopJobPostingId = null;
+    if (coopSelectedJobPosting) { coopSelectedJobPosting.hidden = true; coopSelectedJobPosting.textContent = ''; }
+  }
   selectedCoopCompanyId = company?.id || null;
   const name = document.getElementById("coopCompanyName");
   const province = document.getElementById("coopCompanyProvince");
@@ -2917,6 +2996,10 @@ function applyCoopCompany(company) {
 
 function openCoopRequestModal() {
   if (!canUseCoopFeatures(currentStudent)) return;
+  if (!coopRequestsLoaded || coopRequestsLoadError) {
+    showToast('กรุณารีเฟรชคำร้องให้สำเร็จก่อนยื่นคำร้องใหม่', 'error');
+    return false;
+  }
   if (currentCoopRequest) {
     showDuplicateCoopRequestAlert();
     return false;
@@ -2924,15 +3007,23 @@ function openCoopRequestModal() {
   if (coopRequestSubmitting) return false;
   coopRequestModalReturnFocus = document.activeElement;
   renderReadonlyStudentData();
-  coopRequestForm?.reset();
-  syncCoopPrerequisiteProgram(true);
-  selectedCoopCompanyId = null;
-  selectedCoopJobPostingId = null;
-  if (coopCompanySearch) coopCompanySearch.value = "";
-  if (coopSelectedJobPosting) { coopSelectedJobPosting.hidden = true; coopSelectedJobPosting.textContent = ""; }
-  applyCoopCompany(null);
+  if (!coopRequestHasDraft) {
+    coopRequestForm?.reset();
+    syncCoopPrerequisiteProgram(true);
+    selectedCoopCompanyId = null;
+    selectedCoopJobPostingId = null;
+    if (coopCompanySearch) coopCompanySearch.value = "";
+    if (coopSelectedJobPosting) { coopSelectedJobPosting.hidden = true; coopSelectedJobPosting.textContent = ""; }
+    applyCoopCompany(null);
+  } else {
+    syncCoopPrerequisiteProgram();
+    loadCoopPrerequisiteCatalog();
+  }
+  coopRequestHasDraft = true;
+  loadCoopClassAdvisor();
   clearMessage(coopRequestFormMessage);
   setCoopRequestFormSubmitting(false);
+  coopCreateFocus.open();
   coopRequestModal?.classList.add("open");
   coopRequestModal?.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -2942,9 +3033,12 @@ function openCoopRequestModal() {
 
 function closeCoopRequestModal() {
   if (coopRequestSubmitting) return;
+  companySearchSequence++;
+  companyDuplicateSequence++;
   coopRequestModal?.classList.remove("open");
   coopRequestModal?.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
+  coopCreateFocus.close();
   coopRequestModalReturnFocus?.focus?.();
   coopRequestModalReturnFocus = null;
 }
@@ -2977,6 +3071,8 @@ function validateCoopRequestForm(data) {
 async function submitCoopRequestForm(event) {
   event.preventDefault();
   if (coopRequestSubmitting) return;
+  const advisorWarning = coopAdvisorWarning();
+  if (advisorWarning) { renderCoopClassAdvisor(); showMessage(coopRequestFormMessage, advisorWarning, 'error'); return; }
   const data = getCoopRequestFormData();
   const validationError = validateCoopRequestForm(data);
   if (validationError) {
@@ -3002,6 +3098,13 @@ async function submitCoopRequestForm(event) {
       currentCard?.focus?.({ preventScroll: true });
     }
   } catch (error) {
+    if (error.data?.code?.startsWith('CLASS_ADVISOR_')) {
+      coopClassAdvisor = { ready: false, code: error.data.code, message: error.message };
+      renderCoopClassAdvisor();
+      showMessage(coopRequestFormMessage, error.message, 'error');
+      showToast(error.message, 'error');
+      return;
+    }
     if (error.data?.code === "COOP_PREREQUISITE_CATALOG_CHANGED") {
       coopRequestSubmitting = false;
       await loadCoopPrerequisiteCatalog();
@@ -3030,10 +3133,12 @@ async function submitCoopRequestForm(event) {
 }
 
 function closeCoopRequestDetailModal() {
-  if (coopRequestDetailLoading) return;
+  if (coopRequestDetailLoading || coopAcademicDetail?.busy) return;
+  coopAcademicDetail?.dispose(); coopAcademicDetail = null;
   coopRequestDetailModal?.classList.remove("open");
   coopRequestDetailModal?.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
+  coopDetailFocus.close();
   coopRequestDetailModalReturnFocus?.focus?.();
   coopRequestDetailModalReturnFocus = null;
 }
@@ -3041,6 +3146,13 @@ function closeCoopRequestDetailModal() {
 function renderCoopRequestDetail(request) {
   renderCoopPrerequisiteSnapshot(request.prerequisite_courses);
   renderCoopHeadApproval(request);
+  renderCoopAdvisorApproval(request);
+  renderCoopReviewHistory(request);
+  coopAcademicDetail?.dispose();
+  const academicRoot = document.getElementById('coopAcademicDetail'), academicToken = getStudentToken();
+  if (academicRoot) coopAcademicDetail = mountAcademicCourses({ document, root: academicRoot, request, editable: true,
+    isLive: () => getStudentToken() === academicToken && Boolean(academicToken),
+    onSaved: academic => { const row = coopRequests.find(row => row.id === request.id); if (row) row.academic = academic; renderCoopRequests(); } });
   const status = getCoopRequestStatusMeta(request.status);
   const student = request.student || {};
   const profile = student.profile || {};
@@ -3097,12 +3209,38 @@ function renderCoopRequestDetail(request) {
     createCoopDetailItem("ลงชื่อ", fullName),
     createCoopDetailItem("ชื่อ-สกุล", fullName),
   );
-  setText(coopDetailAdvisorName, getCoopAdvisorName(student));
   if (coopDetailStatus) {
     coopDetailStatus.className = `coop-status-badge is-${request.status}`;
     coopDetailStatus.textContent = status.label;
   }
   renderCoopStepper(coopDetailStepper, request);
+}
+
+function renderCoopAdvisorApproval(request) {
+  const target = document.getElementById('coopDetailAdvisorApproval');
+  if (!target) return;
+  const review = [...(request.reviews || [])].reverse().find(row => row.actor_role === 'teacher' && ['approve', 'reject'].includes(row.decision));
+  target.replaceChildren(
+    createCoopDetailItem('อาจารย์ที่ปรึกษาประจำชั้นปัจจุบัน', getCoopAdvisorName(request.student)),
+    createCoopDetailItem('ผลการพิจารณา', review ? review.decision === 'approve' ? 'อนุมัติ' : 'ไม่อนุมัติ' : 'ยังไม่มีประวัติการพิจารณา'),
+    createCoopDetailItem('ผู้พิจารณา', review?.teacher ? formatTeacherName(review.teacher) : 'ยังไม่มีข้อมูล'),
+    createCoopDetailItem('วันที่พิจารณา', review ? formatCoopDate(review.created_at || review.createdAt, true) : 'ยังไม่มีข้อมูล'),
+    createCoopDetailItem('เหตุผล / ความเห็น', review?.reason || 'ไม่ได้ระบุความเห็น', true),
+  );
+}
+
+function renderCoopReviewHistory(request) {
+  const target = document.getElementById('coopDetailReviewHistory');
+  if (!target) return;
+  const roles = { student: 'นักศึกษา', teacher: 'อาจารย์ที่ปรึกษาประจำชั้น', department_head: 'หัวหน้าภาควิชา', department_staff: 'เจ้าหน้าที่' };
+  const decisions = { submit: 'ยื่นคำร้อง', approve: 'อนุมัติ', reject: 'ไม่อนุมัติ', cancel: 'ยกเลิก' };
+  target.replaceChildren();
+  for (const review of request.reviews || []) {
+    const row = document.createElement('li');
+    row.textContent = `${formatCoopDate(review.created_at || review.createdAt, true)} · ${roles[review.actor_role] || 'ไม่พบข้อมูลบทบาท'}${review.teacher ? ` (${formatTeacherName(review.teacher)})` : ''} · ${decisions[review.decision] || review.decision} · ${review.from_status === 'new' ? 'เริ่มคำร้อง' : getCoopRequestStatusMeta(review.from_status).label} → ${getCoopRequestStatusMeta(review.to_status).label}${review.reason ? ` · ${review.reason}` : ''}`;
+    target.append(row);
+  }
+  if (!target.children.length) { const row = document.createElement('li'); row.textContent = 'ยังไม่มีประวัติการดำเนินการ'; target.append(row); }
 }
 
 function renderCoopHeadApproval(request) {
@@ -3143,10 +3281,10 @@ function renderCoopPrerequisiteSnapshot(snapshot) {
     return;
   }
   setText(document.getElementById('coopDetailPrerequisiteProgram'), `หลักสูตรที่ยื่นคำร้อง: ${courses[0].program || '-'}`);
-  const labels = {passed: 'ผ่านแล้ว', studying: 'กำลังศึกษา', unselected: 'ยังไม่เลือก'};
+  const labels = {passed: 'ผ่านแล้ว', studying: 'กำลังศึกษา', failed: 'ไม่ผ่าน', unselected: 'ยังไม่ระบุ'};
   [...courses].sort((a,b) => String(a.course_code).localeCompare(String(b.course_code))).forEach(course => {
     const row = document.createElement('tr'); row.dataset.courseCode = course.course_code;
-    for (const value of [`${course.course_code} ${course.course_name}${course.english_name ? ` (${course.english_name})` : ''}`, course.status === 'passed' ? course.grade || '-' : '-', labels[course.status] || 'ไม่พบสถานะ']) {
+    for (const value of [`${course.course_code} ${course.course_name}${course.english_name ? ` (${course.english_name})` : ''}`, course.grade || '-', labels[course.status] || 'สถานะเดิมที่ต้องตรวจสอบ']) {
       const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
     }
     body.append(row);
@@ -3156,6 +3294,7 @@ function renderCoopPrerequisiteSnapshot(snapshot) {
 async function openCoopRequestDetail(id) {
   if (!id || coopRequestDetailLoading) return;
   coopRequestDetailModalReturnFocus = document.activeElement;
+  coopDetailFocus.open();
   coopRequestDetailModal?.classList.add("open");
   coopRequestDetailModal?.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -3210,15 +3349,19 @@ function confirmCancelCoopRequest() {
 }
 
 createRequestBtn?.addEventListener("click", openCoopRequestModal);
+document.getElementById('coopRequestsRefresh')?.addEventListener('click', loadCoopRequests);
 document.getElementById("coopCatalogRetry")?.addEventListener("click", loadCoopPrerequisiteCatalog);
 createAnotherCoopRequestBtn?.addEventListener("click", openCoopRequestModal);
 coopCompanySearch?.addEventListener("input", () => {
   window.clearTimeout(companySearchTimer);
+  const sequence = ++companySearchSequence;
   const query = coopCompanySearch.value.trim();
+  coopCompanySearchResults.replaceChildren();
   companySearchTimer = window.setTimeout(async () => {
     if (query.length < 2) { coopCompanySearchResults.replaceChildren(); return; }
     try {
       const result = await searchCompanies(query);
+      if (sequence !== companySearchSequence || coopCompanySearch.value.trim() !== query || !coopRequestModal?.classList.contains('open')) return;
       const rows = (result?.data || []).map((company) => {
         const row = document.createElement("div"); row.className = "coop-company-result";
         const details = document.createElement("span"); details.textContent = `${company.name} — ${company.province}`;
@@ -3227,14 +3370,16 @@ coopCompanySearch?.addEventListener("input", () => {
       });
       if (!rows.length) { const empty = document.createElement("p"); empty.textContent = "ไม่พบข้อมูลบริษัท คุณสามารถกรอกข้อมูลเองได้"; rows.push(empty); }
       coopCompanySearchResults.replaceChildren(...rows);
-    } catch (error) { showToast(error.message || "ค้นหาบริษัทไม่สำเร็จ", "error"); }
+    } catch (error) { if (sequence === companySearchSequence) showToast(error.message || "ค้นหาบริษัทไม่สำเร็จ", "error"); }
   }, 250);
 });
 coopManualCompanyBtn?.addEventListener("click", () => { selectedCoopCompanyId = null; applyCoopCompany(null); document.getElementById("coopCompanyName")?.focus(); });
 document.getElementById("coopCompanyName")?.addEventListener("blur", async (event) => {
   if (selectedCoopCompanyId || !event.target.value.trim()) return;
+  const query = event.target.value.trim(), sequence = ++companyDuplicateSequence;
   try {
-    const result = await checkCompanyDuplicate(event.target.value.trim());
+    const result = await checkCompanyDuplicate(query);
+    if (sequence !== companyDuplicateSequence || selectedCoopCompanyId || event.target.value.trim() !== query || !coopRequestModal?.classList.contains('open')) return;
     const duplicates = result?.data || [];
     if (!duplicates.length) { coopCompanyDuplicateMessage.textContent = "ไม่พบชื่อบริษัทซ้ำ สามารถดำเนินการต่อได้"; return; }
     coopCompanyDuplicateMessage.replaceChildren(document.createTextNode("พบชื่อบริษัทที่อาจซ้ำ: "));
@@ -3244,11 +3389,12 @@ document.getElementById("coopCompanyName")?.addEventListener("blur", async (even
       button.addEventListener("click", () => applyCoopCompany(company));
       coopCompanyDuplicateMessage.append(button);
     });
-  } catch (error) { showToast(error.message || "ตรวจสอบชื่อบริษัทไม่สำเร็จ", "error"); }
+  } catch (error) { if (sequence === companyDuplicateSequence) showToast(error.message || "ตรวจสอบชื่อบริษัทไม่สำเร็จ", "error"); }
 });
 jobMatchingResults?.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-job-posting-id]");
   if (!button || button.disabled) return;
+  if ((!coopRequestsLoaded || coopRequestsLoadError) && !await loadCoopRequests()) return;
   if (currentCoopRequest) {
     showDuplicateCoopRequestAlert();
     return;
@@ -3258,10 +3404,9 @@ jobMatchingResults?.addEventListener("click", async (event) => {
     const result = await getPublishedJobPostingForCoopRequest(button.dataset.jobPostingId);
     const job = result?.data;
     if (!job?.company) throw new Error("ไม่พบตำแหน่งงานที่เปิดรับ");
+    if (!openCoopRequestModal()) return;
     selectedCoopJobPostingId = job.id;
-    openCoopRequestModal();
-    selectedCoopJobPostingId = job.id;
-    applyCoopCompany(job.company);
+    applyCoopCompany(job.company, { preserveJob: true });
     if (coopSelectedJobPosting) { coopSelectedJobPosting.textContent = `ตำแหน่งงาน: ${job.title}`; coopSelectedJobPosting.hidden = false; }
   } catch (error) { showToast(error.message || "โหลดตำแหน่งงานไม่สำเร็จ", "error"); }
   finally { setButtonLoading(button, false, "กำลังโหลดตำแหน่งงาน...", "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้"); }

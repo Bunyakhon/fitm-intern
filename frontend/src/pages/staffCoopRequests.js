@@ -1,4 +1,6 @@
 import { roleSessionStorage } from "../auth/roleAuthStorage.js";
+import { mountAcademicCourses } from './coopAcademicCourses.js';
+import '../styles/coop_academic.css';
 import { STAFF_TOKEN_KEY, getCurrentStaff } from '../api/staffDocuments.api.js';
 import { getStaffCoopRequests, getStaffCoopRequest, cancelStaffCoopRequest } from '../api/staffCoopRequests.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
@@ -60,7 +62,10 @@ export function mountStaffCoopRequests({ document, storage, location, me = getCu
   function renderDetail(data) {
     const row = data.request, grid = node('dl', undefined, 'staff-detail-grid'); body.replaceChildren();
     for (const [label, value] of [['นักศึกษา', name(row)], ['รหัสนักศึกษา', row.student?.student_id], ['คำร้อง', row.id], ['สถานะคำร้อง', STATUS[row.status] || row.status], ['สถานประกอบการ', row.company_name], ['ที่อยู่ตามคำร้อง', row.company_address], ['จังหวัด', row.company_province], ['ผู้รับหนังสือ', row.letter_recipient_name], ['ช่วงปฏิบัติงาน', `${row.work_start_date || '-'} – ${row.work_end_date || '-'}`], ['ยกเลิกเมื่อ', date(row.cancelled_at)]]) grid.append(node('dt', label), node('dd', value || '-'));
-    body.append(grid, node('h3', 'ประวัติคำร้อง'));
+    body.append(grid);
+    const academicRoot = node('section'); body.append(academicRoot);
+    mountAcademicCourses({ document, root: academicRoot, request: row });
+    body.append(node('h3', 'ประวัติคำร้อง'));
     for (const review of data.reviews || []) {
       const actor = review.staff || review.teacher;
       const actorName = actor ? [actor.academic_title, actor.first_name, actor.last_name].filter(Boolean).join(' ') : ROLES[review.actor_role] || '-';

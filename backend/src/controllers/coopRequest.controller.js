@@ -12,12 +12,15 @@ const {
 } = require("../models");
 const {normalizePrerequisites, prerequisiteInclude} = require('../services/coopPrerequisites');
 const { readStudentCatalog } = require('../services/coopPrerequisiteCatalog.service');
+const academic = require('../services/coopAcademic.service').createAcademicService(require('../models'));
 const PREREQUISITE_INCLUDE = prerequisiteInclude(require('../models'));
 const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'],
   include: [{model: Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'], required: false}],
   separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
 const { publishedJobWhere, isPublishedJobAvailable } = require("../services/jobEligibility");
+const { requireClassAdvisor } = require('../services/coopClassAdvisor.service');
+const { authorizeActor } = require('../services/unifiedAuth.service');
 
 const ACTIVE_STATUSES = new Set([
   "submitted",
@@ -198,7 +201,9 @@ function normalizeRequestPayload(body) {
 }
 
 function toErrorResponse(error, res, fallbackMessage) {
-  if (error.status === 409 && error.code?.startsWith('COOP_PREREQUISITE_')) return res.status(409).json({ success: false, code: error.code, message: error.message });
+  if (error.status === 400 && error.code?.startsWith('CLASS_ADVISOR_')) return res.status(400).json({ success: false, code: error.code, message: error.message });
+  if (error.status === 403 && error.code === 'ACCOUNT_UNAUTHORIZED') return res.status(403).json({ success: false, code: error.code, message: error.message });
+  if (error.status === 409 && (error.code?.startsWith('COOP_PREREQUISITE_') || error.code?.startsWith('COOP_ACADEMIC_'))) return res.status(409).json({ success: false, code: error.code, message: error.message });
   if (error.status === 400) {
     return res.status(400).json({ success: false, message: error.message });
   }
@@ -230,14 +235,14 @@ exports.getMyCoopRequests = async (req, res) => {
   try {
     const requests = await CoopRequest.findAll({
       where: { student_id: req.user.id },
-      include: [DELIVERY_METHOD_INCLUDE],
+      include: [DELIVERY_METHOD_INCLUDE, PREREQUISITE_INCLUDE],
       order: [["submitted_at", "DESC"], ["created_at", "DESC"]],
     });
 
     return res.status(200).json({
       success: true,
       message: "ดึงรายการคำร้องสหกิจศึกษาสำเร็จ",
-      data: requests,
+      data: await academic.attach(requests),
     });
   } catch (error) {
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการดึงรายการคำร้องสหกิจศึกษา");
@@ -257,7 +262,7 @@ exports.getCoopRequestById = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "ดึงรายละเอียดคำร้องสหกิจศึกษาสำเร็จ",
-      data: request,
+      data: (await academic.attach([request], { history: true }))[0],
     });
   } catch (error) {
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการดึงรายละเอียดคำร้องสหกิจศึกษา");
@@ -305,12 +310,19 @@ exports.createCoopRequest = async (req, res) => {
       transaction = null;
       return res.status(404).json({ success: false, message: "ไม่พบข้อมูลนักศึกษา" });
     }
+    // Middleware authenticates first; recheck the saved Student after the lock,
+    // including changes committed while this submission was waiting.
+    authorizeActor(student, 'student');
+    await requireClassAdvisor(require('../models'), student, transaction);
     const catalog = await readStudentCatalog(require('../models'), student.major, transaction);
     if (req.body.prerequisite_catalog_revision !== undefined && String(req.body.prerequisite_catalog_revision) !== catalog.revision) {
       throw Object.assign(new Error('รายการรายวิชาเปลี่ยนแปลงแล้ว กรุณาตรวจสอบ Catalog ล่าสุดก่อนยื่นคำร้อง'), { status: 409, code: 'COOP_PREREQUISITE_CATALOG_CHANGED' });
     }
     const prerequisiteRows = normalizePrerequisites(student.major, req.body.prerequisite_courses,
       catalog.courses.map(course => [course.course_code, course.course_name, course.english_name]));
+    if (prerequisiteRows.some(row => row.status === 'failed') && !await academic.ready(transaction)) {
+      throw Object.assign(new Error('ยังไม่เปิดใช้การบันทึกสถานะไม่ผ่าน กรุณาติดต่อเจ้าหน้าที่'), { status: 409, code: 'COOP_ACADEMIC_SCHEMA_REQUIRED' });
+    }
 
     const activeRequest = await CoopRequest.findOne({
       where: {
@@ -353,22 +365,44 @@ exports.createCoopRequest = async (req, res) => {
       { transaction },
     );
 
-    await transaction.commit();
-    transaction = null;
-
     const createdRequest = await findOwnedRequest(request.id, req.user.id, {
+      transaction,
       include: [DELIVERY_METHOD_INCLUDE, PREREQUISITE_INCLUDE],
     });
+    const [responseData] = await academic.attach([createdRequest], { transaction });
+    await transaction.commit();
+    transaction = null;
     return res.status(201).json({
       success: true,
       message: "ยื่นคำร้องสหกิจศึกษาเรียบร้อยแล้ว",
-      data: createdRequest,
+      data: responseData,
     });
   } catch (error) {
     if (transaction && !transaction.finished) {
       await transaction.rollback();
     }
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการยื่นคำร้องสหกิจศึกษา");
+  }
+};
+
+exports.getClassAdvisorReadiness = async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await sequelize.transaction(async transaction => {
+      const student = await Student.findByPk(req.user.id, { transaction, lock: transaction.LOCK.SHARE });
+      if (!student) throw Object.assign(new Error('ไม่พบข้อมูลนักศึกษา'), { status: 404 });
+      authorizeActor(student, 'student');
+      try {
+        return { ready: true, advisor: await requireClassAdvisor(require('../models'), student, transaction), code: null, message: 'ข้อมูลอาจารย์ที่ปรึกษาประจำชั้นพร้อมสำหรับยื่นคำร้อง' };
+      } catch (error) {
+        if (!error.code?.startsWith('CLASS_ADVISOR_')) throw error;
+        return { ready: false, advisor: error.advisor, code: error.code, message: error.message };
+      }
+    });
+    return res.json({ success: true, data });
+  } catch (error) {
+    if (error.status === 404) return res.status(404).json({ success: false, message: error.message });
+    return toErrorResponse(error, res, 'ไม่สามารถตรวจสอบอาจารย์ที่ปรึกษาประจำชั้นได้ กรุณาลองอีกครั้ง');
   }
 };
 
@@ -421,6 +455,8 @@ exports.cancelCoopRequest = async (req, res) => {
 
   try {
     transaction = await sequelize.transaction();
+    // Match academic updates/reviews: Student -> Request, avoiding opposite FK locks.
+    await Student.findByPk(req.user.id, { transaction, lock: transaction.LOCK.UPDATE });
     const request = await findOwnedRequest(req.params.id, req.user.id, {
       transaction,
       lock: transaction.LOCK.UPDATE,
@@ -446,16 +482,17 @@ exports.cancelCoopRequest = async (req, res) => {
     await request.save({ transaction });
     await CoopRequestReview.create({coop_request_id: request.id, actor_role: 'student', student_id: req.user.id,
       teacher_id: null, department_staff_id: null, from_status: fromStatus, to_status: 'cancelled', decision: 'cancel', reason: 'Cancelled by student'}, {transaction});
-    await transaction.commit();
-    transaction = null;
-
     const cancelledRequest = await findOwnedRequest(request.id, req.user.id, {
+      transaction,
       include: [DELIVERY_METHOD_INCLUDE],
     });
+    const responseData = cancelledRequest.toJSON ? cancelledRequest.toJSON() : cancelledRequest;
+    await transaction.commit();
+    transaction = null;
     return res.status(200).json({
       success: true,
       message: "ยกเลิกคำร้องสหกิจศึกษาเรียบร้อยแล้ว",
-      data: cancelledRequest,
+      data: responseData,
     });
   } catch (error) {
     if (transaction && !transaction.finished) {

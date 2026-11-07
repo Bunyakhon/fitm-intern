@@ -15,6 +15,7 @@ const {
 } = require("./teacherAuth.service");
 const { toSafeDepartmentStaffProfile } = require("./staffAuth.service");
 const {prerequisiteInclude} = require('./coopPrerequisites');
+const { createAcademicService } = require('./coopAcademic.service');
 
 const STAGES = {
   teacher: { from: ["advisor_review"], next: "department_head_review" },
@@ -58,6 +59,7 @@ const STUDENT_FIELDS = [
 ];
 
 function createRoleWorkflowService(m = models) {
+  const academic = createAcademicService(m);
   async function actor(role, id, transaction, lock) {
     uuid(id, "actor id");
     const record =
@@ -154,7 +156,7 @@ function createRoleWorkflowService(m = models) {
       ],
       ...page(query),
     });
-    return role === 'department_staff' ? requests.map(request => ({ ...request.toJSON(), cancellation: cancellationState(request) })) : requests;
+    return academic.attach(role === 'department_staff' ? requests.map(request => ({ ...request.toJSON(), cancellation: cancellationState(request) })) : requests);
   }
   async function requestDetail(role, actorId, id) {
     uuid(id);
@@ -176,7 +178,7 @@ function createRoleWorkflowService(m = models) {
     await authorizeRequest(role, currentActor, request.student);
     const reviews = await m.CoopRequestReview.findAll({
       where: { coop_request_id: id },
-      ...(role === "department_head" ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
+      ...(['teacher', 'department_head'].includes(role) ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
       ...(role === 'department_staff' ? { include: [
         { model: m.DepartmentStaff, as: 'staff', attributes: ['id', 'first_name', 'last_name'] },
         { model: m.Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'] },
@@ -186,7 +188,7 @@ function createRoleWorkflowService(m = models) {
         ["id", "ASC"],
       ],
     });
-    return { request, reviews, ...(role === 'department_staff' ? { cancellation: cancellationState(request) } : {}) };
+    return { request: (await academic.attach([request], { history: true }))[0], reviews, ...(role === 'department_staff' ? { cancellation: cancellationState(request) } : {}) };
   }
   async function reviewRequest(role, actorId, id, decision, body) {
     if (role === 'department_staff' && decision !== 'cancel') throw new WorkflowError('Staff cannot approve or forward Coop Requests', 403);

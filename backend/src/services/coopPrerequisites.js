@@ -1,8 +1,13 @@
 const { WorkflowError } = require('../validators/roleWorkflow.validator');
 const GRADE_OPTIONS = Object.freeze(['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F']);
 function normalizeNewCourseGrade(status, rawGrade) {
+  if (!['passed', 'studying', 'failed', 'unselected'].includes(status)) throw new WorkflowError('Invalid prerequisite status');
   if (rawGrade != null && typeof rawGrade !== 'string') throw new WorkflowError('Grade must be text');
   const grade = rawGrade?.trim() || null;
+  if (status === 'failed') {
+    if (grade !== 'F') throw new WorkflowError('สถานะไม่ผ่านต้องระบุผลการเรียน F');
+    return grade;
+  }
   if (status !== 'passed') {
     if (grade !== null) throw new WorkflowError('Studying/unselected must not have a grade');
     return null;
@@ -35,7 +40,7 @@ function normalizePrerequisites(program, input, activeCatalog = null) {
   for (const row of input) {
     if (!row || typeof row !== 'object' || Array.isArray(row) || Object.keys(row).some(key => !['course_code', 'status', 'grade'].includes(key))) throw new WorkflowError('Invalid prerequisite fields');
     if (!catalog.some(([code]) => code === row.course_code) || byCode.has(row.course_code)) throw new WorkflowError('Unknown, cross-program or duplicate course code');
-    if (!['passed', 'studying', 'unselected'].includes(row.status)) throw new WorkflowError('Invalid prerequisite status');
+    if (!['passed', 'studying', 'failed', 'unselected'].includes(row.status)) throw new WorkflowError('Invalid prerequisite status');
     const grade = normalizeNewCourseGrade(row.status, row.grade);
     byCode.set(row.course_code, {status: row.status, grade});
   }

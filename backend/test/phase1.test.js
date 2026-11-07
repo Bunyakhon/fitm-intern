@@ -264,6 +264,7 @@ test('Co-op Only: actual protected routers reject old internship JWTs before han
   const matching = isolated('routes/jobMatching.routes.js', { ...shared, '../controllers/jobMatching.controller': { getMyJobMatches: handler } });
   const mentor = isolated('routes/mentor.routes.js', { ...shared, '../controllers/mentor.controller': controllers });
   const requests = isolated('routes/coopRequest.routes.js', { ...shared, '../controllers/coopRequest.controller': controllers,
+    '../controllers/coopAcademic.controller': { createAcademicController: () => ({ read: handler, update: handler }) },
     '../controllers/companyResponse.controller': { createStudentCompanyResponseHandler: () => handler } });
   const coop = isolated('routes/studentCoop.routes.js', { ...shared,
     '../services/studentCoopProject.service': { createStudentCoopProjectService: () => service },
@@ -485,13 +486,18 @@ function jobFixture(patch = {}, expireDuringOwnerLock = false) {
     JobPosting: { async findAll(options) { return matchesWhere(job, options.where) ? [job] : []; },
       async findOne(options) { return matchesWhere(job, options.where) ? job : null; },
       async findByPk(_, options) { assert.equal(options.lock, 'SHARE'); return job; } },
-    Student: { async findByPk() { if (expireDuringOwnerLock) now += 1000; return { id: randomUUID(), major: 'IT', track: 'co_op', profile: { related_skills: 'fixture' } }; } },
+    Student: { async findByPk() { if (expireDuringOwnerLock) now += 1000; return { id: randomUUID(), major: 'IT', track: 'co_op', status: 'searching', profile: { related_skills: 'fixture' } }; } },
     StudentProfile: {}, Teacher: {},
     CoopRequest: { async findOne(options) { return options.where.id ? created : null; }, async create(values) { writes++; created = { id: randomUUID(), ...values }; return created; } },
     CoopRequestDeliveryMethod: { async bulkCreate() { writes++; } }, CoopRequestPrerequisiteCourse: { async bulkCreate() { writes++; } }, CoopRequestReview: { async create() { writes++; } },
     sequelize: { async transaction() { return transaction; } },
   };
   const controllers = isolated('controllers/coopRequest.controller.js', { '../models': models,
+    '../services/coopClassAdvisor.service': { requireClassAdvisor: async () => ({}) },
+    '../services/unifiedAuth.service': authHarness().auth,
+    '../services/coopAcademic.service': require('../src/services/coopAcademic.service'),
+    // This fixture isolates job eligibility; Catalog persistence is tested separately.
+    '../services/coopPrerequisiteCatalog.service': { readStudentCatalog: async () => ({ program: 'IT', revision: 'fixture-v1', courses: [] }) },
     '../services/coopPrerequisites': { normalizePrerequisites: () => [], prerequisiteInclude: () => ({}) }, '../services/jobEligibility': policy }, { Date: Clock });
   const matching = isolated('controllers/jobMatching.controller.js', { '../models': models,
     '../services/resumeText.service': { isUsableResumeText: () => true }, '../services/nlpMatching.client': { NlpMatchingResponseError: class extends Error {} }, '../services/jobEligibility': policy }, { Date: Clock });
@@ -529,7 +535,11 @@ test('job eligibility: deadline passing during Student lock wait refuses a new a
 test('overview API contract: existing request list is owner-scoped and retains success/data shape', async () => {
   const rows = [{ id: 'one', student_id: 'owner-a', status: 'approved' }, { id: 'two', student_id: 'owner-b', status: 'advisor_review' }];
   const controller = isolated('controllers/coopRequest.controller.js', {
+    '../services/coopClassAdvisor.service': {},
+    '../services/unifiedAuth.service': authHarness().auth,
+    '../services/coopAcademic.service': require('../src/services/coopAcademic.service'),
     '../models': { CoopRequest: { async findAll(options) { return rows.filter(row => row.student_id === options.where.student_id); } } },
+    '../services/coopPrerequisiteCatalog.service': { readStudentCatalog: async () => { throw Error('List reads stored snapshots, not the current Catalog'); } },
     '../services/coopPrerequisites': { prerequisiteInclude: () => ({}) }, '../services/jobEligibility': jobPolicy,
   });
   for (const owner of ['owner-a', 'owner-b', 'empty-owner']) {

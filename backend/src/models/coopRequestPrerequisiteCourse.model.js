@@ -13,7 +13,7 @@ module.exports = sequelize => {
     course_code: {type: DataTypes.STRING(9), allowNull: false},
     course_name: {type: DataTypes.STRING(255), allowNull: false},
     english_name: {type: DataTypes.STRING(255), allowNull: true},
-    status: {type: DataTypes.STRING(16), allowNull: false, validate: {isIn: [['passed', 'studying', 'unselected']]}},
+    status: {type: DataTypes.STRING(16), allowNull: false, validate: {isIn: [['passed', 'studying', 'failed', 'unselected']]}},
     grade: {type: DataTypes.STRING(10), allowNull: true},
   }, {sequelize, modelName: 'CoopRequestPrerequisiteCourse', tableName: 'coop_request_prerequisite_courses', underscored: true, timestamps: true,
     indexes: [{name: 'coop_prerequisites_request_code_unique', unique: true, fields: ['coop_request_id', 'course_code']}],

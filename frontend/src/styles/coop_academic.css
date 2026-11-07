@@ -1,0 +1,12 @@
+.coop-academic, .coop-academic-summary { min-width: 0; overflow-wrap: anywhere; }
+.coop-academic-summary { margin-block: 1rem; }
+.coop-academic-summary p, .coop-academic-course p { margin-block: .5rem; }
+.coop-academic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.coop-academic-course { min-width: 0; border: 1px solid var(--border-color, #e2e8f0); border-radius: .75rem; padding: 1rem; }
+.coop-academic-course h5 { font-size: 1em; margin: 0 0 .75rem; }
+.coop-academic-course form { display: grid; gap: .75rem; }
+.coop-academic-course label { display: grid; gap: .25rem; }
+.coop-academic-course select, .coop-academic-course button { font: inherit; min-width: 0; max-width: 100%; }
+.coop-academic-course select { width: 100%; padding: .5rem; }
+.coop-academic ol { padding-inline-start: 1.5rem; }
+.coop-academic li { margin-block: .5rem; }

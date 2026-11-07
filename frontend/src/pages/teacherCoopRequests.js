@@ -2,6 +2,8 @@ import { roleSessionStorage } from "../auth/roleAuthStorage.js";
 import { getCurrentTeacher, getTeacherCoopRequests, getTeacherCoopRequest, decideTeacherCoopRequest, TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showConfirmModal, showToast, setButtonLoading } from "../ui/feedback.js";
 import { createTeacherListPresentation } from "./teacherListPresentation.js";
+import { academicSummaryNode, mountAcademicCourses } from './coopAcademicCourses.js';
+import '../styles/coop_academic.css';
 
 const LABELS = {
   advisor_review: "รออาจารย์ที่ปรึกษาพิจารณา", department_head_review: "รอหัวหน้าภาควิชาพิจารณา",
@@ -62,7 +64,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
   function fields(values) { const dl = node("dl"); for (const [label, value] of values) dl.append(node("dt", label), node("dd", value || "-")); return dl; }
   function courses(values) {
     const list = node("ul", "", "teacher-course-list");
-    const labels = { passed: "ผ่านแล้ว", studying: "กำลังศึกษา", unselected: "ยังไม่เลือก" };
+    const labels = { passed: "ผ่านแล้ว", studying: "กำลังศึกษา", failed: 'ไม่ผ่าน', unselected: "ยังไม่ระบุ" };
     if (!Array.isArray(values) || !values.length) list.append(node("li", "คำร้องเดิมไม่มีข้อมูลรายวิชาที่บันทึกไว้"));
     else for (const course of [...values].sort((a, b) => String(a.course_code).localeCompare(String(b.course_code)))) list.append(node("li", `${course.program || "-"} · ${course.course_code || "-"} ${course.course_name || "-"} · ${labels[course.status] || "ไม่พบสถานะ"} · เกรด ${course.grade || "-"}`));
     return list;
@@ -84,7 +86,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
       if (!isHead) card.dataset.status = row.status;
       card.append(node("span", LABELS[row.status] || "ไม่ทราบสถานะ", "teacher-status"), node("h2", name(row)), fields([
         ["รหัสนักศึกษา", row.student?.student_id], ["สาขา", row.student?.major], ["สถานประกอบการ", row.company_name], ["วันที่ยื่น", date(row.submitted_at)],
-      ]), courses(row.prerequisite_courses));
+      ]), courses(row.prerequisite_courses), academicSummaryNode(document, row.academic));
       if (isHead) { const approval = classDecision(row); card.append(fields([["อาจารย์ที่ปรึกษาประจำชั้น", teacherName(row.student?.advisorTeacher)], ["ผู้อนุมัติขั้นอาจารย์ที่ปรึกษา", teacherName(approval?.teacher)], ["วันที่อาจารย์ที่ปรึกษาอนุมัติ", date(approval?.created_at || approval?.createdAt)]])); }
       const button = node("button", "ดูรายละเอียด", "teacher-button"); button.type = "button";
       button.addEventListener("click", () => openDetail(row.id, button)); card.append(button, actions(row)); container.append(card);
@@ -108,10 +110,13 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
         ["สถานประกอบการที่ยื่นคำร้อง", row.company_name], ["จังหวัด", row.company_province], ["ที่อยู่บริษัท", row.company_address],
         ["ผู้รับหนังสือ", row.letter_recipient_name], ["ตำแหน่ง / หน่วยงานผู้รับ", row.letter_recipient_position_department],
         ["ตำแหน่งงาน", row.jobPosting?.title], ["รายละเอียดงาน", row.jobPosting?.description], ["เริ่มปฏิบัติงาน", date(row.work_start_date, false)], ["สิ้นสุดปฏิบัติงาน", date(row.work_end_date, false)],
-        ["วันที่ยื่น", date(row.submitted_at)], ["สถานะ", LABELS[row.status] || "ไม่ทราบสถานะ"]]), node("h3", "รายวิชาที่บันทึกตอนยื่นคำร้อง"), courses(row.prerequisite_courses), node("h3", "ประวัติการดำเนินการ"));
+        ["วันที่ยื่น", date(row.submitted_at)], ["สถานะ", LABELS[row.status] || "ไม่ทราบสถานะ"]]), node("h3", "รายวิชาที่บันทึกตอนยื่นคำร้อง"), courses(row.prerequisite_courses));
+      const academicRoot = node('section'); detailBody.append(academicRoot);
+      mountAcademicCourses({ document, root: academicRoot, request: row });
+      detailBody.append(node('h3', 'ประวัติการดำเนินการ'));
       const history = node("ol");
       if (!reviews.length) history.append(node("li", "ยังไม่มีประวัติการดำเนินการ"));
-      for (const event of reviews) history.append(node("li", `${date(event.created_at || event.createdAt)} · ${ROLES[event.actor_role] || "ไม่ระบุบทบาท"}${isHead && event.teacher ? ` (${teacherName(event.teacher)})` : ""} · ${DECISIONS[event.decision] || "ไม่ระบุการดำเนินการ"} · ${LABELS[event.from_status] || (event.from_status === "new" ? "เริ่มคำร้อง" : event.from_status) || "-"} → ${LABELS[event.to_status] || event.to_status || "-"}${event.reason ? ` · เหตุผล: ${event.reason}` : ""}`));
+      for (const event of reviews) history.append(node("li", `${date(event.created_at || event.createdAt)} · ${ROLES[event.actor_role] || "ไม่ระบุบทบาท"}${event.teacher ? ` (${teacherName(event.teacher)})` : ""} · ${DECISIONS[event.decision] || "ไม่ระบุการดำเนินการ"} · ${LABELS[event.from_status] || (event.from_status === "new" ? "เริ่มคำร้อง" : event.from_status) || "-"} → ${LABELS[event.to_status] || event.to_status || "-"}${event.reason ? ` · เหตุผล: ${event.reason}` : ""}`));
       detailBody.append(history, actions(row)); get("teacherCoopDetailMessage").textContent = "";
       detailPanel.focus?.(); detailPanel.scrollIntoView?.({ behavior: "smooth", block: "start" }); return true;
     } catch (error) {

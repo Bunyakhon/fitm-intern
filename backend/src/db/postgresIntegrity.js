@@ -90,7 +90,7 @@ module.exports = {
       "table_name": "coop_request_prerequisite_courses",
       "name": "coop_prerequisites_status_grade_check",
       "type": "c",
-      "definition": "CHECK (((((status)::text = 'passed'::text) AND (grade IS NOT NULL) AND (length(TRIM(BOTH FROM grade)) > 0)) OR (((status)::text = ANY (ARRAY[('studying'::character varying)::text, ('unselected'::character varying)::text])) AND (grade IS NULL))))",
+      "definition": require('./coopAcademicIntegrity').SNAPSHOT_GRADE_CHECK,
       "key_count": 2
     },
     {
@@ -867,3 +867,4 @@ for (const [name, expression] of Object.entries(require('../models/studentProfil
 }
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./superAdminIntegrity')[key]);
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopTopicExamIntegrity')[key]);
+for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopAcademicIntegrity')[key]);

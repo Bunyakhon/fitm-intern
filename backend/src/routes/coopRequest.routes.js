@@ -9,6 +9,7 @@ const {
   checkCompanyDuplicate,
   getPublishedJobPostingForCoopRequest,
   getPrerequisiteCatalog,
+  getClassAdvisorReadiness,
 } = require("../controllers/coopRequest.controller");
 const { authenticateToken, requireCoopStudent } = require("../middlewares/auth.middleware");
 
@@ -25,9 +26,13 @@ router.use(authenticateToken, requireStudentActor);
 router.get("/companies/search", searchCompanies);
 router.get("/companies/duplicate-check", checkCompanyDuplicate);
 router.use(requireCoopStudent);
+router.get('/class-advisor', getClassAdvisorReadiness);
 router.get('/prerequisite-catalog', getPrerequisiteCatalog);
 router.get("/job-postings/:id", getPublishedJobPostingForCoopRequest);
 router.get("/me", getMyCoopRequests);
+const academic = require('../controllers/coopAcademic.controller').createAcademicController(require('../models'));
+router.get('/:id/academic-courses', academic.read);
+router.patch('/:id/academic-courses/:courseCode', academic.update);
 router.get('/:id/company-response', require('../controllers/companyResponse.controller').createStudentCompanyResponseHandler(require('../models')));
 router.get("/:id", getCoopRequestById);
 router.post("/", createCoopRequest);

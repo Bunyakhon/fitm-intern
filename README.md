@@ -2,7 +2,137 @@
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
-## รายวิชาก่อนออกสหกิจ / ความเห็นหัวหน้าภาควิชา — อัปเดต 7 พฤศจิกายน 2026
+## พร้อม User Manual Acceptance — 8 พฤศจิกายน 2026
+
+เตรียมวันที่ **7 พฤศจิกายน 2026 (Asia/Bangkok)**: Student→Class Advisor→Department Head→Staff Catalog และ Academic Eligibility พร้อมตรวจรับใน Development. เปิด [Checklist ภาษาไทย58กรณี](docs/testing/COOP_REQUEST_MANUAL_TEST_CHECKLIST.md) ซึ่งมีขั้นตอน/Expected/ช่องActualและPASS/FAIL/BLOCKED/Screenshot, IT+INE และDesktop/Mobile. **ผลManualยังว่าง; Google INE Login = USER MANUAL TEST PENDING** ตามคำตอบผู้ใช้ ไม่สร้างบัญชี/Passwordใหม่หรือเปลี่ยนtrack/Googleflags.
+
+เริ่มที่ **http://localhost:5173/login.html** ทุกบทบาท ใช้บัญชีเดิมจาก DPAPI credential viewer; คำสั่งเปิดviewer/บัญชีsynthetic/ตัวระบุAdvisor-Headแบบprivateอยู่ในChecklist. ลำดับทดสอบ IT Student9900000000001→Advisorของคนนั้น→Head→Studentรีเฟรช→Staff; ใช้Student9900000000003/5สำหรับReject/Cancel/Catalog. INEใช้Google co_opเดิมโดยเจ้าของLoginเอง; มีmajorINE/activeAdvisor/departmentตรงHead/Googlemapping1actor1พร้อม. INEwebsite9900000000002/4ยังเป็นinternshipไม่เปลี่ยนpolicyให้ผ่าน.
+
+| หน้า | URL |
+| --- | --- |
+| Student | http://localhost:5173/src/student_coop/student_coop.html |
+| Teacher | http://localhost:5173/src/teacher_coop/teacher_coop.html |
+| Head | http://localhost:5173/src/department_head/department_head.html |
+| Staff | http://localhost:5173/src/department_staff/department_staff.html |
+
+**Staff Mapping ผู้ใช้อนุมัติแล้ว แทนPending/Grants0ด้านล่าง:** `fitm.staff1@example.test` และ `fitm.staff2@example.test` ได้ exact `coop_prerequisite_catalog.manage` ทั้ง **IT+INE** ในDevelopment รวม4activegrants. Deployed APIจริงpermissions/listผ่านทั้งสองบัญชี; CRUDทั้ง2สาขาผ่าน actualroutes/JWT/PGในprivate rollbacktransaction. เพิ่มCLI `backend/src/seeders/grantCoopCatalog.js` Previewdefault/explicitUUID+programs+targetguard/Applyต้องconfirmintern_system; rerunไม่สร้างซ้ำ ไม่autoassignจากdepartment/email.
+
+แก้Bugที่กระทบManualTesting: Student Refresherrorรักษาข้อมูลล่าสุด/Retryและไม่ยื่นใหม่จากstateที่ยังไม่ยืนยัน; แสดงAdvisorผู้พิจารณา/วันที่และReviewHistoryจริง; Teacherhistoryแสดงชื่อผู้พิจารณา; Create/Cancelเตรียมresponseก่อนcommitเพื่อให้readfailurerollback; ล้างjobcontextเมื่อเปลี่ยนบริษัท/กันsearchresponseเก่า; reusefocushelperกับStudentdialogs. TeacherMobileแก้hiddenmenulabelทำให้pageoverflowด้วยCSSpositionเพียงจุดเดียว ไม่เปลี่ยนbranding/เมนู/spacing.
+
+Developmentยัง **PG16.15/56tables/IT5+INE5/Programs2/Grants4**; Requests/Snapshots/Reviews/AcademicState/History0หลังrollbacktests. Schema/ข้อมูลบัญชี/Profile/Catalog/Academicคงเดิม; ต่างเฉพาะGrantที่อนุมัติและGooglechallenge lifecycleจากLoginUIจริง. Backupก่อนGrantใหม่224,474bytes/390TOC/SHA256`641174e810dc2d3f72c805aff2aeb9d0fb6b001e2bfa483d80496d65789b7f95`เก็บprivate `.local-db-backups/manual-prep/20261107/`; ไม่reset/ลบvolumes/แก้.env/dependencies. Backendrebuilt/recreatedเฉพาะบริการที่จำเป็นจากartifact `fitm-manual-prep:20261107`; Frontendใช้bindmount/Viteเดิม.
+
+**Automated/Developer verification ใหม่:** Backend32/32, restoredPostgreSQL14/14, Frontend16/16, DevelopmentrollbackAPI16กลุ่มรวมINEworkflowและทั้ง2Staffจริง CRUD, UnifiedLogin7บัญชีเดิม, Chromeจริง5Dashboard/1280-390-320px, Chrome+mockHTTP19checks/1280-768-390-320px. Buildsผ่าน/Frontend168modules; Models56+associations/syntax/health`/`+`/health/db`200/protectedanonymous401ผ่าน. Manual59cases/GoogleINEProvider/fullpersistedreal-accountworkflowยังรอผู้ใช้ตรวจรับ ไม่ยกผลfixturesเป็นProviderE2E.
+
+**ข้อควรระวัง:** A08liveAdvisor/HeadtransferยังPendingPolicyDecision; approvedไม่ใช่Academiccertification, studyingupdateได้เฉพาะช่วงเดิมก่อนเอกสาร, retakes/แก้เกรดซ้ำรอนโยบาย. approvedยังเป็นactiverequest; ใช้บัญชีทดสอบอีกคนแทนresetเพื่อยื่นซ้ำ. มีChecklistปิดเฉพาะวิชาtestหลังจบ. Actualmobiledevice/LAN/fullregression/productionreadinessไม่ได้ตรวจ; chunk>500kBwarningเดิมยังมี. [Current Handoff](HANDOFF_fitm-intern.md)แยกหลักฐาน/ข้อจำกัดครบ.
+
+**NEXT TASK: USER MANUAL ACCEPTANCE วันที่8พฤศจิกายน2026.** Gitก่อน16M/18U→หลัง17M/21U; แก้9paths+เพิ่ม3paths ไม่มีลบ/Commit/Push และรักษางานเดิมนอกscope.
+
+## ประวัติ — A01 + Prerequisite Catalog Development — 7 พฤศจิกายน 2026
+
+**A01 ทำแล้ว และ Catalog ติดตั้งจริงใน Development intern_system/PG16.15 แล้วตามคำขอรอบนี้.** สถานะนี้แทน Catalog NO-GO/ยังไม่ Deploy ในประวัติด้านล่างเฉพาะงาน Development นี้. Staff จริงยังรอ confirmed account→program grants; รายละเอียดหลักฐานและขอบเขตใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+- Backend ตรวจ Student ที่ล็อกแล้ว + saved `advisor_teacher_id` + Teacher active/live account access/department ก่อนสร้างคำร้อง. Error HTTP400: `CLASS_ADVISOR_REQUIRED`, `CLASS_ADVISOR_NOT_FOUND`, `CLASS_ADVISOR_NOT_ELIGIBLE`; ไม่มี Request/Review ใหม่เมื่อไม่ผ่าน. ไม่ใช้อาจารย์โครงการแทน ไม่รับ Advisor จาก Browser. Student lock ป้องกัน concurrent duplicate; valid submit→advisor_review→Teacher→department_head_review ตาม workflow เดิม.
+- GET `/api/coop-requests/class-advisor` (own co_op Student/no-store) คืน `data={ready,advisor,code,message}`; หน้าคำร้องแสดงชื่อ readonly/สถานะ/Retry/ปุ่มไป Profile. Unsaved Advisor ต้อง Save ก่อน; ไป Profile/เปิดฟอร์มใหม่/submit error รักษา draft ในหน้าเดิม. POST ยืนยันใหม่เสมอ. เปลี่ยน Advisor กลาง workflow ยังย้าย live scope ตามเดิม (A08 รอนโยบาย); ไม่สร้าง program→department mapping เอง.
+- Development **53→56 tables**, เพิ่ม `coop_prerequisite_catalog_programs`, `coop_prerequisite_catalog_courses`, `coop_prerequisite_catalog_grants`; Programs2, **IT5/INE5 active courses**, Grants0. Installer explicit model-driven/transactional รันซ้ำ seeded0 และ logical schema/data/revisions/timestampsไม่เปลี่ยน ไม่ใช้ startup sync/reset/migration ledger.
+- ก่อน DDL สร้าง consistent Backup ใหม่ **215,903bytes/375TOC entries**, SHA256 `493ddcdf7a8c749160b0530e435d28a173f2366212456d1e75a8e7ebd206d1ee`; Restore verified บน disposable PG16.15 แล้ว. Private archive/receiptsอยู่ `.local-db-backups/a01-catalog/20261107/` (Git ignored) เก็บต่อ. Original53tables/119rows fingerprintsตรง; หลังมี131rowsรวม2programs+10courses; Academic tables/functions/triggers/historyคงเดิม/orphan0.
+- Staff Catalog UI/API เดิมพร้อมกับ schema ใหม่: exact `coop_prerequisite_catalog.manage` + active IT/INE account grant, รองรับ IT/INE/both, เพิ่ม/แก้/ลำดับ/เปิดปิด/duplicate409/revision409. **active Staff จริง2บัญชียังไม่มี confirmed mapping จึงไม่ได้ provision grantจริง**. Fixture scopesผ่าน isolated tests และ Development rollback transaction; ไม่เดาสิทธิ์จาก department/email.
+- Student ใช้ saved major + active DB Catalog/จำนวนจริง/revision. Catalog changes มีผลกับคำร้องใหม่; Original Snapshot/Academic historyไม่เปลี่ยน. Studying gradeNULL ยื่นได้, passed+F reject, failed+F valid; Dropdown A/B+/B/C+/C/D+/D/F. Approval ยังแยก Academic certification และคง update window เดิม.
+- Rebuild/recreateเฉพาะ Backend พร้อม anonymous node_modules จาก final artifact `fitm-a01-catalog:20261107`; คง PostgreSQL/Frontend/NLP/named storage volumes. Runtime ใช้ existing Wave A dependencies ชุดที่ทดสอบ ไม่แก้ package/lock/.env หรือทำ dependency audit/remediationเพิ่ม.
+
+**Focused verification ใหม่:** Backend32/32; restored-PostgreSQL A01+Catalog+Academic12/12; Catalog PostgreSQL20/20; Frontend4/4; Development private HTTP/JWT/PG14กลุ่ม (outer transaction+ROLLBACK ไม่มี Fixture/Grantค้าง); Chrome15checksกับ actual UI/API adapters + synthetic identity/mock HTTP ที่1280/768/390/320px. Backend Docker build/Frontend production build168modulesผ่าน; health `/`+`/health/db`200, anonymous protected Advisor/Catalog401. ไม่ใช่ manual real-account Browser/Provider E2E; real historical Requests/Snapshots/Reviews/Academic historyยัง0. Full regression/production readinessไม่ได้ทำ; chunk>500kB warningเดิมยังมี.
+
+**NEXT TASK:** ยืนยัน Staff UUID/program grants แล้ว provisionตามมอบหมายและทำ real-account UI acceptance. A08 transfer policy/Academic criteria/retakes/grade correctionยังรอตัดสิน ไม่เปลี่ยนเอง. Gitก่อน16M/16U→หลัง16M/18U; แก้10paths+เพิ่ม2paths ไม่มีลบ/Commit/Push และรักษางานค้างเดิม.
+
+## ประวัติ — Coop Request Academic Eligibility — 7 พฤศจิกายน 2026
+
+**Academic feature ทำแล้วและติดตั้ง Academic schema เฉพาะส่วนที่อนุมัติใน Development intern_system แล้ว.** ทำต่อจาก Working Tree เดิม ไม่สร้างซ้ำ. Catalog Migration/Staff Grants/Security Runtime Deployment ยังแยกงาน และ Catalog Deployment NO-GO เดิมไม่เปลี่ยน. รายละเอียดไฟล์/หลักฐาน/ข้อจำกัดอยู่ [Current Handoff](HANDOFF_fitm-intern.md).
+
+Student เลือก passed/studying/failed/unselected พร้อม Dropdown A/B+/B/C+/C/D+/D/F; studying/unselected ไม่มีเกรด, passed+F ปฏิเสธ, failed ต้องF. ยื่นได้แม้กำลังศึกษา. อัปเดตเฉพาะวิชา studying เดิมที่ยังไม่เคยรายงานผล ระหว่าง **advisor_review / department_head_review / approved ก่อนออกเอกสาร** และต้องไม่มี document_issued_at/started_at. Legacy submitted/staff_review และ rejected/cancelled/document_issued/in_progress ปิด; ข้อตกลงล่าสุดแทนช่วงเดิมที่กว้างกว่า.
+
+Original Submission Snapshot แยกและ immutable; latest results มาจาก append-only history ที่เก็บ old/new status+grade, actor/time, revision. expected_revision/expected_request_status/operation_id ป้องกัน stale/concurrent writes และ retryซ้ำ. Teacher/Class Advisor และ Head เห็น original/latest/history และสถานะคุณสมบัติแยกจาก approval โดยใช้ advisor_teacher_id/scopeเดิม. Staff อ่านได้ ไม่ได้สิทธิ์รับรองเพิ่ม. Shared Confirm/Toast/draft/session protection คงอยู่.
+
+**Approval ไม่เท่ากับ Academic Certification:** รอผลใช้ pending_grades; เกรดครบใช้ pending_verification รวม failed+F หรือ D/D+. ยังไม่มี auto verified_eligible/verified_ineligible หรือ verifier endpoint/permission เพราะเกณฑ์ขั้นต่ำและผู้มีอำนาจยัง Pending Decision. การแก้เกรดซ้ำ/เรียนซ้ำ/unselected→ผลภายหลังรอนโยบาย.
+
+| Database/API | สถานะ |
+| --- | --- |
+| Academic installer | backend/src/db/coopAcademicDevelopment.js; explicit target/env guards, transaction/drift/rollback; ไม่รันอัตโนมัติ ไม่ใช้ sync/reset |
+| Development | intern_postgres/intern_system/PG16.15; เพิ่ม coop_request_academic_states/history รวม2PK/4FK/2uniqueindexes/2CHECK/4triggers/3functions; snapshot CHECKรับfailed+Fโดยไม่แก้legacy |
+| Preservation | 51→53tables; original51tables/119rows counts+keyed fingerprintsตรง; orphan0; states/history0หลังrollback fixtures; Catalog3tablesยังไม่มี/Grant0เพิ่ม |
+| GET /api/coop-requests/:id/academic-courses | owning co_op Student; original/latest/history; no-store |
+| PATCH /api/coop-requests/:id/academic-courses/:courseCode | status/grade/expected_revision/expected_request_status/operation_id → data={academic,replayed}; no-store |
+| Existing Student/Teacher/Head/Staff request APIs | เพิ่ม academic; prerequisite_courses ยังคง Original Snapshot; approval/scopeเดิม |
+
+ก่อน Development DDL สร้าง consistent read-only Backup ใหม่ exit0/SHA/TOC356entries/204,319bytes; SHA256 e711633d062f32a674a4b4943fec91371fc9162ceb0c7906a2f8690411ab168f. เก็บ private ACL/Git-ignored .local-db-backups/academic-development/20261107_110807_b75b3c/ พร้อม receipt/key/TOC ไม่ลบอัตโนมัติ. Fresh archiveนี้ไม่ได้Restoreซ้ำ; isolated testsใช้Backupเดิมที่เคยRestoreverifyและรักษาไว้. Firstinstallเพิ่ม2tables; rerun0 และปรับเฉพาะ exact-known Academic guardให้ตรง3สถานะล่าสุด โดย unknown driftยังreject.
+
+**Focused results:** Backend23/23, Frontend4/4, restored isolated PostgreSQL15/15, Development actual HTTP/JWT/DB rollback-fixture9กลุ่ม และ Browser components/Teacher/Head14checksที่1280/768/390/320ผ่าน. Live Backend root/health200และAcademic no-token401. Syntax/model+associations/UTF8/diff-check/Backend Docker/Frontend production buildผ่าน; chunk-size warningยังมี. ไม่ทำ Full Regression. Unit commands: node --test --test-isolation=none backend/test/coopAcademic.test.js backend/test/phase1.test.js และ node --test --test-isolation=none frontend/test/coopAcademic.test.js. PG suiteต้องexplicit opt-in+fresh restored disposable fitm_academic_test_* เท่านั้น ห้ามชี้intern_system.
+
+**ข้อจำกัด:** Development positive-write APIใช้ private process+transaction/savepointsก่อนROLLBACK ไม่ใช่ real-account full-dashboard E2E; ไม่เหลือfixture. Browserใช้synthetic APIไม่เชื่อมฐานจริง. Requests/Snapshots/Reviewsเดิม0แถว จึงพิสูจน์Legacyเฉพาะsyntheticfixtures. เกณฑ์/ผู้รับรอง/retakeยังPending; A01 missingClassAdvisorนอกscope. ไม่ manualRestart/Deploy; existingnodemonอาจreloadจากsourcebindmount. Gitก่อนContinue16M/16U/0D→หลัง16M/16U/0D (ต้นงานรวม5M/4U/0D); รักษางานค้างเดิม ไม่มีCommit/Push.
+
+**NEXT TASK:** ยืนยัน academic criteria/verifier authority/grade-correction policy และตรวจรับ UI ด้วยบัญชีจริง ก่อนพัฒนาการรับรอง/Document gateตามอนุมัติ. Catalog Migration, Staff Grants และ Security Runtime Deployment แยกรอบ ไม่เริ่มเอง.
+
+## ประวัติ — Isolated Catalog Installer Rehearsal + Security Disposition — 7 พฤศจิกายน 2026
+
+**Installer บน restored isolated PostgreSQL PASS; Development ยัง NO-GO.** ใช้ Backup ที่ผ่าน D01 เดิม Restore ใหม่และเทียบ SHA/TOC/51-table counts+HMAC ก่อนติดตั้งครบ3clones. PostgreSQL3ตัวเป็น Network=none/noports/Mounts=[]/tmpfs; Node runners3ตัวแชร์เฉพาะ namespace ของ PG ทดสอบของตนเอง พร้อม exact-ID/DB/test-environment guards ไม่เปลี่ยน Development env หรือข้าม guard.
+
+ติดตั้ง Catalog3ตาราง/22columns/3PK/4FK/2uniqueindexes/3CHECK, seed IT5+INE5/Programs2/Grants0. Rerun seed0/schema+data unchanged; original51tables/119rows fingerprintsตรงเดิม ยกเว้นเปลี่ยน snapshot CHECK ตาม Source. ผ่าน7target-guard rejection/8drift cases/9constraint rejections และ rollbackหลังเขียน10seeds โดยไม่มี Catalog partial leftovers; intentional partial input ถูก reject. Requests/Snapshots/Reviewsยัง0/0/0 จึงมี **legacy coverage limitation**; ไม่ได้รัน full RBAC/CRUD20/20ใหม่.
+
+Fresh auditยัง **0Critical/0High/4Moderate; production2Moderate**. Runtimeยังdependenciesเก่า: **FIX REQUIRED** ให้ approved WaveA rollout. Minimatch/NodemonและUUID/Sequelizeเสนอ **DEFER WITH MITIGATION / NEEDS APPROVAL** ไม่รับความเสี่ยงแทนเจ้าของ; WaveBเสนอ scoped child updates11.0.1/11.1.1พร้อมcompatibilitytestsแยก ยังไม่อัปเดตใด. รายละเอียด/หลักฐาน/ข้อจำกัด/approvalอยู่หัวข้อ21ใน [Deployment Readiness Audit](docs/audits/COOP_CATALOG_DEV_DEPLOYMENT_READINESS_2026-11-07.md) และ [Current Handoff](HANDOFF_fitm-intern.md).
+
+Cleanupครบเฉพาะ6containersใหม่; Development/Backend/Backup/receiptเดิมคงเดิม ไม่Restart/Deploy/ให้Grant/Commit/Push. แก้เฉพาะ3เอกสาร; Gitก่อน/หลัง **5modified/4untracked/0deleted**. D01 RESOLVED, D02 NEEDS APPROVAL, D03–D06 OPEN (D06 rehearsal subcriteriaผ่าน แต่operational/recovery signoffยังค้าง). **NEXT TASK:** ตัดสินใจ/อนุมัติSecurity remediationหรือrisk acceptanceและruntime rolloutแยก ก่อนทบทวนDevelopment DDL; **NO-GOคงเดิม**.
+
+## ประวัติ — Backup/Restore Rehearsal — 7 พฤศจิกายน 2026
+
+**Backup และ isolated Restore ผ่าน; D01 RESOLVED สำหรับ snapshot นี้ / Deployment ยัง NO-GO.** ยืนยัน `intern_postgres / intern_system / PostgreSQL 16.15` และ Development environment แล้ว สร้าง custom Backup จาก read-only exported snapshot เดียวกับ schema/count/fingerprints เวลา 15:48:44 น. Bangkok โดยไม่แก้ข้อมูลต้นทาง. Dump/copy/TOC exit 0: 204,319 bytes, 356 entries และ SHA-256 ตรงกันทุกจุด.
+
+Restore ด้วย single transaction ลง PostgreSQL container ใหม่ **Network=none / ไม่มี ports / Mounts=[] / tmpfs** เท่านั้น. ตรวจตรงกัน 51 ตาราง/119 แถว, 601 columns, 51 PK/86 FK/132 indexes/123 CHECK; HMAC ตรงทุกตารางและ orphan=0. ความต่าง physical column positions/CHECK cast text ตรวจแยกและยืนยัน logical definitions แล้ว ไม่แก้ Schema เพื่อให้ผ่าน. Legacy Requests/Snapshots/Reviews ยัง 0/0/0 จึงมี coverage limitation; Catalog 3 ตารางยังไม่ติดตั้ง และ CHECK NOT VALID เดิม 2 รายการคงเดิม.
+
+Cleanup เฉพาะ test ID ที่สร้างและยืนยันแล้วสำเร็จ; Source/Backend ไม่ restart และ Development volume คงเดิม. เก็บ Backup/receipt/TOC ไว้ใน private Git-ignored `.local-db-backups/coop-catalog/20261107_084502_56f73258/` โดยตรวจ ACL แล้ว; ไม่ลบ Backup อัตโนมัติ รอเจ้าของกำหนด retention/expiry. ยังไม่รับรอง encryption/offsite copy หรือ global roles/owner/ACL recovery.
+
+รายละเอียด SHA/identity/comparison/ข้อจำกัดอยู่หัวข้อ 20 ใน [Deployment Readiness Audit](docs/audits/COOP_CATALOG_DEV_DEPLOYMENT_READINESS_2026-11-07.md) และ [Current Handoff](HANDOFF_fitm-intern.md). รอบนี้แก้เฉพาะ 3 เอกสาร; Git ก่อน/หลัง **5 modified / 4 untracked / 0 deleted**, งานค้างเดิมคงอยู่. ไม่ติดตั้ง Catalog/ให้ Grant/Deploy Security/Commit/Push. D03–D06 ยัง OPEN, D02 NEEDS APPROVAL; **NEXT TASK:** อนุมัติขอบเขต isolated Installer rehearsal และ Security disposition ก่อนทบทวน Development installation ไม่ถือว่า Backup ผ่านแล้วเป็น GO.
+
+## ประวัติ — Security Remediation Wave A — 7 พฤศจิกายน 2026
+
+**Wave A เสร็จในWorkspace/Artifact — DeploymentยังNO-GO.** อัปเดตครบ9targetsตามแผน: proxy-addr2.0.8, body-parser2.4.0, qs6.16.1, express-rate-limit8.7.3, ip-address10.7.4, multer2.5.0, nodemailer10.1.4, moment2.31.0, brace-expansion5.0.12. คงExpress5.2.1/Sequelize6.37.8และMinimatch/UUID/Nodemonเดิม ไม่มีoverride/majorupgradeอื่น; package.jsonคงเดิม. เพิ่มGit-ignoreexceptionเฉพาะBackendlockเดิมให้ตรวจรับและส่งต่อsecurityversionsได้.
+
+LocalinstalledtreeและbuiltDockerartifactตรวจnpmci/npmls/auditจริง: **13entries(1Critical/5High/7Moderate) → 4Moderate / Critical0 / High0**; production-onlyเหลือ2Moderate. ResidualMinimatch/NodemonและUUID/Sequelizeเป็นWaveBที่ยังDEFERRED ไม่downgrade/overrideอัตโนมัติ. **D03ยังOPEN** ไม่อ้างSecurityPASSทั้งหมด. ExistingrunningBackendยังใช้dependencyvolumeเดิม ไม่ได้Deploy จึงยังไม่ถือว่าruntimeจริงได้รับpatch.
+
+FocusedtestsบนDocker **34/34PASS fail0/skip0**, Localnewtests9/9: HTTP/JWT/RBACกับsyntheticactors/SQLguard, trustproxyfalse/spoofedXFFยังติด429, proxy/mappedIPkey, gzip/JSONerrors/limits, Multerboundary+abortedfilter, Moment/UUID, actualappsmoke และNodemailerstreamtransport. แก้phase1VMfixtureimports2จุดที่พิสูจน์ว่าfailก่อนWaveAด้วย โดยคงassertions/BusinessLogic. BackendDockerbuild/Syntaxผ่าน. FrontendbuildN/Aไม่มีFrontendinputsเปลี่ยน; PGwriteintegration/realaccounts/provider/SMTP/Browser/fullregressionNOTTESTEDรอบนี้.
+
+รายละเอียดก่อน–หลัง/lockSHA/failedtestsที่แก้และข้อจำกัดอยู่หัวข้อ19ใน [Deployment Readiness Audit](docs/audits/COOP_CATALOG_DEV_DEPLOYMENT_READINESS_2026-11-07.md) และ [Current Handoff](HANDOFF_fitm-intern.md). รอบนี้7pathsรวมlock/ignore/tests/3docs, Git **3modified/2untracked → 5modified/4untracked**, ไม่มีลบSource/Commit/Push/Schema/Records/StaffGrant/BackupRestore/Deploy; รักษางานค้างเดิม. **NEXT TASK: Backup/Restore Rehearsal หลังได้รับอนุมัติแยก**; NO-GOไม่เปลี่ยนเพียงเพราะWaveAผ่าน.
+
+## ประวัติ — Catalog NO-GO Preconditions: Security & Backup Planning — 7 พฤศจิกายน 2026
+
+**NO-GO คงเดิม — แผนเสร็จ แต่ยังไม่แก้ Dependencies/Backup/Restore/Deploy.** Reconcile6Findings: **RESOLVED0 / OPEN4 / NEEDS APPROVAL2 / BLOCKED0**. D01BackupRestore/D02Staffmappingรออนุมัติ; D03Security/D04majorNULL/D05Coverage/D06InstallerRecoveryยังOPEN. Read-onlyยืนยันintern_system/PG16.15/targetเดิม, Catalog3ตารางยังไม่มี, Requests/Snapshots/Reviews0/0/0, Staffactive2 และmajorNULL1/Students7. ไม่มีGrantstorage/ไม่มีprovision ไม่อ้างว่าCOUNTgranttableแล้วได้0. RuntimeSourceไม่เรียกInstallerอัตโนมัติ.
+
+Securitytriageใหม่ยัง **13entries: Critical1/High5/Moderate7**. เสนอWaveAแบบtargetedlockrefresh9targetsภายในmajor/rangesเดิม คงExpress5/Sequelize6: proxy-addr2.0.8, body-parser2.4.0, qs6.16.1, rate-limit8.7.3+ip-address>=10.7.4ใน10.x, multer2.5.0, nodemailer10.1.4, moment2.31.0, brace-expansion5.0.12. ตรวจregistry/engines/CJSexports/semverแล้วแต่runtimeรุ่นใหม่ยังNOT TESTED. Minimatch11/UUID11เป็นWaveBที่ต้องอนุมัติแยก ไม่forcedowngrade/overrideอัตโนมัติ. Currenttrustproxyfalseเป็นmitigationของproxy-addr ไม่ใช่resolvedsecurity. ข้อสรุปความเสี่ยงเป็นconditionalstaticassessment ไม่ใช่PoC/Productionaudit.
+
+BackupRestoreRunbookใช้sharedsnapshotสำหรับdump+comparison, privatearchive/SHA/TOC, freshisolatedPG16Networknone/noports/noDevelopmentVolume, restoreatomic, logicalschema/constraints/count/privatefingerprintsและcleanupเฉพาะrecordednewcontainerID. **ไม่ได้สร้างBackup/Restoreหรือexportedsnapshotจริง**; ตารางlegacyว่างต้องคงCoverageLimitation. AcceptanceCriteria/compatibilityrisks/approvalboundariesอยู่หัวข้อ15–18ใน [Deployment Readiness Audit](docs/audits/COOP_CATALOG_DEV_DEPLOYMENT_READINESS_2026-11-07.md) และ [Current Handoff](HANDOFF_fitm-intern.md).
+
+แก้เฉพาะ3เอกสารเดิม Gitก่อน/หลัง **3modified/2untracked/0deleted** เท่าเดิม; source/test/manifest/lockfileและงานค้างอื่นคงเดิม ไม่มีCommit/Push/DatabaseWrite/Grant/Migration. **NEXT TASK:** อนุมัติSecurityWaveAและ/หรือBackupRestoreRehearsalตามขอบเขต แล้วตรวจผลจริงก่อนทบทวนNO-GO; Developmentinstallation/Staffactivationยังต้องอนุมัติแยก.
+
+## ประวัติ — Catalog Development Deployment Readiness — 7 พฤศจิกายน 2026
+
+**Read-only Audit complete — NO-GO ณขณะนี้ / Migration NOT APPLIED / Staff Grants NOT ASSIGNED.** ตรวจจริง `intern_postgres / intern_system / PostgreSQL16.15 / public`, runningEnvironmentdevelopment, ทุกSQLtransactionบังคับread_only=onและROLLBACK. Catalog3ตารางยังไม่มี; legacyCHECKยังอยู่. เปรียบเทียบSourceกับ3ตารางคำร้อง39columns/8FKs/6indexesไม่พบmismatch. LiveRequests/Snapshots/Reviewsอย่างละ0 จึงยังไม่ใช่reallegacyacceptance. Students7 (IT3/INE3/majorNULL1), Staffactive2; ไม่อ่านตัวตน/credentialsและไม่เดาscope.
+
+ตรวจSHA-256ยืนยันInstaller/Test/Backendlockfileตรงartifactที่เคยผ่านisolated20/20; **ไม่ได้รันwriteintegrationใหม่**. Installerมีtransaction/guards/rollbackแต่replaceSnapshotCHECKและมีDDLlocks; ไม่ใช่fullschema/defaults/FKvalidationcertificationหรือpostcommitundo. Backuptools16.15/privatepath+ACLพร้อม แต่freshbackup/restore/rehearsalยังNOT TESTEDและไม่สร้างในรอบนี้.
+
+Read-onlynpm auditยืนยัน **13packageentries: Critical1/High5/Moderate7; direct5/transitive8; prod10/dev3**. Criticalคือproxy-addrซึ่งimpactขึ้นกับtrustproxyconfiguration; ยังไม่พิสูจน์exploitจริง. ไม่fix/upgrade/reinstall/เปลี่ยนlockfile; คำแนะนำdowngradeSequelize/Nodemonต้องreviewแยก. พบ6readinessfindings; ก่อนติดตั้งต้องมีexplicitapproval, freshbackup+verifiedisolatedrestore/rehearsalและsecuritydisposition. StaffUUID/programscopeยัง **PENDING USER APPROVAL** ก่อนactivation. Browser/realaccounts/fullregressionยังNOT TESTED.
+
+รอบนี้เพิ่มเฉพาะ [Deployment Readiness Report](docs/audits/COOP_CATALOG_DEV_DEPLOYMENT_READINESS_2026-11-07.md) และแก้README/[Current Handoff](HANDOFF_fitm-intern.md); รักษาInstaller/Testและงานค้างเดิม. Git **3modified/1untracked → 3modified/2untracked**, ไม่มีลบ/Commit/Push/DatabaseWrite/Grant/Backup/Restore/Deploy. NEXT TASK: **Deployment Approval / Development Migration** ตามpreconditionsในรายงาน ไม่ติดตั้งจริงเองแม้ผลAuditจะเปลี่ยนเป็นGOภายหลัง.
+
+## ประวัติ — Catalog IT/INE Isolated PostgreSQL & Staff RBAC — 7 พฤศจิกายน 2026
+
+**Focused Integration PASS — ยังไม่ติดตั้ง Development.** ทดสอบจริงด้วย PostgreSQL16.15 และ protected HTTP/JWT จาก built Docker image: **20/20 PASS (19 subtests+parent), fail0/skip0**. ครอบคลุมติดตั้ง3ตาราง/seed10วิชา/rerunไม่ซ้ำ, PK/FK/Unique/CHECK, schema drift/NOT VALID/transaction rollback, live Staff Permission `coop_prerequisite_catalog.manage` + IT/INE scope/revocation, Student/Teacher403, CRUD/duplicate/cross-program/concurrent409 และ validation. เกรด A/B+/B/C+/C/D+/D บันทึกได้; F+passed และข้อมูลใหม่ผิดรูปแบบถูกปฏิเสธ. Snapshotคำร้องเดิมรวมlegacy F/free-textไม่เปลี่ยนเมื่อแก้CatalogหรือรันInstallerซ้ำ.
+
+**Isolation evidence:** container `fitm_catalog_test_pg_20261107`, **Network=none / Ports={} / Mounts=[] / PostgreSQL dataในtmpfs**; final DB=`fitm_catalog_test_20261107_image`, `NODE_ENV=test`, loopback`127.0.0.1:5432`ภายในnamespaceทดสอบ ไม่ใช่host Development. Suiteตรวจtarget/allowlist/emptyDBก่อนเขียนและไม่อ่าน`.env`; Fixtures/JWT secretสร้างเฉพาะprocessทดสอบ. ไม่ใช้`intern_system`, ไม่ให้Grantบัญชีจริง, ไม่reset/sync/alter/force และลบเฉพาะcontainerทดสอบหลังเสร็จ.
+
+**แก้รอบนี้:** Installerเพิ่ม explicit test-mode guard, ตรวจPKที่หาย/ผิดและunique indexที่partial/invalid; เพิ่ม `backend/test/coopPrerequisiteCatalogPostgres.test.js` ไฟล์เดียว พร้อมอัปเดตREADME/Handoff. Syntax13ไฟล์, Models/Associations/Routes loading, Backend Docker image build, Frontend production bundleในDocker166modules และdiff/strictUTF-8 **PASS**; health`/`และ`/health/db`HTTP200. Gitก่อนสะอาดที่`aaebbb6` → **3modified/1untracked/0deleted**; ไม่Commit/Pushและไม่แก้A01/Profile/Mentor/Auth/UIอื่น.
+
+**Migration readiness:** ผ่านisolated acceptanceของexplicit model-driven installerแล้ว แต่ **Development installation NOT APPLIED / ต้องอนุมัติแยกก่อน** พร้อมยืนยันtarget, backup/restore, legacy-data preflight และStaff UUID/program grantsที่อนุมัติ. ไม่มีmigration ledger/Umzugใหม่หรือstartup sync. Browser/save+reload/Head display/real accounts/full regression **NOT TESTED** รอบนี้. Buildมีchunk-size warning และnpmรายงาน13dependency vulnerabilitiesที่ยังไม่ได้วิเคราะห์/แก้นอกขอบเขต. NEXT TASKคือการตรวจรับผลและกำหนดงานpreflight/Browserถัดไป ไม่เริ่มติดตั้งจริงเอง.
+
+หลักฐานแยกตามหัวข้อ, Known Issues/Remaining Risks และคำสั่งDockerสำหรับรันซ้ำบนฐานว่างใหม่อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). ผลด้านบนแทนสถานะDEFERREDของการทดสอบCatalog/RBACในประวัติด้านล่างเฉพาะขอบเขตนี้.
+
+## ประวัติ — รายวิชาก่อนออกสหกิจ / ความเห็นหัวหน้าภาควิชา — 7 พฤศจิกายน 2026
 
 ปรับหัวข้อในฟอร์มและรายละเอียด Student Request เป็น “รายวิชาที่ต้องผ่านเกณฑ์ก่อนออกฝึกปฏิบัติงานสหกิจศึกษา”. ผลการเรียนใช้ Select ตามลำดับ A, B+, B, C+, C, D+, D, F พร้อม Backend/Model Validation สำหรับข้อมูลใหม่; ตามนโยบายที่ผู้ใช้ยืนยัน **F + ผ่านแล้วไม่อนุญาต**, กำลังศึกษาไม่ต้องกรอกเกรด. Snapshot เก่าและเกรดเดิมนอกตัวเลือกยังแสดงได้ ไม่แก้ข้อมูลย้อนหลัง.
 
