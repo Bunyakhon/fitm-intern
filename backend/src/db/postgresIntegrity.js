@@ -867,4 +867,5 @@ for (const [name, expression] of Object.entries(require('../models/studentProfil
 }
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./superAdminIntegrity')[key]);
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopTopicExamIntegrity')[key]);
+for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopProjectLinksIntegrity')[key]);
 for (const key of ['constraints', 'functions', 'triggers']) module.exports[key].push(...require('./coopAcademicIntegrity')[key]);

@@ -2,6 +2,7 @@ import { revealNavigationItem } from "../ui/navigationScroll.js";
 import { createMentorStatusSync } from "./studentMentorSync.js";
 import { mountTopicExams } from './coopTopicExams.js';
 import { studentTopicExamView } from './studentCoopProjectView.js';
+import { mountStudentProjectLinks } from './studentProjectLinks.js';
 import { supportsStudentDashboard, canUseCoopFeatures, canOpenStudentPanel, applyStudentDashboardAccess } from "./studentDashboardAccess.js";
 import { mountStudentOverview } from "./studentOverview.js";
 import { renderProfileAdvisors } from "./studentProfileAdvisors.js";
@@ -17,7 +18,8 @@ import { mountStudentProfilePdfImport } from "./studentProfilePdfImport.js";
 import { profileMessage, profileFieldError, clearProfileFieldError, clearProfileErrors, notifyProfileChange, profileModalFocus } from "./studentProfileFeedback.js";
 import { getCurrentStudent } from "../api/auth.api.js";
 import { getStudentToken, clearStudentSession, updateStoredStudent, subscribeStudentSession } from "../auth/studentAuthStorage.js";
-import { getMyJobMatches } from "../api/jobMatching.api.js";
+import { getMyJobMatches, getMyJobMatchingSource, getPublishedJobs } from "../api/jobMatching.api.js";
+import { createJobCard, renderMatchingAnalysis } from "./studentJobRecommendations.js";
 import {
   getMyStudentProfile,
   getStudentProfileImage,
@@ -29,7 +31,7 @@ import {
 import { getTeachers } from "../api/teacher.api.js";
 import { getMyCompanyEvaluation, saveMyCompanyEvaluation } from "../api/studentCoop.api.js";
 import { initCompanyEvaluation } from "./studentCompanyEvaluation.js";
-import { getMyCoopProject, saveMyCoopProject, getMyProjectAdvisorRequest, requestMyProjectAdvisor, getMyCoopProjectFiles, uploadMyCoopProjectFile, previewMyCoopProjectFile } from "../api/studentCoop.api.js";
+import { getMyCoopProject, saveMyCoopProject, getMyProjectAdvisorRequest, getProjectAdvisorTeachers, requestMyProjectAdvisor, getMyCoopProjectFiles, uploadMyCoopProjectFile, previewMyCoopProjectFile } from "../api/studentCoop.api.js";
 import {
   createMentor,
   deleteMyMentor,
@@ -46,6 +48,7 @@ import {
   getCoopPrerequisiteCatalog,
   getMyCoopRequests,
   getClassAdvisorReadiness,
+  getDepartmentHead,
 } from "../api/coopRequest.api.js";
 import { setButtonLoading, showActionModal, showConfirmModal, showToast } from "../ui/feedback.js";
 import { academicSummaryNode, mountAcademicCourses } from './coopAcademicCourses.js';
@@ -69,6 +72,9 @@ const overviewGreeting =
 
 const logoutBtn =
   document.getElementById("logoutBtn");
+let studentLogoutInProgress = false;
+let studentLogoutCompleted = false;
+let studentLogoutConfirmationOpen = false;
 
 // ==============================
 // Profile - Student
@@ -228,11 +234,13 @@ let coopWidgetsInitialized = false;
 // ==============================
 
 async function checkAuthentication() {
+  if (studentLogoutCompleted) { redirectToLogin(); return; }
   const token = getStudentToken();
   studentOverview.clear();
   let authenticated = false;
 
   if (!token) {
+    revokeStudentProjectSession();
     redirectToLogin();
     return;
   }
@@ -274,7 +282,9 @@ async function checkAuthentication() {
     // โหลดข้อมูลเพิ่มเติมจาก student_profiles
     const studentProfile = await loadStudentProfile();
     await loadTeachers(studentProfile?.advisor_teacher_id);
+    if (studentLogoutCompleted || getStudentToken() !== token) return;
     if (canUseCoopFeatures(student)) {
+      if (!startStudentProjectSession(token)) return;
       if (!coopWidgetsInitialized) {
         coopWidgetsInitialized = true;
         initStudentInternshipLog();
@@ -285,6 +295,7 @@ async function checkAuthentication() {
   } catch (error) {
     if (getStudentToken() !== token) { handleStudentSessionChange(); return; }
     if (error.status === 401 || (!authenticated && [403, 404].includes(error.status))) {
+      revokeStudentProjectSession();
       clearStudentSession({ expectedToken: token });
       redirectToLogin();
       return;
@@ -1760,7 +1771,9 @@ async function saveStudentProfile() {
 }
 
 window.addEventListener("beforeunload", event => {
-  if (studentProfileDraft?.hasChanges(readProfileInputs(document)) || captureStudentInfoDraft() || selectedProfileImageFile || (typeof profileWorkspace !== "undefined" && profileWorkspace?.hasChanges()) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.hasChanges())) {
+  // Logout already obtained consent to discard drafts; do not block it again.
+  if (studentLogoutCompleted) return;
+  if (studentProfileDraft?.hasChanges(readProfileInputs(document)) || captureStudentInfoDraft() || selectedProfileImageFile || (typeof profileWorkspace !== "undefined" && profileWorkspace?.hasChanges()) || (typeof profilePdfImport !== "undefined" && profilePdfImport?.hasChanges()) || hasUnsavedProjectWork()) {
     event.preventDefault();
     event.returnValue = "";
   }
@@ -1855,25 +1868,92 @@ function translateStatus(status) {
 function hasUnsavedStudentProfile() {
   return Boolean(studentProfileDraft?.hasChanges(readProfileInputs(document)) || captureStudentInfoDraft() || selectedProfileImageFile || profileWorkspace?.hasChanges() || profilePdfImport?.hasChanges());
 }
-function logout() {
-  if (hasUnsavedStudentProfile()) {
-    showConfirmModal({ title: "ออกจากระบบโดยยังไม่บันทึก?", message: "ข้อมูลประวัติที่ยังไม่บันทึกจะหายเมื่อออกจากระบบ", confirmLabel: "ออกจากระบบ", onConfirm: () => { clearAuthentication(); redirectToLogin(); } });
-    return;
+function completeStudentLogout(expectedToken) {
+  if (studentLogoutInProgress || studentLogoutCompleted) return;
+  studentLogoutInProgress = true;
+  logoutBtn.disabled = true;
+  logoutBtn.setAttribute("aria-busy", "true");
+  try {
+    if (!clearAuthentication({ expectedToken })) {
+      throw new Error("ยังล้างสถานะเข้าสู่ระบบไม่ได้ หรือบัญชีเข้าสู่ระบบเปลี่ยนแล้ว กรุณาลองออกจากระบบอีกครั้ง");
+    }
+    studentLogoutCompleted = true;
+    // Stop cached/pending work and discard only this Student page's UI state.
+    ++studentProfileLoadSequence;
+    currentStudent = currentStudentProfile = studentProfileDraft = null;
+    studentProfileRevision = studentInfoRevision = selectedProfileImageRevision = null;
+    hasLoadedStudentProfile = false;
+    selectedProfileImageFile = null;
+    currentMentor = null;
+    coopRequests = [];
+    coopRequestHasDraft = false;
+    for (const cleanup of [clearProfileImageObjectUrl, () => studentGoogleAccount?.dispose(), () => mentorStatusSync.destroy(), invalidateJobMatchingSource, resetJobBrowser]) {
+      try { cleanup(); } catch { /* Session is already cleared; continue teardown. */ }
+    }
+  } finally {
+    if (studentLogoutCompleted) {
+      // A history/BFCache restore must not expose the previous Student's UI.
+      try {
+        for (const field of document.querySelectorAll("input, textarea, select")) {
+          field.value = "";
+          if (field.type === "checkbox" || field.type === "radio") field.checked = false;
+        }
+      } finally {
+        document.body.replaceChildren();
+        redirectToLogin();
+      }
+    } else {
+      studentLogoutInProgress = false;
+      logoutBtn.disabled = false;
+      logoutBtn.setAttribute("aria-busy", "false");
+    }
   }
-  clearAuthentication();
-
-  window.location.href =
-    "/login.html";
 }
 
-function clearAuthentication() {
-  mentorStatusSync.setActive(false);
-  mentorLoadController?.abort();
-  studentOverview.clear();
-  clearStudentSession();
+function logout(event) {
+  event?.preventDefault();
+  if (studentLogoutInProgress || studentLogoutCompleted || studentLogoutConfirmationOpen) return;
+  const expectedToken = getStudentToken();
+  if (hasUnsavedStudentProfile() || hasUnsavedProjectWork()) {
+    studentLogoutConfirmationOpen = true;
+    showConfirmModal({ title: "ออกจากระบบโดยยังไม่บันทึก?", message: hasUnsavedProjectWork() ? "ข้อมูลที่ยังไม่บันทึกรวมถึงร่างหัวข้อและลิงก์โครงการจะหายเมื่อออกจากระบบ" : "ข้อมูลประวัติที่ยังไม่บันทึกจะหายเมื่อออกจากระบบ", confirmLabel: "ออกจากระบบ", onClose: () => { studentLogoutConfirmationOpen = false; }, onConfirm: () => completeStudentLogout(expectedToken) });
+    return;
+  }
+  try { completeStudentLogout(expectedToken); }
+  catch (error) { if (!studentLogoutCompleted) showToast(error.message, "error"); }
+}
+
+function clearAuthentication(options) {
+  // A late failure from this logged-out page must not clear a newer login.
+  if (studentLogoutCompleted) return true;
+  // Browser authentication must be removed before optional UI cleanup can fail.
+  if (options?.expectedToken === null) {
+    // An inactive Student tab must not publish logout for a newer Role session.
+    try {
+      if (sessionStorage.getItem("token") !== null || localStorage.getItem("token") !== null) return false;
+    } catch { return false; }
+  } else if (!clearStudentSession(options)) return false;
+  for (const cleanup of [revokeStudentProjectSession, () => mentorStatusSync.setActive(false), () => mentorLoadController?.abort(), () => studentOverview.clear()]) {
+    try { cleanup(); } catch { /* Keep clearing the remaining Student UI state. */ }
+  }
+  return true;
 }
 
 function handleStudentSessionChange() {
+  if (studentLogoutCompleted) { redirectToLogin(); return; }
+  revokeStudentProjectSession();
+  invalidateJobMatchingSource();
+  resetJobBrowser();
+  coopHeadSequence++;
+  coopHeadContext = null;
+  coopHeadError = null;
+  coopHeadLoading = false;
+  renderCoopPreviewHead();
+  coopRequestDetailSequence++;
+  coopRequestDetailId = null;
+  coopRequestDetailLoading = false;
+  if (coopRequestDetailData) coopRequestDetailData.hidden = true;
+  document.getElementById('coopDetailHeadApproval')?.replaceChildren();
   coopClassAdvisorSequence++;
   coopClassAdvisor = null;
   coopClassAdvisorLoading = false;
@@ -1904,8 +1984,7 @@ document.getElementById("studentAccountProfileEdit")?.addEventListener("click", 
 });
 
 function redirectToLogin() {
-  window.location.href =
-    "/login.html";
+  window.location.replace("/login.html");
 }
 
 logoutBtn?.addEventListener(
@@ -1937,7 +2016,8 @@ function activateDashboardPanel(targetId) {
   mentorStatusSync.setActive(targetId === "panel-mentor");
   if (targetId === "panel-evaluate") return companyEvaluation.load();
   if (targetId === "panel-request") return loadCoopRequests();
-  if (targetId === "panel-job-matching") renderJobMatchingSource();
+  if (targetId === "panel-coop") loadProjectAdvisorRequest();
+  if (targetId === "panel-job-matching") { refreshJobMatchingSource(); loadJobBrowser(1); }
   if (targetId === "panel-google-account") studentGoogleAccount?.load();
   window.scrollTo({ top: 0, behavior: "smooth" });
   return Promise.resolve(true);
@@ -1949,6 +2029,12 @@ sidebarItems.forEach(
   (item) => {
     item.addEventListener("click", event => {
       const targetId = item.dataset.target;
+      if (targetId && targetId !== "panel-coop" && document.getElementById("panel-coop")?.classList.contains("active") && hasUnsavedProjectWork()) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        const context = projectContext();
+        showConfirmModal({ title: "ออกจากหน้าโครงการ?", message: "ร่างหัวข้อและลิงก์ยังอยู่เมื่อกลับมาในหน้านี้ แต่จะหายหากรีเฟรชหรือปิดหน้า กรุณาบันทึกก่อนออกจากระบบ", confirmLabel: "ไปยังเมนูที่เลือก", onConfirm: () => context && acceptProjectResponse(context) && activateDashboardPanel(targetId) });
+        return;
+      }
       if (!targetId || targetId === "panel-profile" || !document.getElementById("panel-profile")?.classList.contains("active") || !hasUnsavedStudentProfile()) return;
       event.preventDefault(); event.stopImmediatePropagation();
       showConfirmModal({ title: "ออกจากหน้าประวัติ?", message: "Draft ยังอยู่เมื่อกลับมาในหน้านี้ แต่จะหายหากรีเฟรชหรือปิดหน้า กรุณาบันทึกก่อนออกจากระบบ", confirmLabel: "ไปยังเมนูที่เลือก", onConfirm: () => activateDashboardPanel(targetId) });
@@ -1986,8 +2072,15 @@ const jobMatchingProgressNote = document.getElementById("jobMatchingProgressNote
 const jobMatchingResults = document.getElementById("jobMatchingResults");
 const jobMatchingEmpty = document.getElementById("jobMatchingEmpty");
 const jobMatchingResultSource = document.getElementById("jobMatchingResultSource");
+const jobMatchingAnalysis = document.getElementById("jobMatchingAnalysis");
+const jobMatchingRetry = document.getElementById("jobMatchingRetry");
 let isJobMatchingLoading = false;
 let lastMatchingSource = null;
+let savedJobMatchingSource = null;
+let jobMatchingSourceState = "idle";
+let jobMatchingSourceSequence = 0;
+let jobMatchingSourceVersion = 0;
+let jobMatchingRetrySource = "skills";
 let jobMatchingProgressTimer = null;
 let jobMatchingProgressTimeout = null;
 let jobMatchingProgress = 0;
@@ -2061,9 +2154,85 @@ function completeJobMatchingProgress(sourceLabel) {
 }
 
 function renderJobMatchingSource() {
-  setText(document.getElementById("jobMatchingMajor"), currentStudent?.major?.trim() || "ยังไม่ได้ระบุ");
-  setText(document.getElementById("jobMatchingSkills"), currentStudentProfile?.related_skills?.trim() || "ยังไม่ได้ระบุ");
+  const unavailable = jobMatchingSourceState === "error"
+    ? "โหลดข้อมูลที่บันทึกไม่สำเร็จ กรุณาเปิดเมนูนี้ใหม่"
+    : "กำลังโหลดข้อมูลที่บันทึก...";
+  setText(document.getElementById("jobMatchingMajor"), savedJobMatchingSource
+    ? savedJobMatchingSource.major?.trim() || "ยังไม่ได้ระบุ" : unavailable);
+  const target = document.getElementById("jobMatchingSkills");
+  if (target) {
+    target.replaceChildren();
+    if (!savedJobMatchingSource) {
+      target.textContent = unavailable;
+    } else {
+      const skills = savedJobMatchingSource.computer_skills;
+      if (skills.length) {
+        const list = createJobMatchingElement("div", "", "job-skill-chips");
+        skills.forEach((skill) => {
+          const level = skill.proficiency_label || skill.proficiency;
+          list.append(createJobMatchingElement("span", `${skill.skill_name}${level ? ` · ${level}` : ""}`, "job-skill-chip"));
+        });
+        target.append(list);
+      }
+      const related = savedJobMatchingSource.related_skills?.trim();
+      if (related) target.append(createJobMatchingElement("p", `Related Skills: ${related}`, "job-related-skills"));
+      if (!skills.length && !related) target.textContent = "ยังไม่ได้ระบุ";
+    }
+  }
+  if (jobMatchingSkillsBtn) jobMatchingSkillsBtn.disabled = isJobMatchingLoading || jobMatchingSourceState !== "ready";
+  [[jobMatchingSkillsBtn, "fa-wand-magic-sparkles"], [jobMatchingResumeBtn, "fa-file-lines"]].forEach(([button, iconName]) => {
+    if (!button) return;
+    const label = button.textContent;
+    const icon = document.createElement("i");
+    icon.className = `fa-solid ${button.classList.contains("is-loading") ? "fa-spinner fa-spin" : iconName}`;
+    icon.setAttribute("aria-hidden", "true");
+    button.replaceChildren(icon, document.createTextNode(` ${label.trim()}`));
+  });
 }
+
+function invalidateJobMatchingSource() {
+  jobMatchingSourceVersion++;
+  jobMatchingSourceSequence++;
+  savedJobMatchingSource = null;
+  jobMatchingSourceState = "idle";
+  lastMatchingSource = null;
+  jobMatchingResults?.replaceChildren();
+  renderMatchingAnalysis(jobMatchingAnalysis, null);
+  clearMessage(jobMatchingMessage);
+  if (jobMatchingEmpty) jobMatchingEmpty.hidden = true;
+  if (jobMatchingResultSource) { jobMatchingResultSource.hidden = true; jobMatchingResultSource.textContent = ""; }
+  renderJobMatchingSource();
+}
+
+async function refreshJobMatchingSource() {
+  const sequence = ++jobMatchingSourceSequence, token = getStudentToken();
+  savedJobMatchingSource = null;
+  jobMatchingSourceState = "loading";
+  renderJobMatchingSource();
+  try {
+    const result = await getMyJobMatchingSource();
+    if (sequence !== jobMatchingSourceSequence || token !== getStudentToken()) return;
+    if (!Array.isArray(result?.matching_source?.computer_skills)) throw new Error("Invalid matching source");
+    savedJobMatchingSource = result.matching_source;
+    jobMatchingSourceState = "ready";
+  } catch (error) {
+    if (sequence !== jobMatchingSourceSequence || token !== getStudentToken()) return;
+    savedJobMatchingSource = null;
+    jobMatchingSourceState = "error";
+    jobMatchingRetrySource = "skills";
+    if (jobMatchingRetry) jobMatchingRetry.hidden = false;
+    if (error.status === 401) { clearAuthentication(); redirectToLogin(); return; }
+  }
+  renderJobMatchingSource();
+}
+
+document.addEventListener("student-profile-state", (event) => {
+  // Profile editors emit saved/ready only after receiving a persisted snapshot.
+  // Ignore edit/draft notifications, and never read their form controls.
+  if (!["saved", "ready"].includes(event.detail?.outcome)) return;
+  invalidateJobMatchingSource();
+  if (document.getElementById("panel-job-matching")?.classList.contains("active")) refreshJobMatchingSource();
+});
 
 function createJobMatchingElement(tag, value, className = "") {
   const element = document.createElement(tag);
@@ -2073,93 +2242,14 @@ function createJobMatchingElement(tag, value, className = "") {
 }
 
 function renderJobMatches(matches) {
-  const cards = matches.map((match) => {
-    const card = document.createElement("article");
-    card.className = "job-matching-card";
-    if (match.rank === 1) {
-      card.classList.add("is-top-ranked");
-    }
-
-    const header = document.createElement("div");
-    header.className = "job-matching-card-header";
-    const identity = document.createElement("div");
-    identity.className = "job-matching-identity";
-    const rank = createJobMatchingElement("span", `#${match.rank}`, "job-matching-rank");
-    rank.setAttribute("aria-label", `อันดับ ${match.rank}`);
-    identity.append(rank);
-
-    const titleGroup = document.createElement("div");
-    titleGroup.className = "job-matching-title-group";
-    titleGroup.append(
-      createJobMatchingElement("h4", match.title || "ไม่ระบุชื่อตำแหน่ง", "job-matching-title"),
-      createJobMatchingElement("p", match.company?.name || "ไม่ระบุชื่อสถานประกอบการ", "job-matching-company"),
-    );
-    identity.append(titleGroup);
-    if (match.rank === 1) {
-      identity.append(createJobMatchingElement("span", "แนะนำสูงสุด", "job-matching-top-label"));
-    }
-
-    const score = document.createElement("div");
-    score.className = "job-matching-score";
-    score.setAttribute("aria-label", `ความเหมาะสม ${(match.score * 100).toFixed(2)}%`);
-    score.append(
-      createJobMatchingElement("span", "ความเหมาะสม", "job-matching-score-label"),
-      createJobMatchingElement("strong", `${(match.score * 100).toFixed(2)}%`, "job-matching-score-value"),
-    );
-    header.append(identity, score);
-    card.append(header);
-
-    const metadata = document.createElement("div");
-    metadata.className = "job-matching-metadata";
-    const appendMetadata = (iconName, value, className = "") => {
-      if (value == null || value === "") return;
-      const item = document.createElement("span");
-      item.className = `job-matching-meta-item ${className}`.trim();
-      const icon = document.createElement("i");
-      icon.className = `fa-solid ${iconName}`;
-      icon.setAttribute("aria-hidden", "true");
-      item.append(icon, createJobMatchingElement("span", value));
-      metadata.append(item);
-    };
-    appendMetadata("fa-location-dot", match.company?.province || "ยังไม่ได้ระบุ");
-    const labels = { onsite: "On-site", hybrid: "Hybrid", remote: "Remote" };
-    (match.workModes || []).forEach(({ mode }) => {
-      if (mode) {
-        appendMetadata("fa-building", labels[mode] || mode);
-      }
-    });
-    appendMetadata("fa-users", match.quota == null || match.quota === "" ? "" : `รับ ${match.quota} คน`);
-    appendMetadata("fa-baht-sign", match.compensation_text);
-    appendMetadata("fa-calendar-days", match.work_days_per_week == null || match.work_days_per_week === "" ? "" : `${match.work_days_per_week} วัน/สัปดาห์`);
-    if (metadata.childElementCount) card.append(metadata);
-
-    if (match.description) {
-      card.append(createJobMatchingElement("p", match.description, "job-matching-description"));
-    }
-    if (match.category) {
-      const categoryLabels = {
-        information_technology: "Information Technology",
-      };
-      const category = createJobMatchingElement("span", categoryLabels[match.category] || match.category, "job-matching-category");
-      card.append(category);
-    }
-    const coopRequestButton = document.createElement("button");
-    coopRequestButton.type = "button";
-    coopRequestButton.className = "btn-primary job-matching-coop-request";
-    coopRequestButton.dataset.jobPostingId = match.job_posting_id;
-    coopRequestButton.textContent = "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้";
-    coopRequestButton.disabled = !canUseCoopFeatures(currentStudent);
-    card.append(coopRequestButton);
-    return card;
-  });
+  const cards = matches.map((match) => createJobCard(match, { recommendation: true, canWrite: canUseCoopFeatures(currentStudent) }));
   jobMatchingResults.replaceChildren(...cards);
 }
-
 const JOB_MATCHING_ERRORS = {
   400: "เลือกแหล่งข้อมูลสำหรับวิเคราะห์ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง",
   403: "บัญชีนี้ไม่มีสิทธิ์ใช้งานการแนะนำตำแหน่งงาน",
   404: "ไม่พบข้อมูลนักศึกษา",
-  422: "ยังไม่มีข้อมูลเพียงพอสำหรับการจับคู่ กรุณาระบุสาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา",
+  422: "ยังไม่มีข้อมูลเพียงพอ กรุณาบันทึกทักษะหรืออัปโหลด Resume ที่อ่านได้ก่อนวิเคราะห์",
   502: "ระบบได้รับผลการวิเคราะห์ที่ไม่สมบูรณ์ กรุณาลองใหม่อีกครั้ง",
   503: "ระบบวิเคราะห์ตำแหน่งงานไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้ง",
   504: "การวิเคราะห์ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง",
@@ -2171,7 +2261,7 @@ const JOB_MATCHING_SOURCE_LABELS = {
 };
 
 const JOB_MATCHING_CODE_ERRORS = {
-  MATCH_PROFILE_TEXT_REQUIRED: "กรุณาระบุสาขาหรือทักษะที่เกี่ยวข้องก่อนวิเคราะห์จากทักษะ",
+  MATCH_PROFILE_TEXT_REQUIRED: "กรุณาบันทึกทักษะคอมพิวเตอร์หรือทักษะที่เกี่ยวข้องก่อนวิเคราะห์จากทักษะ",
   MATCH_RESUME_TEXT_REQUIRED: "กรุณาอัปโหลด Resume ที่ระบบสามารถอ่านข้อความได้ก่อนวิเคราะห์จาก Resume",
   MATCH_SOURCE_INVALID: "เลือกแหล่งข้อมูลสำหรับวิเคราะห์ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง",
 };
@@ -2181,15 +2271,21 @@ async function loadJobMatches(source) {
     return;
   }
   isJobMatchingLoading = true;
+  jobMatchingRetrySource = source;
+  if (jobMatchingRetry) jobMatchingRetry.hidden = true;
+  const sourceVersion = jobMatchingSourceVersion, sessionToken = getStudentToken();
+  const sourceChanged = () => sessionToken !== getStudentToken()
+    || sourceVersion !== jobMatchingSourceVersion;
   lastMatchingSource = null;
   jobMatchingResults.replaceChildren();
+  renderMatchingAnalysis(jobMatchingAnalysis, null);
   jobMatchingResultSource.hidden = true;
   jobMatchingResultSource.textContent = "";
   jobMatchingResults.classList.remove("job-matching-content-in");
   jobMatchingEmpty.classList.remove("job-matching-content-in");
   jobMatchingMessage.classList.remove("job-matching-content-in");
   jobMatchingLoading.hidden = false;
-  startJobMatchingProgress();
+  stopJobMatchingProgress();
   const sourceLabel = JOB_MATCHING_SOURCE_LABELS[source];
   const loadingText = source === "resume"
     ? "กำลังวิเคราะห์จาก Resume..."
@@ -2197,23 +2293,34 @@ async function loadJobMatches(source) {
   jobMatchingLoadingTitle.textContent = loadingText;
   jobMatchingLoadingCaption.textContent = source === "resume"
     ? "กำลังใช้ข้อความที่อ่านได้จาก Resume เพื่อจับคู่ตำแหน่งงาน"
-    : "กำลังใช้สาขาและทักษะที่เกี่ยวข้องในประวัตินักศึกษา";
+    : "กำลังใช้ทักษะที่บันทึกไว้ในประวัตินักศึกษา";
   jobMatchingEmpty.hidden = true;
   jobMatchingResults.setAttribute("aria-busy", "true");
   setButtonLoading(jobMatchingSkillsBtn, true, source === "skills" ? "กำลังวิเคราะห์ทักษะ..." : "วิเคราะห์จากทักษะ");
   setButtonLoading(jobMatchingResumeBtn, true, source === "resume" ? "กำลังวิเคราะห์ Resume..." : "วิเคราะห์จาก Resume");
+  renderJobMatchingSource();
   showMessage(jobMatchingMessage, loadingText, "loading");
 
   try {
     const result = await getMyJobMatches({ source });
+    if (sourceChanged()) return;
     if (!Array.isArray(result?.matches)) {
       throw new Error("Invalid matching response");
     }
-    await waitForJobMatchingProgressMinimum();
-    await completeJobMatchingProgress(sourceLabel);
+    if (sourceChanged()) return;
+    if (result.matching_source) {
+      if (!Array.isArray(result.matching_source?.computer_skills)) throw new Error("Invalid matching source");
+      // Render the exact persisted projection used for this analysis, including
+      // changes committed in another tab since the panel was opened.
+      ++jobMatchingSourceSequence;
+      savedJobMatchingSource = result.matching_source;
+      jobMatchingSourceState = "ready";
+      renderJobMatchingSource();
+    }
     lastMatchingSource = source;
     jobMatchingResultSource.textContent = `วิเคราะห์จาก: ${sourceLabel}`;
     jobMatchingResultSource.hidden = false;
+    renderMatchingAnalysis(jobMatchingAnalysis, result.matching_analysis);
     renderJobMatches(result.matches);
     jobMatchingLoading.hidden = true;
     jobMatchingResults.classList.add("job-matching-content-in");
@@ -2223,16 +2330,19 @@ async function loadJobMatches(source) {
     }
     clearMessage(jobMatchingMessage);
     if (result.matches.length) {
-      showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว พบตำแหน่งงานที่เหมาะสม ${result.matches.length} ตำแหน่ง`, "success");
+      showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว พบตำแหน่งงานตามคะแนนความคล้ายข้อความ ${result.matches.length} ตำแหน่ง`, "success");
     } else {
       showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว`, "success");
     }
     jobMatchingMessage.classList.add("job-matching-content-in");
   } catch (error) {
+    if (sourceChanged()) return;
     stopJobMatchingProgress();
     jobMatchingLoading.hidden = true;
     jobMatchingResults.replaceChildren();
+    renderMatchingAnalysis(jobMatchingAnalysis, null);
     jobMatchingResultSource.hidden = true;
+    if (jobMatchingRetry) jobMatchingRetry.hidden = false;
     if (error.status === 401) {
       clearAuthentication();
       redirectToLogin();
@@ -2251,14 +2361,75 @@ async function loadJobMatches(source) {
     jobMatchingResults.setAttribute("aria-busy", "false");
     setButtonLoading(jobMatchingSkillsBtn, false, "กำลังวิเคราะห์ทักษะ...");
     setButtonLoading(jobMatchingResumeBtn, false, "กำลังวิเคราะห์ Resume...");
+    renderJobMatchingSource();
   }
 }
 
 jobMatchingSkillsBtn?.addEventListener("click", () => loadJobMatches("skills"));
 jobMatchingResumeBtn?.addEventListener("click", () => loadJobMatches("resume"));
+jobMatchingRetry?.addEventListener("click", async () => {
+  if (jobMatchingRetrySource === "skills" && jobMatchingSourceState !== "ready") await refreshJobMatchingSource();
+  if (jobMatchingRetrySource !== "skills" || jobMatchingSourceState === "ready") loadJobMatches(jobMatchingRetrySource);
+});
 document.getElementById("editJobMatchingProfileBtn")?.addEventListener("click", () => {
   document.querySelector('.sidebar-item[data-target="panel-profile"]')?.click();
 });
+
+// General browsing is independent from scored recommendations and requires no skills.
+let jobBrowserSequence = 0;
+let jobBrowserPage = 1;
+let jobBrowserLoading = false;
+const jobBrowserForm = document.getElementById("jobBrowserForm");
+const jobBrowserResults = document.getElementById("jobBrowserResults");
+const jobBrowserMessage = document.getElementById("jobBrowserMessage");
+const jobBrowserPrevious = document.getElementById("jobBrowserPrevious");
+const jobBrowserNext = document.getElementById("jobBrowserNext");
+
+function resetJobBrowser() {
+  ++jobBrowserSequence;
+  jobBrowserLoading = false;
+  jobBrowserPage = 1;
+  jobBrowserResults?.replaceChildren();
+  clearMessage(jobBrowserMessage);
+  setText(document.getElementById("jobBrowserPage"), "");
+}
+
+async function loadJobBrowser(page = 1) {
+  if (!jobBrowserForm) return;
+  const sequence = ++jobBrowserSequence, token = getStudentToken();
+  const filters = new FormData(jobBrowserForm);
+  jobBrowserLoading = true;
+  jobBrowserResults.replaceChildren();
+  jobBrowserResults.setAttribute("aria-busy", "true");
+  jobBrowserPrevious.disabled = true; jobBrowserNext.disabled = true;
+  const searchButton = jobBrowserForm.querySelector('button[type="submit"]');
+  setButtonLoading(searchButton, true, "กำลังค้นหา...", "ค้นหาประกาศ");
+  showMessage(jobBrowserMessage, "กำลังค้นหาประกาศ...", "loading");
+  try {
+    const result = await getPublishedJobs({ q: filters.get("q"), category: filters.get("category"), province: filters.get("province"), page });
+    if (sequence !== jobBrowserSequence || token !== getStudentToken()) return;
+    if (!Array.isArray(result.jobs)) throw new Error("ข้อมูลประกาศไม่สมบูรณ์ กรุณาลองใหม่");
+    jobBrowserPage = result.page;
+    jobBrowserResults.replaceChildren(...result.jobs.map((job) => createJobCard(job, { recommendation: false, canWrite: canUseCoopFeatures(currentStudent) })));
+    jobBrowserPrevious.disabled = result.page <= 1;
+    jobBrowserNext.disabled = result.page * result.limit >= result.total;
+    setText(document.getElementById("jobBrowserPage"), `หน้า ${result.page} · ${result.total} ประกาศ`);
+    showMessage(jobBrowserMessage, result.jobs.length ? `พบ ${result.total} ประกาศตามเงื่อนไขค้นหา` : "ไม่พบประกาศตามเงื่อนไข ลองเปลี่ยนคำค้นหาหรือตัวกรอง", "info");
+  } catch (error) {
+    if (sequence !== jobBrowserSequence || token !== getStudentToken()) return;
+    if (error.status === 401) { clearAuthentication(); redirectToLogin(); return; }
+    showMessage(jobBrowserMessage, error.message || "ค้นหาประกาศไม่สำเร็จ กรุณากดค้นหาอีกครั้ง", "error");
+  } finally {
+    if (sequence === jobBrowserSequence) {
+      jobBrowserLoading = false;
+      jobBrowserResults.setAttribute("aria-busy", "false");
+      setButtonLoading(searchButton, false, "กำลังค้นหา...", "ค้นหาประกาศ");
+    }
+  }
+}
+jobBrowserForm?.addEventListener("submit", (event) => { event.preventDefault(); if (!jobBrowserLoading) loadJobBrowser(1); });
+jobBrowserPrevious?.addEventListener("click", () => { if (!jobBrowserLoading) loadJobBrowser(Math.max(1, jobBrowserPage - 1)); });
+jobBrowserNext?.addEventListener("click", () => { if (!jobBrowserLoading) loadJobBrowser(jobBrowserPage + 1); });
 
 // ==============================
 // Resume
@@ -2513,6 +2684,8 @@ let coopRequestsLoadError = false;
 let coopRequestSubmitting = false;
 let coopRequestCancelling = false;
 let coopRequestDetailLoading = false;
+let coopRequestDetailId = null;
+let coopRequestDetailSequence = 0;
 let coopRequestModalReturnFocus = null;
 let coopRequestDetailModalReturnFocus = null;
 
@@ -2531,7 +2704,34 @@ let coopCatalogSequence = 0;
 let coopClassAdvisor = null;
 let coopClassAdvisorLoading = false;
 let coopClassAdvisorSequence = 0;
+let coopHeadContext = null;
+let coopHeadLoading = false;
+let coopHeadError = null;
+let coopHeadSequence = 0;
 let coopRequestHasDraft = false;
+
+function renderCoopPreviewHead() {
+  renderCoopHeadApproval({ department_head: coopHeadContext }, document.getElementById('coopPreviewHeadApproval'), {
+    loading: coopHeadLoading, error: coopHeadError, preview: true,
+  });
+}
+
+async function loadCoopDepartmentHead() {
+  const sequence = ++coopHeadSequence, token = getStudentToken();
+  coopHeadLoading = true; coopHeadError = null; coopHeadContext = null;
+  renderCoopPreviewHead();
+  try {
+    const result = await getDepartmentHead();
+    if (sequence !== coopHeadSequence || token !== getStudentToken()) return;
+    if (!result?.data || typeof result.data.resolution !== 'string') throw Error('ข้อมูลหัวหน้าภาควิชาไม่ถูกต้อง กรุณาลองอีกครั้ง');
+    coopHeadContext = result.data;
+  } catch (error) {
+    if (sequence !== coopHeadSequence || token !== getStudentToken()) return;
+    coopHeadError = getCoopRequestErrorMessage(error, 'โหลดข้อมูลหัวหน้าภาควิชา');
+  } finally {
+    if (sequence === coopHeadSequence) { coopHeadLoading = false; renderCoopPreviewHead(); }
+  }
+}
 
 function coopAdvisorWarning() {
   if (hasAdvisorSelectionChanged) return 'มีการเปลี่ยนอาจารย์ที่ยังไม่ได้บันทึก กรุณาบันทึกในเมนูประวัตินักศึกษาก่อนยื่นคำร้อง ข้อมูลคำร้องที่กรอกยังอยู่';
@@ -2541,7 +2741,10 @@ function coopAdvisorWarning() {
 
 function renderCoopClassAdvisor() {
   setText(coopAdvisorName, coopClassAdvisor?.advisor ? formatTeacherName(coopClassAdvisor.advisor) : coopClassAdvisorLoading ? 'กำลังตรวจสอบข้อมูลที่บันทึกไว้' : 'ยังไม่มีข้อมูลอาจารย์ที่พร้อมพิจารณา');
-  setText(document.getElementById('coopClassAdvisorStatus'), coopAdvisorWarning() || coopClassAdvisor.message);
+  const warning = coopAdvisorWarning();
+  const status = document.getElementById('coopClassAdvisorStatus');
+  setText(status, warning || '');
+  if (status) status.hidden = !warning;
   const retry = document.getElementById('coopClassAdvisorRetry');
   if (retry) { retry.hidden = Boolean(coopClassAdvisor?.ready); retry.disabled = coopClassAdvisorLoading || coopRequestSubmitting; }
   if (saveCoopRequestBtn) saveCoopRequestBtn.disabled = coopRequestSubmitting || Boolean(coopAdvisorWarning()) || coopCatalogLoading || Boolean(coopCatalogError) || !coopCatalogRevision;
@@ -2564,15 +2767,6 @@ async function loadCoopClassAdvisor() {
 }
 
 document.getElementById('coopClassAdvisorRetry')?.addEventListener('click', loadCoopClassAdvisor);
-document.getElementById('coopClassAdvisorProfile')?.addEventListener('click', async () => {
-  if (coopRequestSubmitting) return;
-  closeCoopRequestModal();
-  await activateDashboardPanel('panel-profile');
-  studentProfileTabs?.select('profilePersonalTab');
-  studentAdvisorInput?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-  studentAdvisorInput?.focus?.({ preventScroll: true });
-  showToast('เลือกและบันทึกอาจารย์ในประวัตินักศึกษา แล้วกลับมาที่คำร้อง ข้อมูลที่กรอกยังอยู่', 'info');
-});
 
 async function loadCoopPrerequisiteCatalog() {
   const selectedProgram = coopPrerequisiteProgram, sequence = ++coopCatalogSequence;
@@ -2960,6 +3154,7 @@ function setCoopRequestFormSubmitting(isSubmitting) {
   coopRequestForm?.querySelectorAll("input, select, textarea, button").forEach((element) => {
     element.disabled = isSubmitting;
   });
+  syncCoopCompanyFieldOwnership(isSubmitting);
   renderCoopPrerequisiteCourses();
   setButtonLoading(
     saveCoopRequestBtn,
@@ -2968,6 +3163,16 @@ function setCoopRequestFormSubmitting(isSubmitting) {
     "ยื่นคำร้อง",
   );
   renderCoopClassAdvisor();
+}
+
+function syncCoopCompanyFieldOwnership(isSubmitting = coopRequestSubmitting) {
+  const canonicalCompany = Boolean(selectedCoopCompanyId);
+  const name = document.getElementById("coopCompanyName");
+  const province = document.getElementById("coopCompanyProvince");
+  const address = document.getElementById("coopCompanyAddress");
+  if (name) name.readOnly = canonicalCompany;
+  if (address) address.readOnly = canonicalCompany;
+  if (province) province.disabled = isSubmitting || canonicalCompany;
 }
 
 function applyCoopCompany(company, { preserveJob = false } = {}) {
@@ -2986,10 +3191,9 @@ function applyCoopCompany(company, { preserveJob = false } = {}) {
   if (company?.province && province.value !== company.province) {
     const option = document.createElement("option"); option.value = company.province; option.textContent = company.province; province.append(option); province.value = company.province;
   }
-  address.value = company ? [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ") : "";
-  name.readOnly = Boolean(company);
-  province.disabled = Boolean(company);
-  address.readOnly = Boolean(company);
+  const companyAddress = company ? [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ") : "";
+  address.value = company?.development_data ? `ข้อมูลจำลองสำหรับ Development: ${companyAddress}` : companyAddress;
+  syncCoopCompanyFieldOwnership();
   if (coopCompanySearchResults) coopCompanySearchResults.replaceChildren();
   if (coopCompanyDuplicateMessage) coopCompanyDuplicateMessage.textContent = "";
 }
@@ -3020,7 +3224,13 @@ function openCoopRequestModal() {
     loadCoopPrerequisiteCatalog();
   }
   coopRequestHasDraft = true;
+  // Display-only date for the draft form; persisted submission/review dates
+  // continue to come from the request API and are never replaced with today.
+  setText(document.getElementById('coopRequestFormDate'), new Intl.DateTimeFormat('th-TH', {
+    timeZone: 'Asia/Bangkok', calendar: 'buddhist', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(new Date()));
   loadCoopClassAdvisor();
+  loadCoopDepartmentHead();
   clearMessage(coopRequestFormMessage);
   setCoopRequestFormSubmitting(false);
   coopCreateFocus.open();
@@ -3033,6 +3243,8 @@ function openCoopRequestModal() {
 
 function closeCoopRequestModal() {
   if (coopRequestSubmitting) return;
+  coopHeadSequence++;
+  coopHeadLoading = false;
   companySearchSequence++;
   companyDuplicateSequence++;
   coopRequestModal?.classList.remove("open");
@@ -3134,6 +3346,8 @@ async function submitCoopRequestForm(event) {
 
 function closeCoopRequestDetailModal() {
   if (coopRequestDetailLoading || coopAcademicDetail?.busy) return;
+  coopRequestDetailId = null;
+  coopRequestDetailSequence++;
   coopAcademicDetail?.dispose(); coopAcademicDetail = null;
   coopRequestDetailModal?.classList.remove("open");
   coopRequestDetailModal?.setAttribute("aria-hidden", "true");
@@ -3243,29 +3457,45 @@ function renderCoopReviewHistory(request) {
   if (!target.children.length) { const row = document.createElement('li'); row.textContent = 'ยังไม่มีประวัติการดำเนินการ'; target.append(row); }
 }
 
-function renderCoopHeadApproval(request) {
-  const target = document.getElementById("coopDetailHeadApproval");
+function renderCoopHeadApproval(request, target = document.getElementById("coopDetailHeadApproval"), { loading = false, error = null, preview = false } = {}) {
   if (!target) return;
+  target.setAttribute('aria-busy', String(loading));
+  if (loading || error) {
+    target.replaceChildren(createCoopDetailItem('ข้อมูลหัวหน้าภาควิชา', loading ? 'กำลังโหลดข้อมูลหัวหน้าภาควิชา...' : error, true));
+    return;
+  }
+  const context = request.department_head;
+  const head = context?.current_responsible_head;
+  const missingHead = context?.resolution === 'ambiguous'
+    ? 'ไม่มีข้อมูลผู้รับผิดชอบที่ระบุได้แน่ชัด พบหัวหน้าภาควิชาหลายคน กรุณาติดต่อเจ้าหน้าที่'
+    : 'ไม่มีข้อมูลผู้รับผิดชอบ';
+  target.replaceChildren(
+    createCoopDetailItem('หัวหน้าภาควิชาผู้รับผิดชอบปัจจุบัน', head ? formatTeacherName(head) : missingHead, true),
+    createCoopDetailItem('ตำแหน่งผู้รับผิดชอบปัจจุบัน', head?.position || 'ไม่มีข้อมูลตำแหน่ง'),
+    createCoopDetailItem('ภาควิชาที่รับผิดชอบ', context?.department || 'ไม่มีข้อมูลภาควิชา'),
+  );
+  if (preview) return;
   const reviews = Array.isArray(request.reviews) ? request.reviews : [];
   // API orders the persisted history by created_at then id; never infer a vote.
   const review = [...reviews].reverse().find(row => row.actor_role === "department_head" && ["approve", "reject"].includes(row.decision));
   if (review) {
     const name = review.teacher ? formatTeacherName(review.teacher) : "ไม่พบข้อมูลชื่อผู้พิจารณา";
-    target.replaceChildren(
+    target.append(
       createCoopDetailItem("สถานะการพิจารณา", "พิจารณาแล้ว"),
       createCoopDetailItem("ผลการพิจารณา", review.decision === "approve" ? "อนุมัติ" : "ไม่อนุมัติ"),
       createCoopDetailItem("หัวหน้าภาควิชาผู้พิจารณา", name),
+      createCoopDetailItem("ตำแหน่งผู้พิจารณา (ข้อมูลปัจจุบัน)", review.teacher?.position || 'ไม่มีข้อมูลตำแหน่ง'),
       createCoopDetailItem("วันที่พิจารณา", formatCoopDate(review.created_at || review.createdAt, true)),
       createCoopDetailItem("เหตุผล / ความเห็น", typeof review.reason === "string" && review.reason.trim() ? review.reason : "ไม่ได้ระบุความเห็น", true),
     );
     return;
   }
   const message = request.status === "department_head_review" ? "รอการพิจารณาจากหัวหน้าภาควิชา"
-    : ["submitted", "staff_review", "advisor_review"].includes(request.status) ? "ยังไม่ถึงขั้นตอนพิจารณาของหัวหน้าภาควิชา"
+    : !request.status || ["submitted", "staff_review", "advisor_review"].includes(request.status) ? "ยังไม่ถึงขั้นตอนพิจารณาของหัวหน้าภาควิชา"
     : request.status === "cancelled" ? "คำร้องถูกยกเลิกแล้ว ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชา"
     : request.status === "rejected" ? "คำร้องไม่ผ่านการอนุมัติ ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชา"
     : "ไม่พบประวัติการพิจารณาของหัวหน้าภาควิชาในข้อมูลคำร้องนี้";
-  target.replaceChildren(createCoopDetailItem("สถานะการพิจารณา", message, true));
+  target.append(createCoopDetailItem("สถานะการพิจารณา", message, true));
 }
 
 function renderCoopPrerequisiteSnapshot(snapshot) {
@@ -3292,27 +3522,38 @@ function renderCoopPrerequisiteSnapshot(snapshot) {
 }
 
 async function openCoopRequestDetail(id) {
-  if (!id || coopRequestDetailLoading) return;
-  coopRequestDetailModalReturnFocus = document.activeElement;
+  if (!id || coopRequestDetailLoading || coopAcademicDetail?.busy) return;
+  if (!coopRequestDetailModal?.classList.contains('open')) coopRequestDetailModalReturnFocus = document.activeElement;
   coopDetailFocus.open();
   coopRequestDetailModal?.classList.add("open");
   coopRequestDetailModal?.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
   window.requestAnimationFrame(() => closeCoopRequestDetailModalBtn?.focus());
   coopRequestDetailLoading = true;
+  coopRequestDetailId = id;
+  const sequence = ++coopRequestDetailSequence, token = getStudentToken();
+  const retry = document.getElementById('coopRequestDetailRetry');
+  if (retry) { retry.hidden = true; retry.disabled = true; }
   coopRequestDetailContent?.setAttribute("aria-busy", "true");
   coopRequestDetailData.hidden = true;
   showMessage(coopRequestDetailMessage, "กำลังโหลดรายละเอียดคำร้อง...", "loading");
   try {
     const result = await getCoopRequestById(id);
+    if (sequence !== coopRequestDetailSequence || token !== getStudentToken()) return;
     renderCoopRequestDetail(result?.data || {});
     clearMessage(coopRequestDetailMessage);
     coopRequestDetailData.hidden = false;
+    if (retry) { retry.textContent = 'รีเฟรชรายละเอียด'; retry.hidden = false; }
   } catch (error) {
+    if (sequence !== coopRequestDetailSequence || token !== getStudentToken()) return;
     showMessage(coopRequestDetailMessage, getCoopRequestErrorMessage(error, "โหลดรายละเอียด"), "error");
+    if (retry) { retry.textContent = 'ลองโหลดรายละเอียดอีกครั้ง'; retry.hidden = false; }
   } finally {
-    coopRequestDetailLoading = false;
-    coopRequestDetailContent?.setAttribute("aria-busy", "false");
+    if (sequence === coopRequestDetailSequence) {
+      coopRequestDetailLoading = false;
+      coopRequestDetailContent?.setAttribute("aria-busy", "false");
+      if (retry) retry.disabled = false;
+    }
   }
 }
 
@@ -3364,7 +3605,7 @@ coopCompanySearch?.addEventListener("input", () => {
       if (sequence !== companySearchSequence || coopCompanySearch.value.trim() !== query || !coopRequestModal?.classList.contains('open')) return;
       const rows = (result?.data || []).map((company) => {
         const row = document.createElement("div"); row.className = "coop-company-result";
-        const details = document.createElement("span"); details.textContent = `${company.name} — ${company.province}`;
+        const details = document.createElement("span"); details.textContent = `${company.name} — ${company.province}${company.development_data ? " — ข้อมูลจำลองสำหรับ Development" : ""}`;
         const select = document.createElement("button"); select.type = "button"; select.className = "btn-secondary"; select.textContent = "เลือก";
         select.addEventListener("click", () => applyCoopCompany(company)); row.append(details, select); return row;
       });
@@ -3385,32 +3626,52 @@ document.getElementById("coopCompanyName")?.addEventListener("blur", async (even
     coopCompanyDuplicateMessage.replaceChildren(document.createTextNode("พบชื่อบริษัทที่อาจซ้ำ: "));
     duplicates.forEach((company) => {
       const button = document.createElement("button"); button.type = "button"; button.className = "btn-secondary";
-      button.textContent = `ใช้ ${company.name} (${company.province})`;
+      button.textContent = `ใช้ ${company.name} (${company.province})${company.development_data ? " — ข้อมูลจำลองสำหรับ Development" : ""}`;
       button.addEventListener("click", () => applyCoopCompany(company));
       coopCompanyDuplicateMessage.append(button);
     });
   } catch (error) { if (sequence === companyDuplicateSequence) showToast(error.message || "ตรวจสอบชื่อบริษัทไม่สำเร็จ", "error"); }
 });
-jobMatchingResults?.addEventListener("click", async (event) => {
+let jobContextConfirmationOpen = false;
+function handleJobRequestClick(event) {
   const button = event.target.closest("button[data-job-posting-id]");
-  if (!button || button.disabled) return;
-  if ((!coopRequestsLoaded || coopRequestsLoadError) && !await loadCoopRequests()) return;
-  if (currentCoopRequest) {
-    showDuplicateCoopRequestAlert();
-    return;
-  }
-  setButtonLoading(button, true, "กำลังโหลดตำแหน่งงาน...", "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้");
-  try {
-    const result = await getPublishedJobPostingForCoopRequest(button.dataset.jobPostingId);
-    const job = result?.data;
-    if (!job?.company) throw new Error("ไม่พบตำแหน่งงานที่เปิดรับ");
-    if (!openCoopRequestModal()) return;
-    selectedCoopJobPostingId = job.id;
-    applyCoopCompany(job.company, { preserveJob: true });
-    if (coopSelectedJobPosting) { coopSelectedJobPosting.textContent = `ตำแหน่งงาน: ${job.title}`; coopSelectedJobPosting.hidden = false; }
-  } catch (error) { showToast(error.message || "โหลดตำแหน่งงานไม่สำเร็จ", "error"); }
-  finally { setButtonLoading(button, false, "กำลังโหลดตำแหน่งงาน...", "เขียนคำร้องสหกิจสำหรับตำแหน่งนี้"); }
-});
+  if (!button || button.disabled || jobContextConfirmationOpen) return;
+  const token = getStudentToken();
+  let preparedJob = null;
+  jobContextConfirmationOpen = true;
+  showConfirmModal({
+    title: "ยืนยันการเขียนคำร้องสหกิจศึกษา",
+    message: `กรุณาติดต่อสถานประกอบการเพื่อสอบถามการรับนักศึกษาสหกิจศึกษาก่อนเขียนคำร้อง\n\nสถานประกอบการ: ${button.dataset.companyName}\nตำแหน่ง: ${button.dataset.jobTitle}`,
+    confirmLabel: "ยืนยันและดำเนินการต่อ", cancelLabel: "ยกเลิก", loadingLabel: "กำลังเตรียมแบบฟอร์ม...",
+    returnFocus: () => preparedJob && coopRequestModal?.classList.contains("open") ? document.getElementById("coopCompanyName") : button,
+    fallbackFocus: jobMatchingSkillsBtn,
+    onConfirm: async () => {
+      if (token !== getStudentToken() || !canUseCoopFeatures(currentStudent)) throw new Error("สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเปิดรายการใหม่");
+      if ((!coopRequestsLoaded || coopRequestsLoadError) && !await loadCoopRequests()) throw new Error("โหลดคำร้องไม่สำเร็จ กรุณาลองใหม่");
+      if (currentCoopRequest) throw new Error("มีคำร้องสหกิจศึกษาที่กำลังดำเนินการอยู่ กรุณาตรวจสอบในเมนูคำร้อง");
+      const result = await getPublishedJobPostingForCoopRequest(button.dataset.jobPostingId);
+      if (token !== getStudentToken()) throw new Error("สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเปิดรายการใหม่");
+      if (!result?.data?.company) throw new Error("ไม่พบข้อมูลตำแหน่งงานที่พร้อมใช้ กรุณาค้นหาใหม่");
+      preparedJob = result.data;
+    },
+    onClose: () => {
+      jobContextConfirmationOpen = false;
+      // Cancel leaves the draft and current screen untouched. Confirm only
+      // prepares the original form; creation still occurs on its Submit event.
+      if (!preparedJob || token !== getStudentToken()) return;
+      if (button.isConnected) button.focus();
+      if (!openCoopRequestModal()) return;
+      selectedCoopJobPostingId = preparedJob.id;
+      applyCoopCompany(preparedJob.company, { preserveJob: true });
+      if (coopSelectedJobPosting) {
+        coopSelectedJobPosting.textContent = `ตำแหน่งงาน: ${preparedJob.title}`;
+        coopSelectedJobPosting.hidden = false;
+      }
+    },
+  });
+}
+jobMatchingResults?.addEventListener("click", handleJobRequestClick);
+jobBrowserResults?.addEventListener("click", handleJobRequestClick);
 coopRequestForm?.addEventListener("submit", submitCoopRequestForm);
 closeCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);
 cancelCoopRequestModalBtn?.addEventListener("click", closeCoopRequestModal);
@@ -3425,6 +3686,7 @@ coopRequestHistoryBody?.addEventListener("click", (event) => {
 });
 closeCoopRequestDetailModalBtn?.addEventListener("click", closeCoopRequestDetailModal);
 closeCoopRequestDetailFooterBtn?.addEventListener("click", closeCoopRequestDetailModal);
+document.getElementById('coopRequestDetailRetry')?.addEventListener('click', () => openCoopRequestDetail(coopRequestDetailId));
 coopRequestDetailModal?.addEventListener("click", (event) => {
   if (event.target === coopRequestDetailModal) closeCoopRequestDetailModal();
 });
@@ -3484,6 +3746,127 @@ let projectAdvisorTeachers = [];
 let projectAdvisorRequest = { status: "none", teacher: null };
 let confirmedProjectAdvisor = null;
 const projectPreviewUrls = new Map();
+const projectPreviewTabs = new Set();
+let projectSessionToken = null;
+let projectSessionRevoked = false;
+let projectSessionEpoch = 0;
+let projectLoadSequence = 0;
+let projectLoadPromise = null;
+let advisorLoadPromise = null;
+let projectFilesLoadPromise = null;
+let savedProjectTopic = null;
+let latestProjectTopic = null;
+let projectNeedsReconcile = false;
+let advisorMutationUncertain = false;
+let projectFileWriteUncertain = false;
+let advisorLoadState = "loading";
+let hasAdvisorSnapshot = false;
+const projectLinks = mountStudentProjectLinks({ document, getContext: projectContext, isLive: projectSessionLive, onSessionError: projectSessionError });
+
+function startStudentProjectSession(token) {
+  if (projectSessionRevoked || !token || token !== getStudentToken()) return false;
+  if (projectSessionToken && projectSessionToken !== token) { revokeStudentProjectSession(); return false; }
+  projectSessionToken = token;
+  syncProjectControls();
+  return true;
+}
+
+function projectSessionLive(context = { token: projectSessionToken, epoch: projectSessionEpoch }) {
+  return !projectSessionRevoked && Boolean(context?.token) && context.token === projectSessionToken
+    && context.epoch === projectSessionEpoch && context.token === getStudentToken();
+}
+
+function projectContext() {
+  if (!projectSessionLive()) {
+    if (projectSessionToken) revokeStudentProjectSession();
+    return null;
+  }
+  return { token: projectSessionToken, epoch: projectSessionEpoch };
+}
+
+function acceptProjectResponse(context) {
+  if (projectSessionLive(context)) return true;
+  revokeStudentProjectSession();
+  return false;
+}
+
+function clearProjectPreviews() {
+  for (const [url, preview] of projectPreviewUrls) { clearInterval(preview.timer); URL.revokeObjectURL(url); }
+  projectPreviewUrls.clear();
+  for (const tab of projectPreviewTabs) { try { tab.close(); } catch { /* Already closed. */ } }
+  projectPreviewTabs.clear();
+}
+
+function revokeStudentProjectSession() {
+  projectSessionRevoked = true;
+  projectSessionToken = null;
+  ++projectSessionEpoch;
+  ++projectLoadSequence;
+  projectLoadPromise = advisorLoadPromise = projectFilesLoadPromise = null;
+  isProjectSaving = isProjectUploading = isAdvisorRequestSaving = false;
+  isProjectLoaded = isAdvisorLoaded = isAdvisorDirectoryLoaded = false;
+  savedProjectTopic = latestProjectTopic = null;
+  projectNeedsReconcile = advisorMutationUncertain = projectFileWriteUncertain = false;
+  projectAdvisorTeachers = [];
+  projectAdvisorRequest = { status: "unknown", teacher: null };
+  confirmedProjectAdvisor = null;
+  hasAdvisorSnapshot = false;
+  advisorLoadState = "error";
+  for (const input of [projectTitle, projectBookFile, posterFile]) if (input) input.value = "";
+  for (const container of [projectBookCurrent, posterCurrent]) { container?.replaceChildren(); if (container) delete container.dataset.hasFile; }
+  clearProjectPreviews();
+  projectLinks.revoke();
+  topicExams?.revoke();
+  for (const control of document.querySelectorAll('#co09Student button, #co09Student input, #co09Student select, #co09Student textarea')) control.disabled = true;
+  for (const node of [projectMessage, projectAdvisorMessage, projectUploadMessage]) showMessage(node, "สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่", "error");
+  projectMessage?.setAttribute("aria-busy", "false");
+  if (projectAdvisorHelp) projectAdvisorHelp.textContent = "กรุณาเข้าสู่ระบบใหม่เพื่อโหลดสถานะอาจารย์";
+  for (const node of [saveProjectBtn, uploadProjectBtn]) setButtonLoading(node, false);
+  document.getElementById('panel-coop')?.setAttribute('aria-busy', 'false');
+  renderProjectAdvisor();
+  syncProjectControls();
+}
+
+function hasUnsavedProjectTopic() {
+  return !projectSessionRevoked && Boolean(projectTitle) && projectTitle.value !== (savedProjectTopic ?? "");
+}
+function hasUnsavedProjectWork() {
+  return hasUnsavedProjectTopic() || projectLinks.hasChanges();
+}
+
+function syncProjectControls() {
+  const live = projectSessionLive();
+  if (projectTitle) projectTitle.disabled = !live || isProjectSaving;
+  if (saveProjectBtn) saveProjectBtn.disabled = !live || !isProjectLoaded || isProjectSaving || Boolean(projectLoadPromise) || projectNeedsReconcile;
+  if (uploadProjectBtn) uploadProjectBtn.disabled = !live || isProjectUploading || Boolean(projectFilesLoadPromise) || projectFileWriteUncertain;
+  for (const input of [projectBookFile, posterFile]) if (input) input.disabled = !live || isProjectUploading;
+  if (retryProjectBtn) retryProjectBtn.disabled = !live || isProjectSaving || Boolean(projectLoadPromise);
+  if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.disabled = !live || isAdvisorRequestSaving || Boolean(advisorLoadPromise);
+  if (retryProjectFilesBtn) retryProjectFilesBtn.disabled = !live || isProjectUploading || Boolean(projectFilesLoadPromise);
+}
+
+function projectSessionError(error, context) {
+  if (!acceptProjectResponse(context)) return true;
+  if (error.status === 401 || ['ACCOUNT_UNAUTHORIZED', 'STUDENT_SESSION_CHANGED', 'CO09_SESSION_CHANGED'].includes(error.data?.code)) {
+    revokeStudentProjectSession();
+    return true;
+  }
+  return false;
+}
+
+function projectErrorMessage(error) {
+  const codes = {
+    TOPIC_CONFLICT: "หัวข้อโครงการเปลี่ยนแล้ว ร่างของคุณยังอยู่ กรุณาโหลดข้อมูลล่าสุดก่อนบันทึก",
+    TOPIC_BASELINE_REQUIRED: "กรุณาโหลดหัวข้อโครงการก่อนบันทึก",
+    PROJECT_COMMIT_UNCERTAIN: "ยังยืนยันผลบันทึกไม่ได้ ร่างยังอยู่ กรุณาโหลดหัวข้อล่าสุดก่อนลองใหม่",
+    ADVISOR_TARGET_UNAVAILABLE: "อาจารย์ที่เลือกไม่พร้อมรับคำขอ กรุณาโหลดรายชื่อใหม่",
+    ADVISOR_CONFIRMED: "ไม่สามารถเปลี่ยนอาจารย์ที่ยืนยันแล้วได้",
+    ADVISOR_COMMIT_UNCERTAIN: "ยังยืนยันผลส่งคำขอไม่ได้ กรุณาโหลดสถานะล่าสุดก่อนลองใหม่",
+    ADVISOR_SCHEMA_NOT_READY: "บริการคำขออาจารย์ยังไม่พร้อม กรุณาติดต่อผู้ดูแลระบบ",
+  };
+  const statuses = { 400: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบแล้วลองใหม่", 401: "การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่", 403: "ไม่สามารถดำเนินการนี้ได้ กรุณาโหลดข้อมูลล่าสุด", 404: "ไม่พบข้อมูลที่ต้องการ กรุณาโหลดข้อมูลล่าสุด", 409: "ข้อมูลเปลี่ยนแล้ว กรุณาโหลดข้อมูลล่าสุด", 500: "ระบบไม่สามารถดำเนินการได้ กรุณาลองใหม่", 503: "บริการยังไม่พร้อม กรุณาลองใหม่ภายหลัง" };
+  return codes[error.data?.code] || statuses[error.status] || "การเชื่อมต่อขัดข้องหรือใช้เวลานานเกินไป กรุณาลองใหม่";
+}
 
 function renderProjectAdvisor() {
   renderProfileAdvisors(document, currentStudent, { loaded: isAdvisorLoaded, request: projectAdvisorRequest, confirmed: confirmedProjectAdvisor });
@@ -3505,24 +3888,27 @@ function renderProjectAdvisor() {
     const current = document.createElement("option");
     current.value = advisor.id;
     current.textContent = advisor.name;
+    current.disabled = true; // Retain historical context without offering an unavailable target.
     projectAdvisor.appendChild(current);
   }
   projectAdvisor.value = advisor?.id || "";
   const confirmed = Boolean(confirmedProjectAdvisor) || projectAdvisorRequest.status === "confirmed";
-  projectAdvisor.disabled = confirmed || !isAdvisorLoaded || !isAdvisorDirectoryLoaded || isAdvisorRequestSaving;
+  projectAdvisor.disabled = !projectSessionLive() || confirmed || !isAdvisorLoaded || !isAdvisorDirectoryLoaded || isAdvisorRequestSaving || advisorLoadState !== "loaded" || advisorMutationUncertain;
   if (projectAdvisorStatus) {
-    const labels = { none: "ยังไม่ได้เลือกอาจารย์", pending: "รออาจารย์ยืนยัน", confirmed: "อาจารย์ยืนยันแล้ว", rejected: "อาจารย์ปฏิเสธคำขอ" };
-    const status = confirmed ? "confirmed" : projectAdvisorRequest.status;
+    const labels = { loading: "กำลังโหลดสถานะอาจารย์...", none: "ยังไม่ได้เลือกอาจารย์", pending: "รออาจารย์ยืนยัน", confirmed: "อาจารย์ยืนยันแล้ว", rejected: "อาจารย์ปฏิเสธคำขอ", error: "โหลดสถานะอาจารย์ไม่สำเร็จ", stale: "ข้อมูลอาจารย์ครั้งก่อน · ยังยืนยันสถานะล่าสุดไม่ได้", unknown: "ไม่รู้จักสถานะที่ได้รับ กรุณาลองโหลดใหม่" };
+    const status = advisorLoadState === "loaded" ? (confirmed ? "confirmed" : projectAdvisorRequest.status) : advisorLoadState;
     const colors = { pending: "is-advisor_review", confirmed: "is-approved", rejected: "is-rejected" };
     const badge = document.createElement("span");
     badge.className = `coop-status-badge project-advisor-badge ${colors[status] || ""}`;
-    badge.textContent = labels[status] || labels.none;
+    badge.textContent = labels[status] || labels.unknown;
     projectAdvisorStatus.dataset.status = status;
+    projectAdvisorStatus.setAttribute("aria-busy", String(status === "loading"));
+    projectAdvisorStatus.setAttribute("aria-live", "polite");
     projectAdvisorStatus.replaceChildren(badge);
-    if (advisor) {
+    if (advisor && (advisorLoadState === "loaded" || advisorLoadState === "stale")) {
       const selected = document.createElement("span");
       selected.className = "project-advisor-selected";
-      selected.textContent = `อาจารย์: ${advisor.name || formatTeacherName(advisor)}`;
+      selected.textContent = `${advisorLoadState === "stale" ? "ข้อมูลครั้งก่อน · " : ""}อาจารย์: ${advisor.name || formatTeacherName(advisor)}`;
       projectAdvisorStatus.appendChild(selected);
     }
     if (status === "rejected" && projectAdvisorRequest.rejection_reason) {
@@ -3535,83 +3921,155 @@ function renderProjectAdvisor() {
 }
 
 async function loadStudentCoopProjectSections() {
-  await Promise.all([loadCoopProject(), loadCoopProjectFiles(), topicExams?.refresh()]);
-  await loadProjectAdvisorRequest();
+  if (!projectContext()) return;
+  await Promise.all([loadCoopProject(), loadCoopProjectFiles(), loadProjectAdvisorRequest(), projectLinks.load(), topicExams?.refresh()]);
 }
 
-async function loadCoopProject() {
-  isProjectLoaded = false;
-  if (saveProjectBtn) saveProjectBtn.disabled = true;
+function loadCoopProject({ replaceDraft = false } = {}) {
+  if (projectLoadPromise) return projectLoadPromise;
+  const context = projectContext();
+  if (!context || isProjectSaving) return Promise.resolve(false);
+  const sequence = ++projectLoadSequence;
+  const titleBeforeRead = projectTitle?.value || "";
+  const dirtyBeforeRead = hasUnsavedProjectTopic() || projectNeedsReconcile;
   if (retryProjectBtn) retryProjectBtn.hidden = true;
-  showMessage(projectMessage, "กำลังโหลดหัวข้อโครงการ...", "");
-  // A read retry must not overwrite text entered while that read was pending.
-  const titleBeforeRead = projectTitle?.value;
-  try {
-    const project = await getMyCoopProject();
-    confirmedProjectAdvisor = project.confirmed_advisor || project.coop_advisor_teacher || null;
-    if (projectTitle && projectTitle.value === titleBeforeRead) projectTitle.value = project.topic || "";
-    renderProjectAdvisor();
-    isProjectLoaded = true;
-    clearMessage(projectMessage);
-  } catch (error) {
-    showMessage(projectMessage, error.message || "ไม่สามารถโหลดโครงการได้", "error");
-    if (retryProjectBtn) retryProjectBtn.hidden = false;
-  } finally {
-    if (saveProjectBtn) saveProjectBtn.disabled = !isProjectLoaded || isProjectSaving;
-  }
+  showMessage(projectMessage, "กำลังโหลดหัวข้อโครงการ...", "loading");
+  projectMessage?.setAttribute("aria-busy", "true");
+  projectLoadPromise = (async () => {
+    try {
+      const project = await getMyCoopProject({ sessionToken: context.token });
+      if (!acceptProjectResponse(context) || sequence !== projectLoadSequence) return false;
+      if (typeof project?.topic !== "string") throw new Error("Invalid project response");
+      latestProjectTopic = project.topic;
+      const keepDraft = (!replaceDraft && dirtyBeforeRead) || projectTitle?.value !== titleBeforeRead;
+      if (!keepDraft) {
+        if (projectTitle) projectTitle.value = project.topic;
+        savedProjectTopic = project.topic;
+        projectNeedsReconcile = false;
+        clearMessage(projectMessage);
+      } else {
+        // A refresh must not silently rebase an existing draft onto a newer
+        // server value; the old baseline is still needed to detect a stale save.
+        if (savedProjectTopic === null) savedProjectTopic = project.topic;
+        if (project.topic !== savedProjectTopic) projectNeedsReconcile = true;
+        showMessage(projectMessage, "โหลดข้อมูลล่าสุดแล้ว ร่างของคุณยังอยู่ หากต้องการแทนร่างให้เลือกโหลดหัวข้อล่าสุด", "info");
+      }
+      isProjectLoaded = true;
+      return true;
+    } catch (error) {
+      if (projectSessionError(error, context) || sequence !== projectLoadSequence) return false;
+      showMessage(projectMessage, `${projectErrorMessage(error)} ร่างหัวข้อยังคงอยู่`, "error");
+      return false;
+    } finally {
+      if (projectSessionLive(context) && sequence === projectLoadSequence) {
+        projectLoadPromise = null;
+        projectMessage?.setAttribute("aria-busy", "false");
+        if (retryProjectBtn) retryProjectBtn.hidden = false;
+        syncProjectControls();
+      }
+    }
+  })();
+  syncProjectControls();
+  return projectLoadPromise;
 }
 
-async function loadProjectAdvisorRequest() {
+function reloadProjectTopic() {
+  const context = projectContext();
+  if (!context || isProjectSaving || projectLoadPromise) return;
+  const reload = () => acceptProjectResponse(context) ? loadCoopProject({ replaceDraft: true }) : false;
+  if (hasUnsavedProjectTopic() || projectNeedsReconcile) {
+    showConfirmModal({ title: "โหลดหัวข้อล่าสุด?", message: "ร่างที่ยังไม่บันทึกจะถูกแทนที่ด้วยข้อมูลล่าสุด กรุณาเก็บข้อความที่ต้องการไว้ก่อน", confirmLabel: "แทนร่างและโหลดล่าสุด", onConfirm: reload });
+  } else reload();
+}
+
+function applyProjectAdvisorSnapshot(result) {
+  if (!["none", "pending", "confirmed", "rejected"].includes(result?.advisor_request?.status)) return false;
+  projectAdvisorRequest = result.advisor_request;
+  confirmedProjectAdvisor = result.confirmed_advisor || null;
+  hasAdvisorSnapshot = true;
+  isAdvisorLoaded = true;
+  advisorLoadState = "loaded";
+  advisorMutationUncertain = false;
+  return true;
+}
+
+function loadProjectAdvisorRequest({ afterMutation = false } = {}) {
+  if (advisorLoadPromise) return advisorLoadPromise;
+  const context = projectContext();
+  if (!context || (isAdvisorRequestSaving && !afterMutation)) return Promise.resolve(false);
   isAdvisorLoaded = false;
   isAdvisorDirectoryLoaded = false;
+  advisorLoadState = "loading";
   if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.hidden = true;
   renderProjectAdvisor();
-  const [request, directory] = await Promise.allSettled([getMyProjectAdvisorRequest(), getTeachers()]);
-  const errors = [];
-  if (request.status === "fulfilled" && ["none", "pending", "confirmed", "rejected"].includes(request.value?.advisor_request?.status)) {
-    projectAdvisorRequest = request.value.advisor_request;
-    confirmedProjectAdvisor = request.value.confirmed_advisor;
-    isAdvisorLoaded = true;
-  } else errors.push(request.reason?.message || "ไม่สามารถโหลดคำขออาจารย์ได้");
-  if (directory.status === "fulfilled" && Array.isArray(directory.value?.teachers)) {
-    projectAdvisorTeachers = directory.value.teachers;
-    isAdvisorDirectoryLoaded = true;
-  } else errors.push("โหลดรายชื่ออาจารย์ไม่สำเร็จ");
-  if (projectAdvisorHelp) projectAdvisorHelp.textContent = errors.length ? errors.join(" • ") : "เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที";
-  if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.hidden = !errors.length;
-  renderProjectAdvisor();
-  return isAdvisorLoaded && isAdvisorDirectoryLoaded;
+  advisorLoadPromise = (async () => {
+    try {
+      const options = { sessionToken: context.token };
+      const [request, directory] = await Promise.allSettled([getMyProjectAdvisorRequest(options), getProjectAdvisorTeachers(options)]);
+      if (!acceptProjectResponse(context)) return false;
+      for (const result of [request, directory]) if (result.status === "rejected" && projectSessionError(result.reason, context)) return false;
+      const errors = [];
+      if (request.status === "fulfilled") {
+        if (!applyProjectAdvisorSnapshot(request.value)) { advisorLoadState = "unknown"; errors.push("ไม่รู้จักสถานะที่ได้รับ กรุณาลองโหลดใหม่"); }
+      } else {
+        advisorLoadState = hasAdvisorSnapshot ? "stale" : "error";
+        errors.push(projectErrorMessage(request.reason));
+      }
+      if (directory.status === "fulfilled" && Array.isArray(directory.value?.teachers)) {
+        projectAdvisorTeachers = directory.value.teachers;
+        isAdvisorDirectoryLoaded = true;
+      } else errors.push(directory.status === "rejected" ? projectErrorMessage(directory.reason) : "โหลดรายชื่ออาจารย์ไม่สำเร็จ");
+      if (projectAdvisorHelp) projectAdvisorHelp.textContent = errors.length ? errors.join(" • ") : "เลือกอาจารย์เพื่อส่งคำขอยืนยัน หัวข้อโครงการบันทึกและแก้ไขได้ทันที";
+      if (retryProjectAdvisorBtn) retryProjectAdvisorBtn.hidden = !errors.length;
+      return isAdvisorLoaded && isAdvisorDirectoryLoaded;
+    } finally {
+      if (projectSessionLive(context)) {
+        advisorLoadPromise = null;
+        renderProjectAdvisor();
+        syncProjectControls();
+      }
+    }
+  })();
+  syncProjectControls();
+  return advisorLoadPromise;
 }
 
 async function requestProjectAdvisor() {
-  if (isAdvisorRequestSaving || !isAdvisorLoaded || !isAdvisorDirectoryLoaded || confirmedProjectAdvisor || projectAdvisorRequest.status === "confirmed") return;
+  const context = projectContext();
+  if (!context || advisorLoadPromise || advisorMutationUncertain || isAdvisorRequestSaving || !isAdvisorLoaded || !isAdvisorDirectoryLoaded || confirmedProjectAdvisor || projectAdvisorRequest.status === "confirmed") return;
   const teacherId = projectAdvisor?.value;
   if (!teacherId) { renderProjectAdvisor(); return; }
   isAdvisorRequestSaving = true;
   projectAdvisor.disabled = true;
   clearMessage(projectAdvisorMessage);
   try {
-    const saved = await requestMyProjectAdvisor(teacherId);
-    projectAdvisorRequest = saved.advisor_request;
-    confirmedProjectAdvisor = saved.confirmed_advisor;
-    await loadProjectAdvisorRequest();
-    if (isAdvisorLoaded) {
-      showMessage(projectAdvisorMessage, "ส่งคำขออาจารย์ที่ปรึกษาแล้ว", "success");
-      showToast("ส่งคำขออาจารย์ที่ปรึกษาแล้ว", "success");
-    }
-  } catch (error) {
-    showMessage(projectAdvisorMessage, error.message || "ไม่สามารถส่งคำขออาจารย์ได้", "error");
-    // Reconcile a response lost after commit or a confirmation that raced selection.
-    await loadProjectAdvisorRequest();
-  } finally {
-    isAdvisorRequestSaving = false;
+    const saved = await requestMyProjectAdvisor(teacherId, { sessionToken: context.token });
+    if (!acceptProjectResponse(context)) return;
+    if (!applyProjectAdvisorSnapshot(saved)) throw Object.assign(new Error("Unknown advisor response"), { status: 503 });
     renderProjectAdvisor();
+    showMessage(projectAdvisorMessage, "ส่งคำขออาจารย์ที่ปรึกษาแล้ว", "success");
+    showToast("ส่งคำขออาจารย์ที่ปรึกษาแล้ว", "success");
+    const refreshed = await loadProjectAdvisorRequest({ afterMutation: true });
+    if (acceptProjectResponse(context) && !refreshed) showMessage(projectAdvisorMessage, "ส่งคำขอสำเร็จ แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณากดลองโหลดอีกครั้ง", "info");
+  } catch (error) {
+    if (projectSessionError(error, context)) return;
+    advisorMutationUncertain = !error.status || error.status >= 500;
+    showMessage(projectAdvisorMessage, advisorMutationUncertain ? "ยังยืนยันผลส่งคำขอไม่ได้ กำลังโหลดสถานะล่าสุด กรุณาตรวจสอบก่อนส่งอีกครั้ง" : projectErrorMessage(error), "error");
+    // Read to reconcile; never retry the mutation automatically.
+    await loadProjectAdvisorRequest({ afterMutation: true });
+  } finally {
+    if (projectSessionLive(context)) {
+      isAdvisorRequestSaving = false;
+      renderProjectAdvisor();
+      syncProjectControls();
+    }
   }
 }
 projectAdvisor?.addEventListener("change", requestProjectAdvisor);
 
 async function saveCoopProjectTopic() {
-  if (isProjectSaving || !isProjectLoaded) return;
+  const context = projectContext();
+  if (!context || isProjectSaving || projectLoadPromise || !isProjectLoaded || projectNeedsReconcile || savedProjectTopic === null) return;
   const topic = projectTitle?.value.trim() || "";
   if (!topic || [...topic].length > 500) {
     showMessage(projectMessage, "กรุณากรอกหัวข้อโครงการไม่เกิน 500 ตัวอักษร", "error");
@@ -3621,22 +4079,32 @@ async function saveCoopProjectTopic() {
   if (projectTitle) projectTitle.disabled = true;
   setButtonLoading(saveProjectBtn, true, "กำลังบันทึก...");
   try {
-    const saved = await saveMyCoopProject(topic);
+    const saved = await saveMyCoopProject(topic, savedProjectTopic, { sessionToken: context.token });
+    if (!acceptProjectResponse(context)) return;
+    if (typeof saved?.topic !== "string") throw Object.assign(new Error("Unknown project response"), { status: 503 });
     if (projectTitle) projectTitle.value = saved.topic;
-    await loadCoopProject();
-    if (isProjectLoaded) {
-      showMessage(projectMessage, "บันทึกหัวข้อโครงการสำเร็จ", "success");
-      showToast("บันทึกหัวข้อโครงการสำเร็จ", "success");
-    }
+    savedProjectTopic = latestProjectTopic = saved.topic;
+    projectNeedsReconcile = false;
+    showMessage(projectMessage, "บันทึกหัวข้อโครงการสำเร็จ", "success");
+    showToast("บันทึกหัวข้อโครงการสำเร็จ", "success");
   } catch (error) {
-    showMessage(projectMessage, error.message || "ไม่สามารถบันทึกหัวข้อโครงการได้", "error");
+    if (projectSessionError(error, context)) return;
+    projectNeedsReconcile = error.status === 409 || !error.status || error.status >= 500;
+    showMessage(projectMessage, projectNeedsReconcile ? `${projectErrorMessage(error)} ร่างยังอยู่ กรุณาโหลดหัวข้อล่าสุดก่อนลองบันทึกอีกครั้ง` : projectErrorMessage(error), "error");
+    if (retryProjectBtn) retryProjectBtn.hidden = false;
+    if (error.status === 409) reloadProjectTopicAfterConflict(context);
   } finally {
-    isProjectSaving = false;
-    if (projectTitle) projectTitle.disabled = false;
-    setButtonLoading(saveProjectBtn, false);
-    if (saveProjectBtn) saveProjectBtn.disabled = !isProjectLoaded;
+    if (projectSessionLive(context)) {
+      isProjectSaving = false;
+      setButtonLoading(saveProjectBtn, false);
+      syncProjectControls();
+    }
   }
 }
+function reloadProjectTopicAfterConflict(context) {
+  showConfirmModal({ title: "หัวข้อโครงการเปลี่ยนแล้ว", message: "ร่างของคุณยังคงอยู่ ต้องการแทนร่างด้วยหัวข้อล่าสุดหรือไม่? ยกเลิกเพื่อเก็บร่างไว้ก่อน", confirmLabel: "แทนร่างและโหลดล่าสุด", onConfirm: () => acceptProjectResponse(context) && loadCoopProject({ replaceDraft: true }) });
+}
+projectTitle?.addEventListener("input", () => { if (!projectNeedsReconcile) clearMessage(projectMessage); syncProjectControls(); });
 saveProjectBtn?.addEventListener("click", saveCoopProjectTopic);
 
 function renderCurrentProjectFile(container, file) {
@@ -3665,26 +4133,38 @@ function renderCurrentProjectFile(container, file) {
   container.appendChild(button);
 }
 
-async function loadCoopProjectFiles() {
+function loadCoopProjectFiles({ afterMutation = false } = {}) {
+  if (projectFilesLoadPromise) return projectFilesLoadPromise;
+  const context = projectContext();
+  if (!context || (isProjectUploading && !afterMutation)) return Promise.resolve(false);
   if (retryProjectFilesBtn) retryProjectFilesBtn.hidden = true;
-  try {
-    const result = await getMyCoopProjectFiles();
-    if (!Array.isArray(result?.files)) throw new Error("ไม่สามารถโหลดไฟล์โครงการได้");
-    renderCurrentProjectFile(projectBookCurrent, result.files.find(file => file.file_type === "coop_project_book"));
-    renderCurrentProjectFile(posterCurrent, result.files.find(file => file.file_type === "coop_poster"));
-    clearMessage(projectUploadMessage);
-    return true;
-  } catch (error) {
-    showMessage(projectUploadMessage, error.message || "ไม่สามารถโหลดไฟล์โครงการได้", "error");
-    for (const container of [projectBookCurrent, posterCurrent]) {
-      if (container && !container.dataset.hasFile) container.textContent = "โหลดรายการไฟล์ไม่สำเร็จ";
+  projectFilesLoadPromise = (async () => {
+    try {
+      const result = await getMyCoopProjectFiles({ sessionToken: context.token });
+      if (!acceptProjectResponse(context)) return false;
+      if (!Array.isArray(result?.files)) throw new Error("Invalid project file response");
+      renderCurrentProjectFile(projectBookCurrent, result.files.find(file => file.file_type === "coop_project_book"));
+      renderCurrentProjectFile(posterCurrent, result.files.find(file => file.file_type === "coop_poster"));
+      projectFileWriteUncertain = false;
+      clearMessage(projectUploadMessage);
+      return true;
+    } catch (error) {
+      if (projectSessionError(error, context)) return false;
+      showMessage(projectUploadMessage, `${projectErrorMessage(error)} กรุณาลองโหลดรายการไฟล์อีกครั้ง`, "error");
+      for (const container of [projectBookCurrent, posterCurrent]) {
+        if (container && container.dataset.hasFile !== "true") container.textContent = "โหลดรายการไฟล์ไม่สำเร็จ";
+      }
+      if (retryProjectFilesBtn) retryProjectFilesBtn.hidden = false;
+      return false;
+    } finally {
+      if (projectSessionLive(context)) { projectFilesLoadPromise = null; syncProjectControls(); }
     }
-    if (retryProjectFilesBtn) retryProjectFilesBtn.hidden = false;
-    return false;
-  }
+  })();
+  syncProjectControls();
+  return projectFilesLoadPromise;
 }
 
-retryProjectBtn?.addEventListener("click", () => loadCoopProject());
+retryProjectBtn?.addEventListener("click", reloadProjectTopic);
 retryProjectAdvisorBtn?.addEventListener("click", () => loadProjectAdvisorRequest());
 retryProjectFilesBtn?.addEventListener("click", () => loadCoopProjectFiles());
 
@@ -3697,7 +4177,8 @@ function validateProjectUpload(file, category) {
 }
 
 async function uploadCoopProjectFiles() {
-  if (isProjectUploading) return;
+  const context = projectContext();
+  if (!context || isProjectUploading || projectFileWriteUncertain || projectFilesLoadPromise) return;
   const selected = [["project-book", projectBookFile], ["poster", posterFile]].filter(([, input]) => input?.files?.[0]);
   try {
     if (!selected.length) throw new Error("กรุณาเลือกไฟล์ที่ต้องการอัปโหลด");
@@ -3707,55 +4188,64 @@ async function uploadCoopProjectFiles() {
   setButtonLoading(uploadProjectBtn, true, "กำลังอัปโหลด...");
   for (const [, input] of selected) input.disabled = true;
   clearMessage(projectUploadMessage);
+  let acknowledged = 0;
   try {
     // Independent categories: a successful Book is retained if Poster fails.
     for (const [category, input] of selected) {
-      await uploadMyCoopProjectFile(category, input.files[0]);
+      if (!acceptProjectResponse(context)) return;
+      await uploadMyCoopProjectFile(category, input.files[0], { sessionToken: context.token });
+      if (!acceptProjectResponse(context)) return;
+      acknowledged++;
       input.value = "";
     }
-    if (await loadCoopProjectFiles()) {
-      showMessage(projectUploadMessage, "อัปโหลดไฟล์โครงการสำเร็จ", "success");
-      showToast("อัปโหลดไฟล์โครงการสำเร็จ", "success");
-    }
+    showMessage(projectUploadMessage, "อัปโหลดไฟล์โครงการสำเร็จ", "success");
+    showToast("อัปโหลดไฟล์โครงการสำเร็จ", "success");
+    const loaded = await loadCoopProjectFiles({ afterMutation: true });
+    if (acceptProjectResponse(context)) showMessage(projectUploadMessage, loaded ? "อัปโหลดไฟล์โครงการสำเร็จ" : "อัปโหลดสำเร็จ แต่โหลดรายการล่าสุดไม่สำเร็จ กรุณาลองโหลดอีกครั้ง", loaded ? "success" : "info");
   } catch (error) {
-    await loadCoopProjectFiles();
-    showMessage(projectUploadMessage, error.message || "ไม่สามารถอัปโหลดไฟล์ได้", "error");
+    if (projectSessionError(error, context)) return;
+    projectFileWriteUncertain = !error.status || error.status >= 500;
+    await loadCoopProjectFiles({ afterMutation: true });
+    if (acceptProjectResponse(context)) showMessage(projectUploadMessage, `${acknowledged ? "อัปโหลดสำเร็จบางไฟล์แล้ว · " : ""}${projectErrorMessage(error)}${!error.status || error.status >= 500 ? " ยังยืนยันผลไฟล์ที่เกิดปัญหาไม่ได้ โปรดตรวจรายการล่าสุดก่อนอัปโหลดซ้ำ" : ""}`, "error");
   } finally {
-    isProjectUploading = false;
-    setButtonLoading(uploadProjectBtn, false);
-    for (const [, input] of selected) input.disabled = false;
+    if (projectSessionLive(context)) {
+      isProjectUploading = false;
+      setButtonLoading(uploadProjectBtn, false);
+      syncProjectControls();
+    }
   }
 }
 uploadProjectBtn?.addEventListener("click", uploadCoopProjectFiles);
 
 async function openProjectFilePreview(file, button) {
-  if (button.disabled) return;
+  const context = projectContext();
+  if (!context || button.disabled) return;
   // Reserve the tab inside the click gesture before awaiting authenticated Blob fetch.
   const tab = window.open("", "_blank");
   if (!tab) { showMessage(projectUploadMessage, "กรุณาอนุญาตเปิดแท็บใหม่เพื่อดูไฟล์", "error"); return; }
+  projectPreviewTabs.add(tab);
   tab.opener = null;
   setButtonLoading(button, true, "กำลังเปิด...");
   let objectUrl;
   try {
-    const blob = await previewMyCoopProjectFile(file.id);
+    const blob = await previewMyCoopProjectFile(file.id, { sessionToken: context.token });
+    if (!acceptProjectResponse(context)) { tab.close(); return; }
     if (!["application/pdf", "image/png", "image/jpeg"].includes(blob.type)) throw new Error("ประเภทไฟล์ไม่รองรับการเปิดดู");
-    if (tab.closed) return;
+    if (tab.closed) { projectPreviewTabs.delete(tab); return; }
     objectUrl = URL.createObjectURL(blob);
     tab.location.replace(objectUrl);
     const timer = setInterval(() => {
-      if (tab.closed) { URL.revokeObjectURL(objectUrl); clearInterval(timer); projectPreviewUrls.delete(objectUrl); }
+      if (tab.closed) { URL.revokeObjectURL(objectUrl); clearInterval(timer); projectPreviewUrls.delete(objectUrl); projectPreviewTabs.delete(tab); }
     }, 1000);
-    projectPreviewUrls.set(objectUrl, timer);
+    projectPreviewUrls.set(objectUrl, { timer, tab });
   } catch (error) {
     tab.close();
+    projectPreviewTabs.delete(tab);
     if (objectUrl) URL.revokeObjectURL(objectUrl);
-    showMessage(projectUploadMessage, error.message || "ไม่สามารถเปิดไฟล์ได้", "error");
-  } finally { setButtonLoading(button, false); }
+    if (!projectSessionError(error, context)) showMessage(projectUploadMessage, projectErrorMessage(error), "error");
+  } finally { if (projectSessionLive(context)) setButtonLoading(button, false); }
 }
-window.addEventListener("pagehide", () => {
-  for (const [url, timer] of projectPreviewUrls) { clearInterval(timer); URL.revokeObjectURL(url); }
-  projectPreviewUrls.clear();
-});
+window.addEventListener("pagehide", clearProjectPreviews);
 
 // ==============================
 // Mentor

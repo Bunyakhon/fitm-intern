@@ -4,6 +4,7 @@ const {
   JobPostingWorkMode,
   Student,
   StudentProfile,
+  StudentSkill,
 } = require("../models");
 const {
   NlpMatchingResponseError,
@@ -11,9 +12,13 @@ const {
 } = require("../services/nlpMatching.client");
 const { isUsableResumeText } = require("../services/resumeText.service");
 const { publishedJobWhere } = require("../services/jobEligibility");
+const { Op } = require("sequelize");
+const { jobDisplayInformation } = require("../services/internthDevelopmentData");
+const { matchingSource, readMatchingStudent } = require("../services/jobMatchingProfile.service");
+const { describeAnalysis, explainJob } = require("../services/jobMatchingExplanation.service");
 
 const SCHEMA_VERSION = "job-matching.v1";
-const TOP_K = 5;
+const TOP_K = 10;
 const MIN_SCORE = 0.05;
 
 function normalizedText(...values) {
@@ -30,8 +35,12 @@ function cleanCandidatePart(value) {
 }
 
 function createCandidateSources(student, resumeText = "") {
+  const saved = matchingSource(student);
+  // The engine accepts text, not proficiency weights. Include saved skill names
+  // once; preserve proficiency separately for display without inventing scores.
+  const computerNames = [...new Set(saved.computer_skills.map((skill) => cleanCandidatePart(skill.skill_name)))];
   return {
-    profile: normalizedText(cleanCandidatePart(student?.major), cleanCandidatePart(student?.profile?.related_skills)).slice(0, 20_000),
+    profile: normalizedText(...computerNames, cleanCandidatePart(saved.related_skills)).slice(0, 20_000),
     resume: cleanCandidatePart(resumeText).slice(0, 20_000),
   };
 }
@@ -120,7 +129,7 @@ function validateNlpResponse(response, jobIds) {
   return response.matches;
 }
 
-function enrichMatches(matches, jobPostings) {
+function enrichMatches(matches, jobPostings, database = JobPosting.sequelize) {
   const jobsById = new Map(
     jobPostings.map((jobPosting) => {
       const job = toPlainJob(jobPosting);
@@ -141,9 +150,12 @@ function enrichMatches(matches, jobPostings) {
       compensation_text: job.compensation_text,
       work_days_per_week: job.work_days_per_week,
       company: {
+        id: job.company?.id || null,
         name: job.company?.name || null,
         province: job.company?.province || null,
       },
+      ...jobDisplayInformation(job, database),
+      selectable: true,
       workModes: (job.workModes || []).map((workMode) => ({
         mode: workMode.mode,
       })),
@@ -158,6 +170,7 @@ function createJobMatchingHandler(dependencies = {}) {
   const StudentFileModel = dependencies.StudentFileModel || require("../models").StudentFile;
 
   return async function getMyJobMatches(req, res) {
+    res.set("Cache-Control", "private, no-store");
     try {
       const source = req.query?.source;
       if (source !== undefined && source !== "skills" && source !== "resume") {
@@ -167,17 +180,12 @@ function createJobMatchingHandler(dependencies = {}) {
         });
       }
 
-      const student = await StudentModel.findByPk(req.user.id, {
-        attributes: source === "resume" ? ["id"] : ["id", "major"],
-        include: source === "resume" ? [] : [
-          {
-            model: dependencies.StudentProfileModel || StudentProfile,
-            as: "profile",
-            attributes: ["related_skills"],
-            required: false,
-          },
-        ],
-      });
+      // Read saved profile data for transparent display even in Resume mode;
+      // the Resume candidate below remains Resume text only.
+      const student = await readMatchingStudent(req.user.id, {
+          StudentModel, StudentProfileModel: dependencies.StudentProfileModel || StudentProfile,
+          StudentSkillModel: dependencies.StudentSkillModel || StudentSkill,
+        });
 
       if (!student) {
         return res.status(404).json({
@@ -185,6 +193,9 @@ function createJobMatchingHandler(dependencies = {}) {
           code: "MATCH_STUDENT_NOT_FOUND",
         });
       }
+
+      const savedSource = matchingSource(student);
+      const sourcePayload = { matching_source: savedSource };
 
       const resumeText = source === "skills"
         ? ""
@@ -195,7 +206,7 @@ function createJobMatchingHandler(dependencies = {}) {
       if (source === "skills") {
         if (!profileText) {
           return res.status(422).json({
-            message: "Please add your major or related skills before matching by skills",
+            message: "Please save computer skills or related skills before matching by skills",
             code: "MATCH_PROFILE_TEXT_REQUIRED",
           });
         }
@@ -212,7 +223,7 @@ function createJobMatchingHandler(dependencies = {}) {
         const candidateText = profileText || resume;
         if (!candidateText) {
           return res.status(422).json({
-            message: "Student major or related skills are required for matching",
+            message: "Saved skills or a readable Resume are required for matching",
             code: "MATCH_CANDIDATE_TEXT_REQUIRED",
           });
         }
@@ -221,8 +232,7 @@ function createJobMatchingHandler(dependencies = {}) {
           : { text: candidateText };
       }
 
-      const jobPostings = await JobPostingModel.findAll({
-        where: publishedJobWhere(),
+      const jobQuery = {
         attributes: [
           "id",
           "title",
@@ -236,7 +246,7 @@ function createJobMatchingHandler(dependencies = {}) {
           {
             model: dependencies.CompanyModel || Company,
             as: "company",
-            attributes: ["name", "province"],
+            attributes: ["id", "name", "province", "email", "email_verified_at", "phone", "address_no", "moo", "subdistrict", "district"],
             required: false,
           },
           {
@@ -246,10 +256,17 @@ function createJobMatchingHandler(dependencies = {}) {
             required: false,
           },
         ],
-      });
+      };
+      const jobPostings = await JobPostingModel.findAll({ ...jobQuery, where: publishedJobWhere(new Date(), JobPostingModel.sequelize) });
+      const usesProfile = source !== "resume" && Boolean(profileText);
+      const analysis = describeAnalysis({ savedSource, candidate, usesProfile,
+        mode: candidate.resume_text ? "combined" : usesProfile ? "skills" : "resume",
+        topK: TOP_K, minScore: MIN_SCORE, jobCount: jobPostings.length });
+      // Retain the response key for compatibility; browsing has its own endpoint.
+      const developmentPayload = { development_listings: [] };
 
       if (!jobPostings.length) {
-        return res.status(200).json({ matches: [] });
+        return res.status(200).json({ matches: [], ...developmentPayload, ...sourcePayload, matching_analysis: analysis });
       }
 
       const response = await callNlp({
@@ -263,7 +280,12 @@ function createJobMatchingHandler(dependencies = {}) {
         new Set(jobPostings.map((jobPosting) => toPlainJob(jobPosting).id)),
       );
 
-      return res.status(200).json({ matches: enrichMatches(matches, jobPostings) });
+      const jobsById = new Map(jobPostings.map((job) => [toPlainJob(job).id, toPlainJob(job)]));
+      const jobTexts = new Map(normalizeJobs(jobPostings).map((job) => [job.job_posting_id, job.text]));
+      const explainedMatches = enrichMatches(matches, jobPostings, JobPostingModel.sequelize).map((match) => ({ ...match,
+        explanation: explainJob(jobsById.get(match.job_posting_id), analysis, { jobText: jobTexts.get(match.job_posting_id) }),
+      }));
+      return res.status(200).json({ matches: explainedMatches, ...developmentPayload, ...sourcePayload, matching_analysis: analysis });
     } catch (error) {
       if (error?.status === 503 || error?.status === 504 || error?.status === 502) {
         return res.status(error.status).json({
@@ -283,6 +305,51 @@ function createJobMatchingHandler(dependencies = {}) {
 
 const getMyJobMatches = createJobMatchingHandler();
 
+async function listPublishedJobs(req, res) {
+  res.set("Cache-Control", "private, no-store");
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 255) : "";
+    const province = typeof req.query.province === "string" ? req.query.province.trim().slice(0, 100) : "";
+    const category = typeof req.query.category === "string" ? req.query.category : "";
+    if (category && !["information_technology", "business", "design", "engineering", "other"].includes(category)) {
+      return res.status(400).json({ message: "Unsupported job category" });
+    }
+    const page = /^\d+$/.test(req.query.page || "") ? Math.min(1000, Math.max(1, Number(req.query.page))) : 1;
+    const limit = 12;
+    const conditions = [publishedJobWhere()];
+    const pattern = (value) => `%${value.replace(/[\\%_]/g, "\\$&")}%`;
+    if (q) conditions.push({ [Op.or]: [{ title: { [Op.iLike]: pattern(q) } },
+      { description: { [Op.iLike]: pattern(q) } }, { "$company.name$": { [Op.iLike]: pattern(q) } }] });
+    if (province) conditions.push({ "$company.province$": { [Op.iLike]: pattern(province) } });
+    if (category) conditions.push({ category });
+    const result = await JobPosting.findAndCountAll({
+      where: { [Op.and]: conditions },
+      attributes: ["id", "title", "company_id", "description", "category", "quota", "compensation_text", "work_days_per_week"],
+      include: [{ model: Company, as: "company", required: true,
+        attributes: ["id", "name", "province", "email", "email_verified_at", "phone", "address_no", "moo", "subdistrict", "district"] },
+      { model: JobPostingWorkMode, as: "workModes", attributes: ["mode"], separate: true }],
+      order: [["published_at", "DESC"], ["id", "ASC"]], limit, offset: (page - 1) * limit,
+    });
+    const jobs = enrichMatches(result.rows.map((job) => ({ job_posting_id: job.id })), result.rows);
+    return res.json({ jobs, page, limit, total: result.count });
+  } catch {
+    return res.status(500).json({ message: "ไม่สามารถค้นหาประกาศงานได้ กรุณาลองใหม่" });
+  }
+}
+
+async function getMyJobMatchingSource(req, res) {
+  res.set("Cache-Control", "private, no-store");
+  try {
+    const student = await readMatchingStudent(req.user.id, {
+      StudentModel: Student, StudentProfileModel: StudentProfile, StudentSkillModel: StudentSkill,
+    });
+    if (!student) return res.status(404).json({ message: "Student was not found", code: "MATCH_STUDENT_NOT_FOUND" });
+    return res.json({ matching_source: matchingSource(student) });
+  } catch {
+    return res.status(500).json({ message: "Unable to load saved matching skills", code: "MATCH_SOURCE_LOAD_FAILED" });
+  }
+}
+
 module.exports = {
   MIN_SCORE,
   SCHEMA_VERSION,
@@ -292,6 +359,8 @@ module.exports = {
   createJobMatchingHandler,
   enrichMatches,
   getMyJobMatches,
+  getMyJobMatchingSource,
+  listPublishedJobs,
   normalizeJobs,
   readStudentResume,
   validateNlpResponse,

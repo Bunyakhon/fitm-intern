@@ -55,7 +55,7 @@ function createCoopTopicExamService(models, { storage = createTopicDocumentStora
   async function saveDocument(studentId, body, header, file) {
     r.object(body, file ? [] : ['document_url']);
     if (!file && !Object.hasOwn(body, 'document_url')) r.fail('กรุณาระบุ document_url ให้ชัดเจน');
-    const url = file ? undefined : r.httpsUrl(body.document_url);
+    const url = file ? undefined : r.overleafUrl(body.document_url);
     if (file) r.pdf(file);
     return tx(async transaction => {
       await owner(studentId, transaction, true);

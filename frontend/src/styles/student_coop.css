@@ -1013,6 +1013,116 @@ a {
   gap: 14px;
 }
 
+/* Recommendations and general browsing share cards, but keep separate results. */
+#panel-job-matching [hidden] { display: none !important; }
+#panel-job-matching .section-card { min-width: 0; container: job-matching-section / inline-size; }
+#panel-job-matching .job-matching-results { width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr); align-items: start; }
+#panel-job-matching .job-matching-results > .job-recommendation-card:only-child { grid-column: 1 / -1; }
+#panel-job-matching .section-card-header { gap: 16px; flex-wrap: wrap; }
+#panel-job-matching .job-matching-source { grid-template-columns: minmax(110px, .35fr) minmax(0, 1fr); }
+#panel-job-matching .job-matching-source dd { margin: 8px 0 0; }
+#panel-job-matching .job-skill-chips { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+#panel-job-matching .job-skill-chip { display: inline-flex; max-width: 100%; padding: 6px 11px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-dark); font-size: .86rem; line-height: 1.5; overflow-wrap: anywhere; }
+#panel-job-matching .job-related-skills { margin-top: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+#panel-job-matching .job-recommendation-card { min-width: 0; max-width: 100%; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 10px; overflow-wrap: anywhere; container-type: inline-size; }
+#panel-job-matching .job-recommendation-card > * { min-width: 0; max-width: 100%; }
+#panel-job-matching .job-recommendation-card p { margin-block: 0; }
+#panel-job-matching .job-recommendation-card .job-matching-metadata { margin: 0; gap: 6px 14px; line-height: 1.6; }
+#panel-job-matching .job-recommendation-heading { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+#panel-job-matching .job-recommendation-identity { min-width: 0; flex: 1; }
+#panel-job-matching .job-source-label { display: inline-block; margin-top: 6px; color: var(--muted); font-size: .83rem; }
+#panel-job-matching .job-recommendation-score { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; color: var(--muted); }
+#panel-job-matching .job-recommendation-score strong { color: var(--primary); font-size: 1.85rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
+#panel-job-matching .job-score-track { height: 8px; background: var(--primary-soft); border-radius: 999px; overflow: hidden; }
+#panel-job-matching .job-score-track > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+#panel-job-matching .job-development-label { color: var(--muted); background: var(--primary-soft); border-radius: 8px; padding: 8px 10px; font-size: .82rem; line-height: 1.6; }
+#panel-job-matching .job-card-label { font-weight: 600; font-size: .9rem; }
+#panel-job-matching .job-card-details summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+#panel-job-matching .job-card-details p { margin-top: 8px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+#panel-job-matching .job-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; align-items: stretch; gap: 10px; margin-top: 4px; }
+#panel-job-matching .job-card-actions button { display: flex; justify-content: center; align-items: center; width: 100%; min-width: 0; min-height: 48px; height: 100%; margin: 0; white-space: normal; line-height: 1.5; padding: 10px 12px; }
+#panel-job-matching .job-contact-details { display: grid; min-width: 0; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+#panel-job-matching .job-contact-details h5 { font: inherit; font-weight: 600; margin: 0; }
+#panel-job-matching .job-contact-fields { display: grid; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr); gap: 4px 12px; min-width: 0; margin: 0; }
+#panel-job-matching .job-contact-fields dt { color: var(--muted); }
+#panel-job-matching .job-contact-fields dd { min-width: 0; margin: 0; }
+#panel-job-matching .job-contact-details a { display: inline; overflow-wrap: anywhere; text-underline-offset: 3px; }
+#panel-job-matching .job-contact-synthetic-label { color: var(--muted); font-size: .85rem; }
+#panel-job-matching .job-contact-advice { color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+#panel-job-matching .job-browser-form { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; margin: 16px 0; }
+#panel-job-matching .job-browser-form label { display: grid; gap: 6px; min-width: 0; font-size: .87rem; }
+#panel-job-matching .job-browser-form input,
+#panel-job-matching .job-browser-form select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card, #fff); color: var(--text); font: inherit; }
+#panel-job-matching .job-browser-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+#panel-job-matching .job-browser-pagination button { min-height: 44px; }
+#panel-job-matching button:focus-visible,
+#panel-job-matching summary:focus-visible,
+#panel-job-matching a:focus-visible,
+#panel-job-matching input:focus-visible,
+#panel-job-matching select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (min-width: 1100px) {
+  @container job-matching-section (min-width: 760px) {
+    #panel-job-matching .job-matching-results { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+@container (max-width: 380px) {
+  #panel-job-matching .job-card-actions { grid-template-columns: minmax(0, 1fr); }
+  #panel-job-matching .job-contact-fields { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  #panel-job-matching .job-contact-fields dd + dt { margin-top: 6px; }
+}
+@media (max-width: 900px) {
+  #panel-job-matching .job-browser-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  #panel-job-matching .section-card { padding: 16px; }
+  #panel-job-matching .job-matching-source,
+  #panel-job-matching .job-browser-form,
+  #panel-job-matching .job-card-actions { grid-template-columns: minmax(0, 1fr); }
+  #panel-job-matching .job-recommendation-card { padding: 16px; }
+  #panel-job-matching .job-matching-actions { width: 100%; grid-template-columns: minmax(0, 1fr); }
+  #panel-job-matching .job-matching-title { overflow-wrap: anywhere; }
+}
+
+#panel-job-matching .job-explanation,
+#panel-job-matching .job-explanation-wrapper,
+#jobMatchingAnalysis {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+#panel-job-matching .job-explanation {
+  margin-top: 12px;
+}
+
+#panel-job-matching .job-explanation summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+}
+
+#panel-job-matching .job-explanation summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+#panel-job-matching .job-explanation-label {
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+#panel-job-matching .job-explanation-wrapper ul,
+#panel-job-matching .job-explanation ul {
+  padding-inline-start: 1.25rem;
+  margin-block: 6px;
+}
+
+#panel-job-matching .job-explanation-text {
+  max-height: 14rem;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
 .job-matching-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2794,21 +2904,40 @@ textarea::placeholder {
   box-shadow: 0 0 0 3px rgba(20, 80, 163, 0.12);
 }
 
-.coop-delivery-methods > p {
-  margin: -6px 0 12px;
-  font-weight: 400;
+.coop-request-modal .coop-delivery-methods {
+  min-inline-size: 0;
+  padding: 18px;
 }
 
-.coop-check-row {
-  display: flex;
-  flex-wrap: wrap;
+/* Float the semantic legend into the padded box, clear of the top border. */
+.coop-request-modal .coop-delivery-methods > legend {
+  float: left;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0 0 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.coop-request-modal .coop-delivery-methods > p {
+  clear: both;
+  margin: 0 0 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.coop-delivery-methods .coop-check-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 10px;
+  min-width: 0;
 }
 
 .coop-delivery-methods .coop-check-item {
   display: flex;
   align-items: flex-start;
-  flex: 1 1 220px;
+  min-width: 0;
   gap: 9px;
   min-height: 48px;
   margin: 0;
@@ -2818,20 +2947,37 @@ textarea::placeholder {
   background: #f8fafc;
   color: #344054;
   font-size: 0.84rem;
-  line-height: 1.45;
+  line-height: 1.6;
   cursor: pointer;
 }
 
-.coop-check-item:has(input:checked) {
+.coop-delivery-methods .coop-check-item:has(input:checked) {
   border-color: var(--primary);
   background: var(--primary-soft);
 }
 
 .coop-delivery-methods input[type="checkbox"] {
-  width: 17px;
-  height: 17px;
-  margin-top: 1px;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: .2em 0 0;
   accent-color: var(--primary);
+}
+
+.coop-delivery-methods .coop-check-item > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.coop-delivery-methods .coop-check-item:focus-within {
+  border-color: var(--primary);
+}
+
+.coop-delivery-methods input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .coop-unavailable {
@@ -2888,6 +3034,36 @@ textarea::placeholder {
 
 .coop-advisor-grid {
   margin-top: 14px;
+}
+
+/* Pre-submission participants only; submitted request tracking stays unchanged. */
+#coopRequestForm .coop-form-participants {
+  display: grid;
+  gap: 12px;
+}
+
+#coopRequestForm .coop-form-participants h4,
+#coopRequestForm .coop-form-participants .coop-advisor-grid {
+  margin: 0;
+}
+
+#coopRequestForm .coop-form-participants .coop-readonly-grid {
+  gap: 12px 16px;
+}
+
+#coopRequestForm .coop-form-participants .coop-readonly-grid strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#coopRequestForm .coop-form-participants .coop-unavailable {
+  min-height: 0;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+#coopRequestForm .coop-form-participants [hidden] {
+  display: none;
 }
 
 .coop-detail-chip-list {

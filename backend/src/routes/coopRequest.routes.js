@@ -10,6 +10,7 @@ const {
   getPublishedJobPostingForCoopRequest,
   getPrerequisiteCatalog,
   getClassAdvisorReadiness,
+  getDepartmentHead,
 } = require("../controllers/coopRequest.controller");
 const { authenticateToken, requireCoopStudent } = require("../middlewares/auth.middleware");
 
@@ -27,6 +28,7 @@ router.get("/companies/search", searchCompanies);
 router.get("/companies/duplicate-check", checkCompanyDuplicate);
 router.use(requireCoopStudent);
 router.get('/class-advisor', getClassAdvisorReadiness);
+router.get('/department-head', getDepartmentHead);
 router.get('/prerequisite-catalog', getPrerequisiteCatalog);
 router.get("/job-postings/:id", getPublishedJobPostingForCoopRequest);
 router.get("/me", getMyCoopRequests);

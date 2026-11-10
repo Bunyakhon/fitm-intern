@@ -1,5 +1,5 @@
 const express = require("express");
-const { getMyJobMatches } = require("../controllers/jobMatching.controller");
+const { getMyJobMatches, getMyJobMatchingSource, listPublishedJobs } = require("../controllers/jobMatching.controller");
 const { authenticateToken } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
@@ -21,6 +21,8 @@ function requireStudentActor(req, res, next) {
 }
 
 router.post("/me", authenticateToken, requireStudentActor, getMyJobMatches);
+router.get("/me/source", authenticateToken, requireStudentActor, getMyJobMatchingSource);
+router.get("/me/jobs", authenticateToken, requireStudentActor, listPublishedJobs);
 
 module.exports = router;
 module.exports.requireStudentActor = requireStudentActor;

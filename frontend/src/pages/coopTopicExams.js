@@ -2,6 +2,7 @@ import { topicExamClient } from '../api/coopTopicExams.api.js';
 import { showToast, showConfirmModal } from '../ui/feedback.js';
 import { node, renderDetail, reviewLabels, examLabels, roleLabels, transitions, name, date, bangkokInput, bangkokISO } from './coopTopicExamView.js';
 import '../styles/coop_topic_exams.css';
+import { documentUrl } from '../validators/projectDocumentUrl.js';
 
 export function mountTopicExams({ document, container, role = 'student', client = topicExamClient(role), toast = showToast, confirm = showConfirmModal, view = null } = {}) {
   if (!container || container.dataset.co09Mounted) return;
@@ -17,12 +18,39 @@ export function mountTopicExams({ document, container, role = 'student', client 
     <form data-co09="schedule"><fieldset><legend>จัดตารางสอบหัวข้อโครงการ CO-09</legend><p>วันเวลา Asia/Bangkok · จำนวนกรรมการยังไม่มีข้อกำหนดยืนยันในระบบ</p><div class="co09-grid"><label>สถานะสอบ<select name="status"></select></label><label>วันสอบ<input name="day" type="date"></label><label>เวลาเริ่ม<input name="start" type="time"></label><label>เวลาสิ้นสุด<input name="end" type="time"></label><label>รูปแบบสอบ<select name="mode"><option value="onsite">On-site</option><option value="online">Online</option></select></label><label>ห้องสอบ / สถานที่<input name="location" maxlength="500"></label><label>Meeting URL (HTTPS)<input name="meeting_url" type="url" maxlength="2000"></label><label>เหตุผลเลื่อน / ยกเลิก<textarea name="reason" maxlength="2000" rows="2"></textarea></label><label class="co09-wide">หมายเหตุ<textarea name="notes" maxlength="5000" rows="2"></textarea></label></div><h4>กรรมการสอบ</h4><div data-co09="committee"></div><button data-co09="add" type="button">เพิ่มกรรมการ</button><div class="co09-actions"><button type="submit">บันทึกตารางสอบ</button><button data-co09="reloadDetail" type="button">โหลดรายละเอียดล่าสุด</button></div></fieldset></form><div data-co09="history"></div>` : `<form data-co09="upload"><fieldset><legend>CO-09 — ใบยื่นสอบหัวข้อโครงการสหกิจศึกษา</legend><label>เลือกไฟล์ PDF ขนาดไม่เกิน 10MB<input name="file" type="file" accept=".pdf,application/pdf" required></label><p>ไฟล์ใหม่บันทึกแยกจากไฟล์เดิม และเริ่มรอตรวจอีกครั้ง</p><button type="submit">อัปโหลด PDF</button></fieldset></form><form data-co09="url"><fieldset><legend>URL เอกสาร CO-09</legend><label>HTTPS URL<input name="document_url" type="url" maxlength="2000"></label><p>URL และ PDF บันทึกแยกกัน การบันทึก URL ไม่ถือว่าอัปโหลด PDF แล้ว</p><button type="submit">บันทึก URL</button></fieldset></form>`}</section>`;
   const get = key => container.querySelector(`[data-co09="${key}"]`), input = (form, key) => get(form).elements.namedItem(key);
   const documentControls = { files: get('fileActions'), upload: get('upload'), url: get('url') };
+  if (!manager && !view) {
+    const urlInput = input('url', 'document_url');
+    urlInput.placeholder = 'https://www.overleaf.com/...';
+    urlInput.parentElement.firstChild.textContent = 'ลิงก์ Overleaf สำหรับเอกสาร CO-09';
+    get('url').querySelector('p').textContent = 'บันทึกแยกจาก PDF · ตรวจสอบสิทธิ์การแชร์เพื่อให้อาจารย์ที่เกี่ยวข้องเปิดเอกสารได้';
+  }
+  const urlFeedback = manager ? null : el('p', '', 'message error');
+  function urlError(message = '') {
+    if (manager) return;
+    urlFeedback.textContent = message;
+    urlFeedback.hidden = !message;
+    input('url', 'document_url').setAttribute('aria-invalid', String(Boolean(message)));
+  }
+  if (!manager) {
+    // Route URL errors through the shared Thai validation, without native popups.
+    documentControls.url.noValidate = true;
+    const urlInput = input('url', 'document_url');
+    urlFeedback.id = `${container.id || 'co09Student'}UrlValidation`;
+    urlFeedback.hidden = true;
+    urlFeedback.setAttribute('role', 'alert');
+    urlInput.closest('label').after(urlFeedback);
+    urlInput.setAttribute('aria-describedby', [urlInput.getAttribute('aria-describedby'), urlFeedback.id].filter(Boolean).join(' '));
+    urlInput.addEventListener('input', () => {
+      try { documentUrl(urlInput.value, 'overleaf'); urlError(); }
+      catch (error) { urlError(error.message); }
+    });
+  }
   let current = null, teachers = [], page = 1, hasNext = false, busy = false, dirty = false, conflict = false, serial = 0, session = client.getToken(), revoked = false;
   let previewUrl = null;
   const dirtyForms = new Set();
   const live = () => !revoked && !!session && client.getToken() === session;
   function clearPreview() { get('pdfPreview')?.remove(); if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = null; }
-  function wipe() { revoked = true; ++serial; current = null; clearPreview(); get('detail').replaceChildren(); get('identity').replaceChildren(); get('list')?.replaceChildren(); get('workspace').hidden = true; say('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่', true); }
+  function wipe() { revoked = true; ++serial; current = null; clearPreview(); get('detail').replaceChildren(); get('identity').replaceChildren(); get('list')?.replaceChildren(); get('workspace').hidden = true; if (!manager) { dirty = false; dirtyForms.clear(); documentControls.upload.reset(); documentControls.url.reset(); urlError(); controls(); } say('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่', true); }
   function say(message, error = false) { get('message').textContent = message; get('message').setAttribute('role', error ? 'alert' : 'status'); }
   function controls() {
     container.setAttribute('aria-busy', String(busy));
@@ -32,6 +60,7 @@ export function mountTopicExams({ document, container, role = 'student', client 
   }
   function failure(error) {
     if (!live() || error.data?.code === 'CO09_SESSION_CHANGED') { wipe(); return; }
+    if (!manager && error.data?.code === 'CO09_URL_INVALID') urlError(error.message || 'กรุณาระบุลิงก์ HTTPS จาก overleaf.com หรือ www.overleaf.com');
     if (error.status === 409 || error.data?.code === 'CO09_COMMIT_UNCERTAIN') conflict = true;
     say(`${error.message || 'ดำเนินการไม่สำเร็จ'}${conflict ? ' ร่างยังคงอยู่ โปรดโหลดรายละเอียดล่าสุดเพื่อตรวจสอบก่อนบันทึกซ้ำ' : ''}`, true);
   }
@@ -48,7 +77,7 @@ export function mountTopicExams({ document, container, role = 'student', client 
     get('workspace').hidden = false;
     get('fileActions').hidden = !current.document.file;
     get('identity').replaceChildren(el('p', `${current.student.student_id} · ${name(current.student)} · ${current.student.major || '-'}`), el('p', `อาจารย์ที่ปรึกษาโครงการ: ${name(current.advisor)}`));
-    if (!manager) { if (!dirtyForms.has('url')) input('url','document_url').value = current.document.document_url; return; }
+    if (!manager) { if (!dirtyForms.has('url')) { input('url','document_url').value = current.document.document_url; urlError(); } return; }
     if (!dirtyForms.has('review') || resetForm === 'review') { input('review','review_status').value = current.document.review_status === 'needs_revision' ? 'needs_revision' : 'approved'; input('review','review_reason').value = current.document.review_reason || ''; }
     if (!dirtyForms.has('schedule') || resetForm === 'schedule') {
     const exam = current.exam, start = bangkokInput(exam.starts_at), end = bangkokInput(exam.ends_at), statuses = transitions[exam.status] || [];
@@ -128,7 +157,14 @@ export function mountTopicExams({ document, container, role = 'student', client 
       const body = new FormData(); body.append('file',file);
       await save('/me/document', { method: 'POST', version: current.document.version, body }, data => { current.document = data; input('upload','file').value = ''; });
     }); });
-    get('url').addEventListener('submit', event => { event.preventDefault(); run(() => save('/me/document-url', { method: 'PUT', version: current.document.version, body: { document_url: input('url','document_url').value } }, data => { current.document = data; })); });
+    get('url').addEventListener('submit', event => {
+      event.preventDefault();
+      if (!current || busy || !live()) return;
+      let url;
+      try { url = documentUrl(input('url','document_url').value, 'overleaf'); urlError(); }
+      catch (error) { urlError(error.message); input('url','document_url').focus(); return; }
+      run(() => save('/me/document-url', { method: 'PUT', version: current.document.version, body: { document_url: url } }, data => { current.document = data; }));
+    });
   }
   const target = document.defaultView;
   target?.addEventListener('storage', () => { if (!live()) { wipe(); controls(); } });

@@ -1,4 +1,5 @@
 const { uuid } = require('../validators/roleWorkflow.validator');
+const { documentUrl } = require('./projectDocumentUrl.rules');
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const EXAM_STATUSES = ['unscheduled', 'scheduled', 'rescheduled', 'cancelled', 'completed'];
 const REVIEW_STATUSES = ['missing', 'pending', 'needs_revision', 'approved'];
@@ -25,6 +26,10 @@ function httpsUrl(value) {
 function revision(header, current) {
   if (header == null) fail('กรุณาโหลดข้อมูลก่อนบันทึก', 428, 'CO09_REVISION_REQUIRED');
   if (header !== `"${current}"`) fail('ข้อมูลเปลี่ยนแล้ว กรุณาโหลดข้อมูลล่าสุดและตรวจสอบร่างก่อนบันทึก', 409, 'CO09_REVISION_CONFLICT');
+}
+function overleafUrl(value) {
+  try { return documentUrl(value == null ? '' : value, 'overleaf'); }
+  catch (error) { fail(error.message, 400, 'CO09_URL_INVALID'); }
 }
 function dateTime(value) {
   // The form supplies Bangkok local times; reject implicit host-timezone parsing.
@@ -59,4 +64,4 @@ function schedule(body, previous = 'unscheduled') {
 function pdf(file) {
   if (!file || !Buffer.isBuffer(file.buffer) || !file.buffer.length || file.buffer.length > MAX_PDF_BYTES || file.mimetype !== 'application/pdf' || !/\.pdf$/i.test(file.originalname || '') || !/^%PDF-1\.[0-9]|^%PDF-2\.0/.test(file.buffer.subarray(0, 8).toString('ascii'))) fail('รองรับ PDF เท่านั้น ขนาดไม่เกิน 10MB');
 }
-module.exports = { MAX_PDF_BYTES, EXAM_STATUSES, REVIEW_STATUSES, TRANSITIONS, fail, object, text, httpsUrl, revision, dateTime, schedule, pdf };
+module.exports = { MAX_PDF_BYTES, EXAM_STATUSES, REVIEW_STATUSES, TRANSITIONS, fail, object, text, httpsUrl, overleafUrl, revision, dateTime, schedule, pdf };

@@ -2,6 +2,16 @@
 
 ใช้กฎนี้กับงานทุกส่วนใน Repository. คำสั่งผู้ใช้สำหรับงานปัจจุบันมาก่อนข้อตกลงทั่วไปในไฟล์นี้; การอนุญาตเดิมใน Session ใช้ต่อได้ภายในขอบเขตเดิม ไม่ขออนุญาตซ้ำโดยไม่จำเป็น. หากงานใหม่ขัดกับข้อตกลงเดิมและยังไม่มีคำสั่งเปลี่ยนนโยบายชัดเจน ให้แจ้งความขัดแย้งก่อนดำเนินการส่วนที่ขึ้นกับนโยบายนั้น.
 
+## Working Agreement — Effective 8 November 2026
+
+- ใช้ [Project Skill](.agents/skills/fitm-intern-workflow/SKILL.md) สำหรับงาน FITM-INTERN ใน Repository นี้. ข้อตกลงนี้แทนคำสั่งเดิมให้ Codex รัน Focused Verification, tests, build, syntax/static checks หรือ health checks เอง รวมคำสั่งในประวัติ README/Handoff; ไม่เปลี่ยนพฤติกรรมระบบหรือขยายนโยบายสิทธิ์.
+- **User-Owned Testing:** ผู้ใช้ทดสอบระบบและ Manual Acceptance เองทั้งหมด. Codex ห้ามรัน Unit/Integration/E2E/API/Database tests, Browser Automation, Playwright/Puppeteer, build, lint/typecheck, syntax checks/automated validation หรือ health checks เว้นแต่ผู้ใช้อนุญาตอย่างชัดเจนในงานครั้งนั้น. การอนุญาตทดสอบครั้งก่อนใช้แทนไม่ได้.
+- **No Questions:** ทำงานอัตโนมัติภายในขอบเขต ไม่ถาม clarification, multiple choice หรือ confirmation สำหรับงานปกติที่อนุญาตแล้ว. อ่าน Source/Documentation และข้อตกลงเดิมก่อน เลือกวิธีรักษาพฤติกรรมเดิม; นโยบายที่ยังไม่ชัดให้บันทึก `Pending Decision` และทำส่วนอิสระต่อ ไม่เดานโยบายมหาวิทยาลัย.
+- **Implementation First:** แก้ Requirement/Bug ที่ได้รับจริง ไม่ Full Audit, refactor, เพิ่ม Feature หรือแก้เมนู/Workflow นอกขอบเขต. รักษา API Contract, Schema และ RBAC เว้นแต่คำสั่งงานจำเป็นต้องเปลี่ยน. ระบุสิ่งที่ผู้ใช้ควรทดสอบภายหลังโดยไม่รันเอง.
+- Workflow: ผู้ใช้ส่ง Bug/Acceptance Results → ChatGPT เตรียมคำสั่งพัฒนาโดยละเอียด → Codex ทำตามขอบเขตที่อนุมัติ → ผู้ใช้ทดสอบซ้ำ. ห้ามสร้างผลทดสอบ PASS/FAIL/BLOCKED เอง; บันทึก `Tests: NOT RUN — USER-OWNED TESTING` เมื่อไม่ได้รับอนุญาต.
+- ไม่ข้าม Permission/Security Approval ของเครื่องมือ. หากสิทธิ์/เครื่องมือไม่พอ ให้ข้ามเฉพาะขั้นตอนนั้น บันทึกข้อจำกัด/Blocker และทำส่วนที่เหลือต่อ ไม่พยายามข้ามระบบหรือขออนุมัติซ้ำ.
+- อ่านเฉพาะไฟล์ที่เกี่ยวข้อง ไม่ตรวจซ้ำเมื่อมีหลักฐานเพียงพอ ไม่สร้าง Audit Report เพิ่มโดยไม่จำเป็น และสรุปงานสั้นเป็นภาษาไทย.
+
 ## ก่อนเริ่มงาน
 
 1. อ่าน `AGENTS.md`, ส่วนสถานะล่าสุดของ `HANDOFF_fitm-intern.md` และ `README.md`; อ่านประวัติที่เกี่ยวข้องเมื่อจำเป็น.
@@ -26,7 +36,7 @@
 - คง Email/Password, Remember Me, JWT, RBAC, Logout, cross-tab protection และ Dashboard URLs เดิม: `/src/student_coop/student_coop.html`, `/src/teacher_coop/teacher_coop.html`, `/src/department_head/department_head.html`, `/src/department_staff/department_staff.html`.
 - UI ใช้ Header `ระบบจัดการสหกิจศึกษา`, โลโก้ `/images/logo_kiwi.png` และ KIWI Branding/CSS เดิมตาม Git. **Google อยู่เหนือฟอร์ม Email/Password** ตามคำตอบผู้ใช้วันที่ 14 ตุลาคม 2026 ซึ่งแทนที่ตำแหน่งใต้ฟอร์มจากรอบก่อน. ห้ามย้ายหรือออกแบบใหม่โดยไม่มีคำสั่ง.
 - ต้องมีปุ่ม Google ใน UI เสมอ. อ่าน `/api/auth/google/config`; disabled ให้แสดง `ยังไม่เปิดใช้งาน` และกดแล้วแจ้ง Shared Toast โดยไม่โหลด Provider หรือเรียก challenge/login. Enabled ใช้ GIS/ID token verification/nonce guards/secure subject mapping/Application JWT และ automatic role detection เดิม; ไม่สร้าง Authentication ซ้ำ.
-- ห้ามเปิด Google Login/Account Linking flags เอง, ห้าม Auto-Link จาก Email เพียงอย่างเดียว และห้ามเปลี่ยน domain/hosted-domain/identity/linking policy. Subject ที่มีหลาย Actor โดยไม่มี safe context ต้องปฏิเสธและรายงาน BLOCKED สำหรับกรณีนั้น.
+- ห้ามเปิด Google Login/Account Linking flags เอง, ห้าม Auto-Link จาก Email เพียงอย่างเดียว และห้ามเปลี่ยน domain/hosted-domain/identity/linking policy. Subject ที่มีหลาย Actor โดยไม่มี safe context ต้องปฏิเสธตาม guard เดิมและบันทึกเป็นข้อจำกัดเมื่อมีหลักฐาน ไม่สร้างผลทดสอบเอง.
 
 ## Database
 
@@ -37,15 +47,15 @@
 
 ## Git และข้อมูลส่วนตัว
 
-- ห้าม Commit/Push อัตโนมัติ, Git Reset/Clean ที่ทำให้ข้อมูลสูญหาย และห้ามลบ/ทับ Uncommitted Changes. คง `.env` และ secrets เดิมเมื่อไม่มีคำสั่งแก้; ไม่พิมพ์ password, hash, JWT หรือข้อมูลส่วนบุคคลลง Chat/เอกสาร.
+- ห้าม Commit/Push อัตโนมัติ และห้าม `git reset`, `git clean`, `git stash`, ลบ Modified/Untracked Files หรือทับ Uncommitted Changes. ห้าม Truncate/Recreate Database หรือทำลายข้อมูล PostgreSQL. ห้ามแก้ Environment Secrets; ไม่พิมพ์ credentials, password, hash, JWT, tokens หรือข้อมูลส่วนบุคคลลง Chat/เอกสาร/Skill.
 - ตรวจ Git Diff หลังทำงานและรายงานไฟล์ที่เพิ่ม แก้ไข หรือลบ โดยแยกงานรอบนี้จาก Baseline เดิม. ไม่สร้าง Audit Reports เพิ่มโดยไม่มีงานที่ต้องใช้.
 
-## Focused Verification
+## Testing Responsibility — User-Owned Testing
 
-- ตรวจเฉพาะฟังก์ชันที่ได้รับผลกระทบด้วย Focused Verification หรือ Smoke Tests. ไม่ทำ Full Repository Audit/Full Regression ทุกครั้ง และไม่สร้าง Test Files หรือ Evidence จำนวนมากโดยไม่จำเป็น.
-- อ่าน scripts ปัจจุบันก่อนรัน; automated suites/runners เดิมถูกลบแล้ว อย่าสั่ง `npm test` หรือ runner จากประวัติโดยไม่ตรวจว่ามีจริง. เมื่อไม่มี tests ให้ใช้ syntax/static checks, build และ inline checks ที่เหมาะสม พร้อมระบุขอบเขตและข้อจำกัด.
-- งาน Login UI ตรวจ Google disabled ไม่เรียก Provider, การเชื่อม Unified endpoint, ไม่มี Role Selector และ Responsive 1280/390/320 px. Build จาก `frontend` ด้วย `npm.cmd run build` บน Windows หรือ `npm run build` เมื่อ shell รองรับ. อ่าน Backend health จาก `/` และ `/health/db` เมื่อบริการรันอยู่; ไม่จำเป็นต้อง restart/reset เพื่อสร้างผล PASS.
-- ใช้ PASS/FAIL/PARTIAL/BLOCKED/NOT TESTED ตามหลักฐาน. แยก static/mock/synthetic/browser/real accounts/provider E2E ให้ชัด; ไม่เปิด feature flags เพื่อให้ทดสอบผ่านและไม่อ้าง Provider E2E เมื่อยังไม่ได้ทดสอบจริง.
+- อ่าน Test Checklist และผลที่ผู้ใช้ส่งมาเพื่อประกอบการแก้ไขได้; ไม่ถือเป็นอนุญาตให้รันทดสอบ. ใช้ [Manual Acceptance Checklist](docs/testing/COOP_REQUEST_MANUAL_TEST_CHECKLIST.md) 59 กรณี; สถานะ `PENDING USER RESULTS` จนมีผลยืนยันจากผู้ใช้.
+- ถ้างานนั้นอนุญาตทดสอบชัดเจน อ่าน scripts ปัจจุบันก่อนและทำเฉพาะขอบเขตที่อนุญาต ไม่เรียก runner จากประวัติโดยเดาว่ายังมีอยู่. ไม่เปิด flags/สร้างบัญชี/เพิ่มสิทธิ์เพื่อให้ทดสอบผ่าน.
+- งาน Login UI ให้ระบุรายการสำหรับผู้ใช้ตรวจ: Google disabled ไม่เรียก Provider, Unified endpoint, ไม่มี Role Selector, Responsive 1280/390/320 px และ Session/RBAC เดิม; Codex ไม่รัน Browser/build/health เอง.
+- ผลเก่าคงวันที่และชนิดหลักฐาน static/mock/synthetic/browser/real accounts/provider E2E; ไม่ยกเป็นผลใหม่หรือ Manual Acceptance. ผลจากผู้ใช้ต้องอ้างที่มา ไม่สร้างผล PASS/FAIL/BLOCKED เอง.
 
 ## Handoff บังคับก่อนจบงาน
 
@@ -57,9 +67,11 @@
 4. ไฟล์ที่เพิ่ม แก้ไข หรือลบ
 5. Workflow ที่ต้องรักษา
 6. ข้อกำหนดที่ห้ามเปลี่ยน
-7. ผลทดสอบพร้อมชนิด/ขอบเขตหลักฐาน
+7. `Tests: NOT RUN — USER-OWNED TESTING` เมื่อไม่ได้รับอนุญาต; ผลผู้ใช้/ประวัติต้องแยกที่มาและวันที่
 8. ปัญหาที่ยังเหลือ
-9. งานที่ต้องทำต่อ โดยไม่เริ่มทำเอง
+9. `Pending Decisions`, `Remaining Issues` และ `NEXT TASK` โดยไม่เริ่มงานต่อเอง
 10. ข้อจำกัดและสิ่งที่ยังไม่ได้ทดสอบ
 
 ใช้ Handoff ไฟล์หลักเดียวนี้ ไม่สร้างไฟล์ซ้ำ ไม่ลบประวัติสำคัญ ไม่บันทึกซ้ำเมื่องานไม่มีการเปลี่ยนแปลงจริง. อัปเดตส่วนปัจจุบันอย่างกระชับและระบุเมื่อข้อตกลงใหม่แทนที่ของเดิม. ประวัติเป็น Project Continuity Record ไม่ใช่หลักฐานว่า Source ปัจจุบันทดสอบผ่านโดยอัตโนมัติ. ก่อนจบ ตรวจ Diff/UTF-8/สถานะนอกขอบเขต และสรุปภาษาไทย: ผลงาน ไฟล์เปลี่ยน ผลตรวจ Git ก่อน/หลัง และข้อจำกัด.
+
+อ่าน Diff/เนื้อหาและ Git status ได้ แต่ไม่ใช้ขั้นตอนนี้เป็นเหตุให้รัน automated validation. README อัปเดตเฉพาะการใช้งาน/สถาปัตยกรรมที่เปลี่ยนจริง; Project Skill อัปเดตเมื่อข้อตกลงเปลี่ยน ไม่จำเป็นต้องแก้ทุกครั้ง. สรุปท้ายงานเป็น `UPDATED FILES`, `RULES APPLIED`, `NOT MODIFIED`, `TESTS`, `PENDING DECISIONS / BLOCKERS`, `NEXT TASK` พร้อม baseline/สถานะ Git หลังงาน; ไม่ถามปิดท้าย.

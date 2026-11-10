@@ -48,7 +48,9 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     if (error.status === 409 || error.status === 404) return "คำขอนี้เปลี่ยนแปลงหรือไม่อยู่ในรายการของคุณแล้ว กรุณาตรวจสอบข้อมูลล่าสุด";
     if (error.status === 400) return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบเหตุผลและลองอีกครั้ง";
     if (error.status === 503) return "ระบบคำขอที่ปรึกษายังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ";
-    return "ไม่สามารถติดต่อระบบคำขอที่ปรึกษาได้ กรุณาลองรีเฟรชอีกครั้ง";
+    if (error.status === 500) return "ระบบคำขอที่ปรึกษาเกิดข้อผิดพลาด (HTTP 500) กรุณารีเฟรชสถานะคำขอก่อนลองใหม่";
+    if (!error.status) return "ไม่สามารถติดต่อระบบคำขอที่ปรึกษาได้ การเชื่อมต่อขัดข้องหรือหมดเวลา กรุณาตรวจสอบการเชื่อมต่อและรีเฟรชสถานะคำขอ";
+    return "ระบบคำขอที่ปรึกษาตอบกลับข้อผิดพลาด กรุณาลองรีเฟรชอีกครั้ง";
   }
   function element(tag, text, className) {
     const node = document.createElement(tag);

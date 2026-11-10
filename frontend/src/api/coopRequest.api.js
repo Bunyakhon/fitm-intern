@@ -14,6 +14,10 @@ export function getClassAdvisorReadiness() {
   return apiRequest('/api/coop-requests/class-advisor', { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
 }
 
+export function getDepartmentHead() {
+  return apiRequest('/api/coop-requests/department-head', { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
+}
+
 export function getMyCoopRequests() {
   return apiRequest("/api/coop-requests/me", { method: "GET" });
 }

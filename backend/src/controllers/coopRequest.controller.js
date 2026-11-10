@@ -15,11 +15,13 @@ const { readStudentCatalog } = require('../services/coopPrerequisiteCatalog.serv
 const academic = require('../services/coopAcademic.service').createAcademicService(require('../models'));
 const PREREQUISITE_INCLUDE = prerequisiteInclude(require('../models'));
 const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['actor_role','student_id','teacher_id','department_staff_id','decision','from_status','to_status','reason','created_at'],
-  include: [{model: Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'], required: false}],
+  include: [{model: Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name', 'position'], required: false}],
   separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
 const { publishedJobWhere, isPublishedJobAvailable } = require("../services/jobEligibility");
+const { companyVisibilityWhere, decorateCompany } = require("../services/internthDevelopmentData");
 const { requireClassAdvisor } = require('../services/coopClassAdvisor.service');
+const { readDepartmentHead } = require('../services/coopDepartmentHead.service');
 const { authorizeActor } = require('../services/unifiedAuth.service');
 
 const ACTIVE_STATUSES = new Set([
@@ -250,6 +252,7 @@ exports.getMyCoopRequests = async (req, res) => {
 };
 
 exports.getCoopRequestById = async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     const request = await findOwnedRequest(req.params.id, req.user.id, {
       include: [DELIVERY_METHOD_INCLUDE, STUDENT_INCLUDE, PREREQUISITE_INCLUDE, REVIEW_INCLUDE],
@@ -259,10 +262,12 @@ exports.getCoopRequestById = async (req, res) => {
       return res.status(404).json({ success: false, message: "ไม่พบคำร้องสหกิจศึกษา" });
     }
 
+    const data = (await academic.attach([request], { history: true }))[0];
+    data.department_head = await readDepartmentHead(require('../models'), request.student);
     return res.status(200).json({
       success: true,
       message: "ดึงรายละเอียดคำร้องสหกิจศึกษาสำเร็จ",
-      data: (await academic.attach([request], { history: true }))[0],
+      data,
     });
   } catch (error) {
     return toErrorResponse(error, res, "เกิดข้อผิดพลาดในการดึงรายละเอียดคำร้องสหกิจศึกษา");
@@ -385,6 +390,17 @@ exports.createCoopRequest = async (req, res) => {
   }
 };
 
+exports.getDepartmentHead = async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const student = await Student.findByPk(req.user.id, { attributes: ['id', 'advisor_teacher_id'] });
+    if (!student) return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลนักศึกษา' });
+    return res.json({ success: true, data: await readDepartmentHead(require('../models'), student) });
+  } catch (error) {
+    return toErrorResponse(error, res, 'ไม่สามารถโหลดข้อมูลหัวหน้าภาควิชาได้ กรุณาลองอีกครั้ง');
+  }
+};
+
 exports.getClassAdvisorReadiness = async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
@@ -420,11 +436,11 @@ exports.searchCompanies = async (req, res) => {
   if (query.length < 2) return res.status(200).json({ success: true, data: [] });
   try {
     const companies = await Company.findAll({
-      where: { name: { [Op.iLike]: `%${query.replace(/[\\%_]/g, "\\$&")}%` } },
+      where: { ...companyVisibilityWhere(sequelize), name: { [Op.iLike]: `%${query.replace(/[\\%_]/g, "\\$&")}%` } },
       attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"],
       order: [["name", "ASC"]], limit: 20,
     });
-    return res.json({ success: true, data: companies });
+    return res.json({ success: true, data: companies.map(decorateCompany) });
   } catch (error) { return toErrorResponse(error, res, "Unable to search companies"); }
 };
 
@@ -434,11 +450,11 @@ exports.checkCompanyDuplicate = async (req, res) => {
   try {
     const normalized = name.replace(/\s+/gu, " ").toLocaleLowerCase("th-TH");
     const matches = await Company.findAll({
-      where: { normalized_name: normalized },
+      where: { ...companyVisibilityWhere(sequelize), normalized_name: normalized },
       attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"],
       limit: 20,
     });
-    return res.json({ success: true, data: matches });
+    return res.json({ success: true, data: matches.map(decorateCompany) });
   } catch (error) { return toErrorResponse(error, res, "Unable to check company duplicates"); }
 };
 
@@ -446,7 +462,8 @@ exports.getPublishedJobPostingForCoopRequest = async (req, res) => {
   try {
     const job = await JobPosting.findOne({ where: { id: req.params.id, ...publishedJobWhere() }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
     if (!job || !job.company) return res.status(404).json({ success: false, message: "Published job posting was not found" });
-    return res.json({ success: true, data: job });
+    const plain = job.get({ plain: true });
+    return res.json({ success: true, data: { ...plain, company: decorateCompany(plain.company) } });
   } catch (error) { return toErrorResponse(error, res, "Unable to load job posting"); }
 };
 

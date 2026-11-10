@@ -1,5 +1,6 @@
 import { node, safeLink, reviewLabels, examLabels, roleLabels, name, date } from './coopTopicExamView.js';
 import { setButtonLoading } from '../ui/feedback.js';
+import { documentUrl, httpsDocumentUrl } from '../validators/projectDocumentUrl.js';
 import '../styles/student_coop_project.css';
 
 // This view is supplied only by the student project panel. Management keeps its existing view.
@@ -11,7 +12,7 @@ export const studentTopicExamView = {
     <section data-co09="workspace"><div data-co09="identity" hidden></div><div data-co09="detail" class="coop-exam-grid"></div>
       <div data-co09="fileActions" class="co09-actions coop-file-actions" hidden><button type="button" data-co09="preview" class="coop-secondary">${icon('eye')} เปิดดู PDF</button><button type="button" data-co09="download" class="coop-secondary">${icon('download')} ดาวน์โหลด PDF</button></div>
       <form data-co09="upload"><fieldset><legend>${icon('upload')} อัปโหลดเอกสาร PDF</legend><label>เลือกไฟล์ CO-09<input name="file" type="file" accept=".pdf,application/pdf" aria-describedby="co09StudentPdfHelp" required></label><p id="co09StudentPdfHelp" class="coop-help">PDF ขนาดไม่เกิน 10MB · เมื่อเปลี่ยนไฟล์ เอกสารจะเริ่มรอตรวจอีกครั้ง</p><button type="submit" class="coop-primary">${icon('upload')} อัปโหลด PDF</button></fieldset></form>
-      <form data-co09="url"><fieldset><legend>${icon('link')} ลิงก์เอกสาร CO-09</legend><label>URL เอกสาร (HTTPS)<input name="document_url" type="url" maxlength="2000" placeholder="https://" aria-describedby="co09StudentUrlHelp"></label><p id="co09StudentUrlHelp" class="coop-help">บันทึกแยกจาก PDF · การบันทึก URL ไม่ถือว่าอัปโหลด PDF แล้ว</p><button type="submit" class="coop-primary">${icon('floppy-disk')} บันทึก URL</button></fieldset></form>
+      <form data-co09="url"><fieldset><legend>${icon('link')} ลิงก์เอกสาร CO-09</legend><label>ลิงก์ Overleaf สำหรับเอกสาร CO-09<input name="document_url" type="url" maxlength="2000" placeholder="https://www.overleaf.com/..." aria-describedby="co09StudentUrlHelp"></label><p id="co09StudentUrlHelp" class="coop-help">บันทึกแยกจาก PDF · ตรวจสอบสิทธิ์การแชร์เพื่อให้อาจารย์ที่เกี่ยวข้องเปิดเอกสารได้</p><button type="submit" class="coop-primary">${icon('floppy-disk')} บันทึกลิงก์</button></fieldset></form>
     </section>`,
   renderDetail: renderStudentTopicExam,
   setBusy(container, busy) {
@@ -48,7 +49,16 @@ export function renderStudentTopicExam(document, root, detail) {
   file.append(el('p', doc.file?.original_name || 'ยังไม่ได้อัปโหลด PDF', 'coop-file-name'));
   if (doc.file) file.append(el('p', `อัปโหลด ${date(doc.file.uploaded_at)}`, 'coop-help'));
   documentCard.append(file);
-  if (doc.document_url) linked(documentCard, doc.document_url, 'เปิดลิงก์เอกสาร CO-09');
+  if (doc.document_url) {
+    try { linked(documentCard, documentUrl(doc.document_url, 'overleaf'), 'เปิดลิงก์ Overleaf สำหรับเอกสาร CO-09'); }
+    catch {
+      // Legacy HTTPS links remain readable/openable after a safe URL check.
+      // This presentation never rewrites stored URLs or review/version metadata.
+      try { linked(documentCard, httpsDocumentUrl(doc.document_url), 'เปิดลิงก์เดิมของเอกสาร CO-09 (HTTPS)'); }
+      catch { note(documentCard, 'ลิงก์เดิม (ไม่เปิดเป็นลิงก์)', doc.document_url); }
+      note(documentCard, 'ข้อมูลเดิม', 'ลิงก์เดิมยังคงอยู่ การบันทึกใหม่ต้องใช้ลิงก์ Overleaf');
+    }
+  }
   note(documentCard, 'เหตุผลการตรวจ', doc.review_reason);
 
   examCard.append(heading('กำหนดการสอบหัวข้อโครงการ', 'calendar-days'), badge(`การสอบ: ${examLabels[exam.status] || '-'}`, exam.status));

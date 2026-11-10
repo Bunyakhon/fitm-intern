@@ -9,11 +9,12 @@ const FILE_POLICY = {
 };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-function fail(status, message) { throw Object.assign(new Error(message), { status }); }
+function fail(status, message, code) { throw Object.assign(new Error(message), { status, ...(code ? { code } : {}) }); }
 function onlyTopic(body) {
-  if (!body || Object.keys(body).some(key => key !== "topic") || typeof body.topic !== "string") fail(400, "กรุณาส่งเฉพาะหัวข้อโครงการ");
+  if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some(key => !["topic", "expected_topic"].includes(key)) || typeof body.topic !== "string") fail(400, "กรุณาส่งเฉพาะหัวข้อโครงการและข้อมูลที่อ่านล่าสุด", "TOPIC_INVALID_INPUT");
   const topic = body.topic.trim();
   if (!topic || [...topic].length > 500 || /[\u0000-\u001f\u007f]/.test(topic)) fail(400, "หัวข้อโครงการต้องมีความยาว 1–500 ตัวอักษร");
+  if (typeof body.expected_topic !== "string" || [...body.expected_topic].length > 500) fail(400, "กรุณาโหลดหัวข้อโครงการก่อนบันทึก", "TOPIC_BASELINE_REQUIRED");
   return topic;
 }
 function publicFile(file) {
@@ -32,22 +33,38 @@ function createStudentCoopProjectService(models, storage = defaultStorage) {
     if (record.track !== "co_op") fail(403, "สำหรับนักศึกษาสหกิจศึกษาเท่านั้น");
     return record;
   }
-  async function readProject(studentId) {
-    const owner = await student(studentId);
-    const project = await CoopProject.findOne({ where: { student_id: owner.id } });
-    const teacher = owner.coop_advisor_teacher_id ? await Teacher.findByPk(owner.coop_advisor_teacher_id, { attributes: ["id", "academic_title", "first_name", "last_name"] }) : null;
+  async function projectData(owner, project, transaction) {
+    const teacher = owner.coop_advisor_teacher_id ? await Teacher.findByPk(owner.coop_advisor_teacher_id, { attributes: ["id", "academic_title", "first_name", "last_name"], transaction }) : null;
     const confirmed = teacher ? { id: teacher.id, name: `${teacher.academic_title || ""}${teacher.first_name} ${teacher.last_name}`.trim() } : null;
     return { topic: project?.topic || "", coop_advisor_teacher: confirmed, confirmed_advisor: confirmed };
   }
+  async function readProject(studentId) {
+    const owner = await student(studentId);
+    const project = await CoopProject.findOne({ where: { student_id: owner.id } });
+    return projectData(owner, project);
+  }
   async function saveTopic(studentId, body) {
     const topic = onlyTopic(body);
-    await sequelize.transaction(async transaction => {
-      const owner = await student(studentId, transaction);
-      const project = await CoopProject.findOne({ where: { student_id: owner.id }, transaction, lock: transaction.LOCK.UPDATE });
-      if (project) await project.update({ topic }, { transaction });
-      else await CoopProject.create({ student_id: owner.id, topic }, { transaction });
-    });
-    return readProject(studentId);
+    let readyToCommit = false;
+    try {
+      return await sequelize.transaction(async transaction => {
+        const owner = await student(studentId, transaction);
+        let project = await CoopProject.findOne({ where: { student_id: owner.id }, transaction, lock: transaction.LOCK.UPDATE });
+        // Value-based CAS also covers first creation under the Student lock.
+        // There is no revision column: a change away and back (ABA) is not detected.
+        if ((project?.topic || "") !== body.expected_topic) fail(409, "หัวข้อโครงการเปลี่ยนแล้ว ร่างของคุณยังอยู่ กรุณาโหลดข้อมูลล่าสุดก่อนบันทึก", "TOPIC_CONFLICT");
+        if (project) await project.update({ topic }, { transaction });
+        else project = await CoopProject.create({ student_id: owner.id, topic }, { transaction });
+        // Build the response before COMMIT; no follow-up read can turn an
+        // acknowledged write into an error response.
+        const result = await projectData(owner, project, transaction);
+        readyToCommit = true;
+        return result;
+      });
+    } catch (error) {
+      if (readyToCommit) fail(503, "ยังยืนยันผลบันทึกไม่ได้ กรุณาโหลดหัวข้อล่าสุดก่อนลองใหม่", "PROJECT_COMMIT_UNCERTAIN");
+      throw error;
+    }
   }
   async function listFiles(studentId) {
     await student(studentId);
@@ -67,11 +84,18 @@ function createStudentCoopProjectService(models, storage = defaultStorage) {
     return real;
   }
   async function cleanup(studentId, type, storedPath) {
-    try { await fs.unlink(await ownedPath(studentId, type, storedPath)); }
+    try {
+      const physicalPath = await ownedPath(studentId, type, storedPath);
+      // Check all StudentFile references on the primary, outside the upload
+      // transaction. If this read fails, keep the bytes rather than risk data loss.
+      const referenced = await StudentFile.findOne({ where: { storage_path: storedPath }, attributes: ["id"], transaction: null, useMaster: true });
+      if (!referenced) await fs.unlink(physicalPath);
+    }
     catch (error) { if (error.code !== "ENOENT") console.error("Co-op project file cleanup failed"); }
   }
   async function upload(studentId, type, file, body = {}) {
-    let committed = false, stagedPath;
+    let transaction, stagedPath;
+    let transactionState = "not_started";
     try {
       if (!FILE_POLICY[type] || !file) fail(400, "กรุณาเลือกไฟล์");
       stagedPath = storage.toStorageRelativePath(file.path);
@@ -93,19 +117,33 @@ function createStudentCoopProjectService(models, storage = defaultStorage) {
         : file.mimetype === "image/png" ? header.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
         : header.subarray(0, 3).equals(Buffer.from([255,216,255]));
       if (!matches || (await fs.stat(physicalPath)).size !== file.size) fail(400, "เนื้อหาไฟล์ไม่ตรงกับประเภทที่อนุญาต");
-      const result = await sequelize.transaction(async transaction => {
-        await student(studentId, transaction); // Serializes first upload and concurrent replacements.
-        const existing = await StudentFile.findOne({ where: { student_id: studentId, file_type: type }, transaction, lock: transaction.LOCK.UPDATE });
-        const previous = existing?.storage_path;
-        const metadata = { original_name: original, storage_path: stagedPath, mime_type: file.mimetype, file_size: file.size };
-        const current = existing ? await existing.update(metadata, { transaction }) : await StudentFile.create({ student_id: studentId, file_type: type, ...metadata }, { transaction });
-        return { current, previous };
-      });
-      committed = true; // Subsequent failures must never remove this committed file.
-      if (result.previous && result.previous !== stagedPath) await cleanup(studentId, type, result.previous);
-      return publicFile(result.current);
+      transaction = await sequelize.transaction();
+      transactionState = "active";
+      await student(studentId, transaction); // Serializes first upload and concurrent replacements.
+      const existing = await StudentFile.findOne({ where: { student_id: studentId, file_type: type }, transaction, lock: transaction.LOCK.UPDATE });
+      const previous = existing?.storage_path;
+      const metadata = { original_name: original, storage_path: stagedPath, mime_type: file.mimetype, file_size: file.size };
+      const current = existing ? await existing.update(metadata, { transaction }) : await StudentFile.create({ student_id: studentId, file_type: type, ...metadata }, { transaction });
+      // Mark uncertainty BEFORE sending COMMIT. A rejected commit promise (or
+      // transaction.finished) cannot prove that PostgreSQL rolled back the write.
+      transactionState = "commit_uncertain";
+      await transaction.commit();
+      transactionState = "committed";
+      if (previous && previous !== stagedPath) await cleanup(studentId, type, previous);
+      return publicFile(current);
     } catch (error) {
-      if (!committed && stagedPath) await cleanup(studentId, type, stagedPath);
+      if (transactionState === "active") {
+        try {
+          await transaction.rollback();
+          transactionState = "rolled_back";
+        } catch {
+          transactionState = "rollback_uncertain";
+        }
+      }
+      // Even an absent reference cannot authorize cleanup while COMMIT may
+      // still complete. Preserve both old and staged files on uncertain outcomes.
+      if (stagedPath && ["not_started", "rolled_back"].includes(transactionState)) await cleanup(studentId, type, stagedPath);
+      if (["commit_uncertain", "rollback_uncertain"].includes(transactionState)) console.error("Co-op project upload transaction outcome uncertain; files retained");
       throw error;
     }
   }
