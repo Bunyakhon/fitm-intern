@@ -1,16 +1,80 @@
 const FEEDBACK_ROOT_ID = "appFeedback";
 
-function getFeedbackRoot() {
-  let root = document.getElementById(FEEDBACK_ROOT_ID);
+function getFeedbackRoot(doc = document) {
+  let root = doc.getElementById(FEEDBACK_ROOT_ID);
 
   if (!root) {
-    root = document.createElement("div");
+    root = doc.createElement("div");
     root.id = FEEDBACK_ROOT_ID;
     root.className = "app-feedback";
-    document.body.append(root);
+    doc.body.append(root);
   }
 
   return root;
+}
+
+// Opt-in content variant of shared feedback. Existing alert/confirm callers keep
+// their behavior; a nested confirmation can suspend and resume this dialog.
+export function mountContentModal({ document: doc = document, overlay, panel, canClose = () => true, onClose,
+  returnFocus, fallbackFocus, initialFocus = panel } = {}) {
+  const root = getFeedbackRoot(doc), target = doc.defaultView;
+  root.append(overlay);
+  let open = false, suspended = false, scroll, paddingRight, background = [];
+  const focus = element => { if (element?.isConnected && !element.disabled) element.focus?.({ preventScroll: true }); };
+  const focusable = () => [...panel.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')].filter(element => {
+    if (element.disabled || element.tabIndex < 0) return false;
+    for (let node = element; node && node !== panel; node = node.parentElement) if (node.hidden || node.inert) return false;
+    return element.getClientRects().length > 0;
+  });
+  function onKey(event) {
+    if (!open || suspended) return;
+    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); close(); }
+    if (event.key !== 'Tab') return;
+    const elements = focusable(), first = elements[0], last = elements.at(-1), active = doc.activeElement;
+    if (!first) { event.preventDefault(); focus(panel); }
+    else if (!panel.contains(active) || active === panel) { event.preventDefault(); focus(event.shiftKey ? last : first); }
+    else if (event.shiftKey && active === first) { event.preventDefault(); focus(last); }
+    else if (!event.shiftKey && active === last) { event.preventDefault(); focus(first); }
+  }
+  function onFocus(event) {
+    if (open && !suspended && !panel.contains(event.target)) focus(focusable()[0] || panel);
+  }
+  function show() {
+    if (open) return;
+    open = true; suspended = false;
+    scroll = { x: target.scrollX, y: target.scrollY };
+    paddingRight = doc.body.style.paddingRight;
+    const gap = Math.max(0, target.innerWidth - doc.documentElement.clientWidth);
+    if (gap) doc.body.style.paddingRight = `${parseFloat(target.getComputedStyle(doc.body).paddingRight) + gap}px`;
+    background = [...doc.body.children].filter(element => element !== root).map(element => ({ element, inert: element.inert }));
+    for (const { element } of background) element.inert = true;
+    overlay.hidden = panel.hidden = false; overlay.inert = false;
+    panel.setAttribute('aria-modal', 'true'); panel.removeAttribute('aria-hidden');
+    doc.body.classList.add('has-app-modal');
+    doc.addEventListener('keydown', onKey, true); doc.addEventListener('focusin', onFocus, true);
+    focus(initialFocus);
+  }
+  function close() {
+    if (!open || suspended || !canClose()) return false;
+    const destination = typeof returnFocus === 'function' ? returnFocus() : returnFocus;
+    open = false; suspended = false;
+    overlay.hidden = panel.hidden = true; overlay.inert = false;
+    panel.removeAttribute('aria-hidden');
+    doc.removeEventListener('keydown', onKey, true); doc.removeEventListener('focusin', onFocus, true);
+    for (const { element, inert } of background) if (element.isConnected) element.inert = inert;
+    background = []; doc.body.style.paddingRight = paddingRight;
+    doc.body.classList.remove('has-app-modal');
+    onClose?.();
+    const fallback = typeof fallbackFocus === 'function' ? fallbackFocus() : fallbackFocus;
+    focus(destination?.isConnected && !destination.disabled ? destination : fallback);
+    target.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' });
+    return true;
+  }
+  overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+  return { open: show, close, get isOpen() { return open; },
+    suspend() { if (!open) return; suspended = true; overlay.inert = true; panel.setAttribute('aria-hidden', 'true'); panel.removeAttribute('aria-modal'); },
+    resume() { if (!open) return; suspended = false; overlay.inert = false; panel.removeAttribute('aria-hidden'); panel.setAttribute('aria-modal', 'true'); doc.body.classList.add('has-app-modal'); focus(panel); },
+  };
 }
 
 export function showToast(message, type = "info", options = {}) {
@@ -132,12 +196,16 @@ export function showConfirmModal({
   reasonMaxLength = 2000,
   returnFocus,
   fallbackFocus,
+  parentModal,
+  initialReason = "",
+  onReasonChange,
   onClose,
   onConfirm,
 }) {
   const root = getFeedbackRoot();
   // Callers that disable the opener before mounting must pass it explicitly.
   const previousFocus = returnFocus ?? document.activeElement;
+  parentModal?.suspend();
   const modal = document.createElement("div");
 
   modal.className = "app-confirm-overlay";
@@ -166,6 +234,8 @@ export function showConfirmModal({
     reasonInput.required = true;
     reasonInput.maxLength = reasonMaxLength;
     reasonInput.rows = 4;
+    reasonInput.value = initialReason.slice(0, reasonMaxLength);
+    reasonInput.addEventListener("input", () => onReasonChange?.(reasonInput.value));
     label.append(reasonInput);
     modal.querySelector(".app-confirm-modal").append(label);
   }
@@ -189,9 +259,14 @@ export function showConfirmModal({
 
     isClosed = true;
     modal.classList.add("is-leaving");
-    document.body.classList.remove("has-app-modal");
+    if (parentModal) {
+      modal.inert = true;
+      modal.querySelector('[role="dialog"]').removeAttribute("aria-modal");
+    }
+    document.body.classList.toggle("has-app-modal", !!parentModal?.isOpen);
     document.removeEventListener("keydown", handleEscape);
     onClose?.();
+    parentModal?.resume();
     window.setTimeout(() => {
       modal.remove();
       for (const target of [previousFocus, fallbackFocus]) {

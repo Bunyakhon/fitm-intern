@@ -9,7 +9,7 @@ const PAGE_SIZE = 25;
 export function mountTeacherCoop({ document, storage, location, me = getCurrentTeacher, list = getTeacherAdvisorRequests, decide = decideTeacherAdvisorRequest, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading }) {
   const get = id => document.getElementById(id);
   const container = get("teacherRequestList"), message = get("teacherRequestMessage");
-  const presentation = createTeacherListPresentation({ document, list: container, message, refresh: get("teacherRefresh"), emptyTitle: "ยังไม่มีคำขอที่ปรึกษารอยืนยัน", emptyDescription: "เมื่อมีนักศึกษาเลือกคุณเป็นที่ปรึกษาโครงการ คำขอจะแสดงที่นี่" });
+  const presentation = createTeacherListPresentation({ document, list: container, message, onRetry: () => { if (!submitting && !modalOpen) return refresh(); }, emptyTitle: "ยังไม่มีคำขอที่ปรึกษารอยืนยัน", emptyDescription: "เมื่อมีนักศึกษาเลือกคุณเป็นที่ปรึกษาโครงการ คำขอจะแสดงที่นี่" });
   let authorized = false, fetching = false, submitting = false, modalOpen = false;
   let status = "pending", offset = 0, hasNext = false, rows = [];
 
@@ -20,7 +20,6 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
   }
   function controls() {
     const busy = !authorized || !storage.getItem(TEACHER_TOKEN_KEY) || fetching || submitting || modalOpen;
-    get("teacherRefresh").disabled = busy;
     get("teacherRequestStatus").disabled = busy;
     get("teacherPrevious").disabled = busy || offset === 0;
     get("teacherNext").disabled = busy || !hasNext;
@@ -33,8 +32,11 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     storage.removeItem(TEACHER_TOKEN_KEY);
     get("teacherCoopList")?.replaceChildren();
     get("teacherCoopDetailBody")?.replaceChildren();
-    if (get("teacherCoopDetail")) get("teacherCoopDetail").hidden = true;
-    for (const id of ["teacherCoopRefresh", "teacherCoopStatus", "teacherCoopPrevious", "teacherCoopNext"]) { const node = get(id); if (node) node.disabled = true; }
+    if (get("teacherCoopDetailOverlay")) {
+      // Let the request modal clear sensitive content while keeping its Close controls.
+      document.dispatchEvent(new document.defaultView.CustomEvent("teacher:coop-session-invalid", { detail: { status: error.status } }));
+    } else if (get("teacherCoopDetail")) get("teacherCoopDetail").hidden = true;
+    for (const id of ["teacherCoopStatus", "teacherCoopPrevious", "teacherCoopNext"]) { const node = get(id); if (node) node.disabled = true; }
     rows = [];
     container.replaceChildren();
     get("teacherPageNumber").textContent = "";
@@ -48,9 +50,9 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     if (error.status === 409 || error.status === 404) return "คำขอนี้เปลี่ยนแปลงหรือไม่อยู่ในรายการของคุณแล้ว กรุณาตรวจสอบข้อมูลล่าสุด";
     if (error.status === 400) return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบเหตุผลและลองอีกครั้ง";
     if (error.status === 503) return "ระบบคำขอที่ปรึกษายังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ";
-    if (error.status === 500) return "ระบบคำขอที่ปรึกษาเกิดข้อผิดพลาด (HTTP 500) กรุณารีเฟรชสถานะคำขอก่อนลองใหม่";
-    if (!error.status) return "ไม่สามารถติดต่อระบบคำขอที่ปรึกษาได้ การเชื่อมต่อขัดข้องหรือหมดเวลา กรุณาตรวจสอบการเชื่อมต่อและรีเฟรชสถานะคำขอ";
-    return "ระบบคำขอที่ปรึกษาตอบกลับข้อผิดพลาด กรุณาลองรีเฟรชอีกครั้ง";
+    if (error.status === 500) return "ระบบคำขอที่ปรึกษาเกิดข้อผิดพลาด (HTTP 500) กรุณาลองอีกครั้ง";
+    if (!error.status) return "ไม่สามารถติดต่อระบบคำขอที่ปรึกษาได้ การเชื่อมต่อขัดข้องหรือหมดเวลา กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง";
+    return "ระบบคำขอที่ปรึกษาตอบกลับข้อผิดพลาด กรุณาลองอีกครั้ง";
   }
   function element(tag, text, className) {
     const node = document.createElement(tag);
@@ -99,7 +101,6 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
     render();
     if (!preserveMessage) say("กำลังโหลดคำขอ...");
     presentation.setState("loading");
-    loading(get("teacherRefresh"), true, "กำลังโหลด...", "รีเฟรช");
     try {
       let data = await list({ status, offset, limit: PAGE_SIZE + 1 });
       if (!Array.isArray(data)) throw new Error("Invalid request list");
@@ -122,7 +123,6 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
       return false;
     } finally {
       fetching = false;
-      loading(get("teacherRefresh"), false, "กำลังโหลด...", "รีเฟรช");
       controls();
     }
   }
@@ -148,7 +148,7 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
           toast(success, "success");
           say(success, "success");
           const refreshed = await refresh({ preserveMessage: true });
-          if (!refreshed && authorized) say(`${success} แต่โหลดรายการล่าสุดไม่สำเร็จ กรุณารีเฟรช`, "error");
+          if (!refreshed && authorized) say(`${success} แต่โหลดรายการล่าสุดไม่สำเร็จ กรุณากดลองโหลดอีกครั้ง`, "error");
         } catch (error) {
           if (!authError(error)) {
             const text = errorText(error);
@@ -165,7 +165,9 @@ export function mountTeacherCoop({ document, storage, location, me = getCurrentT
       },
     });
   }
-  get("teacherRefresh").addEventListener("click", () => refresh());
+  document.addEventListener("teacher:viewchange", event => {
+    if (event.detail.view === "advisorRequests" && !submitting && !modalOpen) refresh();
+  });
   get("teacherRequestStatus").addEventListener("change", async event => {
     if (fetching || submitting || modalOpen) return;
     status = event.target.value;

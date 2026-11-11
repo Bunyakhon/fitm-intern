@@ -1,0 +1,185 @@
+# Teacher Demo Dataset — Completed Existing Development Fixtures
+
+อัปเดต 10 พฤศจิกายน 2026 (Asia/Bangkok). **เติมข้อมูลจริงและ PostgreSQL COMMIT แล้ว** บน `intern_system/public` สำหรับ Teacher UUID `e9876862-0d5b-4641-8d5f-990ea3f0b146`.
+ใช้ Synthetic Students เดิม15คนตาม marker/UUID เดิม ไม่สร้าง Student ใหม่. คำสั่งผู้ใช้รอบนี้อนุญาต UPDATE Synthetic/INSERT Supporting/Academic Snapshot และ SELECT หลัง Commit โดยตรง รวมการเก็บ immutable rows ไว้ใน Development; แทนข้อจำกัด minimal seed ที่ไม่สร้าง Academic ด้านล่างเฉพาะงานนี้.
+
+## Actual completion result
+
+| กลุ่มข้อมูล | ผลหลัง Commit |
+|---|---:|
+| Synthetic Students เดิม / มี Academic Data | 15 / 15 |
+| Pending Coop A / Pending Advisor B | 5 / 5 |
+| Supervised C ใหม่ / รวมเดิม1คน | 5 / 6 |
+| Company / Job / Project | 15 / 15 / 15 |
+| Mentor verified C / pending B | 5 / 5 |
+| Original course snapshots / Academic state / Academic history | 75 / 15 / 15 |
+| Submission review history ของ Pending A | 5 |
+| Education records / Current addresses / Skills | 15 / 15 / 30 |
+
+**INSERT เพิ่ม175แถว, UPDATE Synthetic เดิม92แถว, รวม Fixture320แถวหลังเติม** (เดิม145แถว).
+INSERT: Snapshot75, State15, Academic History15, Submission Review5, Mentor pending5, Education15, Address15, Skill30.
+UPDATE: Students15, Profiles15, Jobs15, Projects15, Coop Requests15, Companies12 และ Mentors5.
+Companiesอีก3รายมีค่าที่อยู่ตรงแผนแล้วจึงไม่ UPDATE. ไม่มี DELETE/UPDATE Teacher/นักศึกษาจริง/Schema/Trigger/Constraints/Auth/API/Frontend.
+
+ผลล่าสุดรวม75วิชา: **ผ่าน42 / กำลังศึกษา21 / ไม่ผ่าน9 / ยังไม่ระบุ3**. Catalog IT ที่ Active จริงมี5วิชาต่อคน จึงไม่สร้าง8–10วิชาสมมตินอก Catalog.
+Snapshot ณวันยื่นเวลา09:00น. มีสถานะดั้งเดิม; Academic History หลังยื่นเวลา09:30–10:12น. แยกผลล่าสุด ไม่แก้ Snapshot ทับ.
+ตัวอย่าง `9906990000001`: ระบบฐานข้อมูล060243108 กำลังศึกษา→ผ่าน B; `...0002`: วิเคราะห์และออกแบบระบบ060243112→ผ่าน C+; `...0003`: ระบบฐานข้อมูล060243108→ไม่ผ่าน F. ข้อมูลทั้งหมดเป็น Fixture Simulation ไม่ใช่ผลการเรียนจริง.
+
+## Source mapping / what the pages actually read
+
+| พื้นที่ | แหล่งข้อมูลจริง |
+|---|---|
+| Coop detail ชื่อ/รหัส/สาขา | `coop_requests.student_id` → `students`; roleWorkflow student projection เดิม |
+| บริษัท/ผู้รับหนังสือ/ช่วงฝึก | Snapshot fields ใน `coop_requests`; ข้อมูล Company join ผ่าน `company_id` |
+| ตำแหน่ง/รายละเอียดงาน | `job_posting_id` → `job_postings.title/description` |
+| รายวิชา ณวันยื่น | `coop_request_prerequisite_courses` ผ่าน `prerequisiteInclude` |
+| ผลล่าสุด/จำนวน/ประวัติ | `coop_request_academic_states` + `coop_request_academic_history` → `academicSummary` เดิม |
+| ประวัติคำร้อง | `coop_request_reviews` ของ A5: Student Submit new→advisor_review |
+| Advisor Request | `coop_project_advisor_requests` pending + `students` + `coop_projects.topic` |
+| Supervised Student / นิเทศ | `students.coop_advisor_teacher_id`, approved `coop_requests`, verified `mentors.student_id`; Company ของ Mentor อ้างผ่าน Placement ไม่ใช่คอลัมน์ Mentor |
+| Profile ภาษาอังกฤษ/ที่อยู่/การศึกษา/ทักษะ | `student_profiles`, `student_addresses`, `student_education_records`, `student_skills` ของ Student Profile aggregate เดิม; ไม่เพิ่มให้ Teacher API เปิดเผย Fields ที่เดิมไม่คืน |
+| Dashboard | API queues/list เดิม5+5/6 ไม่มี Mock หรือ Hardcoded Count ใน UI |
+
+## Completion execution / receipt
+
+จาก Repository root:
+
+```powershell
+node backend/src/seeders/teacherDashboardDemo.js --complete-fixtures --apply --teacher-id=e9876862-0d5b-4641-8d5f-990ea3f0b146
+node backend/src/seeders/teacherDashboardDemo.js --complete-fixtures --verify-data --teacher-id=e9876862-0d5b-4641-8d5f-990ea3f0b146
+```
+
+Preconditions: Development configเดิม/loopback5432/PG16/public/Teacher Active/account enabled, original committed receipt/UUID+marker ตรงชุดเดิม, ไม่มีข้อมูลที่ถูกแก้ภายนอกหรือ unfinished receipt. Apply ใช้ Serializable transaction/advisory lock/row locks/Model validation/hooks/FK เดิม, UPDATE เฉพาะ92แถวใน original receipt และ INSERT supporting IDs แบบ deterministic. ตรวจว่า Company/Job ไม่ถูกอ้างโดย Student นอก Fixture; เก็บ Fingerprint Teacher/Studentเดิมไว้.
+Receipt ที่ ignored เก็บ `completion.version/spec_digest/rows` เพิ่มจาก145แถวเดิม และปรับ fingerprint ของ Synthetic ที่ได้รับอนุญาตให้เปลี่ยน. ไม่ให้ base `ALREADY_PRESENT_UNCHANGED` ข้าม completion. Snapshot/History ที่มีแล้วใช้ซ้ำเฉพาะ ID/values ตรงกัน ไม่ UPDATE/DELETE; ชุดที่ครบใช้ `ALREADY_COMPLETE_UNCHANGED`.
+หากพบ pending receipt/commitไม่แน่ชัด ให้หยุด writer เพื่อสอบสวนด้วย SELECT ไม่ลบหลักฐานหรือ replay โดยอัตโนมัติ. Receipt finalization ไม่ใช่ distributed transaction กับ PostgreSQL.
+
+**Execution evidence รอบนี้:** Apply=`COMPLETION_APPLIED`, PostgreSQL COMMIT สำเร็จ; transactionใหม่ `SET TRANSACTION READ ONLY`=`COMMITTED_COMPLETION_SELECT_VERIFIED`, ตรวจ fingerprint320แถว/TeacherและStudentจริงเดิม1คน/ความสัมพันธ์และ DTO fields ที่ Popup อ่าน. Apply ซ้ำ=`ALREADY_COMPLETE_UNCHANGED`, INSERT0/UPDATE0, ไม่มี Student/Fixture ซ้ำ. นี่คือ Seed Execution/SELECT ที่ผู้ใช้อนุญาต ไม่ใช่ Test Suite หรือ Chrome Acceptance.
+
+## Supported-field limitations / retained workflows
+
+- ไม่มี credit/course transcript/GPA formula ใน Schema/Service ปัจจุบัน จึงไม่ประดิษฐ์หน่วยกิตหรือ GPAX จาก5วิชา prerequisites. ล้าง GPA/last_semester_gpa แบบค่าคงที่ของ Synthetic15คนเป็นNULL; Education GPA=NULL เช่นกัน. ยังไม่ใช่ Transcript ครบหลักสูตร.
+- ไม่มีปี/ภาคเรียนแบบ structured ใน Academic Course Schema; บันทึกบริบท2569ภาค2ในข้อความ qualification ของ Education และในเอกสารนี้ ไม่เพิ่มคอลัมน์.
+- Project มีเพียง `topic`500อักษร: เก็บหัวข้อ/วัตถุประสงค์/เทคโนโลยีสั้นในช่องเดิมและรายละเอียดใน Job description; ไม่มี English project title/document/status column แยก. ไม่สร้าง CO-09/PDF/ไฟล์สมมติ.
+- Mentor ไม่มี phone/department/company_id columns: เก็บแผนก/บริษัทใน position ที่มี และใช้ Placement เชื่อม Company. C5 verifiedพร้อม verified_at เดิม, B5pending/verified_at=NULL, Aยังไม่Placementจึงไม่สร้างMentor. ไม่มี Verification Token/Email/นัดหมายอัตโนมัติ.
+- ไม่สร้าง Teacher/Head approval log ปลอมให้ supporting approved B/C; คงประวัติตามที่มี. A5มี submission history และยังรอ Teacher จริง. Bยัง coop advisor=NULL ก่อนAccept; C5คง Coop Advisor เดิม. Academic data ไม่ใช่การรับรองคุณสมบัติออกฝึก; policy pendingเดิมไม่เปลี่ยน.
+- Snapshot/Academic History/Reviewเป็นข้อมูลที่อาจ immutable และเก็บต่อใน Developmentตามที่ผู้ใช้ยอมรับ ไม่ทำ row cleanup/reset.
+
+**Manual Chrome checklist:** ตรวจDashboard5+5/6 → เปิด Popup A5เห็น Snapshot/Latest/Historyต่างกันและ Company/Job/ผู้รับครบ → Pending Advisorมีหัวข้อแตกต่าง/ยังไม่เป็น Coop Advisor → C5มีVerified Mentorตรงบริษัทและสร้างนัดครั้ง1–2ด้วย Workflowเดิม → Studentจริงเดิมยังอยู่. ตรวจ Responsive/Error/Approve/Reject/Accept/Reject/นิเทศด้วยตนเอง; การบันทึกนัดในระบบจริงอาจเข้าสู่ขั้นตอนส่งลิงก์ตาม Workflowเดิมซึ่ง Seeder นี้ไม่ได้เรียก.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** ไม่รัน Unit/E2E/Browser Automation/Build/Lint/Syntax/API Test Suite. **Backup: NOT REQUESTED. Commit/Push Git: NONE. NEXT TASK: USER MANUAL ACCEPTANCE IN CHROME.**
+
+---
+
+# Historical Initial Seed — 10 November 2026 (before completion above)
+
+อัปเดต 10 พฤศจิกายน 2026 (Asia/Bangkok). **COMMITTED AND SELECT-VERIFIED: 5 + 5 + 5.**
+ผู้ใช้อนุญาต INSERT Synthetic Data ลง Development intern_system โดยตรงในงานนี้อย่างชัดเจน.
+คำสั่งนี้แทนข้อกำหนดเดิมให้ใช้ isolated DB/Approval File/หยุดที่Blueprint เฉพาะ Seeder และงานนี้.
+ไม่ได้เปลี่ยน Runtime Authentication, Email Validation, Permissions, Schema หรือ Business Workflow.
+
+## Target / execution
+
+- PostgreSQL Development `intern_system/public`, version16.15; loopback5432 ตาม config backend/.env เดิม.
+- Teacher UUID: `e9876862-0d5b-4641-8d5f-990ea3f0b146`, Active/account enabled.
+  ใช้ UUID เท่านั้น ไม่เลือกจากชื่อ ไม่แก้ Teacher Account.
+- รัน Apply จริงและ PostgreSQL COMMIT สำเร็จ ตามด้วย SELECT จาก transaction ใหม่หลัง Commit.
+- Created Synthetic Students15คน, รวม145แถวใน11ตาราง. ข้อมูลเดิมไม่ถูก UPDATE/DELETE.
+- Existing Visible ก่อนงาน: pending Coop0 / pending Advisor0 / Supervised1.
+  หลังงาน: pending Coop5 / pending Advisor5 / Supervised6 (เดิม1 + ใหม่5).
+
+| Dataset | Requested | Created | Ownership / initial state |
+|---|---:|---:|---|
+| Coop Requests A | 5 | 5 | Class Advisor → Teacher / advisor_review |
+| Advisor Requests B | 5 | 5 | Requested Teacher → Teacher / pending / coop advisor=null |
+| Supervised Students C | 5 | 5 | Coop Advisor → Teacher / approved placement + verified Mentor |
+
+## Physical records inserted
+
+| Table | New rows |
+|---|---:|
+| students | 15 |
+| student_profiles | 15 |
+| coop_projects | 15 |
+| companies | 15 |
+| job_submissions | 15 |
+| job_postings | 15 |
+| job_posting_work_modes | 15 |
+| coop_requests | 15 |
+| coop_request_delivery_methods | 15 |
+| coop_project_advisor_requests | 5 |
+| mentors | 5 |
+| Total | 145 |
+
+มี recordsสัมพันธ์/คำร้อง130แถวเพิ่มเติมจากStudent15คน. Coop Requestรวม15 ประกอบด้วย advisor_review5ของกลุ่มA
+และ approved10เพื่อรองรับCompany/Placementของกลุ่มB/C ไม่ใช่15คำร้องรอTeacherพิจารณา.
+
+## Fixture design / existing workflows
+
+Marker `fitm.teacher-demo.v1`, plan_version3, deterministic UUIDs; code9906990000001–9906990000015.
+Student emails `fitm.teacher-demo.v1.student01@email.kmutnb.ac.th` ถึงstudent15 ตามValidationเดิม.
+Company/Mentorใช้example.com, บริษัทมีคำว่าจำลอง, โทร0000000000. ไม่มีการนำข้อมูลติดต่อบุคคลจริงมาใช้.
+ระยะปฏิบัติงาน2027-01-04–2027-04-30 ในปีการศึกษา2569ภาค2.
+
+ทั้ง15คนมี Profile, Project และ Company/Job/Requestสัมพันธ์จริง. กลุ่มBมีหัวข้อพร้อมคำอธิบายสั้นในช่อง
+`CoopProject.topic` ที่มีอยู่แล้ว (Modelไม่มีdescriptionแยก จึงไม่เพิ่มColumn/API). Job descriptionมีรายละเอียดประกอบ.
+Bยังไม่มีcoop_advisor_teacher_idก่อนAccept; หลังAccept Workflowเดิมจะกำหนดให้เอง.
+CมีMentor5คน verified เพื่อให้เปิดงานนิเทศได้ตามเงื่อนไขเดิม.
+
+ไม่มีAcademic Snapshot/State/Historyสร้างจากSeeder. ผลการเรียนแสดงpending_gradesตามจริง ไม่แสดงผ่านเกณฑ์ปลอม.
+Teacher approvalsเดิมยังส่งไปdepartment_head_review; Advisor Accept/Reject และ Supervision ใช้Service/guardsเดิม.
+Dashboard/รายชื่ออ่านAPIเดิม ไม่ใส่Mock/จำนวน5ในFrontend. Summaryคำว่า“อย่างน้อย”ยังคงเดิม.
+
+## Execution commands
+
+รันจากRepository root. Sourceรองรับคำสั่งที่ผู้ใช้อนุญาตให้รันจริงและดำเนินการแล้ว:
+
+```powershell
+node backend/src/seeders/teacherDashboardDemo.js --apply --teacher-id=e9876862-0d5b-4641-8d5f-990ea3f0b146
+node backend/src/seeders/teacherDashboardDemo.js --verify-data --teacher-id=e9876862-0d5b-4641-8d5f-990ea3f0b146
+```
+
+ApplyโหลดDevelopment configเดิม, ตรวจNODE_ENV/database/schema/PG16/liveTarget/TeacherUUID,
+ใช้Model validation/hooks และSerializable transaction/advisory lock/Teacher lock. ไม่มี Approval File, Backup,
+Database/Volumeใหม่, sync/alter/init/migrate หรือการปิดConstraints/Triggers. `--academic-snapshots` ไม่อนุญาตในApplyรอบนี้.
+
+SeedเรียกModel.createโดยตรง ไม่ import app startup/API/Mail/Notification services และไม่มีการส่งEmailจากSeed.
+SMTP/Google flagsเดิมไม่เปลี่ยน. สุ่มStudent passwordในruntimeเพื่อผ่านhookปกติ ไม่แสดงหรือเก็บpassword/hash/token.
+
+## Receipt / idempotency / failure handling
+
+Local metadata receiptอยู่ใน .local-dev-accounts ที่Git ignore อยู่แล้ว; เก็บDB/Teacher/plan digest/UUID/fingerprints
+และbaselineของrecordเดิม โดยไม่เก็บcredentialsหรือraw personal row values. ไม่ใช่DatabaseBackupหรือApprovalFile.
+FingerprintของDemoใช้ข้อมูลSELECT `to_jsonb` จากPostgreSQL (ตัดpassword_hash) เพื่อไม่ขึ้นกับModel default scope.
+
+รันชุดเดิมที่ยังไม่เปลี่ยนพร้อมreceipt → no-op; ชุดไม่ครบ/ชนID/code/email/name/receiptหายหรือข้อมูลเปลี่ยน → หยุด
+ไม่overwrite/repairข้อมูลจริง ไม่เปลี่ยนpendingกลับหลังผู้ใช้Approve/Accept. ความไม่แน่นอนระหว่างCommit/receipt
+จะเก็บpendingmetadataให้ตรวจ ไม่ retryสร้างข้อมูลอัตโนมัติ. ไม่มีRowCleanup/DELETE/DROP/Truncate.
+
+หลังแก้รูปแบบreceipt รันคำสั่งApplyเดิมซ้ำแล้วได้ `ALREADY_PRESENT_UNCHANGED`, Created0/0/0,
+row_count145: เป็นSeed Executionซ้ำที่ไม่มีINSERTเพิ่ม ไม่ใช่ยอดสร้างครั้งแรกซึ่งยืนยันแล้ว5/5/5.
+
+ข้อผิดพลาดที่แก้ในรอบนี้: SELECTครั้งแรกหลังCommitพบreceiptที่สร้างจากModel.createมีรูปแบบต่างจากSELECT
+เพราะdefaultScopeตัดบางextension fields. แก้writerให้SELECT readbackก่อนทำfingerprint และแก้receiptเฉพาะรอบที่สร้างนี้
+โดย `--verify-data --reconcile-receipt`: ตรวจทุกfixturefield/UUID/created_at=updated_at/recordsเดิมก่อนแก้metadata.
+ไม่มีDB UPDATEจากขั้นตอนนี้. จากนั้นรัน --verify-data ปกติอีกครั้งได้ COMMITTED_DATA_PRESENT,
+local_receipt_format_reconciled=false. ตัวเลือกreconcileใช้ได้เฉพาะreceiptเก่าที่ยังไม่มีrow_format ไม่รับข้อมูลที่แก้แล้ว.
+
+## SELECT verification result — not a Test Suite
+
+หลังCommitอ่านDBจริงยืนยัน Synthetic Students15, A5, B5, C5, visible5/5/6, row count145,
+FK/Ownership/placement/company/job/project/verifiedMentorของชุดเป้าหมาย, Academic Snapshots0.
+TeacherเดิมและStudentเดิม1คนตรงกับbaseline. ตรวจfingerprintทุก145แถวจากcommittedreceipt.
+การSELECTนี้ได้รับอนุญาตโดยตรงสำหรับSeed ไม่ใช่Unit/API/Browser/Database Test Suite.
+
+## Manual acceptance in Chrome
+
+1. เข้าบัญชีTeacherที่UUIDเป้าหมาย เปิดDashboard; ตรวจรายการรอพิจารณา5+5และนักศึกษาเดิม1+ใหม่5.
+2. เปิดคำร้องสหกิจ → advisor_review5 → รายละเอียดชื่อ/บริษัท/ตำแหน่ง/ช่วงฝึกงาน → ทดลองApprove/RejectตามWorkflowเดิม.
+3. เปิดคำขอเป็นที่ปรึกษา → pending5 → ตรวจหัวข้อ/คำอธิบาย → ทดลองAccept/Reject; เมื่อAcceptจำนวนSupervisedเพิ่มได้ตามจริง.
+4. เปิดนักศึกษาในความดูแล → รวม6ก่อนทำActions → เลือกdemoC5 → ตรวจPlacement/Mentorและใช้นัดนิเทศเดิม.
+5. ตรวจนักศึกษาเดิมยังอยู่, บัญชีTeacherอื่นไม่เห็นข้อมูลนอกscope, Automatic Loading/Error Retry/draft/ภาพยังทำงานเดิม.
+6. ไม่ต้องกดRefreshข้อมูลปกติ; Sidebar9เมนู/Theme/Drawer/Navigation/Admin accessไม่ได้แก้ในรอบSeedนี้.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** รันเฉพาะSeed ExecutionและSELECT Verificationที่อนุญาต.
+ยังไม่รัน Unit/E2E/Build/Lint/Syntax/Browser/API Test Suite และไม่รับรองChrome acceptanceแทนผู้ใช้.
+**NEXT TASK: USER MANUAL ACCEPTANCE IN CHROME.**

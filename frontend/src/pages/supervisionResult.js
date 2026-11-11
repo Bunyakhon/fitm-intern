@@ -5,6 +5,8 @@ export function mountSupervisionResult({ document, container, appointment, stude
   const teacher = !!studentId, root = element(document, 'section', '', 'supervision-result'); container.append(root);
   const open = element(document, 'button', `ผลนิเทศครั้งที่ ${appointment.visit_number}`, 'teacher-button'); open.type = 'button'; open.dataset.resultVisit = String(appointment.visit_number); root.append(open);
   const panel = element(document, 'div'), message = element(document, 'p', '', 'supervision-result-message'); panel.hidden = true; root.append(panel); panel.append(message);
+  const statusBadge = teacher ? element(document, 'span', '', 'teacher-result-status') : null;
+  if (statusBadge) { statusBadge.hidden = true; panel.prepend(statusBadge); message.setAttribute('role', 'status'); message.setAttribute('aria-live', 'polite'); }
   let current = null, busy = false, modal = false, disposed = false, dirty = false, generation = 0;
   const urls = new Set(), fields = {}, inputs = {}, previews = {}, savedPreviews = [];
   const say = text => { message.textContent = text; };
@@ -30,6 +32,7 @@ export function mountSupervisionResult({ document, container, appointment, stude
   }
   const readback = element(document, 'div', '', 'supervision-result-readback'); panel.append(readback);
   const actions = element(document, 'div', '', 'supervision-actions'), save = element(document, 'button', 'บันทึกฉบับร่าง', 'teacher-button'), complete = element(document, 'button', 'ยืนยันผลเสร็จสมบูรณ์', 'teacher-button'), reload = element(document, 'button', 'โหลดผลล่าสุด', 'teacher-button'); save.type = 'submit'; complete.type = reload.type = 'button';
+  if (teacher) { reload.textContent = 'ลองโหลดอีกครั้ง'; reload.hidden = true; }
   if (teacher) { form.append(save); actions.append(complete); } actions.append(reload); panel.append(actions, history);
   function controls() { open.disabled = busy || modal; reload.disabled = busy || modal; fieldset.disabled = busy || modal || !current || current.result?.status === 'completed'; save.disabled = fieldset.disabled; complete.disabled = busy || modal || dirty || !current?.result || current.result.status !== 'draft'; }
   function clearUrls() { for (const url of urls) URL.revokeObjectURL(url); urls.clear(); }
@@ -42,6 +45,7 @@ export function mountSupervisionResult({ document, container, appointment, stude
   function render(data) {
     current = data; dirty = false; clearUrls(); const ticket = ++generation; readback.replaceChildren(); history.replaceChildren(); savedPreviews.length = 0;
     const row = data.result;
+    if (statusBadge) { statusBadge.hidden = !row; statusBadge.textContent = row ? row.status === 'completed' ? 'เสร็จสมบูรณ์' : 'ฉบับร่าง' : ''; statusBadge.dataset.status = row?.status || ''; }
     form.hidden = row?.status === 'completed';
     for (const key of Object.keys(fields)) fields[key].value = row?.[key] || '';
     for (const slot of [1,2]) { if (inputs[slot]) inputs[slot].value = ''; if (previews[slot]) { previews[slot].hidden = true; previews[slot].removeAttribute('src'); delete previews[slot].dataset.localUrl; } }
@@ -62,9 +66,11 @@ export function mountSupervisionResult({ document, container, appointment, stude
   }
   function failure(error) { say(error.message); toast(error.message, 'error'); if ([401,403].includes(error.status)) { panel.hidden = true; clearUrls(); onAuthError(error); } }
   async function load() {
-    if (busy || modal || disposed) return; busy = true; controls(); panel.hidden = false; say('กำลังโหลดผลนิเทศ...');
+    if (busy || modal || disposed || (teacher && dirty)) return; busy = true; controls(); panel.hidden = false; say('กำลังโหลดผลนิเทศ...');
+    if (teacher) reload.hidden = true;
+    if (statusBadge) statusBadge.hidden = true;
     try { const data = await services.getSupervisionResult(studentId, appointment); if (!disposed) render(data); }
-    catch (error) { if (!disposed) { current = null; failure(error); } } finally { busy = false; controls(); }
+    catch (error) { if (!disposed) { current = null; if (teacher) reload.hidden = [401,403].includes(error.status); failure(error); } } finally { busy = false; controls(); }
   }
   async function saveDraft(event) {
     event.preventDefault(); if (busy || modal || disposed || current?.result?.status === 'completed' || !current) return;
@@ -88,5 +94,5 @@ export function mountSupervisionResult({ document, container, appointment, stude
     } });
   });
   form.addEventListener('submit', saveDraft); open.addEventListener('click', load); reload.addEventListener('click', load); controls();
-  return { load, dispose() { disposed = true; ++generation; clearUrls(); root.remove(); }, imagesReady: () => Promise.all(savedPreviews) };
+  return { load, hasPendingChanges: () => dirty || busy || modal, dispose() { disposed = true; ++generation; clearUrls(); root.remove(); }, imagesReady: () => Promise.all(savedPreviews) };
 }
