@@ -2,6 +2,14 @@
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
+## Teacher/Head Profile — 12 พฤศจิกายน 2026
+
+หน้า Account แก้ชื่อไทย/อังกฤษ, `academic_title` และ `major` จาก Catalog จริงผ่าน `PATCH /api/teachers/me` หรือ `/api/department-head/me`; ตัวเลือกอ่านจาก `GET .../me/profile-options`. ภาควิชายังคงเดิม เพราะมีผลต่อ Authorization Scope และยังไม่มีนโยบาย/Flow อนุมัติการย้ายภาควิชา. Protected Fields และ Google Linking เดิมไม่เปลี่ยน.
+
+รูปใช้ `GET/POST/DELETE .../me/profile-image` ผ่าน Teacher JWT/Live Actor/Owner guards; POST multipart ช่อง `profile_image` เพียงช่องเดียว รองรับ JPG/PNG/WebP≤5MB. DELETE ไม่รับฟิลด์เลือกบัญชี/ไฟล์ ตั้งเฉพาะอ้างอิงของOwnerเป็นNULLในTransactionและคืน `{success:true,data:{deleted:true,profile_image:null}}`; ปุ่มกล้องมุมAvatarเปิดSharedContentModal“จัดการรูปโปรไฟล์”พร้อมPreview/เปลี่ยนรูปสีน้ำเงิน/นำรูปออกแบบGhostแดงและConfirmationซ้อน โดยไม่มีปุ่มลบหรือพื้นที่จัดการรูปถาวรในSummary. สำเร็จแล้วปิดModalและอัปเดตSummary/Header; APIErrorยังคงรูปเดิม. ไฟล์อยู่ Private Storage `teachers/<authenticated actor>/profile` และ Browser อ่านด้วย Authorization Header แล้วสร้าง Blob URL ชั่วคราว ไม่เปิด Public Storage URL/ไม่เก็บ Base64 ใน DB. รูปเดียวใช้ใน Teacher/Head Summary และ Header; รูปเดิมยังเก็บไว้ตามRetentionPolicyทั้งตอนเปลี่ยนและลบการอ้างอิง ไม่ทำPhysicalUnlink/Cleanup.
+
+**Schema status — 12 พฤศจิกายน 2026 เวลา23:44 Asia/Bangkok:** ติดตั้ง nullable `public.teachers.profile_image varchar(255)` ใน Development `intern_system` บน PostgreSQL16.15แล้ว ตามคำสั่งผู้ใช้อนุญาต DDL โดยไม่สร้าง Backup ใหม่. ก่อนติดตั้ง Metadataยืนยันไม่มีคอลัมน์; หลังCommitยืนยันชนิด/ความยาว/Nullable/ไม่มีDefaultตรงModel. เพิ่มคอลัมน์ภายในTransactionด้วยLockTimeout5วินาที/StatementTimeout15วินาที ไม่แก้ข้อมูลบัญชี/Reset/Sync และไม่มีAuto-DDLในStartup. ฐานอื่นยังต้องเพิ่มคอลัมน์ให้ตรงModelก่อนใช้ Backend รุ่นนี้ โดยอ้าง SQL `backend/src/db/teacherProfileImage.sql`; ไม่ถือว่าฐานอื่นติดตั้งแล้ว. รูปเก่า/ไฟล์ที่ผลCommitไม่แน่นอนยังเก็บไว้ ไม่มีRetentionCleanup. Login/Uploadจริงยังรอผู้ใช้ทดสอบ. **Tests: NOT RUN — USER-OWNED TESTING.**
+
 ## Teacher Dashboard Action Center — 11 พฤศจิกายน 2026
 
 Dashboard แยก 3 KPI: คำร้อง `advisor_review` ของนักศึกษาที่เป็น Class Advisor, คำขอ `pending` ที่ส่งถึง Teacher และนักศึกษาสหกิจในความดูแลผ่าน `coop_advisor_teacher_id`. กด KPI สองใบแรกเพื่อกรองงาน Pending ใน Action Center; ใบนักศึกษาเปิดเมนูเดิม. งานมีตัวกรองทั้งหมด/คำร้อง/คำขอ หน้าละ5รายการ เปิดรายละเอียดตาม Request ID เดิม และใช้สี Teacher รอบ3. Navbar/Sidebar/Account Menu และเมนูอื่นคงเดิม.

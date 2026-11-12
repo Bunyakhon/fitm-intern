@@ -30,6 +30,10 @@ function createGoogleAuthController({ service = createGoogleAuthService(), confi
     studentChallenge: handler("studentChallenge", [], true),
     linkStudent: handler("linkStudent", ["credential", "requestId", "requestToken", "password"], true),
     studentConfirm: handler("confirmLink", ["confirmationToken"], true),
+    teacherStatus: handler('teacherStatus', undefined, true),
+    teacherChallenge: handler('teacherChallenge', [], true),
+    linkTeacher: handler('linkTeacher', ['credential', 'requestId', 'requestToken'], true),
+    teacherConfirm: handler('confirmLink', ['confirmationToken'], true),
     onboard: handler("onboard", ["role", "purpose", "credential", "requestId", "requestToken"]) };
 }
 module.exports = { createGoogleAuthController };

@@ -127,6 +127,8 @@ body.teacher-page[data-workflow-role="teacher"] .teacher-request-actions .teache
 body.teacher-page[data-workflow-role="teacher"] :is(.supervision-card, .supervision-history, .supervision-result-history details) { background: var(--teacher-surface); border-color: var(--teacher-border); }
 body.teacher-page[data-workflow-role="teacher"] .sidebar-item.active { background: var(--teacher-info-bg); color: var(--teacher-primary); border-color: var(--teacher-primary); box-shadow: inset 3px 0 var(--teacher-primary); }
 body.teacher-page[data-workflow-role="teacher"] .sidebar-item:hover { background: var(--teacher-info-bg); color: var(--teacher-primary); }
+body.teacher-page[data-workflow-role="teacher"] #teacherHeadWorkspaceMenu { border-top: 1px solid var(--teacher-border); padding-top: 16px; }
+body.teacher-page[data-workflow-role="teacher"] .teacher-head-workspace-link { color: var(--teacher-primary); }
 body.teacher-page[data-workflow-role="teacher"] :is(.teacher-welcome, .teacher-summary-card) { border-color: var(--teacher-border); }
 body.teacher-page[data-workflow-role="teacher"] .teacher-summary-card:hover { border-color: var(--teacher-primary); transform: none; }
 body.teacher-page[data-workflow-role="teacher"] :is(.teacher-message, .supervision-message)[data-type="success"] { color: var(--teacher-success); border-color: currentColor; background: var(--teacher-success-bg); }

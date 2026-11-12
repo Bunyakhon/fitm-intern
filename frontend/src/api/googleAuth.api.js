@@ -1,4 +1,5 @@
 import { apiRequest } from "./client.js";
+import { teacherRequest } from './teacherProjectAdvisor.api.js';
 export const googleConfig = () => apiRequest("/api/auth/google/config", { auth: false });
 export const googleChallenge = body => apiRequest("/api/auth/google/challenge", { method: "POST", body, auth: false });
 export const googleAuthenticate = body => apiRequest("/api/auth/google/login", { method: "POST", body, auth: false });
@@ -8,3 +9,7 @@ export const googleStudentStatus = () => apiRequest("/api/auth/google/student/st
 export const googleStudentChallenge = () => apiRequest("/api/auth/google/student/challenge", { method: "POST", body: {} });
 export const googleStudentLink = body => apiRequest("/api/auth/google/student/link", { method: "POST", body });
 export const googleStudentConfirm = body => apiRequest("/api/auth/google/student/link/confirm", { method: "POST", body });
+export const googleTeacherStatus = () => teacherRequest('/api/auth/google/teacher/status');
+export const googleTeacherChallenge = body => teacherRequest('/api/auth/google/teacher/challenge', { method: 'POST', body });
+export const googleTeacherLink = body => teacherRequest('/api/auth/google/teacher/link', { method: 'POST', body });
+export const googleTeacherConfirm = body => teacherRequest('/api/auth/google/teacher/link/confirm', { method: 'POST', body });

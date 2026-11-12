@@ -1,0 +1,129 @@
+/* Head workspace only. Shared Teacher/Staff/Student presentation stays unchanged. */
+body[data-workflow-role="department_head"] #headDashboardRefresh[hidden] { display: none !important; }
+body[data-workflow-role="department_head"] {
+  --primary: #1d4ed8; --primary-dark: #1e40af; --primary-soft: #dbeafe;
+  --bg: #f8fafc; --white: #fff; --text: #0f172a; --muted: #475569; --border: #cbd5e1;
+  --danger: #b91c1c; --danger-light: #fee2e2;
+  --head-success: #166534; --head-success-bg: #dcfce7;
+  --head-warning: #92400e; --head-warning-bg: #fef3c7;
+  background: var(--bg); color: var(--text);
+}
+body[data-workflow-role="department_head"] .dashboard-layout { grid-template-columns: 264px minmax(0, 1fr); }
+body[data-workflow-role="department_head"] .dashboard-sidebar { align-self: start; position: sticky; top: 88px; max-height: calc(100dvh - 88px); overflow-y: auto; }
+body[data-workflow-role="department_head"] .sidebar-menu { display: flex; flex-direction: column; gap: 24px; }
+body[data-workflow-role="department_head"] .teacher-menu-label { font-size: .8rem; letter-spacing: .02em; }
+body[data-workflow-role="department_head"] .sidebar-item { font-size: 1rem; gap: 10px; }
+body[data-workflow-role="department_head"] .sidebar-item.active { color: var(--primary); background: var(--primary-soft); border-color: var(--primary); box-shadow: inset 3px 0 var(--primary); }
+body[data-workflow-role="department_head"] .sidebar-item:hover { color: var(--primary-dark); background: var(--primary-soft); }
+body[data-workflow-role="department_head"] .head-menu-icon { display: grid; place-items: center; width: 24px; flex: 0 0 24px; font-size: 1.25rem; }
+body[data-workflow-role="department_head"] .dashboard-content { padding: 28px 32px 48px; }
+body[data-workflow-role="department_head"] .dashboard-content > section { max-width: 1240px; }
+body[data-workflow-role="department_head"] .head-breadcrumb { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 auto 24px; max-width: 1240px; font-size: .9rem; color: var(--muted); }
+body[data-workflow-role="department_head"] .head-breadcrumb a { color: var(--primary); text-decoration: underline; text-underline-offset: 4px; }
+body[data-workflow-role="department_head"] .head-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 28px; border: 1px solid var(--border); border-radius: 16px; background: var(--white); box-shadow: inset 4px 0 var(--primary); margin-bottom: 32px; }
+body[data-workflow-role="department_head"] .head-hero > div { min-width: 0; flex: 1 1 300px; }
+body[data-workflow-role="department_head"] :is(h1, h2, h3, p, dd) { overflow-wrap: anywhere; }
+body[data-workflow-role="department_head"] :is(.head-hero h1, .teacher-heading h1, .account-overview-heading h1) { font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.4; margin: 8px 0 12px; }
+body[data-workflow-role="department_head"] .head-eyebrow { color: var(--primary); font-size: .75rem; font-weight: 700; letter-spacing: .08em; }
+body[data-workflow-role="department_head"] #headDepartment { color: var(--muted); margin-top: 8px; }
+body[data-workflow-role="department_head"] .head-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+body[data-workflow-role="department_head"] :is(.head-card h2, .head-section-heading h2) { font-size: 1.25rem; line-height: 1.5; margin: 0; }
+body[data-workflow-role="department_head"] :is(.head-section-heading p, .head-shortcuts p, .head-count-note) { color: var(--muted); font-size: .9rem; line-height: 1.7; }
+body[data-workflow-role="department_head"] .head-notice { margin: 12px 0 20px; font-size: .95rem; }
+body[data-workflow-role="department_head"] :is(.head-notice[data-type="error"], #teacherCoopDetailMessage[role="alert"]) { color: var(--danger); }
+body[data-workflow-role="department_head"] .head-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+body[data-workflow-role="department_head"] .head-metric { display: flex; flex-direction: column; min-width: 0; gap: 12px; padding: 24px; color: var(--text); background: var(--white); border: 1px solid var(--border); border-radius: 14px; text-decoration: none; }
+body[data-workflow-role="department_head"] .head-metric:hover { border-color: var(--primary); box-shadow: 0 4px 16px #0f172a0d; }
+body[data-workflow-role="department_head"] .head-metric:active { background: #eff6ff; }
+body[data-workflow-role="department_head"] .head-metric h3 { font-size: 1.05rem; }
+body[data-workflow-role="department_head"] .head-metric strong { font-size: clamp(1.35rem, 2vw, 1.85rem); line-height: 1.5; }
+body[data-workflow-role="department_head"] .head-metric p { font-size: .9rem; color: var(--muted); }
+body[data-workflow-role="department_head"] .head-card-link { margin-top: auto; color: var(--primary); font-weight: 600; font-size: .9rem; }
+body[data-workflow-role="department_head"] .head-metric-symbol { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-size: 1.6rem; }
+body[data-workflow-role="department_head"] [data-tone="warning"] .head-metric-symbol { color: var(--head-warning); background: var(--head-warning-bg); }
+body[data-workflow-role="department_head"] [data-tone="success"] .head-metric-symbol { color: var(--head-success); background: var(--head-success-bg); }
+body[data-workflow-role="department_head"] [data-tone="danger"] .head-metric-symbol { color: var(--danger); background: var(--danger-light); }
+body[data-workflow-role="department_head"] .head-count-note { margin: 14px 0 24px; }
+body[data-workflow-role="department_head"] .head-dashboard-columns { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(240px, 1fr); align-items: start; gap: 24px; }
+body[data-workflow-role="department_head"] .head-card { min-width: 0; padding: 24px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); }
+body[data-workflow-role="department_head"] .head-shortcuts { display: grid; gap: 20px; min-width: 0; }
+body[data-workflow-role="department_head"] .head-shortcuts .head-card { display: grid; gap: 16px; }
+body[data-workflow-role="department_head"] .head-tasks { margin: 16px 0 24px; }
+body[data-workflow-role="department_head"] .head-task { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+body[data-workflow-role="department_head"] .head-task > div { flex: 1 1 220px; min-width: 0; }
+body[data-workflow-role="department_head"] .head-task h3 { font-size: 1rem; margin-bottom: 6px; }
+body[data-workflow-role="department_head"] .head-task p { color: var(--muted); font-size: .9rem; margin-bottom: 10px; }
+body[data-workflow-role="department_head"] :is(.head-empty, .teacher-list-state) { text-align: center; padding: 32px 20px; border: 1px dashed var(--border); border-radius: 12px; background: var(--bg); color: var(--muted); }
+body[data-workflow-role="department_head"] .head-empty h3 { font-size: 1.1rem; color: var(--text); margin: 12px 0; }
+body[data-workflow-role="department_head"] .head-empty p { font-size: .95rem; }
+body[data-workflow-role="department_head"] .head-empty-symbol { color: var(--head-success); font-size: 2rem; }
+body[data-workflow-role="department_head"] .teacher-list-state svg { width: 48px; height: 48px; margin-bottom: 12px; }
+body[data-workflow-role="department_head"] .teacher-list-state h3 { color: var(--text); margin-bottom: 10px; }
+body[data-workflow-role="department_head"] .teacher-list-state p { margin-bottom: 16px; }
+body[data-workflow-role="department_head"] .teacher-message--assistive { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+body[data-workflow-role="department_head"] :is(.teacher-button, .teacher-toolbar select, .btn-logout, .app-confirm-modal__actions button) { font-size: 1rem; line-height: 1.5; }
+body[data-workflow-role="department_head"] :is(.teacher-button, .btn-logout, .app-confirm-modal__actions button) {
+  --head-button-bg: #fff; --head-button-fg: #334155; --head-button-border: #64748b; --head-button-hover: #f1f5f9; --head-button-active: #e2e8f0;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 10px 16px;
+  border: 1px solid var(--head-button-border); border-radius: 8px; background: var(--head-button-bg); color: var(--head-button-fg); font-weight: 600; text-decoration: none; white-space: normal; cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+body[data-workflow-role="department_head"] :is(.teacher-button--primary, .teacher-list-state .teacher-button, .teacher-request-card > .teacher-button, .app-confirm-modal__confirm) { --head-button-bg: #1d4ed8; --head-button-fg: #fff; --head-button-border: #1d4ed8; --head-button-hover: #1e40af; --head-button-active: #1e3a8a; }
+body[data-workflow-role="department_head"] :is(.teacher-button--accept, [data-intent="success"] .app-confirm-modal__confirm) { --head-button-bg: #166534; --head-button-fg: #fff; --head-button-border: #166534; --head-button-hover: #14532d; --head-button-active: #052e16; }
+body[data-workflow-role="department_head"] :is(.teacher-button--reject, .btn-logout, [data-intent="danger"] .app-confirm-modal__confirm) { --head-button-bg: #b91c1c; --head-button-fg: #fff; --head-button-border: #b91c1c; --head-button-hover: #991b1b; --head-button-active: #7f1d1d; }
+body[data-workflow-role="department_head"] :is(.teacher-button, .btn-logout, .app-confirm-modal__actions button):hover:not(:disabled) { background: var(--head-button-hover); color: var(--head-button-fg); border-color: var(--head-button-border); }
+body[data-workflow-role="department_head"] :is(.teacher-button, .btn-logout, .app-confirm-modal__actions button):active:not(:disabled) { background: var(--head-button-active); }
+body[data-workflow-role="department_head"] :is(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+body[data-workflow-role="department_head"] :is(.teacher-button, .btn-logout, .app-confirm-modal__actions button):disabled { background: #e2e8f0; color: #475569; border-color: #94a3b8; opacity: 1; cursor: not-allowed; box-shadow: none; }
+body[data-workflow-role="department_head"] .teacher-toolbar select:disabled { background: #e2e8f0; color: var(--muted); cursor: not-allowed; opacity: 1; }
+body[data-workflow-role="department_head"] :is(.teacher-button, .btn-logout, .app-confirm-modal__actions button).is-loading { background: var(--head-button-bg); color: var(--head-button-fg); border-color: var(--head-button-border); cursor: progress; }
+body[data-workflow-role="department_head"] .teacher-status { display: inline-block; max-width: 100%; padding: 4px 10px; border: 1px solid currentColor; border-radius: 999px; color: var(--muted); background: #f1f5f9; white-space: normal; font-size: .85rem; line-height: 1.6; }
+body[data-workflow-role="department_head"] .teacher-status[data-tone="warning"] { color: var(--head-warning); background: var(--head-warning-bg); }
+body[data-workflow-role="department_head"] .teacher-status[data-tone="success"] { color: var(--head-success); background: var(--head-success-bg); }
+body[data-workflow-role="department_head"] .teacher-status[data-tone="danger"] { color: var(--danger); background: var(--danger-light); }
+body[data-workflow-role="department_head"] .teacher-status[data-tone="info"] { color: var(--primary-dark); background: var(--primary-soft); }
+body[data-workflow-role="department_head"] .head-account-workspace { padding: 0; border: 0; background: transparent; box-shadow: none; }
+body[data-workflow-role="department_head"] .account-overview-heading { justify-content: space-between; margin-bottom: 24px; }
+body[data-workflow-role="department_head"] .head-account-workspace dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+body[data-workflow-role="department_head"] .head-account-workspace dl > div { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+body[data-workflow-role="department_head"] .head-account-workspace dt { font-size: .85rem; }
+body[data-workflow-role="department_head"] .head-account-workspace dd { font-size: 1rem; }
+body[data-workflow-role="department_head"] [data-account-status] dd { color: var(--muted); }
+body[data-workflow-role="department_head"] [data-account-status="active"] dd { color: var(--head-success); }
+body[data-workflow-role="department_head"] .app-confirm-modal__icon { color: var(--primary); background: var(--primary-soft); }
+body[data-workflow-role="department_head"] [data-intent="success"] .app-confirm-modal__icon { color: var(--head-success); background: var(--head-success-bg); }
+body[data-workflow-role="department_head"] [data-intent="danger"] .app-confirm-modal__icon { color: var(--danger); background: var(--danger-light); }
+body[data-workflow-role="department_head"] .app-confirm-modal .app-confirm-modal__error { color: var(--danger); }
+body[data-workflow-role="department_head"] .app-toast--success { color: var(--head-success); border-color: var(--head-success); }
+body[data-workflow-role="department_head"] .app-toast--error { color: var(--danger); border-color: var(--danger); }
+body[data-workflow-role="department_head"] .app-toast--warning { color: var(--head-warning); border-color: var(--head-warning); }
+body[data-workflow-role="department_head"] .teacher-message[data-type="success"] { color: var(--head-success); }
+body[data-workflow-role="department_head"] .head-skip-link { position: fixed; top: -100px; left: 16px; z-index: 2000; padding: 12px 16px; color: #fff; background: var(--primary); border-radius: 8px; }
+body[data-workflow-role="department_head"] .head-skip-link:focus { top: 12px; }
+@media (max-width: 1100px) {
+  body[data-workflow-role="department_head"] .head-dashboard-columns { grid-template-columns: minmax(0, 1fr); }
+  body[data-workflow-role="department_head"] .head-metrics { grid-template-columns: minmax(0, 1fr); }
+  body[data-workflow-role="department_head"] .head-metric { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px 16px; }
+  body[data-workflow-role="department_head"] .head-metric-symbol { grid-row: span 4; }
+  body[data-workflow-role="department_head"] .dashboard-content { padding: 24px 20px; }
+}
+@media (max-width: 767px) {
+  body[data-workflow-role="department_head"] .dashboard-layout { display: block; }
+  body[data-workflow-role="department_head"] .dashboard-sidebar { position: static; max-height: none; overflow: visible; padding: 16px 12px; }
+  body[data-workflow-role="department_head"] .sidebar-header { display: none; }
+  body[data-workflow-role="department_head"] .sidebar-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; overflow: visible; padding: 0; }
+  body[data-workflow-role="department_head"] .teacher-menu-group { display: flex; flex-direction: column; align-items: stretch; padding: 0; border: 0; min-width: 0; }
+  body[data-workflow-role="department_head"] .teacher-menu-group + .teacher-menu-group { padding-inline-start: 0; border-inline-start: 0; }
+  body[data-workflow-role="department_head"] .teacher-menu-group:first-child { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-workflow-role="department_head"] .teacher-menu-label { position: static; width: auto; height: auto; clip-path: none; padding: 0 8px 6px; grid-column: 1 / -1; }
+  body[data-workflow-role="department_head"] .sidebar-item { white-space: normal; padding: 10px; height: 100%; }
+  body[data-workflow-role="department_head"] .sidebar-item span { overflow-wrap: anywhere; }
+  body[data-workflow-role="department_head"] .dashboard-content { padding: 20px 12px 32px; }
+  body[data-workflow-role="department_head"] :is(.head-hero, .head-card) { padding: 20px 16px; }
+  body[data-workflow-role="department_head"] .head-hero > .teacher-button { width: 100%; }
+  body[data-workflow-role="department_head"] .head-account-workspace dl { grid-template-columns: minmax(0, 1fr); }
+  body[data-workflow-role="department_head"] .head-task > .teacher-button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-workflow-role="department_head"] *, body[data-workflow-role="department_head"] *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

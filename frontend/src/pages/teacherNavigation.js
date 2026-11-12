@@ -1,4 +1,6 @@
 import { revealNavigationItem } from '../ui/navigationScroll.js';
+import { getCurrentTeacher } from '../api/teacherProjectAdvisor.api.js';
+import { getRoleToken } from '../auth/roleAuthStorage.js';
 
 // Navigation owns visibility only. Workflow modules keep their DOM, state and lifecycle.
 const mounted = new WeakMap();
@@ -14,6 +16,7 @@ const supervisionViews = {
   supervisionResults: ['บันทึกผลนิเทศ', 'การนิเทศและประเมิน / บันทึกผลนิเทศ', 'เลือกนักศึกษาและนัดหมายเพื่อเปิดผลนิเทศ บันทึกฉบับร่าง แนบภาพสองภาพ และตรวจทานก่อนยืนยันผล'],
 };
 const adminPath = '/src/super_admin/super_admin.html';
+const headPath = '/src/department_head/department_head.html';
 const iconPaths = {
   '#teacherOverview': 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   '#teacherStudents': 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M17 4a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.9M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
@@ -25,9 +28,10 @@ const iconPaths = {
   '#teacherEvaluations': 'M4 20h16M7 16v-4M12 16V7M17 16V3',
   '#own-account': 'M20 21v-2a7 7 0 0 0-14 0v2M13 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
   [adminPath]: 'M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6zM8 12l3 3 5-6',
+  [headPath]: 'M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4',
 };
 
-export function mountTeacherNavigation({ document, target = window } = {}) {
+export function mountTeacherNavigation({ document, target = window, me = getCurrentTeacher, getToken = () => getRoleToken('teacher') } = {}) {
   if (document.body.dataset.workflowRole !== 'teacher') return;
   if (mounted.has(document)) return mounted.get(document);
   const nav = document.querySelector('.sidebar-menu');
@@ -40,6 +44,33 @@ export function mountTeacherNavigation({ document, target = window } = {}) {
   let drawerOpen = false;
   let active = null, pendingFocus = false;
   let modalOpen = document.body.classList.contains('has-app-modal');
+  const headMenu = document.getElementById('teacherHeadWorkspaceMenu');
+  const headLink = headMenu?.querySelector('a');
+  let headGeneration = 0, verifiedHeadToken = null;
+  function hideHeadNavigation() {
+    ++headGeneration; verifiedHeadToken = null;
+    if (headMenu) headMenu.hidden = true;
+  }
+  async function loadHeadNavigation() {
+    hideHeadNavigation();
+    const ticket = headGeneration, token = getToken();
+    if (!headMenu || !token) return;
+    try {
+      const result = await me();
+      if (ticket !== headGeneration || token !== getToken()) return;
+      // Display evidence only; the destination still enforces live Backend RBAC.
+      if (result?.success === true && result.data?.id && result.data.is_department_head === true) {
+        verifiedHeadToken = token; headMenu.hidden = false;
+      }
+    } catch { /* Failed/invalid profile responses never reveal the Head entry. */ }
+  }
+  headLink?.addEventListener('click', event => {
+    if (headMenu.hidden || !verifiedHeadToken || verifiedHeadToken !== getToken() || document.body.classList.contains('has-app-modal')) {
+      event.preventDefault();
+      if (!verifiedHeadToken || verifiedHeadToken !== getToken()) hideHeadNavigation();
+    }
+    // Native same-window navigation retains the existing Teacher/Head session.
+  });
 
   function decorate(link) {
     const href = link.getAttribute('href'), path = iconPaths[href];
@@ -200,8 +231,12 @@ export function mountTeacherNavigation({ document, target = window } = {}) {
   observer.observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
   observer.observe(main, { childList: true });
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  target.addEventListener('pagehide', () => setDrawer(false));
-  const controller = { sync };
+  target.addEventListener('storage', () => { if (verifiedHeadToken !== getToken()) hideHeadNavigation(); });
+  document.addEventListener('teacher:coop-session-invalid', hideHeadNavigation);
+  target.addEventListener('focus', loadHeadNavigation);
+  target.addEventListener('pageshow', event => { if (event.persisted) loadHeadNavigation(); });
+  target.addEventListener('pagehide', () => { setDrawer(false); hideHeadNavigation(); });
+  const controller = { sync, ready: loadHeadNavigation() };
   mounted.set(document, controller);
   setDrawer(false); sync();
   return controller;

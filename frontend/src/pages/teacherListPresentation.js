@@ -1,7 +1,7 @@
 // Explicit presentation states come from the existing workflow's request result.
 // This helper never fetches, changes a filter, or replaces a mounted list/form.
 export function createTeacherListPresentation({ document, list, message, onRetry, emptyTitle, emptyDescription, picker }) {
-  if (document.body.dataset.workflowRole !== 'teacher') return { setState() {} };
+  if (!['teacher', 'department_head'].includes(document.body.dataset.workflowRole)) return { setState() {} };
   const pagination = list.parentElement.querySelector('.teacher-pagination');
   const root = document.createElement('div'); root.className = 'teacher-list-state';
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

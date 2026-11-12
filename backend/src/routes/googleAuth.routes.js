@@ -1,7 +1,8 @@
 const express = require("express");
 const { rateLimit } = require("express-rate-limit");
 const { createGoogleAuthController } = require("../controllers/googleAuth.controller");
-const { authenticateStudentToken } = require("../middlewares/auth.middleware");
+const { authenticateStudentToken, authenticateToken } = require("../middlewares/auth.middleware");
+const { requireTeacher } = require('../middlewares/teacherAuth.middleware');
 function createGoogleAuthRouter(dependencies) {
   const router = express.Router(), controller = createGoogleAuthController(dependencies);
   router.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 40, standardHeaders: "draft-7", legacyHeaders: false,
@@ -16,6 +17,10 @@ function createGoogleAuthRouter(dependencies) {
   router.post("/student/challenge", authenticateStudentToken, controller.studentChallenge);
   router.post("/student/link", authenticateStudentToken, controller.linkStudent);
   router.post("/student/link/confirm", authenticateStudentToken, controller.studentConfirm);
+  router.get('/teacher/status', authenticateToken, requireTeacher, controller.teacherStatus);
+  router.post('/teacher/challenge', authenticateToken, requireTeacher, controller.teacherChallenge);
+  router.post('/teacher/link', authenticateToken, requireTeacher, controller.linkTeacher);
+  router.post('/teacher/link/confirm', authenticateToken, requireTeacher, controller.teacherConfirm);
   return router;
 }
 module.exports = { createGoogleAuthRouter };

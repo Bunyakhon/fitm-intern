@@ -163,6 +163,9 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
 
+      // Private owner-authenticated image reference; never a public URL or Base64.
+      profile_image: { type: DataTypes.STRING(255), allowNull: true },
+
       // ==============================
       // ชื่อ
       // ==============================

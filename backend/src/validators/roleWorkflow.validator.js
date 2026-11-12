@@ -68,6 +68,24 @@ function teacherUpdate(body, own = false) {
   }
   return values;
 }
+function teacherSelfProfile(body) {
+  object(body, ['first_name', 'last_name', 'first_name_en', 'last_name_en', 'academic_title', 'major']);
+  const values = {};
+  for (const [key, raw] of Object.entries(body)) {
+    if (['academic_title', 'major'].includes(key)) {
+      values[key] = raw === null || (typeof raw === 'string' && !raw.trim()) ? null : text(raw, key, 255);
+      continue;
+    }
+    if (key.endsWith('_en')) {
+      if (raw === null || (typeof raw === 'string' && !raw.trim())) { values[key] = null; continue; }
+      const value = text(raw, key, 255);
+      if (!/^[A-Z]+(?:[ '-][A-Z]+)*$/.test(value))
+        throw new WorkflowError('ชื่อภาษาอังกฤษต้องเป็น A–Z ตัวพิมพ์ใหญ่ คั่นด้วยช่องว่าง apostrophe หรือขีดกลางเท่านั้น');
+      values[key] = value;
+    } else values[key] = text(raw, key, 255);
+  }
+  return values;
+}
 function page(query = {}) {
   const limit = query.limit === undefined ? 25 : Number(query.limit);
   const offset = query.offset === undefined ? 0 : Number(query.offset);
@@ -88,5 +106,6 @@ module.exports = {
   text,
   decisionPayload,
   teacherUpdate,
+  teacherSelfProfile,
   page,
 };

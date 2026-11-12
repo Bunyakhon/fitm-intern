@@ -1,10 +1,11 @@
 const models = require("../models");
-const { Op } = require("sequelize");
+const { Op, QueryTypes } = require("sequelize");
 const {
   WorkflowError,
   uuid,
   decisionPayload,
   teacherUpdate,
+  teacherSelfProfile,
   text,
   page,
   object,
@@ -170,35 +171,41 @@ function createRoleWorkflowService(m = models) {
   }
   async function requestDetail(role, actorId, id) {
     uuid(id);
-    const currentActor = await actor(role, actorId);
-    const request = await m.CoopRequest.findByPk(id, {
-      include: [
-        studentInclude(undefined, role),
-        {
-          model: m.CoopRequestDeliveryMethod,
-          as: "deliveryMethods",
-          attributes: ["id", "method"],
-        },
-        { model: m.Company, as: "company" },
-        { model: m.JobPosting, as: "jobPosting" },
-        prerequisiteInclude(m),
-      ],
+    // Keep the request, scope, separate prerequisite queries, reviews and latest
+    // academic state in one MVCC snapshot. No row locks or write-workflow changes.
+    return m.sequelize.transaction({ isolationLevel: 'REPEATABLE READ', readOnly: true }, async transaction => {
+      const currentActor = await actor(role, actorId, transaction);
+      const request = await m.CoopRequest.findByPk(id, {
+        transaction,
+        include: [
+          studentInclude(undefined, role),
+          {
+            model: m.CoopRequestDeliveryMethod,
+            as: "deliveryMethods",
+            attributes: ["id", "method"],
+          },
+          { model: m.Company, as: "company" },
+          { model: m.JobPosting, as: "jobPosting" },
+          prerequisiteInclude(m),
+        ],
+      });
+      if (!request) throw new WorkflowError("Coop request was not found", 404);
+      await authorizeRequest(role, currentActor, request.student, transaction);
+      const reviews = await m.CoopRequestReview.findAll({
+        transaction,
+        where: { coop_request_id: id },
+        ...(['teacher', 'department_head'].includes(role) ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
+        ...(role === 'department_staff' ? { include: [
+          { model: m.DepartmentStaff, as: 'staff', attributes: ['id', 'first_name', 'last_name'] },
+          { model: m.Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'] },
+        ] } : {}),
+        order: [
+          ["created_at", "ASC"],
+          ["id", "ASC"],
+        ],
+      });
+      return { request: (await academic.attach([request], { history: true, transaction }))[0], reviews, ...(role === 'department_staff' ? { cancellation: cancellationState(request) } : {}) };
     });
-    if (!request) throw new WorkflowError("Coop request was not found", 404);
-    await authorizeRequest(role, currentActor, request.student);
-    const reviews = await m.CoopRequestReview.findAll({
-      where: { coop_request_id: id },
-      ...(['teacher', 'department_head'].includes(role) ? { attributes: reviewInclude().attributes, include: reviewInclude().include } : {}),
-      ...(role === 'department_staff' ? { include: [
-        { model: m.DepartmentStaff, as: 'staff', attributes: ['id', 'first_name', 'last_name'] },
-        { model: m.Teacher, as: 'teacher', attributes: ['id', 'academic_title', 'first_name', 'last_name'] },
-      ] } : {}),
-      order: [
-        ["created_at", "ASC"],
-        ["id", "ASC"],
-      ],
-    });
-    return { request: (await academic.attach([request], { history: true }))[0], reviews, ...(role === 'department_staff' ? { cancellation: cancellationState(request) } : {}) };
   }
   async function reviewRequest(role, actorId, id, decision, body) {
     if (role === 'department_staff' && decision !== 'cancel') throw new WorkflowError('Staff cannot approve or forward Coop Requests', 403);
@@ -402,6 +409,27 @@ function createRoleWorkflowService(m = models) {
       ...page(query),
     });
   }
+  async function updateOwnProfile(role, actorId, body) {
+    if (!['teacher', 'department_head'].includes(role)) throw new WorkflowError('Teacher authorization is required', 403);
+    const values = teacherSelfProfile(body);
+    return m.sequelize.transaction(async transaction => {
+      const teacher = await actor(role, actorId, transaction, transaction.LOCK.UPDATE);
+      if (values.major != null && values.major !== teacher.major) {
+        const options = await profileOptions(role, actorId, transaction);
+        if (!options.majors.includes(values.major)) throw new WorkflowError('กรุณาเลือกสาขาจาก Catalog ที่เปิดใช้งานในระบบ');
+      }
+      await teacher.update(values, { transaction, fields: Object.keys(values) });
+      return toSafeTeacherProfile(teacher);
+    });
+  }
+  async function profileOptions(role, actorId, transaction) {
+    if (!['teacher', 'department_head'].includes(role)) throw new WorkflowError('Teacher authorization is required', 403);
+    await actor(role, actorId, transaction);
+    const [ready] = await m.sequelize.query("SELECT to_regclass('public.coop_prerequisite_catalog_programs') IS NOT NULL AS ready", { type: QueryTypes.SELECT, transaction });
+    const rows = ready.ready ? await m.CoopPrerequisiteCatalogProgram.findAll({ attributes: ['program'], order: [['program', 'ASC']], transaction,
+      ...(transaction ? { lock: transaction.LOCK.SHARE } : {}) }) : [];
+    return { majors: rows.map(row => row.program), department_change_available: false };
+  }
   async function updateTeacher(headId, teacherId, body, own = false) {
     uuid(teacherId);
     const values = teacherUpdate(body, own);
@@ -449,6 +477,8 @@ function createRoleWorkflowService(m = models) {
   }
   return {
     profile,
+    updateOwnProfile,
+    profileOptions,
     listRequests,
     requestDetail,
     reviewRequest,

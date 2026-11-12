@@ -23,7 +23,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
   const get = id => document.getElementById(id);
   const refreshButton = isHead ? get("teacherCoopRefresh") : null;
   const container = get("teacherCoopList"), message = get("teacherCoopMessage"), detailPanel = get("teacherCoopDetail"), detailBody = get("teacherCoopDetailBody");
-  const presentation = createTeacherListPresentation({ document, list: container, message, onRetry: () => { if (!submitting && !modalOpen && !detailLoading) return refresh(); }, emptyTitle: isHead ? "ยังไม่มีคำร้องรอพิจารณา" : 'ยังไม่มีคำร้องสหกิจศึกษา', emptyDescription: "เมื่อมีคำร้องจากนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น รายการจะแสดงที่นี่" });
+  const presentation = createTeacherListPresentation({ document, list: container, message, onRetry: () => { if (!submitting && !modalOpen && !detailLoading) return refresh(); }, emptyTitle: isHead ? "ยังไม่มีคำร้องรอพิจารณา" : 'ยังไม่มีคำร้องสหกิจศึกษา', emptyDescription: isHead ? "เมื่อมีคำร้องในภาควิชาที่ผ่านขั้นอาจารย์ที่ปรึกษาแล้ว รายการจะแสดงที่นี่" : "เมื่อมีคำร้องจากนักศึกษาที่คุณเป็นอาจารย์ที่ปรึกษาประจำชั้น รายการจะแสดงที่นี่" });
   let authorized = false, fetching = false, submitting = false, modalOpen = false, detailLoading = false;
   let status = isHead ? reviewStatus : 'all', offset = 0, hasNext = false, rows = [], detailId = null, returnFocus = null;
   let detailVersion = 0, openerId = null;
@@ -78,8 +78,9 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     container.setAttribute("aria-busy", String(fetching || submitting));
     detailPanel.setAttribute("aria-busy", String(detailLoading));
   }
-  function authError(error) {
+  function authError(error, sessionConfirmed = false) {
     if (![401, 403].includes(error.status)) return false;
+    if (isHead && error.status === 403 && !sessionConfirmed) return false;
     authorized = false; storage.removeItem(TEACHER_TOKEN_KEY); rows = []; hasNext = false;
     container.replaceChildren(); detailBody.replaceChildren(); detailId = null;
     if (isHead) detailPanel.hidden = true;
@@ -100,6 +101,19 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     presentation.setState("error", { retry: false });
     controls(); return true;
   }
+  async function handleAuthError(error) {
+    if (!isHead || error.status !== 403) return authError(error);
+    // A request can leave the department while the Head session remains valid.
+    // Only the protected profile endpoint can confirm loss of that session/role.
+    try {
+      const profile = await me();
+      if (profile?.success === true && profile.data?.id && profile.data.is_department_head === false)
+        return authError(error, true);
+    } catch (sessionError) {
+      if ([401, 403].includes(sessionError.status)) return authError(sessionError, true);
+    }
+    return false;
+  }
   function errorText(error, operation = 'list') {
     if (!isHead) {
       const action = { list: 'โหลดรายการคำร้อง', detail: 'โหลดรายละเอียดคำร้อง', save: 'บันทึกผลพิจารณาคำร้อง' }[operation];
@@ -111,8 +125,12 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
       if (!error.status) return `${action}ไม่สำเร็จ การเชื่อมต่อขัดข้องหรือหมดเวลา กรุณาลองอีกครั้ง`;
       return `${action}ไม่สำเร็จ (HTTP ${error.status}) กรุณาลองอีกครั้ง หากยังพบปัญหาให้แจ้งขั้นตอนและ HTTP Status`;
     }
+    if (error.status === 403) return "ไม่สามารถเข้าถึงคำร้องนี้ได้ (HTTP 403) กรุณาตรวจสอบรายการล่าสุด";
     if ([404, 409].includes(error.status)) return "คำร้องนี้เปลี่ยนสถานะหรือไม่อยู่ในรายการแล้ว กรุณาตรวจสอบข้อมูลล่าสุด";
     if (error.status === 400) return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบเหตุผลและลองอีกครั้ง";
+    if (operation === 'save') return error.status
+      ? `บันทึกผลพิจารณาไม่สำเร็จ (HTTP ${error.status}) กรุณาลองอีกครั้ง ร่างเหตุผลยังอยู่`
+      : "บันทึกผลพิจารณาไม่สำเร็จ การเชื่อมต่อขัดข้องหรือรูปแบบคำตอบไม่ถูกต้อง ร่างเหตุผลยังอยู่";
     return isHead ? "โหลดหรือบันทึกคำร้องไม่สำเร็จ กรุณาลองรีเฟรชอีกครั้ง" : "โหลดหรือบันทึกคำร้องไม่สำเร็จ กรุณาลองอีกครั้ง";
   }
   const invalidList = () => Object.assign(new Error('Invalid request list contract'), { code: 'TEACHER_LIST_CONTRACT_INVALID' });
@@ -139,7 +157,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     for (const action of ["approve", "reject"]) {
       const button = node("button", action === "approve" ? "อนุมัติ" : "ไม่อนุมัติ", `teacher-button teacher-button--${action === "approve" ? "accept" : "reject"}`);
       button.type = "button"; button.dataset.coopAction = action;
-      if (!isHead) button.setAttribute('aria-label', `${action === 'approve' ? 'อนุมัติ' : 'ไม่อนุมัติ'}คำร้อง ${name(row)} รหัส ${row.student?.student_id || '-'}`);
+      button.setAttribute('aria-label', `${action === 'approve' ? 'อนุมัติ' : 'ไม่อนุมัติ'}คำร้อง ${name(row)} รหัส ${row.student?.student_id || '-'}`);
       button.addEventListener("click", () => openDecision(row, action, button)); group.append(button);
     }
     return group;
@@ -170,7 +188,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
   function detailButton(row) {
     const button = node('button', 'ดูรายละเอียด', 'teacher-button'); button.type = 'button';
     if (!isHead) button.dataset.coopDetailId = row.id;
-    if (!isHead) button.setAttribute('aria-label', `ดูรายละเอียดคำร้อง ${name(row)} รหัส ${row.student?.student_id || '-'}`);
+    button.setAttribute('aria-label', `ดูรายละเอียดคำร้อง ${name(row)} รหัส ${row.student?.student_id || '-'}`);
     button.addEventListener('click', () => openDetail(row.id, button)); return button;
   }
   function closeDetail() {
@@ -237,12 +255,19 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     } catch (error) {
       if (!current()) return false;
       if (sessionChanged()) return false;
-      if (!authError(error)) {
+      if (!await handleAuthError(error)) {
         if (isHead) detailId = null;
         detailBody.replaceChildren();
         const detailMessage = get("teacherCoopDetailMessage");
         detailMessage.textContent = !isHead && error.status === 404 ? "ไม่พบคำร้องนี้ หรือคำร้องไม่อยู่ในรายการที่เข้าถึงได้แล้ว" : errorText(error, 'detail');
         if (!isHead) { detailMessage.setAttribute("role", "alert"); detailActions.replaceChildren(); detailRetry.hidden = false; }
+        if (isHead && error.status === 403) {
+          detailMessage.setAttribute("role", "alert");
+          const text = errorText(error, 'detail');
+          toast(text, "error");
+          await refresh({ preserveMessage: true });
+          if (authorized) say(text, "error");
+        }
       }
       return false;
     } finally { if (isHead || version === detailVersion) { detailLoading = false; controls(); } }
@@ -273,7 +298,7 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
       searchToolbar.update(data.metadata);
       if (!preserveMessage) say(rows.length ? `แสดง ${rows.length} คำร้องในหน้านี้` : status === reviewStatus ? isHead ? "ยังไม่มีคำร้องสหกิจที่รอการพิจารณาจากหัวหน้าภาควิชา" : "ยังไม่มีคำร้องสหกิจที่รอการพิจารณา" : "ยังไม่มีคำร้องในสถานะที่เลือก");
       presentation.setState("ready", { count: rows.length, filtered: status !== (isHead ? reviewStatus : 'all') || searchToolbar.active(), pageable: offset > 0 || hasNext }); return true;
-    } catch (error) { if (!currentList()) return false; if (!authError(error)) say(errorText(error), "error"); presentation.setState("error", { retry: authorized }); return false; }
+    } catch (error) { if (!currentList()) return false; if (!await handleAuthError(error)) say(errorText(error), "error"); presentation.setState("error", { retry: authorized }); return false; }
     finally { fetching = false; if (refreshButton) loading(refreshButton, false, "กำลังโหลด...", "รีเฟรช"); controls(); if (!isHead) openTask(); }
   }
   function openDecision(row, action, button) {
@@ -281,20 +306,23 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
     modalOpen = true; controls();
     confirm({ title: action === "approve" ? isHead ? "ยืนยันอนุมัติคำร้องสหกิจ" : "อนุมัติคำร้องและส่งต่อหัวหน้าภาควิชา" : "ไม่อนุมัติคำร้องสหกิจ", message: `${name(row)} (${row.student?.student_id || "-"}) · ${row.company_name || "-"}`,
       variant: action === 'approve' ? 'success' : 'danger', confirmLabel: action === "approve" ? "ยืนยันอนุมัติ" : "ยืนยันไม่อนุมัติ", loadingLabel: "กำลังบันทึก...", reasonLabel: action === "reject" ? "เหตุผลที่ไม่อนุมัติ (จำเป็น)" : "",
+      initialReason: action === "reject" ? rejectionDrafts.get(row.id) || "" : "",
+      onReasonChange: value => { if (action === "reject") rejectionDrafts.set(row.id, value); },
       ...(!isHead ? {
         parentModal: detailModal.isOpen ? detailModal : undefined,
         returnFocus: button,
         fallbackFocus: () => detailModal.isOpen ? detailActions.querySelector(`[data-coop-action="${action}"]`) || get("teacherCoopCloseDetailBottom") : get("teacherCoopStatus"),
-        initialReason: action === "reject" ? rejectionDrafts.get(row.id) || "" : "",
-        onReasonChange: value => { if (action === "reject") rejectionDrafts.set(row.id, value); },
       } : {}),
       onClose: () => { modalOpen = false; controls(); },
       onConfirm: async reason => {
         if (submitting || !authorized || !storage.getItem(TEACHER_TOKEN_KEY)) return;
         submitting = true; controls(); loading(button, true, "กำลังบันทึก...");
         try {
-          await decide(row.id, action, reason);
-          if (!isHead) rejectionDrafts.delete(row.id);
+          const result = await decide(row.id, action, reason);
+          if (isHead && (result?.success !== true || result.data?.request?.id !== row.id
+            || result.data.request.status !== (action === 'reject' ? 'rejected' : 'approved')))
+            throw Error("Invalid decision response");
+          if (!isHead || action === 'reject') rejectionDrafts.delete(row.id);
           const text = action === "approve" ? isHead ? "คำร้องได้รับการอนุมัติแล้ว" : "อนุมัติแล้ว ส่งต่อให้หัวหน้าภาควิชาพิจารณา" : "บันทึกการไม่อนุมัติแล้ว";
           toast(text, "success"); say(text, "success");
           const selected = detailId;
@@ -310,10 +338,11 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
           detailBody.replaceChildren();
           if (isHead) { detailPanel.hidden = true; detailId = null; }
           else detailActions.replaceChildren();
-          if (!authError(error)) {
+          if (!await handleAuthError(error)) {
             const text = errorText(error, 'save'); toast(text, "error"); await refresh();
             if (!isHead && selected && authorized) await openDetail(selected, null, { reload: true });
             if (authorized) say(text, "error");
+            if (isHead && authorized) throw Error(text);
           }
         } finally { submitting = false; loading(button, false, "กำลังบันทึก..."); controls(); }
       },
@@ -343,10 +372,20 @@ export function mountTeacherCoopRequests({ document, storage, location, role = "
       if (isHead && get("headName")) get("headName").textContent = teacherName(result.data);
       authorized = true; await refresh();
     }
-    catch (error) { if (!authError(error)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherCoopSignIn").hidden = false; presentation.setState("error", { retry: false }); } }
+    catch (error) { if (!authError(error, true)) { say("ตรวจสอบบัญชีอาจารย์ไม่สำเร็จ กรุณาโหลดหน้านี้ใหม่", "error"); get("teacherCoopSignIn").hidden = false; presentation.setState("error", { retry: false }); } }
     finally { controls(); }
   })();
-  return { ready, refresh, openDetail };
+  return { ready, refresh, openDetail,
+    ...(isHead ? {
+      handleAuthError,
+      canLeave: () => !fetching && !submitting && !modalOpen && !detailLoading,
+      showRequests: async (nextStatus) => {
+        if (fetching || submitting || modalOpen || detailLoading) return false;
+        if (nextStatus && Object.hasOwn(LABELS, nextStatus)) { status = nextStatus; offset = 0; get("teacherCoopStatus").value = status; }
+        closeDetail(); return refresh();
+      },
+    } : {}),
+  };
 }
 
 if (typeof document !== "undefined" && document.body.dataset.workflowRole !== "department_head") mountTeacherCoopRequests({ document, storage: roleSessionStorage, location: window.location });

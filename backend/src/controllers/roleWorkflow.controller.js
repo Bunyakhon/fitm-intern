@@ -58,9 +58,8 @@ function createRoleWorkflowController(service = createRoleWorkflowService()) {
     updateTeacher: handler((req) =>
       service.updateTeacher(req.user.id, req.params.id, req.body),
     ),
-    updateOwnProfile: handler((req) =>
-      service.updateTeacher(req.user.id, req.user.id, req.body, true),
-    ),
+    updateOwnProfile: role => roleHandler(role, (req, id) => service.updateOwnProfile(role, id, req.body)),
+    profileOptions: role => roleHandler(role, (req, id) => service.profileOptions(role, id)),
     assignProjectAdvisor: handler((req) =>
       service.assignProjectAdvisor(req.user.id, req.params.id, req.body),
     ),

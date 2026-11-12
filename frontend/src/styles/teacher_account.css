@@ -1,0 +1,139 @@
+/* Settings presentation only. This class is mounted exclusively for Teacher/Head. */
+#own-account.teacher-account-settings [hidden] { display: none !important; }
+#own-account.teacher-account-settings {
+  --account-bg: #f8fafc; --account-card: #fff; --account-blue: #1d4ed8;
+  --account-text: #0f172a; --account-muted: #64748b; --account-border: #e2e8f0;
+  --account-success: #15803d; --account-warning: #b45309; --account-error: #b91c1c;
+  padding: 0; border: 0; border-radius: 0; background: var(--account-bg);
+  color: var(--account-text); font-size: 1rem; line-height: 1.6; box-shadow: none;
+}
+#own-account.teacher-account-settings :is(.teacher-heading, .account-overview-heading) { margin-bottom: 24px; }
+#own-account.teacher-account-settings :is(.teacher-heading h1, .account-overview-heading h1) { font-size: clamp(1.5rem, 2.5vw, 1.875rem); margin: 4px 0 8px; line-height: 1.4; }
+#own-account.teacher-account-settings .teacher-heading p { font-size: 1rem; color: var(--account-muted); }
+#own-account.teacher-account-settings .teacher-heading .teacher-eyebrow { color: var(--account-blue); font-size: .8125rem; }
+#own-account.teacher-account-settings .teacher-account-content { display: grid; gap: 24px; min-width: 0; }
+#own-account.teacher-account-settings .teacher-account-card { padding: 24px; min-width: 0; border: 1px solid var(--account-border); border-radius: 16px; background: var(--account-card); box-shadow: 0 2px 8px #0f172a03; }
+#own-account.teacher-account-settings :is(h2, h3, p, dt, dd, code) { min-width: 0; overflow-wrap: anywhere; }
+#own-account.teacher-account-settings .teacher-account-card h2 { margin: 0; font-size: 1.125rem; line-height: 1.5; font-weight: 700; color: var(--account-text); }
+#own-account.teacher-account-settings .teacher-account-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; min-height: 152px; }
+#own-account.teacher-account-settings .teacher-account-avatar { width: 72px; height: 72px; flex: 0 0 72px; display: grid; place-items: center; border-radius: 50%; background: #dbeafe; color: var(--account-blue); font-size: 1.5rem; font-weight: 700; letter-spacing: .03em; }
+#own-account.teacher-account-settings .teacher-account-summary-info { flex: 1 1 240px; min-width: 0; }
+#own-account.teacher-account-settings .teacher-account-summary h2 { font-size: clamp(1.25rem, 2vw, 1.5rem); margin: 4px 0 8px; }
+#own-account.teacher-account-settings .teacher-account-summary-info > p { margin: 0; font-size: .9375rem; }
+#own-account.teacher-account-settings .teacher-account-summary-info > p:last-child { color: var(--account-muted); }
+#own-account.teacher-account-settings .teacher-account-summary-info .teacher-account-eyebrow { color: var(--account-muted); font-size: .8125rem; }
+#own-account.teacher-account-settings .teacher-account-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; min-width: 0; }
+#own-account.teacher-account-settings .teacher-account-card-heading { display: flex; flex-wrap: wrap; align-items: start; gap: 16px; margin-bottom: 24px; }
+#own-account.teacher-account-settings .teacher-account-card-heading > div { flex: 1 1 200px; min-width: 0; }
+#own-account.teacher-account-settings .teacher-account-card-heading p { color: var(--account-muted); font-size: .875rem; margin: 4px 0 0; line-height: 1.7; }
+#own-account.teacher-account-settings .teacher-account-personal { min-height: 360px; }
+#own-account.teacher-account-settings dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0 0; gap: 24px; }
+#own-account.teacher-account-settings dl > div { padding: 0; border: 0; border-radius: 0; background: transparent; min-width: 0; }
+#own-account.teacher-account-settings dt { font-size: .8125rem; font-weight: 400; color: var(--account-muted); margin-bottom: 8px; }
+#own-account.teacher-account-settings dd { margin: 0; font-size: 1rem; font-weight: 500; line-height: 1.6; white-space: pre-wrap; }
+#own-account.teacher-account-settings .teacher-account-names { min-height: 168px; }
+#own-account.teacher-account-settings .teacher-account-protected > dl { min-height: 240px; }
+#own-account.teacher-account-settings .teacher-account-protected > h2 { margin-bottom: 8px; }
+#own-account.teacher-account-settings .teacher-account-hint { color: var(--account-muted); font-size: .8125rem; line-height: 1.7; margin: 8px 0 16px; }
+#own-account.teacher-account-settings .teacher-account-feedback { min-height: 24px; margin: 0 0 16px; font-size: .875rem; color: var(--account-muted); line-height: 1.7; }
+#own-account.teacher-account-settings .teacher-account-recovery { margin-top: 24px; }
+#own-account.teacher-account-settings .teacher-account-form { margin: 0; }
+#own-account.teacher-account-settings fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+#own-account.teacher-account-settings legend { margin-bottom: 16px; font-size: 1rem; font-weight: 600; }
+#own-account.teacher-account-settings .teacher-account-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+#own-account.teacher-account-settings label { display: flex; flex-direction: column; min-width: 0; gap: 8px; color: var(--account-text); font-size: .875rem; font-weight: 500; }
+#own-account.teacher-account-settings :is(input, select) { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 12px; background: var(--account-card); border: 1px solid #94a3b8; border-radius: 8px; color: var(--account-text); font: inherit; font-size: 1rem; line-height: 1.5; }
+#own-account.teacher-account-settings :is(input, select):hover:not(:disabled) { border-color: var(--account-blue); }
+#own-account.teacher-account-settings :is(input, select):disabled, #own-account.teacher-account-settings input[readonly] { color: var(--account-muted); background: #f1f5f9; border-color: var(--account-border); cursor: not-allowed; }
+#own-account.teacher-account-settings :is(input, select)[aria-invalid="true"] { border-color: var(--account-error); }
+#own-account.teacher-account-settings .teacher-account-field-error { display: block; min-height: 1.5em; color: var(--account-error); font-size: .8125rem; line-height: 1.5; font-weight: 400; }
+#own-account.teacher-account-settings .teacher-account-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; padding-top: 16px; }
+#own-account.teacher-account-settings .teacher-account-unsaved { margin: 16px 0; padding: 12px 16px; color: var(--account-warning); border: 1px solid #fde68a; border-radius: 8px; background: #fffbeb; font-size: .875rem; }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button {
+  --account-button-bg: #fff; --account-button-fg: #475569; --account-button-border: #cbd5e1; --account-button-hover: #f1f5f9; --account-button-active: #e2e8f0;
+  display: inline-flex; justify-content: center; align-items: center; gap: 8px; max-width: 100%; min-height: 44px;
+  padding: 10px 16px; border: 1px solid var(--account-button-border); border-radius: 8px; background: var(--account-button-bg);
+  color: var(--account-button-fg); font: inherit; font-size: .875rem; font-weight: 600; line-height: 1.5;
+  white-space: normal; overflow-wrap: anywhere; text-decoration: none; cursor: pointer; box-shadow: none;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button--primary { --account-button-bg: #1d4ed8; --account-button-fg: #fff; --account-button-border: #1d4ed8; --account-button-hover: #1e40af; --account-button-active: #1e3a8a; }
+#own-account.teacher-account-settings .teacher-button--danger-outline { --account-button-bg: #fff; --account-button-fg: #b91c1c; --account-button-border: #b91c1c; --account-button-hover: #fef2f2; --account-button-active: #fee2e2; }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button:hover:not(:disabled) { background: var(--account-button-hover); color: var(--account-button-fg); border-color: var(--account-button-border); }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button:active:not(:disabled) { background: var(--account-button-active); }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button:disabled { color: var(--account-muted); background: #f1f5f9; border-color: var(--account-border); opacity: 1; cursor: not-allowed; }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button.is-loading { color: var(--account-button-fg); background: var(--account-button-bg); border-color: var(--account-button-border); cursor: progress; }
+#own-account.teacher-account-settings .teacher-button > svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#own-account.teacher-account-settings :is(button, input, select, summary, a, code, [tabindex]):focus-visible { outline: 3px solid var(--account-blue); outline-offset: 3px; }
+#own-account.teacher-account-settings .teacher-status { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin: 0; padding: 4px 12px; color: #475569; background: #f1f5f9; border: 1px solid var(--account-border); border-radius: 999px; font-size: .8125rem; font-weight: 500; line-height: 1.7; white-space: normal; }
+#own-account.teacher-account-settings .teacher-status[data-tone="success"] { color: var(--account-success); background: #f0fdf4; border-color: #bbf7d0; }
+#own-account.teacher-account-settings .teacher-status[data-tone="warning"] { color: var(--account-warning); background: #fffbeb; border-color: #fde68a; }
+#own-account.teacher-account-settings .teacher-status[data-tone="danger"] { color: var(--account-error); background: #fef2f2; border-color: #fecaca; }
+#own-account.teacher-account-settings .teacher-account-technical { margin-top: 24px; padding: 16px 0 0; border-top: 1px solid var(--account-border); }
+#own-account.teacher-account-settings .teacher-account-technical summary { min-height: 44px; padding: 8px 0; font-size: .875rem; font-weight: 600; color: #475569; cursor: pointer; }
+#own-account.teacher-account-settings .teacher-account-technical-body { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding-top: 8px; }
+#own-account.teacher-account-settings .teacher-account-technical code { display: block; flex: 1 1 160px; max-width: 100%; color: var(--account-muted); font-size: .8125rem; user-select: all; }
+#own-account.teacher-account-settings .teacher-google-account { min-width: 0; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--account-border); }
+#own-account.teacher-account-settings .teacher-google-account h3 { margin: 0; font-size: 1rem; line-height: 1.5; font-weight: 700; color: var(--account-text); }
+#own-account.teacher-account-settings .teacher-google-account .teacher-account-card-heading { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; gap: 8px 16px; margin-bottom: 16px; }
+#own-account.teacher-account-settings .teacher-google-account .teacher-status { grid-column: 2; justify-self: start; }
+#own-account.teacher-account-settings .teacher-google-brand { width: 40px; height: 40px; display: grid; place-items: center; background: #fff; border: 1px solid var(--account-border); border-radius: 12px; }
+#own-account.teacher-account-settings .teacher-google-brand svg { width: 24px; height: 24px; }
+#own-account.teacher-account-settings .teacher-account-message { margin: 0 0 16px; min-height: 24px; font-size: .875rem; color: var(--account-muted); line-height: 1.7; }
+#own-account.teacher-account-settings .teacher-google-provider { min-width: 0; max-width: 100%; overflow-x: auto; }
+#own-account.teacher-account-settings .teacher-google-provider:not(:empty) { margin: 16px 0; }
+#own-account.teacher-account-settings .teacher-google-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+#own-account.teacher-account-settings [data-type="error"] { color: var(--account-error); }
+#own-account.teacher-account-settings [data-type="success"] { color: var(--account-success); }
+#own-account.teacher-account-settings[data-account-loading="true"] .teacher-account-names:empty { background: linear-gradient(#f1f5f9, #f1f5f9) 0 24px / 45% 56px no-repeat, linear-gradient(#f1f5f9, #f1f5f9) 100% 24px / 45% 56px no-repeat; border-radius: 8px; }
+@media (max-width: 1100px) {
+  #own-account.teacher-account-settings .teacher-account-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  #own-account.teacher-account-settings .teacher-account-card { padding: 24px 16px; border-radius: 12px; }
+  #own-account.teacher-account-settings .teacher-account-summary { flex-direction: column; align-items: flex-start; gap: 16px; }
+  #own-account.teacher-account-settings .teacher-account-summary-info { flex-basis: auto; }
+  #own-account.teacher-account-settings :is(dl, .teacher-account-fields) { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  #own-account.teacher-account-settings .teacher-account-names { min-height: 280px; }
+  #own-account.teacher-account-settings .teacher-account-protected > dl { min-height: 0; }
+  #own-account.teacher-account-settings .teacher-account-card-heading > div { flex-basis: 100%; }
+  #own-account.teacher-account-settings .teacher-account-card-heading > .teacher-button { width: 100%; }
+  #own-account.teacher-account-settings .teacher-account-actions { flex-direction: column-reverse; align-items: stretch; }
+  #own-account.teacher-account-settings .teacher-google-actions > .teacher-button { flex: 1 1 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #own-account.teacher-account-settings *, #own-account.teacher-account-settings *::before { animation: none !important; transition: none !important; }
+}
+
+#own-account.teacher-account-settings .teacher-photo-avatar { position: relative; flex: 0 0 80px; width: 80px; height: 80px; overflow: visible; }
+/* Override the shared account button's 44px minimum without changing other controls. */
+#own-account.teacher-account-settings .teacher-photo-picker { position: absolute; bottom: -4px; right: -4px; display: grid; place-items: center; box-sizing: border-box; width: 32px; height: 32px; min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px; flex-shrink: 0; aspect-ratio: 1 / 1; padding: 0; font-size: 0; line-height: 1; transform: none; border: 2px solid #fff; border-radius: 50%; background: var(--account-blue); color: #fff; cursor: pointer; box-shadow: 0 1px 4px #0f172a26; }
+#own-account.teacher-account-settings .teacher-photo-avatar .teacher-account-avatar { width: 100%; height: 100%; }
+#own-account.teacher-account-settings .teacher-photo-avatar > img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+#own-account.teacher-account-settings .teacher-photo-camera { display: grid; place-items: center; width: 16px; height: 16px; line-height: 0; }
+#own-account.teacher-account-settings .teacher-photo-camera svg { display: block; width: 16px; height: 16px; min-width: 16px; min-height: 16px; flex-shrink: 0; }
+#own-account.teacher-account-settings .teacher-photo-picker:hover:not(:disabled) { background: #1e40af; }
+#own-account.teacher-account-settings .teacher-photo-picker:active:not(:disabled) { background: #1e3a8a; }
+#own-account.teacher-account-settings .teacher-photo-picker:disabled { cursor: not-allowed; opacity: .65; }
+.teacher-photo-overlay[hidden], .teacher-photo-modal [hidden] { display: none !important; }
+.teacher-photo-overlay { padding: 16px; box-sizing: border-box; }
+.teacher-photo-modal { --account-blue: #1d4ed8; --account-muted: #64748b; --account-border: #e2e8f0; box-sizing: border-box; padding: 24px; max-height: calc(100dvh - 32px); }
+.teacher-photo-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.teacher-photo-heading h2 { min-width: 0; overflow-wrap: anywhere; text-align: left; }
+.teacher-photo-close { flex: 0 0 32px; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #64748b; font: inherit; font-size: 1.5rem; cursor: pointer; }
+.teacher-photo-close:hover:not(:disabled) { background: #f1f5f9; }
+.teacher-photo-close:disabled { opacity: .5; cursor: not-allowed; }
+.teacher-photo-preview-area { display: flex; justify-content: center; align-items: center; min-height: 160px; margin: 16px 0; }
+.teacher-photo-preview, .teacher-photo-placeholder { width: 144px; height: 144px; border: 1px solid #e2e8f0; border-radius: 50%; object-fit: cover; }
+.teacher-photo-placeholder { display: grid; place-items: center; background: #dbeafe; color: #1d4ed8; font-size: 2rem; font-weight: 700; }
+.teacher-photo-modal :is(.teacher-account-hint, .teacher-account-message) { font-size: .875rem; overflow-wrap: anywhere; text-align: left; }
+.teacher-photo-modal [data-type="error"] { color: #b91c1c; }
+:is(#own-account.teacher-account-settings, .teacher-photo-modal) .teacher-button--danger-ghost { --account-button-bg: transparent; --account-button-fg: #b91c1c; --account-button-border: transparent; --account-button-hover: #fef2f2; --account-button-active: #fee2e2; }
+.teacher-photo-trash { display: inline-flex; }
+.teacher-photo-trash svg { width: 18px; height: 18px; }
+.teacher-photo-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.teacher-photo-modal :is(button, [tabindex]):focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
+@media (max-width: 390px) { .teacher-photo-modal { padding: 20px 16px; } .teacher-photo-actions > button { flex: 1 1 100%; } }
+body:is([data-workflow-role="teacher"], [data-workflow-role="department_head"]) .teacher-profile-header-avatar { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; padding: 0; border: 0; overflow: hidden; border-radius: 50%; background: #dbeafe; color: #1d4ed8; font-size: .875rem; font-weight: 600; }
+body:is([data-workflow-role="teacher"], [data-workflow-role="department_head"]) .teacher-profile-header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 640px) { body:is([data-workflow-role="teacher"], [data-workflow-role="department_head"]) .teacher-profile-header-avatar { flex-basis: 32px; width: 32px; height: 32px; } }

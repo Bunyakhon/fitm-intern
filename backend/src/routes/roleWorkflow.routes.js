@@ -52,6 +52,11 @@ function createRoleWorkflowRouter(role, registry = models) {
         }),
   );
   router.get("/me", controller.profile(role));
+  if (['teacher', 'department_head'].includes(role)) router.patch('/me', controller.updateOwnProfile(role));
+  if (['teacher', 'department_head'].includes(role)) {
+    router.get('/me/profile-options', controller.profileOptions(role));
+    router.use('/me/profile-image', require('./teacherProfileImage.routes').createTeacherProfileImageRouter(registry));
+  }
   if (role === "teacher") {
     router.get('/admin-access', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ available: process.env.NODE_ENV === 'development' && !!req.superAdmin?.is_active }); });
     const advisor = createCoopProjectAdvisorController(createCoopProjectAdvisorService(registry));
@@ -80,7 +85,6 @@ function createRoleWorkflowRouter(role, registry = models) {
     router.post("/job-postings/:id/reject", controller.reviewJob("reject"));
   }
   if (role === "department_head") {
-    router.patch("/me", controller.updateOwnProfile);
     router.get("/teachers", controller.listTeachers);
     router.patch("/teachers/:id", controller.updateTeacher);
     router.patch("/students/:id/coop-advisor", controller.assignProjectAdvisor);
