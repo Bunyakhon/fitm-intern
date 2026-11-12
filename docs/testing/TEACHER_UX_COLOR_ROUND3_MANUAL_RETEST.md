@@ -1,0 +1,33 @@
+# Teacher Round 3 — User Manual Chrome Retest
+
+11 November 2026 (Asia/Bangkok). **Tests: NOT RUN — USER-OWNED TESTING.** Every new acceptance result below is **PENDING USER RESULTS**. Codex did not run application checks, API/DB requests, browser automation, build/lint/typecheck/syntax checks or test suites. Contrast-token arithmetic is documented separately, not a Chrome/WCAG pass.
+
+Latest user evidence from the Round 3 request: **PASS 4** R2-04 Advisor Page Size, R2-05 Student Popup, R2-06 Popup Close/Drafts, R2-07 Student Page Size; **FAIL 3** R2-01/R2-02 Coop loading, R2-03 Advisor Status UX; **NOT TESTED 3** R2-08 Mentor/Academic Period, R2-09 Responsive Popup, R2-10 Regression. These IDs/meanings are quoted from the user report; they do not remap the differently named rows in the older generated Round 2 checklist. Source changes do not change those reported results.
+
+Use normal Backend restart/Frontend reload after updating source. Use existing authorized accounts/data; no seed/reset, data correction or privilege changes are required for this checklist. Confirmations that save real decisions should follow the user's normal acceptance process.
+
+| ID | Manual action | Expected behavior | New result |
+|---|---|---|---|
+| R3-01 | Teacher Coop: open default all-status list; choose 10/25/50, Next/Previous where data permits | List loads owned requests, correct total/range, size change resets page 1; no generic load/save error | PENDING USER RESULTS |
+| R3-02 | Combine all/specific status with name/code/company/job search, year, semester, IT/INE, both sort directions, page sizes | `all` is omitted from Coop URL; valid page_size sent; scoped total/order before pagination; filter/sort/view retained after size change | PENDING USER RESULTS |
+| R3-03 | Switch Coop/Advisor/Student Card ↔ Table | Same IDs/order and semantic status labels/colors, no new list fetch merely for view change; preference remains per menu | PENDING USER RESULTS |
+| R3-04 | Network unavailable/server error while loading Coop list; Retry after recovery | List-specific error; HTTP status where available, appropriate Retry, no stale data/draft deletion | PENDING USER RESULTS |
+| R3-05 | Coop detail request error/404; Retry/close; cancel Reject then reopen; save error if encountered | Detail vs save messages distinguish operation; scope denial/session guard preserved; reason draft survives cancellation/failure; no double save | PENDING USER RESULTS |
+| R3-06 | Advisor filter all/pending/confirmed/rejected; search known name/code across current statuses; paginate 10/25/50 | Four labels: ทุกสถานะของคำขอปัจจุบัน / รอการยืนยัน / ยืนยันรับเป็นที่ปรึกษาแล้ว / ปฏิเสธแล้ว; all includes those three statuses only, excludes superseded before count/page | PENDING USER RESULTS |
+| R3-07 | Inspect Advisor badges/details/actions and existing historical detail access, if available | Confirmed label only for confirmed, no old-request filter/phrase in Operational List; pending alone accepts/rejects; historical superseded remains historical/read-only, never recast as confirmed | PENDING USER RESULTS |
+| R3-08 | Dashboard, all three lists, scheduling/results, documents, sidebar/navbar | Consistent Teacher colors and clear action priority; logo/Noto/layout/navigation/deep links retained; other roles retain their theme | PENDING USER RESULTS |
+| R3-09 | Primary/secondary/success/danger/neutral buttons: default/hover/press/keyboard focus/disabled/loading | Readable states, visible focus, disabled differs from loading; search/save/confirm spinner while request pending; no double requests/saves | PENDING USER RESULTS |
+| R3-10 | Inspect all badges in Cards/Tables, appointment/result readback, toast/error/confirmation | Text always accompanies color; pending amber, success green, reject/error red, in progress/info blue, unknown/draft/historical neutral; confirmation reflects actual action | PENDING USER RESULTS |
+| R3-11 | Keyboard Tab/Shift+Tab/Enter/Space and X/Escape/overlay close with nested confirmation; reduced motion OS setting | Accessible names, focus visible/trapped/restored, body scroll restored; drafts/selection retained; reduced animation/non-smooth detail navigation | PENDING USER RESULTS |
+| R3-12 | 1280/768/390/320px: toolbar, long confirmed labels, table action stacks, modal, toast | No whole-page horizontal overflow, contained table scroll only; controls fit/wrap; 44px button height and icon targets; toast close does not cover text | PENDING USER RESULTS |
+| R3-13 | Inspect computed foreground/background/border/focus in Chrome, including hover/disabled/error/selected states and zoom | Actual normal text ≥4.5:1; applicable non-text boundaries/focus ≥3:1; report any inherited/overridden pair not covered by token doc | PENDING USER RESULTS |
+| R3-14 | Regression: Advisor/Student size; Student Card/Table/Picker popup, close/reopen, workflow footer, existing drafts | Preserve user-reported R2-04–07 behavior; readonly popup does not replace schedule/result draft until explicit workflow navigation | PENDING USER RESULTS |
+| R3-15 | R2-08: open students with known/unknown academic periods/mentors | Correct student IDs, structured year/semester only, unknown remains ไม่ระบุ; no inferred period/shared wrong mentor | PENDING USER RESULTS |
+| R3-16 | R2-09: long popup at all four widths with keyboard/scroll/close | Complete content, usable footer, no clipped controls, correct scroll/focus return | PENDING USER RESULTS |
+| R3-17 | R2-10: Dashboard queue/deep link, approved actions, supervision drafts/results/images, session expiry/ownership | Existing routes, pending queues, approval stages, confirmations, RBAC/session and workflow guards remain correct | PENDING USER RESULTS |
+| R3-18 | Documents: private PDF preview/download; Overleaf/Drive; existing Student upload → Teacher readback; unknown-year sorting/filter | Existing viewer/blob cancellation/file access, separate Book/Poster/link data and CO-09 remain correct; no public byte access introduced | PENDING USER RESULTS |
+| R3-19 | Existing second Teacher / Head / Staff / Student access where authorized accounts are available | Ownership denial and other-role UI/workflows preserved; unavailable accounts remain unverified | PENDING USER RESULTS |
+
+If Coop still fails, record the case ID, steps, sanitized Network URL/query, HTTP status and safe response error/code. Do not include Authorization headers, JWT, cookies, passwords or private document bytes. SQL logs were not collected in this round; source type mismatch is fixed but runtime confirmation remains required.
+
+NEXT TASK: User Manual Chrome Retest. Send confirmed outcomes; do not treat previous PASS or source review as a new acceptance result.

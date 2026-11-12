@@ -1,8 +1,8 @@
 import { apiRequest } from "./client.js";
 import { teacherRequest } from "./teacherProjectAdvisor.api.js";
 const root = "/api/supervision";
-export const listSupervisionStudents = (offset = 0) => teacherRequest(`${root}/teacher/students?${new URLSearchParams({ offset, limit: 26 })}`);
-export const getSupervisionStudent = id => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}`);
+export const listSupervisionStudents = (offset = 0, filters = {}) => teacherRequest(`${root}/teacher/students?${new URLSearchParams({ offset, ...(filters.page_size === undefined ? { limit: 10 } : {}), ...filters })}`);
+export const getSupervisionStudent = (id, { signal } = {}) => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}`, { signal });
 export const saveSupervision = (id, visit, body, existing) => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}/visits/${visit}`, { method: existing ? "PUT" : "POST", body });
 export const resendSupervisionLink = (id, appointment, version) => teacherRequest(`${root}/teacher/students/${encodeURIComponent(id)}/appointments/${encodeURIComponent(appointment)}/link`, { method: "POST", body: { version } });
 export const getStudentSupervision = () => apiRequest(`${root}/student`);

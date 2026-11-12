@@ -1,3 +1,4 @@
+import { teacherStatusTone } from './teacherStatus.js';
 export const appointmentStatus = { pending_confirmation: "รอพี่เลี้ยงยืนยัน", confirmed: "พี่เลี้ยงยืนยันแล้ว" };
 export function appointmentDate(value) {
   return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" }).format(new Date(value));
@@ -22,6 +23,7 @@ export function renderAppointment(container, row) {
     ...(s.is_substitute ? [`เหตุผลใช้พี่เลี้ยงแทน: ${mentor.reason}`, `พี่เลี้ยงเดิม: ${s.original_mentor.first_name} ${s.original_mentor.last_name}`] : []),
     `หมายเหตุ: ${row.notes || "-"}`, ...(row.confirmed_at ? [`ยืนยันเมื่อ: ${appointmentDate(row.confirmed_at)}`] : []),
   ]) container.append(element(document, "p", text));
+  if (document.body.dataset.workflowRole === 'teacher') { const badge = container.firstElementChild; badge.className = 'teacher-semantic-badge'; badge.dataset.tone = teacherStatusTone(row.status); }
 }
 export function renderAppointmentHistory(container, history) {
   const document = container.ownerDocument; container.replaceChildren();

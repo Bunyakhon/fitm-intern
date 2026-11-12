@@ -16,6 +16,7 @@ const {
 const { toSafeDepartmentStaffProfile } = require("./staffAuth.service");
 const {prerequisiteInclude} = require('./coopPrerequisites');
 const { createAcademicService } = require('./coopAcademic.service');
+const { teacherPage } = require('./teacherSearch.service');
 
 const STAGES = {
   teacher: { from: ["advisor_review"], next: "department_head_review" },
@@ -126,14 +127,23 @@ function createRoleWorkflowService(m = models) {
   async function listRequests(role, actorId, query) {
     const currentActor = await actor(role, actorId);
     const status =
-      query.status === undefined ? (role === 'department_staff' ? REQUEST_STATUSES : STAGES[role].from) : query.status;
+      query.status === undefined ? (role === 'teacher' ? 'all' : role === 'department_staff' ? REQUEST_STATUSES : STAGES[role].from) : query.status;
     if (
       query.status !== undefined &&
-      (typeof status !== "string" || !REQUEST_STATUSES.includes(status))
+      (typeof status !== "string" || (!(role === 'teacher' && status === 'all') && !REQUEST_STATUSES.includes(status)))
     )
       throw new WorkflowError("Unsupported request status");
     let where;
     if (role === "teacher") where = { advisor_teacher_id: actorId };
+    if (role === 'teacher') {
+      const result = await teacherPage(m, 'coop', actorId, { ...query, status }, async (ids, transaction) => {
+        const requests = await m.CoopRequest.findAll({ where: { id: { [Op.in]: ids } },
+          include: [studentInclude(where, role), prerequisiteInclude(m), { model: m.CoopAcademicPeriod, as: 'academicPeriod' }],
+          order: [['submitted_at', 'ASC'], ['id', 'ASC']], transaction });
+        return academic.attach(requests, { transaction });
+      });
+      return query.metadata === '1' ? result : result.rows;
+    }
     if (role === "department_head") {
       const advisors = await m.Teacher.findAll({
         where: { department: currentActor.department },

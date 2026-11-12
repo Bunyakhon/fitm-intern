@@ -19,6 +19,7 @@ function createCoopProjectAdvisorController(service) {
     select: action(req => service.select(req.user.id, req.body)),
     directory: action(req => service.directory(req.user.id)),
     list: action(req => service.list(req.user.id, req.query)),
+    detail: action(req => service.detail(req.user.id, req.params.id)),
     accept: action(req => service.decide(req.user.id, req.params.id, "accept", req.body)),
     reject: action(req => service.decide(req.user.id, req.params.id, "reject", req.body)),
   };

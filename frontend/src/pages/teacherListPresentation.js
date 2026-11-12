@@ -30,8 +30,8 @@ export function createTeacherListPresentation({ document, list, message, onRetry
       action.textContent = 'ลองโหลดอีกครั้ง';
     } else if (empty) {
       path.setAttribute('d', filtered ? 'M21 34a13 13 0 1 0 0-26 13 13 0 0 0 0 26ZM31 31l10 10M16 21h10' : 'M14 6h14l9 9v27H11V6h3ZM28 6v10h9M18 24h12M18 31h8');
-      title.textContent = filtered ? 'ไม่พบรายการในสถานะที่เลือก' : emptyTitle;
-      description.textContent = filtered ? 'ลองเลือกสถานะอื่นเพื่อดูรายการเพิ่มเติม' : emptyDescription;
+      title.textContent = filtered ? 'ไม่พบรายการตามเงื่อนไขที่เลือก' : emptyTitle;
+      description.textContent = filtered ? 'ลองปรับคำค้นหาหรือตัวกรองเพื่อดูรายการเพิ่มเติม' : emptyDescription;
     }
   }
   setState('loading');

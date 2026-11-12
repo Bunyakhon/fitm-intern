@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
-const { WorkflowError, uuid, object, decisionPayload, page } = require("../validators/roleWorkflow.validator");
+const { WorkflowError, uuid, object, decisionPayload } = require("../validators/roleWorkflow.validator");
 const { assertAccountAccess } = require("./adminAccountAccess.service");
+const { teacherPage } = require('./teacherSearch.service');
 const TEACHER_FIELDS = ["id", "academic_title", "first_name", "last_name"];
 const safeTeacher = teacher => teacher ? { id: teacher.id, name: `${teacher.academic_title || ""}${teacher.first_name} ${teacher.last_name}`.trim() } : null;
 const advisorError = (message, status, code) => Object.assign(new WorkflowError(message, status), { code });
@@ -64,13 +65,23 @@ function createCoopProjectAdvisorService(m) {
       throw error;
     }
   }
-  async function list(teacherId, query) {
-    await teacher(teacherId); const pagination = page(query);
-    const status = query?.status ?? "pending";
-    if (!["pending", "confirmed", "rejected"].includes(status)) throw new WorkflowError("Invalid advisor request status");
-    const requests = await R.findAll({ where: { requested_advisor_teacher_id: teacherId, status }, include: [{ model: m.Student, as: "student", attributes: ["id", "student_id", "first_name", "last_name", "major"] }], order: [["requested_at", "ASC"], ["id", "ASC"]], ...pagination });
-    const projects = requests.length ? await m.CoopProject.findAll({ where: { student_id: { [Op.in]: requests.map(r => r.student_id) } }, attributes: ["student_id", "topic"] }) : [];
-    return requests.map(r => ({ id: r.id, status: r.status, requested_at: r.requested_at, confirmed_at: r.confirmed_at, rejected_at: r.rejected_at, rejection_reason: r.rejection_reason, student: r.student.toJSON(), topic: projects.find(p => p.student_id === r.student_id)?.topic || "" }));
+  async function list(teacherId, query = {}) {
+    await teacher(teacherId);
+    const status = query?.status ?? "all";
+    if (!["all", "pending", "confirmed", "rejected"].includes(status)) throw new WorkflowError("Invalid current advisor request status");
+    const result = await teacherPage(m, 'advisor', teacherId, { ...query, status }, (ids, transaction) => hydrate(teacherId, ids, transaction));
+    return query.metadata === '1' ? result : result.rows;
+  }
+  async function hydrate(teacherId, ids, transaction) {
+      const requests = await R.findAll({ where: { id: { [Op.in]: ids }, requested_advisor_teacher_id: teacherId }, include: [{ model: m.Student, as: "student", attributes: ["id", "student_id", "first_name", "last_name", "major"] }, { model: m.CoopAcademicPeriod, as: 'academicPeriod' }], order: [["requested_at", "ASC"], ["id", "ASC"]], transaction });
+      const projects = await m.CoopProject.findAll({ where: { student_id: { [Op.in]: requests.map(r => r.student_id) } }, attributes: ["student_id", "topic"], transaction });
+      return requests.map(r => ({ id: r.id, status: r.status, requested_at: r.requested_at, confirmed_at: r.confirmed_at, rejected_at: r.rejected_at, superseded_at: r.superseded_at, rejection_reason: r.rejection_reason, student: r.student.toJSON(), topic: projects.find(p => p.student_id === r.student_id)?.topic || "", academicPeriod: r.academicPeriod?.toJSON() || null }));
+  }
+  async function detail(teacherId, requestId) {
+    uuid(requestId); await teacher(teacherId);
+    const [row] = await hydrate(teacherId, [requestId]);
+    if (!row) throw new WorkflowError('Advisor request was not found', 404);
+    return row;
   }
   async function decide(teacherId, requestId, decision, body) {
     uuid(teacherId); uuid(requestId); if (!["accept", "reject"].includes(decision)) throw new WorkflowError("Unsupported decision");
@@ -93,6 +104,6 @@ function createCoopProjectAdvisorService(m) {
       return { id: request.id, status: request.status };
     });
   }
-  return { read, select, directory, list, decide };
+  return { read, select, directory, list, detail, decide };
 }
 module.exports = { createCoopProjectAdvisorService };

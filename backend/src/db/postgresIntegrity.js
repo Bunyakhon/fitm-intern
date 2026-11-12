@@ -1,6 +1,7 @@
 // Current PostgreSQL-only constraints and history guards. No migration ledger or runner.
 module.exports = {
   "constraints": [
+    { table_name: 'coop_academic_periods', name: 'coop_academic_periods_values', type: 'c', definition: 'CHECK (academic_year BETWEEN 1 AND 9999 AND semester IN (1,2))' },
     ...require('./coopPrerequisiteCatalog').CHECKS.map(([table_name, name, definition]) => ({ table_name, name, definition, type: 'c' })),
     {
       "table_name": "coop_request_prerequisite_courses",

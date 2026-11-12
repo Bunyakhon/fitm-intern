@@ -50,6 +50,9 @@ function fingerprint(row) {
 async function persistedRow(sql, table, id) {
   if (!/^[a-z_]+$/.test(table) || !UUID.test(id || '')) fail('INVALID_RECEIPT_IDENTIFIER');
   const { rows } = await sql(`SELECT to_jsonb(r)-'password_hash' AS value FROM public."${table}" r WHERE id=$1`, [id]);
+  // Preserve receipts created before the additive Teacher Search period column.
+  // Unknown carries no new value; a non-null period still changes the fingerprint.
+  if (rows[0]?.value?.academic_period_id === null) delete rows[0].value.academic_period_id;
   return rows[0]?.value || null;
 }
 async function activeTeacher(client, teacherId) {

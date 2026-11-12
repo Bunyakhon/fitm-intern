@@ -32,7 +32,7 @@ export function mountSupervisionResult({ document, container, appointment, stude
   }
   const readback = element(document, 'div', '', 'supervision-result-readback'); panel.append(readback);
   const actions = element(document, 'div', '', 'supervision-actions'), save = element(document, 'button', 'บันทึกฉบับร่าง', 'teacher-button'), complete = element(document, 'button', 'ยืนยันผลเสร็จสมบูรณ์', 'teacher-button'), reload = element(document, 'button', 'โหลดผลล่าสุด', 'teacher-button'); save.type = 'submit'; complete.type = reload.type = 'button';
-  if (teacher) { reload.textContent = 'ลองโหลดอีกครั้ง'; reload.hidden = true; }
+  if (teacher) { save.classList.add('teacher-button--primary'); complete.classList.add('teacher-button--success'); reload.textContent = 'ลองโหลดอีกครั้ง'; reload.hidden = true; }
   if (teacher) { form.append(save); actions.append(complete); } actions.append(reload); panel.append(actions, history);
   function controls() { open.disabled = busy || modal; reload.disabled = busy || modal; fieldset.disabled = busy || modal || !current || current.result?.status === 'completed'; save.disabled = fieldset.disabled; complete.disabled = busy || modal || dirty || !current?.result || current.result.status !== 'draft'; }
   function clearUrls() { for (const url of urls) URL.revokeObjectURL(url); urls.clear(); }
@@ -86,7 +86,7 @@ export function mountSupervisionResult({ document, container, appointment, stude
     if (complete.disabled || busy || modal || disposed) return;
     const row = current.result;
     if (!row.summary.trim() || !row.visited_on || !row.image_1_id || !row.image_2_id) { say('ต้องมีวันที่นิเทศ ผลนิเทศ และภาพหลักฐานสองภาพที่บันทึกแล้ว'); return; }
-    modal = true; controls(); confirm({ title: `ยืนยันผลนิเทศครั้งที่ ${appointment.visit_number}`, message: 'กรุณาตรวจทานข้อความและภาพสองภาพที่บันทึกแล้ว ผลเสร็จสมบูรณ์จะแก้ไขไม่ได้', confirmLabel: 'ยืนยันเสร็จสมบูรณ์', onClose: () => { modal = false; controls(); }, onConfirm: async () => {
+    modal = true; controls(); confirm({ variant: teacher ? 'success' : undefined, title: `ยืนยันผลนิเทศครั้งที่ ${appointment.visit_number}`, message: 'กรุณาตรวจทานข้อความและภาพสองภาพที่บันทึกแล้ว ผลเสร็จสมบูรณ์จะแก้ไขไม่ได้', confirmLabel: 'ยืนยันเสร็จสมบูรณ์', onClose: () => { modal = false; controls(); }, onConfirm: async () => {
       if (busy || disposed) return; busy = true; controls();
       try { const data = await services.completeSupervisionResult(studentId, appointment, row.version); if (!disposed) { render(data); toast('ผลนิเทศเสร็จสมบูรณ์แล้ว', 'success'); } }
       catch (error) { if (!disposed) { if (error.status === 409) { try { render(await services.getSupervisionResult(studentId, appointment)); } catch { /* Keep original failure. */ } } failure(error); } }

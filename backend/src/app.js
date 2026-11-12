@@ -71,6 +71,8 @@ app.use("/api/student-profile", studentProfileRoutes);
 
 // Teacher routes
 app.use("/api/teachers", teacherRoutes);
+app.use('/api/teachers/dashboard', require('./routes/teacherDashboard.routes').createTeacherDashboardRouter());
+app.use('/api/teachers/project-documents', require('./routes/teacherProjectDocuments.routes').createTeacherProjectDocumentsRouter());
 
 // Mentor routes
 app.use("/api/mentors", mentorRoutes);

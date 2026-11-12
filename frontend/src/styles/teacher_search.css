@@ -1,0 +1,9 @@
+.teacher-search-toolbar { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(115px, 1fr)); gap: 12px; align-items: end; margin-bottom: 12px; }
+.teacher-search-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; }
+.teacher-search-field label { font-weight: 700; font-size: 1.1875rem; }
+.teacher-search-field input, .teacher-search-field select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: var(--white); font: inherit; font-size: 1.25rem; line-height: 1.35; }
+.teacher-search-field input:focus-visible, .teacher-search-field select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.teacher-search-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.teacher-search-count { margin: 8px 0 16px; color: var(--muted); font-size: 1.1875rem; }
+@media (max-width: 900px) { .teacher-search-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .teacher-search-toolbar { grid-template-columns: minmax(0, 1fr); } .teacher-search-actions .teacher-button { flex: 1; } }

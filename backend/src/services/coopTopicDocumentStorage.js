@@ -21,7 +21,18 @@ function createTopicDocumentStorage(root = STORAGE_ROOT) {
     }
     return current;
   }
+  async function inspect(studentId, storagePath) {
+    uuid(studentId);
+    if (typeof storagePath !== 'string' || !new RegExp(`^co09/${studentId}/[0-9a-f-]{36}\\.pdf$`, 'i').test(storagePath)) fail('ไม่พบเอกสาร', 404, 'CO09_FILE_NOT_FOUND');
+    try {
+      const dir = await directory(studentId), filename = path.join(dir, path.basename(storagePath));
+      const stat = await fs.lstat(filename);
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 10 * 1024 * 1024) fail('ไม่พบเอกสาร', 404);
+      return { path: filename, size: stat.size };
+    } catch (error) { if (error.code === 'ENOENT') fail('ไม่พบเอกสาร', 404, 'CO09_FILE_NOT_FOUND'); throw error; }
+  }
   return {
+    inspect,
     async write(studentId, buffer) {
       const dir = await directory(studentId, true), name = randomUUID() + '.pdf';
       // Immutable files: even failed/uncertain commits retain bytes for reconciliation.
@@ -30,14 +41,9 @@ function createTopicDocumentStorage(root = STORAGE_ROOT) {
       return `co09/${studentId}/${name}`;
     },
     async read(studentId, storagePath) {
-      uuid(studentId);
-      if (typeof storagePath !== 'string' || !new RegExp(`^co09/${studentId}/[0-9a-f-]{36}\\.pdf$`, 'i').test(storagePath)) fail('ไม่พบเอกสาร', 404, 'CO09_FILE_NOT_FOUND');
-      try {
-        const dir = await directory(studentId), filename = path.join(dir, path.basename(storagePath));
-        const stat = await fs.lstat(filename);
-        if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 10 * 1024 * 1024) fail('ไม่พบเอกสาร', 404);
-        return await fs.readFile(filename);
-      } catch (error) { if (error.code === 'ENOENT') fail('ไม่พบเอกสาร', 404, 'CO09_FILE_NOT_FOUND'); throw error; }
+      const file = await inspect(studentId, storagePath);
+      try { return await fs.readFile(file.path); }
+      catch (error) { if (error.code === 'ENOENT') fail('ไม่พบเอกสาร', 404, 'CO09_FILE_NOT_FOUND'); throw error; }
     },
   };
 }

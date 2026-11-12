@@ -56,6 +56,7 @@ function createRoleWorkflowRouter(role, registry = models) {
     router.get('/admin-access', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ available: process.env.NODE_ENV === 'development' && !!req.superAdmin?.is_active }); });
     const advisor = createCoopProjectAdvisorController(createCoopProjectAdvisorService(registry));
     router.get("/project-advisor-requests", advisor.list);
+    router.get("/project-advisor-requests/:id", advisor.detail);
     router.post("/project-advisor-requests/:id/accept", advisor.accept);
     router.post("/project-advisor-requests/:id/reject", advisor.reject);
   }

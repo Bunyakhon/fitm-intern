@@ -156,6 +156,7 @@ function createStudentCoopProjectService(models, storage = defaultStorage) {
     try { return { file: publicFile(file), path: await ownedPath(studentId, file.file_type, file.storage_path) }; }
     catch { fail(404, "ไม่พบไฟล์"); }
   }
-  return { readProject, saveTopic, listFiles, upload, preview };
+  // Internal reuse only: callers must authorize their actor before resolving bytes.
+  return { readProject, saveTopic, listFiles, upload, preview, ownedPath };
 }
 module.exports = { createStudentCoopProjectService, FILE_POLICY, MAX_FILE_SIZE };

@@ -197,6 +197,7 @@ export function showConfirmModal({
   returnFocus,
   fallbackFocus,
   parentModal,
+  variant,
   initialReason = "",
   onReasonChange,
   onClose,
@@ -209,6 +210,7 @@ export function showConfirmModal({
   const modal = document.createElement("div");
 
   modal.className = "app-confirm-overlay";
+  if (document.body.dataset.workflowRole === 'teacher') modal.dataset.intent = ['primary', 'success', 'danger'].includes(variant) ? variant : 'primary';
   modal.innerHTML = `
     <section class="app-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" aria-describedby="appConfirmMessage">
       <div class="app-confirm-modal__icon" aria-hidden="true">!</div>

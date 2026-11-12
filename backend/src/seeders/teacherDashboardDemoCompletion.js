@@ -114,6 +114,8 @@ function completionPlan(base, catalog, idFor) {
 async function readEntry(sql, entry) {
   if (!/^[a-z_]+$/.test(entry.table || '') || !S.UUID.test(entry.id || '')) S.fail('INVALID_COMPLETION_RECEIPT_IDENTIFIER');
   const { rows } = await sql(`SELECT to_jsonb(r)-'password_hash' AS value FROM public."${entry.table}" r WHERE "${pk(entry.table)}"=$1`, [entry.id]);
+  // Keep the original receipt format when the new period remains Unknown.
+  if (rows[0]?.value?.academic_period_id === null) delete rows[0].value.academic_period_id;
   return rows[0]?.value || null;
 }
 async function preserveOriginal(m, receipt, transaction) {

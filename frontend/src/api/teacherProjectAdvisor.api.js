@@ -25,9 +25,15 @@ export function getCurrentTeacher() {
   return teacherRequest("/api/teachers/me");
 }
 
-export function getTeacherAdvisorRequests({ status = "pending", offset = 0, limit = 26 } = {}) {
-  return teacherRequest(`/api/teachers/project-advisor-requests?${new URLSearchParams({ status, offset, limit })}`);
+function listQuery({ status = 'all', offset = 0, page_size, limit, ...filters } = {}) {
+  return new URLSearchParams({ ...(status === 'all' ? {} : { status }), offset,
+    ...(page_size !== undefined ? { page_size, ...(limit !== undefined ? { limit } : {}) } : { limit: limit ?? 10 }), ...filters });
 }
+export function getTeacherAdvisorRequests(query = {}) {
+  return teacherRequest(`/api/teachers/project-advisor-requests?${listQuery(query)}`);
+}
+
+export const getTeacherAdvisorRequest = id => teacherRequest(`/api/teachers/project-advisor-requests/${encodeURIComponent(id)}`);
 
 export function decideTeacherAdvisorRequest(id, decision, reason) {
   return teacherRequest(`/api/teachers/project-advisor-requests/${encodeURIComponent(id)}/${decision}`, {
@@ -35,8 +41,8 @@ export function decideTeacherAdvisorRequest(id, decision, reason) {
   });
 }
 
-export function getTeacherCoopRequests({ status = "advisor_review", offset = 0, limit = 26 } = {}) {
-  return teacherRequest(`/api/teachers/coop-requests?${new URLSearchParams({ status, offset, limit })}`);
+export function getTeacherCoopRequests(query = {}) {
+  return teacherRequest(`/api/teachers/coop-requests?${listQuery(query)}`);
 }
 
 export function getTeacherCoopRequest(id) {

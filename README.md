@@ -2,6 +2,56 @@
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
+## Teacher Dashboard Action Center — 11 พฤศจิกายน 2026
+
+Dashboard แยก 3 KPI: คำร้อง `advisor_review` ของนักศึกษาที่เป็น Class Advisor, คำขอ `pending` ที่ส่งถึง Teacher และนักศึกษาสหกิจในความดูแลผ่าน `coop_advisor_teacher_id`. กด KPI สองใบแรกเพื่อกรองงาน Pending ใน Action Center; ใบนักศึกษาเปิดเมนูเดิม. งานมีตัวกรองทั้งหมด/คำร้อง/คำขอ หน้าละ5รายการ เปิดรายละเอียดตาม Request ID เดิม และใช้สี Teacher รอบ3. Navbar/Sidebar/Account Menu และเมนูอื่นคงเดิม.
+
+เพิ่ม Read-only `GET /api/teachers/dashboard?type=all|coop|advisor&offset=<multiple-of-5>` ผ่าน Auth/Live Teacher guards เดิม. คืน Safe Teacher Identity, Summary, Task Rows และ Pagination จาก Snapshot เดียว; เรียงวันที่ส่งเก่าสุดก่อน/NULLท้าย/ประเภท/ID ก่อน LIMIT/OFFSET ที่ Database. ไม่เปลี่ยน List API/Sort/PageSize ของเมนูอื่น. ยังไม่มี API นัดนิเทศรวม จึงคงทางลัดดูรายนักศึกษาและแสดงข้อจำกัดอย่างตรงไปตรงมา ไม่มี Mock Calendar/Deadline.
+
+**SOURCE UPDATED / NOT TESTED. Tests: NOT RUN — USER-OWNED TESTING. Database Changes: NONE.** Restart Backend/Reload Frontend ตามปกติเพื่อรับ Route/CSS ใหม่. ดู [Design + Source Notes](docs/development/TEACHER_DASHBOARD_ACTION_CENTER.md) และ [Manual Acceptance 20 ข้อ](docs/testing/TEACHER_DASHBOARD_ACTION_CENTER_MANUAL_ACCEPTANCE.md). Round3 ยังรอ Manual Retest ตามเดิม. **NEXT TASK: User Manual Chrome Acceptance.**
+
+## Previous implementation: Teacher Color Design System + Bugfix Round 3 — 11 พฤศจิกายน 2026
+
+Teacher Workspace ใช้ Modern Academic Blue tokens จาก `teacher_design.css` เฉพาะ Teacher: Search/Save สีน้ำเงิน, Approve/Accept/Complete สีเขียว, Reject สีแดง, Secondary พื้นขาว; Badge ใช้สถานะจริงและสีเดียวกันทั้ง Card/Table พร้อม Focus/Disabled/Loading/Reduced Motion. ดู [Tokens + Contrast Arithmetic](docs/development/TEACHER_COLOR_DESIGN_SYSTEM.md); ยังไม่รับรอง WCAG/Responsive จาก Browser.
+
+แก้ SQL สถานะ Coop ENUM เทียบ text ให้เป็น text ทั้งสองด้าน โดยคง Ownership/Filters/Sort/Pagination/DTO. แยก Error โหลดรายการ/รายละเอียด/บันทึกและใช้ Retry เดิม. Advisor Operational List “ทุกสถานะของคำขอปัจจุบัน” รวม pending/confirmed/rejected เท่านั้นก่อน Count/Pagination; ไม่มี Superseded Filter, confirmed ใช้ “ยืนยันรับเป็นที่ปรึกษาแล้ว”. ประวัติ/Detail/สถานะใน DB และ Accept/Reject เดิมคงไว้. ข้อนี้แทนการแสดง Superseded ใน List จาก Round1–2 ด้านล่าง.
+
+ผลผู้ใช้ล่าสุดตามคำสั่ง Round3: PASS4 / FAIL3 / NOT TESTED3; การแก้ Source ยังไม่เปลี่ยนผลเหล่านี้. **Tests: NOT RUN — USER-OWNED TESTING; Database/Schema/Seed Changes: NONE.** ดู [Audit + Root Cause](docs/audits/TEACHER_UX_COLOR_ROUND3_2026-11-11.md) และ [19-case Manual Retest](docs/testing/TEACHER_UX_COLOR_ROUND3_MANUAL_RETEST.md). **NEXT TASK: User Manual Chrome Retest.**
+
+## Previous: Teacher Bugfix Round 2 — 11 พฤศจิกายน 2026
+
+Teacherคำร้องสหกิจเริ่มที่“ทุกสถานะ (ไม่กรอง)” ค้นชื่อ/รหัส/บริษัท/ตำแหน่งข้ามสถานะภายใต้ClassAdvisorScopeเดิม. DashboardยังเรียกPendingQueueตามเดิม. Advisorใช้Label“คำขอเดิม (มีคำขอใหม่แทน)”สำหรับsuperseded โดยไม่เปลี่ยนStatus/Actions. ทั้งสามเมนูใช้PageSize10(default)/25/50, จำแยกเมนูด้วย`fitm.teacher.list-page-size.<menu>`, เปลี่ยนแล้วกลับหน้า1คงFilters/Sort/View. ListUIใช้`page_size=10|25|50`ที่BackendตรวจAllowlist; LegacyboundedlimitสำหรับDashboardยังใช้ได้และไม่เปลี่ยนPendingQueue. Count/Order/Paginationยังทำที่DBก่อนแบ่งหน้า; Documentsคงขนาดหน้าเดิม.
+
+นักศึกษาในความดูแลเปิดRead-onlySharedModalจากCard/Table/Picker แสดงชื่อ/รหัส/สาขา/ปีภาค/หัวข้อ/บริษัท/Mentor+VerifiedStatusจากDetailจริง ไม่มีAuto-scrollไปInlineForm. PopupแยกStateจากSchedule/ResultForms; ปิดไม่ล้างSelection/Drafts. ปุ่มFooterไปWorkflowเดิมเมื่อผู้ใช้กดเท่านั้น ไม่มีสร้างนัด/ส่งEmailเอง. TeacherDetailเดิมเพิ่มMajor/TopicและAcademicPeriodต่อRequestจากModelsจริง ไม่เดาข้อมูล/ไม่เปลี่ยนStudentOwnerDTO.
+
+ผลผู้ใช้RetestRound1วันที่11พฤศจิกายน2569 **PASS7 / FAIL3**; 7PASSและข้อจำกัดเฉพาะบัญชีคงตามที่รายงาน ไม่ถือSourceรอบ2เป็นผลผ่านใหม่. **Tests: NOT RUN — USER-OWNED TESTING; Database/Schema/Seed Changes: NONE.** ไม่ตรวจDB/API/Browserรอบนี้; CrossTeacherยังNOT VERIFIED. ดู [Round2Findings](docs/audits/TEACHER_BUGFIX_ROUND2_2026-11-11.md) และ [FocusedRetest](docs/testing/TEACHER_BUGFIX_ROUND2_MANUAL_RETEST.md). **NEXT TASK: User Manual Chrome Retest.**
+
+## Teacher Manual Acceptance Bugfix Round 1 — 11 พฤศจิกายน 2026
+
+ผลผู้ใช้53ข้อ: PASS27 / FAIL10 / BLOCKED16; Sourceรอบนี้แก้DashboardTaskให้เปิดRequestที่เลือก, Advisorทุกสถานะ(default)/superseded+Search+ScopedDetail, และนักศึกษาในความดูแลเลือก10(default)/25/50ต่อหน้าด้วยBackendCount. Documentsเพิ่มตัวเลือกไม่ระบุปี (ทุกปี/ทุกภาคยังรวมUnknown) และใช้PDF.jsCanvasในSharedModalแทนNativePDFiframe/Popup. Rendererใช้Libraryที่มีในBackendอยู่แล้ว ผ่านviewer-assetsแบบAllowlist เฉพาะLibrary/Fonts ไม่เปิดPrivateStorage; เอกสารยังผ่านAuthenticatedGET/Ownershipเดิม. ไม่มีPackage/Schema/Seed/Data writes.
+
+TargetedSTU-01ที่อนุญาตโหลดServiceจริงdefault10+หน้าถัดไป8รวม18IDไม่ซ้ำ/total18, มีStructuredPeriod12/Unknown6; Mentor18รายไม่พบDuplicateRelationship/RepeatedNamesในScopeที่อ่าน. Book/Posterชื่อprofile.pdfมีMetadataถูกCategory/OwnerPath ไม่ย้ายไฟล์จากชื่อเพียงอย่างเดียว. หลักฐานนี้ไม่แทนChrome/APIJWT/FileBytesAcceptance. **Tests: NOT RUN — USER-OWNED TESTING** สำหรับการทดสอบอื่น; ยังไม่เปลี่ยนFAIL/BLOCKEDเป็นPASS. ดู [Root Causes / Evidence](docs/audits/TEACHER_BUGFIX_ROUND1_2026-11-11.md) และ [Focused Chrome Retest](docs/testing/TEACHER_BUGFIX_ROUND1_MANUAL_RETEST.md). **NEXT TASK: User Manual Chrome Retest.**
+
+## Teacher Project Documents — 11 พฤศจิกายน 2026
+
+Teacher → เอกสารโครงการ เปิดรายชื่อนักศึกษาสหกิจที่ `coop_advisor_teacher_id` ตรงกับบัญชีอาจารย์ พร้อมค้นหาชื่อ/รหัส/หัวข้อ/บริษัท, ปี/ภาค1–2/IT–INE, Sort, Backend Pagination และ Card/Table Preference แยกเมนู. เลือกนักศึกษาเพื่อโหลดรายละเอียดเล่มโครงการ PDF+Overleaf, โปสเตอร์ PDF/PNG/JPEG+Drive และ CO-09 PDF/ลิงก์/สถานะจริงแบบอ่านอย่างเดียว. Class Advisor หรือ Super Admin อย่างเดียวไม่มีสิทธิ์เข้าถึงเอกสารทุกคน.
+
+เพิ่ม GET-only `/api/teachers/project-documents/students` และ Detail/Preview/Download ภายใต้ Student ID โดยใช้ Teacher JWT เดิมและตรวจ Ownership ทุกคำขอ. ไฟล์ผ่าน Private Storage เดิม, Revision Check, MIME/Size/Signature และ no-store/nosniff/CSP; Frontend โหลดเป็น Blob ผ่าน Authentication และล้างเมื่อปิด/ออกเมนู/Session เปลี่ยน. ไม่เปิด Public Storage หรือส่ง Token ใน URL. List โหลด Summary แบบ Bulk; Detail/Bytes โหลดเมื่อเลือก. ลิงก์ภายนอกใช้ Validator เดิมและสิทธิ์แชร์ของเจ้าของเอกสาร; CO-09 legacy HTTPS แสดงชื่อ Host ตาม Compatibility เดิม.
+
+ปี/ภาคเป็นรอบสหกิจจาก Structured Data เดิม ไม่ใช่ปีของไฟล์: เอกสารปัจจุบันยังไม่มี Historical Academic Period Mapping. ไม่ทราบให้แสดงไม่ระบุ. **Database Changes: NONE; SOURCE UPDATED / PENDING USER TESTING.** ดู [Source Audit](docs/audits/TEACHER_PROJECT_DOCUMENTS_AUDIT_2026-11-11.md) และ [Manual Chrome Acceptance](docs/testing/TEACHER_PROJECT_DOCUMENTS_MANUAL_ACCEPTANCE.md) (ทุกข้อ NOT TESTED). **Tests: NOT RUN — USER-OWNED TESTING.** งาน Search/Filter/Card/Table/Sorting ก่อนหน้ายังรอผู้ใช้ทดสอบเช่นเดิม.
+
+## Teacher Search / Academic Periods — 11 พฤศจิกายน 2026
+
+Teacher → คำร้องสหกิจศึกษา / คำขอเป็นที่ปรึกษา / นักศึกษาในความดูแล เพิ่ม Toolbar ค้นหา ปีการศึกษา ภาคเรียน 1–2 และสาขา IT/INE พร้อมตัวกรองสถานะเดิม ค้นหา/ล้างตัวกรอง และยอดรวมจาก PostgreSQL. คำค้นและตัวกรองทำงานแบบ AND ก่อน Pagination ฝั่ง Backend; ไม่กรองเฉพาะข้อมูลที่โหลดแล้ว. ปีอื่นอ่านจากข้อมูลที่ Teacher มีสิทธิ์เห็น.
+
+ทั้งสามเมนูเพิ่มปุ่ม “รายการ / ตาราง” ข้างจำนวนผลลัพธ์ ใช้ResultSet/Actions/Detailเดิมโดยไม่FetchเพราะสลับView และจดจำแยกเมนูด้วยlocalStorageเฉพาะ`card/table` (เริ่มCardเมื่อยังไม่มีค่าหรืออ่านStorageไม่ได้). Tableเลื่อนภายในContainerบนจอเล็ก. รายชื่อนักศึกษาในความดูแลยังใช้Panelร่วมกับนัดนิเทศ/ผลนิเทศ; Fieldsที่listAPIไม่คืนแสดงไม่ระบุ และเติมบริษัท/พี่เลี้ยงจากDetailเดิมเฉพาะคนที่เปิดดู โดยไม่เรียกDetailเพื่อเติมทุกแถว. ปี/ภาคอ่านจากListDTOตามSortingด้านล่าง. ดู [Manual Card/Table Acceptance](docs/testing/TEACHER_CARD_TABLE_MANUAL_ACCEPTANCE.md). **Card/Table และSearch/Filter/Dataset35คนยังPENDING USER TESTING.**
+
+เพิ่มSort “ใหม่สุดก่อน”(default)/“เก่าสุดก่อน”ข้างCard/Table ทั้งสามเมนู; APIรับเฉพาะ`sort=year_desc|year_asc`และเรียงปี→ภาค→วันที่→IDในPostgreSQLก่อนแบ่งหน้า โดยUnknownอยู่ท้ายเสมอ. เปลี่ยนSortกลับหน้า1โดยคงSearch/Filters/Status/ViewและโหลดBackendใหม่; เปลี่ยนViewอย่างเดียวไม่Fetch. จดจำแยกเมนูด้วย`fitm.teacher.list-sort.<menu>`เฉพาะค่าSort. ปีในDropdownมาจากscopedDBmetadataและเรียงตัวเลขจากมากไปน้อย ไม่มีรายการปีคงที่ในFrontend. Supervisionlistเพิ่ม`academicPeriod`/`academicRequestId`/`academicSubmittedAt`จากรอบสหกิจที่มีStructuredPeriodจริงในการอ่านQueryเดียว; หากมีหลายรอบ เลือกรอบแรกที่ตรงFiltersและทิศSortเพื่อแสดง ไม่เปลี่ยนข้อมูลหรือAssignment. ไม่มีStructuredPeriodคงUnknownและไม่มีวันที่ที่เดาขึ้น. ข้อมูลบริษัท/พี่เลี้ยง/Studentstatusยังมีข้อจำกัดตามเดิม. **Sorting: PENDING USER TESTING; ไม่มีSchema/Seed/Data writesในงานนี้.**
+
+เพิ่ม `coop_academic_periods` และ nullable `academic_period_id` บนคำร้องสหกิจ/คำขอที่ปรึกษา เพื่อเก็บรอบการศึกษาแยกจากชั้นปีของนักศึกษา. ข้อมูลเดิมคง Unknown และจะไม่ตรงตัวกรองปี/ภาคที่ระบุ; ไม่อนุมานหรือ backfill จากรหัส/วันที่. APIs เดิมคงรูปแบบเมื่อไม่ส่ง `metadata=1`; Teacher lists รองรับ `search/year/semester/major` และ opt-in metadata `{rows,total,years,offset,limit}` (Coop อยู่ใน `data`). Supervision คง `students` พร้อม metadata เพิ่มเติม.
+
+Development `intern_system.public` ติดตั้ง additive upgrade และ Seed ชุดใหม่ 35 คนแล้ว (11 พ.ย. 2026): INSERT635 / UPDATE0 / DELETE0, IT19/INE16, ปี2567=10/2568=12/2569=13; SELECT หลัง Commit ยืนยันข้อมูลเดิมไม่เปลี่ยน. แยกจาก Demo15คนเดิม. ดูคำสั่ง ความปลอดภัย และ Manual Acceptance ใน [Teacher Demo](docs/development/TEACHER_DASHBOARD_DEMO.md). ไม่มี migration runner ใหม่หรือการเปลี่ยน Schema ตอน Backend startup; การใช้งาน Source ใหม่ต้อง restart Backend ตามปกติ. **Tests: NOT RUN — USER-OWNED TESTING; UI acceptance รอผู้ใช้ทดสอบ.**
+
 ## Student Project — Overleaf / Google Drive — 9 พฤศจิกายน 2026
 
 Student → โครงการสหกิจศึกษา ใช้ CO-09 PDF+Overleaf, เล่มโครงการ PDF+Overleaf และโปสเตอร์ PDF/PNG/JPEG+Google Drive โดยเก็บไฟล์กับ URL แยกกันใน Card เดิม. ใช้ URL parser ตรวจ HTTPS/exact hostname: Overleaf รับ overleaf.com/www.overleaf.com ทุก Path; Poster รับเฉพาะdrive.google.comทุก Path โดยไม่บังคับ File/Folder ID. จำกัด2000ตัวอักษรและไม่รับข้อมูลเข้าสู่ระบบใน URL; ไม่ fetch URL/เชื่อม Drive API/OAuth และไม่บังคับ Public. นักศึกษาตรวจสิทธิ์แชร์เอกสารเอง; รูปแบบ URL ถูกต้องไม่รับรองว่าเปิดเอกสารได้. CO-09 Legacy HTTPS เดิมยังแสดงได้ ไม่ backfill/ย้ายURL และการบันทึกใหม่ต้องOverleaf.

@@ -1,0 +1,26 @@
+.teacher-page .teacher-documents-detail { margin-top: 24px; }
+.teacher-page .teacher-document-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-top: 20px; }
+.teacher-page .teacher-document-card { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 12px; overflow-wrap: anywhere; }
+.teacher-page .teacher-document-card h3 { margin-bottom: 12px; }
+.teacher-page .teacher-document-card p { margin-block: 10px; white-space: pre-wrap; }
+.teacher-page .teacher-document-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.teacher-page .teacher-document-notice { color: var(--danger); }
+.teacher-page .teacher-document-facts { display: grid; grid-template-columns: minmax(100px,auto) minmax(0,1fr); gap: 6px 16px; margin-top: 12px; overflow-wrap: anywhere; }
+.teacher-page .teacher-document-facts dd { margin: 0; white-space: pre-wrap; }
+.teacher-page .teacher-documents-list .teacher-data-table { min-width: 1100px; }
+.teacher-page .teacher-documents-list .teacher-data-table thead th { width: auto; }
+.teacher-page .teacher-documents-list .teacher-data-table thead th:first-child { width: 17%; }
+.teacher-page .teacher-documents-list .teacher-data-table thead th:nth-child(4) { width: 22%; }
+.teacher-page .teacher-document-preview-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15,23,42,.55); }
+.teacher-page .teacher-document-preview-overlay[hidden] { display: none; }
+.teacher-page .teacher-document-preview { display: flex; flex-direction: column; width: min(100%,1000px); max-height: 90dvh; padding: 20px; border-radius: 14px; background: var(--white); color: var(--text); overflow: hidden; }
+.teacher-page .teacher-document-preview-header { display: flex; justify-content: space-between; align-items: start; gap: 12px; overflow-wrap: anywhere; }
+.teacher-page .teacher-document-preview-body { min-height: 0; overflow: auto; margin-block: 12px; }
+.teacher-page .teacher-document-preview-body iframe { display: block; width: 100%; height: 62dvh; border: 1px solid var(--border); }
+.teacher-page .teacher-document-preview-body img { display: block; max-width: 100%; max-height: 62dvh; margin: auto; object-fit: contain; }
+.teacher-page .teacher-document-preview-message { white-space: pre-wrap; }
+.teacher-page .teacher-document-pdf canvas { display: block; max-width: 100%; height: auto; margin: 12px auto; }
+.teacher-page .teacher-document-pdf details { overflow-wrap: anywhere; margin-block: 12px; }
+.teacher-page .teacher-document-pdf summary { cursor: pointer; }
+@media(max-width: 1000px) { .teacher-page .teacher-document-cards { grid-template-columns: minmax(0,1fr); } }
+@media(max-width: 480px) { .teacher-page .teacher-document-facts { grid-template-columns: minmax(0,1fr); gap: 4px; } .teacher-page .teacher-document-facts dd { margin-bottom: 8px; } .teacher-page .teacher-document-preview-overlay { padding: 8px; } .teacher-page .teacher-document-preview { padding: 12px; } .teacher-page .teacher-document-actions .teacher-button { flex: 1 1 120px; } }

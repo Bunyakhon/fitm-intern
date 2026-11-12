@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const { Op } = require("sequelize");
 const R = require("./supervisionRules");
+const { teacherPage, teacherListPagination } = require('./teacherSearch.service');
 const hash = token => crypto.createHash("sha256").update(token).digest("hex");
 const plain = row => row.toJSON();
 const name = row => [row.first_name, row.last_name].join(" ");
@@ -30,11 +31,17 @@ function createSupervisionService(m, { now = () => new Date() } = {}) {
   }
   async function listTeacher(id, query = {}) {
     await ready(); await teacher(id);
-    R.body(query, ["offset", "limit"]);
-    const offset = query.offset === undefined ? 0 : Number(query.offset), limit = query.limit === undefined ? 26 : Number(query.limit);
-    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 50) R.fail(400, "INVALID_PAGE", "หน้ารายการไม่ถูกต้อง");
-    const rows = await Student.findAll({ where: { coop_advisor_teacher_id: id, track: "co_op" }, attributes: ["id", "student_id", "first_name", "last_name"], order: [["student_id", "ASC"], ["id", "ASC"]], offset, limit });
-    return { students: rows.map(plain) };
+    R.body(query, ["offset", "limit", "page_size", "search", "year", "semester", "major", "metadata", "sort"]);
+    const { offset, limit } = teacherListPagination(query);
+    if ((query.offset !== undefined && !['string', 'number'].includes(typeof query.offset))
+      || (query.limit !== undefined && !['string', 'number'].includes(typeof query.limit))
+      || !Number.isInteger(offset) || offset < 0 || ![10, 25, 50].includes(limit)) R.fail(400, "INVALID_PAGE", "จำนวนรายการต่อหน้าต้องเป็น 10, 25 หรือ 50");
+    const result = await teacherPage(m, 'students', id, { ...query, offset, limit }, async (ids, transaction) => {
+      const rows = await Student.findAll({ where: { id: { [Op.in]: ids }, coop_advisor_teacher_id: id, track: 'co_op' }, attributes: ["id", "student_id", "first_name", "last_name", "major"], order: [["student_id", "ASC"], ["id", "ASC"]], transaction });
+      return rows.map(plain);
+    });
+    const { rows: students, ...metadata } = result;
+    return { students, ...metadata };
   }
   async function detail(studentId, teacherId) {
     await ready();
@@ -43,8 +50,13 @@ function createSupervisionService(m, { now = () => new Date() } = {}) {
       const student = await owner(studentId, teacherId, transaction), ctx = await context(student, transaction);
       const appointments = await Appointment.findAll({ where: { student_id: studentId }, order: [["created_at", "ASC"], ["visit_number", "ASC"]], transaction });
       const events = appointments.length ? await Event.findAll({ where: { appointment_id: { [Op.in]: appointments.map(a => a.id) } }, order: [["created_at", "ASC"], ["version", "ASC"]], transaction }) : [];
-      return { student: { id: student.id, name: name(student), code: student.student_id }, mentor: ctx.mentor ? mentorData(ctx.mentor) : null,
-        requests: ctx.requests.map(row => ({ id: row.id, company_name: row.company_name, company_address: row.company_address, work_start_date: row.work_start_date, work_end_date: row.work_end_date })),
+      const project = teacherId ? await m.CoopProject.findOne({ where: { student_id: student.id }, attributes: ['topic'], transaction }) : null;
+      const periodIds = teacherId ? [...new Set(ctx.requests.map(row => row.academic_period_id).filter(Boolean))] : [];
+      const periods = periodIds.length ? await m.CoopAcademicPeriod.findAll({ where: { id: { [Op.in]: periodIds } }, attributes: ['id', 'academic_year', 'semester'], transaction }) : [];
+      const byPeriod = new Map(periods.map(row => [row.id, plain(row)]));
+      return { student: { id: student.id, name: name(student), code: student.student_id, ...(teacherId ? { major: student.major, topic: project?.topic || '' } : {}) }, mentor: ctx.mentor ? mentorData(ctx.mentor) : null,
+        requests: ctx.requests.map(row => ({ id: row.id, company_name: row.company_name, company_address: row.company_address, work_start_date: row.work_start_date, work_end_date: row.work_end_date,
+          ...(teacherId ? { academicPeriod: byPeriod.get(row.academic_period_id) || null } : {}) })),
         appointments: appointments.map(plain), history: events.map(plain) };
     });
   }

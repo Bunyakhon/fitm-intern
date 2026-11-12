@@ -3,6 +3,7 @@ const { DataTypes, Model } = require("sequelize");
 module.exports = sequelize => {
   class CoopProjectAdvisorRequest extends Model {
     static associate(models) {
+      this.belongsTo(models.CoopAcademicPeriod, { foreignKey: 'academic_period_id', as: 'academicPeriod', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
       this.belongsTo(models.Student, { foreignKey: "student_id", as: "student", onDelete: "CASCADE", onUpdate: "CASCADE" });
       this.belongsTo(models.Teacher, { foreignKey: "requested_advisor_teacher_id", as: "requestedTeacher", onDelete: "RESTRICT", onUpdate: "CASCADE" });
     }
@@ -10,6 +11,7 @@ module.exports = sequelize => {
   CoopProjectAdvisorRequest.init({
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
     student_id: { type: DataTypes.UUID, allowNull: false },
+    academic_period_id: { type: DataTypes.UUID, allowNull: true },
     requested_advisor_teacher_id: { type: DataTypes.UUID, allowNull: false },
     status: { type: DataTypes.STRING(16), allowNull: false, defaultValue: "pending", validate: { isIn: [["pending", "confirmed", "rejected", "superseded"]] } },
     requested_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

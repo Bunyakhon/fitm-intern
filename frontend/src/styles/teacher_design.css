@@ -1,0 +1,150 @@
+/* Canonical Teacher colors. Other role pages never load or match this scope. */
+body.teacher-page[data-workflow-role="teacher"] {
+  --teacher-primary: #1d4ed8;
+  --teacher-primary-hover: #1e40af;
+  --teacher-primary-active: #1e3a8a;
+  --teacher-heading: #0f172a;
+  --teacher-background: #f8fafc;
+  --teacher-surface: #ffffff;
+  --teacher-muted: #475569;
+  --teacher-border: #cbd5e1;
+  --teacher-control-border: #64748b;
+  --teacher-success: #166534;
+  --teacher-success-hover: #14532d;
+  --teacher-success-active: #052e16;
+  --teacher-success-bg: #dcfce7;
+  --teacher-warning: #92400e;
+  --teacher-warning-bg: #fef3c7;
+  --teacher-danger: #b91c1c;
+  --teacher-danger-hover: #991b1b;
+  --teacher-danger-active: #7f1d1d;
+  --teacher-danger-bg: #fee2e2;
+  --teacher-info: var(--teacher-primary-hover);
+  --teacher-info-bg: #dbeafe;
+  --teacher-neutral-bg: #f1f5f9;
+  --teacher-overlay: rgba(15, 23, 42, .58);
+  --teacher-dialog-shadow: 0 24px 64px rgba(15, 23, 42, .24);
+  /* Compatibility aliases for existing Teacher components, including portals. */
+  --primary: var(--teacher-primary);
+  --primary-dark: var(--teacher-primary-hover);
+  --primary-soft: var(--teacher-info-bg);
+  --text: var(--teacher-heading);
+  --muted: var(--teacher-muted);
+  --bg: var(--teacher-background);
+  --white: var(--teacher-surface);
+  --border: var(--teacher-border);
+  --border-color: var(--teacher-control-border);
+  --danger: var(--teacher-danger);
+  --danger-light: var(--teacher-danger-bg);
+  --teacher-navy: var(--teacher-heading);
+  --teacher-success-soft: var(--teacher-success-bg);
+  --teacher-warning-soft: var(--teacher-warning-bg);
+  color: var(--teacher-heading);
+  background: var(--teacher-background);
+}
+
+body.teacher-page[data-workflow-role="teacher"] :where(.teacher-button, .teacher-icon-button, .btn-logout, .app-confirm-modal__actions button, .app-toast__close) {
+  --teacher-btn-bg: var(--teacher-surface); --teacher-btn-fg: var(--teacher-heading); --teacher-btn-border: var(--teacher-control-border);
+  --teacher-btn-hover: var(--teacher-info-bg); --teacher-btn-hover-fg: var(--teacher-primary); --teacher-btn-hover-border: var(--teacher-primary);
+  --teacher-btn-active: var(--teacher-info-bg); --teacher-btn-active-fg: var(--teacher-info); --teacher-btn-active-border: var(--teacher-info);
+  min-height: 44px; min-width: 0; max-width: 100%; border: 1px solid var(--teacher-btn-border); border-radius: 8px;
+  color: var(--teacher-btn-fg); background: var(--teacher-btn-bg); opacity: 1; cursor: pointer;
+  text-decoration: none; overflow-wrap: anywhere; transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+body.teacher-page[data-workflow-role="teacher"] .teacher-button { padding: 10px 16px; gap: 8px; white-space: normal; }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-icon-button, .app-toast__close) { min-width: 44px; }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button--primary, .app-confirm-modal__confirm) {
+  --teacher-btn-bg: var(--teacher-primary); --teacher-btn-fg: var(--teacher-surface); --teacher-btn-border: var(--teacher-primary);
+  --teacher-btn-hover: var(--teacher-primary-hover); --teacher-btn-hover-fg: var(--teacher-surface); --teacher-btn-hover-border: var(--teacher-primary-hover);
+  --teacher-btn-active: var(--teacher-primary-active); --teacher-btn-active-fg: var(--teacher-surface); --teacher-btn-active-border: var(--teacher-primary-active);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button--success, .teacher-button--accept),
+body.teacher-page[data-workflow-role="teacher"] [data-intent="success"] .app-confirm-modal__confirm {
+  --teacher-btn-bg: var(--teacher-success); --teacher-btn-fg: var(--teacher-surface); --teacher-btn-border: var(--teacher-success);
+  --teacher-btn-hover: var(--teacher-success-hover); --teacher-btn-hover-fg: var(--teacher-surface); --teacher-btn-hover-border: var(--teacher-success-hover);
+  --teacher-btn-active: var(--teacher-success-active); --teacher-btn-active-fg: var(--teacher-surface); --teacher-btn-active-border: var(--teacher-success-active);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button--danger, .teacher-button--reject),
+body.teacher-page[data-workflow-role="teacher"] [data-intent="danger"] .app-confirm-modal__confirm {
+  --teacher-btn-bg: var(--teacher-danger); --teacher-btn-fg: var(--teacher-surface); --teacher-btn-border: var(--teacher-danger);
+  --teacher-btn-hover: var(--teacher-danger-hover); --teacher-btn-hover-fg: var(--teacher-surface); --teacher-btn-hover-border: var(--teacher-danger-hover);
+  --teacher-btn-active: var(--teacher-danger-active); --teacher-btn-active-fg: var(--teacher-surface); --teacher-btn-active-border: var(--teacher-danger-active);
+}
+body.teacher-page[data-workflow-role="teacher"] .teacher-button--neutral { --teacher-btn-bg: var(--teacher-neutral-bg); --teacher-btn-fg: var(--teacher-muted); }
+body.teacher-page[data-workflow-role="teacher"] .btn-logout {
+  --teacher-btn-bg: var(--teacher-surface); --teacher-btn-fg: var(--teacher-danger); --teacher-btn-border: var(--teacher-danger);
+  --teacher-btn-hover: var(--teacher-danger-bg); --teacher-btn-hover-fg: var(--teacher-danger); --teacher-btn-hover-border: var(--teacher-danger);
+  --teacher-btn-active: var(--teacher-danger-bg); --teacher-btn-active-fg: var(--teacher-danger-hover); --teacher-btn-active-border: var(--teacher-danger-hover);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button, .teacher-icon-button, .btn-logout, .app-confirm-modal__actions button, .app-toast__close):not(:disabled):hover {
+  background: var(--teacher-btn-hover); color: var(--teacher-btn-hover-fg); border-color: var(--teacher-btn-hover-border);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button, .teacher-icon-button, .btn-logout, .app-confirm-modal__actions button, .app-toast__close):not(:disabled):active {
+  background: var(--teacher-btn-active); color: var(--teacher-btn-active-fg); border-color: var(--teacher-btn-active-border);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button, .teacher-icon-button, .btn-logout, .app-confirm-modal__actions button, .app-toast__close):disabled:not(.is-loading) {
+  background: var(--teacher-neutral-bg); color: var(--teacher-muted); border-color: var(--teacher-border); opacity: 1; cursor: not-allowed;
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-button, .app-confirm-modal__actions button).is-loading {
+  background: var(--teacher-btn-bg); color: var(--teacher-btn-fg); border-color: var(--teacher-btn-border); cursor: progress;
+}
+body.teacher-page[data-workflow-role="teacher"] :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--teacher-primary); outline-offset: 3px;
+}
+
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-search-field input, .teacher-search-field select, .teacher-sort-control select, .teacher-toolbar select, .teacher-student-picker select, .supervision-form input, .supervision-form select, .supervision-form textarea, .supervision-result input, .supervision-result textarea, .app-confirm-modal__reason textarea) {
+  border-color: var(--teacher-control-border); background: var(--teacher-surface); color: var(--teacher-heading); accent-color: var(--teacher-primary);
+}
+body.teacher-page[data-workflow-role="teacher"] :is(input, textarea)::placeholder { color: var(--teacher-muted); opacity: 1; }
+body.teacher-page[data-workflow-role="teacher"] :is(input, select, textarea):disabled { background: var(--teacher-neutral-bg); color: var(--teacher-muted); border-color: var(--teacher-border); opacity: 1; cursor: not-allowed; }
+body.teacher-page[data-workflow-role="teacher"] :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--teacher-danger); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-sort-control select:hover:not(:disabled) { border-color: var(--teacher-primary); background: var(--teacher-info-bg); color: var(--teacher-info); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle { background: var(--teacher-neutral-bg); border-color: var(--teacher-control-border); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button { background: var(--teacher-surface); color: var(--teacher-muted); min-height: 44px; opacity: 1; }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button:hover:not(:disabled) { background: var(--teacher-info-bg); color: var(--teacher-primary); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button[aria-pressed="true"] { background: var(--teacher-primary); border-color: var(--teacher-primary); color: var(--teacher-surface); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button:not(:disabled):active { background: var(--teacher-primary-active); color: var(--teacher-surface); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button:disabled { background: var(--teacher-neutral-bg); color: var(--teacher-muted); opacity: 1; cursor: not-allowed; }
+body.teacher-page[data-workflow-role="teacher"] .teacher-view-toggle button[aria-pressed="true"]:disabled { background: var(--teacher-info-bg); border-color: var(--teacher-primary); color: var(--teacher-primary); }
+
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge) {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border: 1px solid currentColor; border-radius: 999px;
+  background: var(--teacher-neutral-bg); color: var(--teacher-muted); font-size: var(--teacher-helper); font-weight: 600; line-height: 1.6; white-space: normal; overflow-wrap: anywhere;
+}
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge)[data-tone="success"],
+body.teacher-page[data-workflow-role="teacher"] .teacher-result-status[data-status="completed"] { background: var(--teacher-success-bg); color: var(--teacher-success); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge)[data-tone="warning"],
+body.teacher-page[data-workflow-role="teacher"] .teacher-task-status { background: var(--teacher-warning-bg); color: var(--teacher-warning); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge)[data-tone="danger"] { background: var(--teacher-danger-bg); color: var(--teacher-danger); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge)[data-tone="info"] { background: var(--teacher-info-bg); color: var(--teacher-info); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-status, .teacher-neutral-badge, .teacher-task-status, .teacher-result-status, .teacher-semantic-badge)[data-tone="neutral"],
+body.teacher-page[data-workflow-role="teacher"] .teacher-result-status[data-status="draft"] { background: var(--teacher-neutral-bg); color: var(--teacher-muted); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-data-table { background: var(--teacher-surface); color: var(--teacher-heading); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-data-table thead th { background: var(--teacher-neutral-bg); color: var(--teacher-heading); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-data-table tbody tr.is-selected > * { background: var(--teacher-info-bg); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-data-table .teacher-request-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+body.teacher-page[data-workflow-role="teacher"] .teacher-request-actions .teacher-button { min-width: 0; }
+body.teacher-page[data-workflow-role="teacher"] :is(.supervision-card, .supervision-history, .supervision-result-history details) { background: var(--teacher-surface); border-color: var(--teacher-border); }
+body.teacher-page[data-workflow-role="teacher"] .sidebar-item.active { background: var(--teacher-info-bg); color: var(--teacher-primary); border-color: var(--teacher-primary); box-shadow: inset 3px 0 var(--teacher-primary); }
+body.teacher-page[data-workflow-role="teacher"] .sidebar-item:hover { background: var(--teacher-info-bg); color: var(--teacher-primary); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-welcome, .teacher-summary-card) { border-color: var(--teacher-border); }
+body.teacher-page[data-workflow-role="teacher"] .teacher-summary-card:hover { border-color: var(--teacher-primary); transform: none; }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-message, .supervision-message)[data-type="success"] { color: var(--teacher-success); border-color: currentColor; background: var(--teacher-success-bg); }
+body.teacher-page[data-workflow-role="teacher"] :is(.teacher-message, .supervision-message)[data-type="error"],
+body.teacher-page[data-workflow-role="teacher"] :is(.app-confirm-modal__error, .supervision-result-message)[role="alert"] { color: var(--teacher-danger); }
+
+body.teacher-page[data-workflow-role="teacher"] :is(.app-confirm-overlay, .teacher-document-preview-overlay, .teacher-drawer-overlay) { background: var(--teacher-overlay); }
+body.teacher-page[data-workflow-role="teacher"] :is(.app-confirm-modal, .teacher-document-preview) { background: var(--teacher-surface); color: var(--teacher-heading); border-color: var(--teacher-border); box-shadow: var(--teacher-dialog-shadow); }
+body.teacher-page[data-workflow-role="teacher"] .app-confirm-modal__icon { color: var(--teacher-info); background: var(--teacher-info-bg); border-color: currentColor; }
+body.teacher-page[data-workflow-role="teacher"] [data-intent="success"] .app-confirm-modal__icon { color: var(--teacher-success); background: var(--teacher-success-bg); }
+body.teacher-page[data-workflow-role="teacher"] [data-intent="danger"] .app-confirm-modal__icon { color: var(--teacher-danger); background: var(--teacher-danger-bg); }
+body.teacher-page[data-workflow-role="teacher"] .app-toast { --teacher-notice-fg: var(--teacher-info); --teacher-notice-bg: var(--teacher-info-bg); min-height: 60px; padding-right: 64px; background: var(--teacher-surface); color: var(--teacher-notice-fg); border-color: currentColor; }
+body.teacher-page[data-workflow-role="teacher"] .app-toast--success { --teacher-notice-fg: var(--teacher-success); --teacher-notice-bg: var(--teacher-success-bg); }
+body.teacher-page[data-workflow-role="teacher"] .app-toast--error { --teacher-notice-fg: var(--teacher-danger); --teacher-notice-bg: var(--teacher-danger-bg); }
+body.teacher-page[data-workflow-role="teacher"] .app-toast--warning { --teacher-notice-fg: var(--teacher-warning); --teacher-notice-bg: var(--teacher-warning-bg); }
+body.teacher-page[data-workflow-role="teacher"] .app-toast__icon { color: var(--teacher-notice-fg); background: var(--teacher-notice-bg); }
+@media (prefers-reduced-motion: reduce) {
+  body.teacher-page[data-workflow-role="teacher"] *, body.teacher-page[data-workflow-role="teacher"] *::before, body.teacher-page[data-workflow-role="teacher"] *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}

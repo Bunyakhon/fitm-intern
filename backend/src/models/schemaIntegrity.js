@@ -4,6 +4,8 @@ const { literal } = require("sequelize");
 const { nameIndex } = require("sequelize/lib/utils");
 const definitions = {
   "foreignKeys": [
+    {"table": "coop_requests", "field": "academic_period_id", "target": "coop_academic_periods", "key": "id", "onUpdate": "CASCADE", "onDelete": "RESTRICT"},
+    {"table": "coop_project_advisor_requests", "field": "academic_period_id", "target": "coop_academic_periods", "key": "id", "onUpdate": "CASCADE", "onDelete": "RESTRICT"},
     {"table": "job_submissions", "field": "company_id", "target": "companies", "key": "id", "onUpdate": "CASCADE", "onDelete": "RESTRICT"},
     {"table": "company_access_tokens", "field": "company_id", "target": "companies", "key": "id", "onUpdate": "CASCADE", "onDelete": "RESTRICT"},
     {"table": "company_access_tokens", "field": "job_submission_id", "target": "job_submissions", "key": "id", "onUpdate": "CASCADE", "onDelete": "RESTRICT"},
@@ -74,6 +76,8 @@ const definitions = {
     {"table": "coop_activity_history", "field": "staff_id", "target": "department_staffs", "key": "id", "onDelete": "RESTRICT", "onUpdate": "NO ACTION"}
   ],
   "indexes": [
+    {"table_name": "coop_requests", "name": "coop_requests_student_period", "fields": ["student_id", "academic_period_id"], "unique": false},
+    {"table_name": "coop_project_advisor_requests", "name": "advisor_requests_teacher_period_status", "fields": ["requested_advisor_teacher_id", "academic_period_id", "status"], "unique": false},
     {"table_name": "job_submissions", "name": "job_submissions_company_status_idx", "unique": false, "predicate": null, "fields": ["company_id", "verification_status"]},
     {"table_name": "companies", "name": "companies_province_idx", "unique": false, "predicate": null, "fields": ["province"]},
     {"table_name": "companies", "name": "companies_normalized_email_idx", "unique": false, "predicate": null, "fields": ["normalized_email"]},

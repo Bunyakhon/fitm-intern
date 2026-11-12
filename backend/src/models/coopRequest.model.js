@@ -3,6 +3,7 @@ const { DataTypes, Model } = require("sequelize");
 module.exports = (sequelize) => {
   class CoopRequest extends Model {
     static associate(models) {
+      CoopRequest.belongsTo(models.CoopAcademicPeriod, { foreignKey: 'academic_period_id', as: 'academicPeriod', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
       CoopRequest.hasMany(models.CoopRequestPrerequisiteCourse, {foreignKey: 'coop_request_id', as: 'prerequisite_courses', onDelete: 'CASCADE', onUpdate: 'CASCADE'});
       CoopRequest.hasMany(models.CoopRequestReview, {foreignKey: 'coop_request_id', as: 'reviews', onDelete: 'RESTRICT'});
       CoopRequest.belongsTo(models.Student, {
@@ -39,6 +40,7 @@ module.exports = (sequelize) => {
         },
       },
       company_id: { type: DataTypes.UUID, allowNull: true },
+      academic_period_id: { type: DataTypes.UUID, allowNull: true },
       job_posting_id: { type: DataTypes.UUID, allowNull: true },
       company_name: {
         type: DataTypes.STRING(255),
