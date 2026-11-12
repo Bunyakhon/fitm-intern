@@ -1,6 +1,44 @@
 # FITM-INTERN — Safe Development Cleanup / Plan and Execution Report
 
-## Current resolution — immutable policy required / 12 November 2026 01:04 Asia/Bangkok
+## Current execution — FINAL DATABASE CLEANUP COMMITTED / 12 November 2026 19:19 Asia/Bangkok
+
+**ฐาน Development `intern_system/public` COMMIT จริงเมื่อ 12 พฤศจิกายน 2026 เวลา 18:43 Bangkok และตรวจหลัง COMMIT แล้ว. เหลือ Student 1 + Teacher 23 = 24 Login Accounts. FILE CLEANUP ยังไม่ดำเนินการ.** คำสั่ง Final One-shot อนุญาตลบ Students56 (Synthetic50 + Other6) และปิด/ลบ Staff2 โดยสำรองครบ; แทนขอบเขต50และข้อห้าม Maintenance Exception จากรายงานก่อนหน้าเฉพาะครั้งนี้. ห้ามนำสถานะ BLOCKED เก่ามาใช้เป็นผลล่าสุด.
+
+| Requested result | Actual result |
+|---|---|
+| Backup / Restore | **PASS** — Full DB dump + Full Storage33files, SHA-256; Restore DB สำเนาจริงครบ1176rows/58tables และ Restore Storage จริงตรวจ size/SHA ครบ33files |
+| Protected Student | **PASS** — UUID/รหัสตรง; Full-row fingerprints ของ Owned Closure62rows ตรงก่อน/หลัง และตรวจซ้ำ19:19; Physical Storage ตรวจครบก่อน Live COMMIT ไม่มี File Delete |
+| Teacher / Admin | **PASS** — Teachers23 active / Head1 / Teacher Super Admin Membership1; Full-row fingerprints/สิทธิ์เดิมครบ |
+| Student Accounts Remaining | **1** — เฉพาะ6706022510107 |
+| Staff Login Accounts Remaining | **0** — `is_active=false` ทั้ง2; คง Historical Actor Records2เพื่อรักษา Catalog Grants4และShared References, ไม่ลบ/ย้ายผู้กระทำ |
+| Deleted Students / Rows / Tables | **56 / 1010 / 20 tables affected**; ไม่ได้ DROP ตาราง; เพิ่ม UPDATE Staff2แยกจากจำนวนลบ |
+| Immutable Cleanup | **SUCCESS** — Courses250 + Academic History15; คืน Function ต้นฉบับก่อนCOMMITและตรวจหลังCOMMIT |
+| DB Integrity | **PASS** — FK97/Orphans0; Legacy CHECK NOT VALID2เดิมคงอยู่และตรวจข้อมูลไม่มีViolation |
+| Files | **NOT EXECUTED / permission blocker** — Candidates17; File Deletes0. Manifestให้เก็บ16จากStorage33; ยังไม่ได้ตรวจ Physical Storage ใหม่หลังกลับมาทำต่อ |
+| Git | รอบเริ่มต้น28M/35U; เพิ่มMaintenanceScriptในช่วงExecution. ช่วงกลับมาทำต่อพบHEAD`0e8a6cf`และWorkspaceสะอาดจากการเปลี่ยนGitภายนอก; รอบปิดเอกสาร0M/0U→2M/0U. Codexไม่Commit/Push |
+
+### Execution evidence and preservation
+
+- Private artifacts: `C:\Users\suran\Documents\FITM-INTERN-Backups\final-cleanup-20261112` จำกัดACL; เก็บManifestใหม่, Inventory, FullBackup, SHA, Restore/Rehearsal/LivePrecommitและPostcommitReceipts. ไม่เก็บข้อมูลส่วนบุคคล/CredentialsในGitReport.
+- DB dump SHA-256: `b5e12c6c99b51c2dbd67f271b98fe8938f8b429ce409b08d4d392a7a12661482`; Full Storage SHA-256: `445c8583eb5360826f0aa16d9cd08c0ff804dcf0b83fa05802ddcb9140a9ec3c`. คำนวณใหม่19:19ตรงทั้งคู่. `backup.private.json`ยังเป็นReceiptตอนCaptureที่ระบุrestore_executed=false; ผลRestoreจริงอ้าง`restore-result.private.json`ภายหลัง.
+- Restoreลง`intern_cleanup_final_20261112`ก่อนทดลองCleanupและCOMMITบนสำเนา; เทียบทุกแถวครบ1176และSchema/Functions/Triggers/FK. pg_restoreทำให้CHECK varchar-array castsแสดงรูปแบบต่างกัน: Normalizeเฉพาะรูปแบบcastที่เทียบเท่ากันก่อนรับสำเนา; เก็บRestoredSchemaFingerprintและใช้เปรียบเทียบExactก่อน/หลังRehearsal. ฐานจริงใช้ExactOriginalSchema ไม่มีการผ่อนGuardของฐานจริง.
+- LiveCleanupใช้SERIALIZABLE + AdvisoryLock + ExclusiveTableLocksครบ58ตาราง; เทียบPersistentData/Manifest/Backup/Storageก่อนลบ, DeleteChildFirstแต่ละPKและexactrowcount, ตรวจProtected/Retained/Teachers/Admin/FKก่อนCOMMIT, เปิดConnectionใหม่ตรวจซ้ำหลังCOMMIT. ผลสำเนาและฐานจริงตรงกัน; ไม่Applyซ้ำหลังReceiptระบุCOMMITแล้ว.
+- MaintenanceFunctionจำกัดเฉพาะDB/BackendPID/TransactionID/DBUser/Table/ImmutableRowIDs265/TargetStudentIDs56/RequestOwnership และปฏิเสธProtectedUUID; UPDATEยังห้ามทุกกรณี. ทดลองDELETE ProtectedCourseและUPDATE TargetCourseแล้วถูกปฏิเสธจริง. Functionเปลี่ยนเฉพาะภายในTransactionและคืนExactOriginalDefinitionก่อนCOMMIT; Trigger/FKไม่ถูกDisableและไม่มีข้อยกเว้นถาวรหรือApplicationSourcePolicyเปลี่ยน.
+- Final SELECT-onlyตรวจซ้ำ19:19: Persistent165rowsตรงExpectedFullRowFingerprintsทุกแถวรวมStaff2ที่ปิดLogin, Protected62ครบ, FK97/Orphans0, ImmutableFunctionต้นฉบับตรง, Student1/Teacher23/Head1/StaffLogin0/AdminMembership1. ไม่มีการเปลี่ยนบัญชีจริงที่ไม่อธิบายได้.
+- AuthDriftแยกEphemeralจากPersistent: เปรียบเทียบOldManifestกับFreshBackupไม่มีPersistentDrift; OldChallengeที่หาย1หมดอายุจริงจากOldDumpMetadata ไม่ละเว้นทั้งAuthตาราง. LivePrecommit/Postcommitไม่มีChallengeDrift. ล่าสุดมีChallenge1หมดอายุและยังไม่Consumed; ไม่ลบ/สร้างChallengeเพื่อทำให้Baselineตรง.
+- Rows deleted per table: students56, student_profiles55, student_addresses19, student_education_records56, student_files13, student_skills81, student_training_records10, mentors33, coop_project_advisor_requests16, coop_projects50, coop_requests50, coop_request_academic_history15, coop_request_academic_states50, coop_request_delivery_methods50, coop_request_prerequisite_courses250, coop_request_reviews6, companies50, job_submissions50, job_postings50, job_posting_work_modes50. Shared/NonSyntheticCompanies12และJobs18คงไว้.
+
+### UPDATED FILES / RULES APPLIED / NOT MODIFIED / TESTS
+
+- MaintenanceScript `backend/scripts/finalDevelopmentCleanup.cjs`สร้างในช่วงExecutionและปัจจุบันอยู่ในHEADเดิม; รอบปิดงานแก้เฉพาะReportนี้และ`HANDOFF_fitm-intern.md`เป็นUTF-8. รักษาBaseline/Historyทั้งหมด.
+- ใช้AGENTS/ProjectSkillและสิทธิ์เฉพาะงานFinalCleanup. ไม่Reset/TRUNCATE/DROP DB/ลบVolumes/DisableTriggersหรือConstraints/SeedBack/เปลี่ยนSecrets/Commit/Push. ApplicationSource/UI/Workflow/Auth/RBAC/TeacherData/SharedRecords/Schemaสุดท้ายคงเดิม.
+- **Tests: DB restore, cleanup rehearsal, scoped negative guards และ DB verification RUN — EXPLICITLY AUTHORIZED. Other tests: NOT RUN — USER-OWNED TESTING.** ไม่รันBuild/Lint/Browser/Syntax/TestSuite/HealthChecks. ไม่ถือผลDBVerificationเป็นManualAcceptance.
+
+### PENDING DECISIONS / BLOCKERS / REMAINING ISSUES / NEXT TASK
+
+ไม่มีPendingPolicyDecision. **FileCleanupยังค้าง17ไฟล์**: ช่วงกลับมาทำต่อDockerNamedPipeปฏิเสธสิทธิ์และApprovalPolicyเป็นnever จึงไม่เรียกFileDeleteหรือขอEscalation/หาวิธีข้ามสิทธิ์. FileDeletes0 ไม่มี`files-result.private.json`; อย่าอ้างว่าStorageCleanupเสร็จ. สำเนาDB/StorageRestoreและBackupsยังเก็บไว้ ไม่DROP/ลบทรัพยากรต่อเอง. NEXT TASK: เมื่อเครื่องมือมีสิทธิ์ตามปกติ ให้ทำFileStepเดิมภายใต้คำอนุญาตที่มีอยู่โดยตรวจPersistentBaseline/Backup/PhysicalFingerprintsและไม่มีProtected/SharedReferenceอีกครั้งก่อนลบ17Candidates; จากนั้นอัปเดตReceipt/Report. ห้ามรันDBApplyซ้ำหรือSeedข้อมูลกลับ. Runtime/Login/BrowserAcceptanceยังเป็นของผู้ใช้.
+
+## Previous resolution — immutable policy required / 12 November 2026 01:04 Asia/Bangkok
 
 **CLEANUP: BLOCKED — Deleted Students / Rows / Tables: 0 / 0 / 0. File Deletes: 0.** รอบนี้ตรวจ Source และฐานข้อมูลด้วย REPEATABLE READ READ ONLY, จบด้วย ROLLBACK. ไม่ส่ง DELETE/DDL หรือเริ่ม Writer Transaction; ไม่มี Partial Cleanup. การอนุญาตเดิมให้ลบ50บัญชีไม่ครอบคลุมการแก้/ข้าม Immutable Policy.
 

@@ -1,6 +1,113 @@
 # FITM-INTERN PROJECT HANDOFF
 
-## CURRENT HANDOFF — Cleanup Blocker Resolution / Immutable Policy Required — 12 November 2026
+## CURRENT HANDOFF — PostgreSQL Exact-Allowlist Cleanup / DELETED30, SKIPPED2 — 12 November 2026
+
+**อัปเดต: 12 พฤศจิกายน 2026 เวลา20:42 Asia/Bangkok. ACTUAL DROP DATABASE30 / SKIPPED2 / BEFORE36→AFTER6รวมTemplates. เป้าหมายเหลือ4ยังไม่ครบเพราะ2ฐานมีConnection.** ผู้ใช้อนุญาตRetentionใหม่สำหรับExactAllowlist32และยอมรับการลบถาวรโดยไม่Backup/Restore; คำสั่งนี้แทนข้อกำหนดBackup/Restore/KeepVerifiedArchiveและการป้องกันAcceptance/Restore/Rehearsal5ฐานจากงานก่อนเฉพาะ32Targetsนี้. คงProtected4=`intern_system`,`postgres`,`template0`,`template1`; ไม่ต้องขออนุญาต32ซ้ำ.
+
+- **งานที่ทำจริง / RULES APPLIED:** ใช้รายงาน12Nov20:07เป็นExactName+OIDAllowlist32 ตรวจDevelopmenthost/port/PG16/serveraddress/recoveryและName/OID/Owner/Marker/Connections/PreparedTransactions/ReplicationSlots/Subscriptionsทันทีก่อนแต่ละDROP. SourceRuntimeที่เกี่ยวข้องไม่พบการใช้จำเป็น; configurationที่ตรวจไม่ชี้Candidate. ReferencesจากOpt-inTestsและHistoricalMaintenanceScriptยังอยู่ แต่ไม่ใช่RuntimeDependencyที่ต้องรักษาฐานออนไลน์ตามคำสั่งเลิกใช้ล่าสุด. เชื่อมผ่านNodepgโดยตรง ใช้postgresเป็นMaintenanceConnectionอ่านServerCatalogและDROPเฉพาะชื่อฐานเป้าหมาย ไม่แก้ข้อมูล/Schemaของpostgresหรือฐานหลัก. ไม่ต้องใช้Docker/pg_dumpซึ่งยังติดสิทธิ์.
+- **DeletionEvidence:** ส่งDROP DATABASEทีละExactQuotedNameโดยไม่มีWildcard/FORCE; queryหลังแต่ละDROPยืนยันทั้งชื่อและOldOIDไม่อยู่จริงก่อนรายการถัดไป. Deleted30คือSyntheticQA25+Acceptance3+Restorecheck1+Rehearsal1. ไม่มีCommandErrors/PermissionDenied. ไม่ใช้TransactionRollbackรับรองDROP; ผู้ใช้ยอมรับถาวรโดยไม่มีBackupRestoreใหม่. ไม่สร้างไฟล์Manifest/Script/Reportเพิ่ม ไม่ลบBackup/Storage/Evidenceเก่า.
+- **NOT MODIFIED:** Protected4Metadata(ชื่อ/OID/Owner/Comment/AllowConnections/TemplateFlag/ConnectionLimit/Encoding/Collation/ACL)ก่อนและหลังตรงทุกค่า. ไม่เชื่อมอ่านบัญชี/Authenticationหรือข้อมูลBusinessภายในintern_system; ไม่UPDATE/DELETE/TRUNCATE/RESET/ALTERSource/Schemaหลัก/Secrets/Environment/Volumes/Roles. ไม่ForceDrop/TerminateSession ไม่ApplicationTests/Build/Lint/HealthChecks.
+
+| Deleted database (confirmed absent) | Old OID |
+|---|---:|
+| `fitm_profile_3a_01bac169b8bd7c8117e163ccb42b2a13` | 100708 |
+| `fitm_profile_3a_2e0c4614068e45b2d0f5a9d7dd07e5e3` | 99948 |
+| `fitm_profile_3a_5e5f6ed0ee990bb046f95d7969444a4e` | 101468 |
+| `fitm_profile_3b_2cf75ff4f55b5b1a34b71baf493859c9` | 102988 |
+| `fitm_profile_3b_6b8c196caa96927ad51ef24b3e06b648` | 105268 |
+| `fitm_profile_3b_6f2de1a0a570002b4c543917f323ce17` | 104508 |
+| `fitm_profile_3b_920a65c4cdf31e20686d80d442cc40d8` | 102228 |
+| `fitm_profile_3b_bd09469d5c1d6023b6419161981354c1` | 106788 |
+| `fitm_profile_3b_db852d8e331a6f45e14483494f03a46c` | 103748 |
+| `fitm_profile_4_0b160af4aa28ff95f4831f75090ab88c` | 112108 |
+| `fitm_profile_4_3234c7e02f424a3712f748f8e6ef5f6e` | 108308 |
+| `fitm_profile_4_5516f1f70bd9f928972ebf6d676f6d28` | 110588 |
+| `fitm_profile_4_aa37237f1a4dd411235b8228b253e72d` | 109068 |
+| `fitm_profile_4_c41fceac3c1481edd79c051965f27b97` | 107548 |
+| `fitm_profile_4_d4eeaaba623c6f9bbe531bf9a01065ec` | 109828 |
+| `fitm_profile_5_1c57303390e13834f76b14f9bbba4013` | 121644 |
+| `fitm_profile_5_25b9ea81803fa3f005d26163f422019b` | 114805 |
+| `fitm_profile_5_52ef315bb7ff927b012b1df7c99a52d8` | 116324 |
+| `fitm_profile_5_696b490ac954b88a3ef97c291c4dd190` | 120124 |
+| `fitm_profile_5_91e07b6b1f59c00a71787f2357220cff` | 117084 |
+| `fitm_profile_5_c00d45efd243be26d115e826c709d349` | 115564 |
+| `fitm_profile_5_cf677ab92ab575a20d1509f9ace07271` | 120884 |
+| `fitm_profile_5_e2f4c001a704db13abbafd7a5771b2dc` | 118604 |
+| `fitm_profile_5_e55dda1a2722c73ed845724d0ffb88c0` | 117844 |
+| `fitm_profile_5_f3635b01fcbf5f84afba1ab72eec0ffa` | 119364 |
+| `fitm_profile_accept_20261105_fc1b0c2e` | 164468 |
+| `fitm_profile_accept_20261106_a9154542` | 180852 |
+| `fitm_profile_accept_20261106_d3c91ea5` | 182062 |
+| `fitm_restorecheck_20261016_000151` | 147572 |
+| `intern_cleanup_final_20261112` | 213620 |
+
+- **SKIPPED2 / RemainingIssues:** `fitm_profile_3b_e07770a625c724845282f514ce3c2f90` OID106028 และ `fitm_profile_4_bed0e36feca0ec350dbe18a8e2b29bbc` OID111348 มีConnectionsก่อนลบจึงข้าม ไม่มีDROPstatementส่งสำหรับ2ฐานนี้ ไม่ปิดConnectionแทนผู้ใช้ ไม่RetryLoop.
+- **RemainingDatabasesจริง6:** สองฐานSkippedข้างต้น+`intern_system` OID16384+`postgres` OID5+`template0` OID4+`template1` OID1. ProtectedDatabasesModified0. RolesเดิมและBackup/StorageFilesเดิมคงอยู่ตามขอบเขต ไม่เริ่มลบRoles/ไฟล์ต่อเอง.
+- **UPDATED FILES / Git:** แก้ต่อเฉพาะ`HANDOFF_fitm-intern.md`เป็นUTF-8และรักษาประวัติเดิม; ไม่มีไฟล์เพิ่ม/ลบ. Baseline2M/0U→2M/0U: Handoffแก้เพิ่มรอบนี้ ส่วน`docs/database/FITM_SYNTHETIC_DATA_CLEANUP_PLAN.md`ยังเป็นModifiedเดิมไม่แก้เพิ่ม. README/Skill/Source/Envไม่แก้ ไม่Commit/Push/Reset/Clean/Stash.
+- **Tests: NOT RUN — USER-OWNED TESTING.** มีเฉพาะCatalogPreflight/ActualDROP/PostDROPVerificationที่ผู้ใช้สั่ง; ไม่รันTestSuite/Browser/Build/Lint/Syntax/HealthChecks. Backup/Restore: NOT RUN — EXPLICIT USER WAIVER. ไม่ใช้ผลประวัติเป็นผลใหม่.
+- **PENDING DECISIONS / BLOCKERS / NEXT TASK:** ไม่มีRetentionApprovalค้าง. เป้าหมาย4ยังค้างเฉพาะConnections2ฐาน; รอผู้ใช้ปิดตามปกติแล้วงานถัดไปตรวจExactName/OID/Owner/Marker/RuntimeDependencies/Connectionsอีกครั้งก่อนลบเฉพาะสองฐานภายใต้Authorizationเดิม. หยุดรอบนี้ตามคำสั่งSkipเมื่อมีConnection ไม่เริ่มงานอื่น.
+
+## PREVIOUS HANDOFF — PostgreSQL Phase 1 Synthetic QA Archive Cleanup / TOOL BLOCKED — 12 November 2026
+
+**อัปเดต: 12 พฤศจิกายน 2026 เวลา20:31 Asia/Bangkok. PHASE 1 NOT COMPLETED. Original36 / Approved27 / Deleted0 / Skipped27 / Remaining36รวมTemplates.** ผู้ใช้อนุญาตเปลี่ยนRetentionเฉพาะSyntheticQA27จากKeepOnline→KeepVerifiedArchiveและDROPรายฐานหลังFullBackup+RestoreVerification+SafetyGuardsครบ. ไม่ต้องขออนุมัติรายชื่อ27ซ้ำ; การอนุญาตไม่ครอบคลุมอีก5ฐาน/Protected9ฐานหรือRoles. งานDataCleanupก่อนหน้าCOMMITแล้วคงเป็นประวัติแยก ไม่ใช่ผลPhase1นี้.
+
+- **RULES APPLIED / Preflightจริง:** อ่านAGENTS/ProjectSkill/CurrentHandoff/READMEและใช้ExactAllowlistจากรายงาน12Nov20:07. READ ONLY transactionจบด้วยROLLBACK; ExactName/OID/Owner/Commentตรง27/27, missing0/drift0; Owner27ยังNOLOGIN. ไม่มีPreparedTransactions/ReplicationSlots/Subscriptionsใน27Targets. ตรวจSourceRuntimeเฉพาะกลุ่มเป้าหมายไม่พบreferenceจำเป็นในbackend/src/backend/scripts/frontend/src; historicalharness/หลักฐานเดิมยังเก็บ. ไม่อ่านแถวข้อมูลบัญชี/Authentication.
+- **Connections:** Targets25ไม่มีConnectionอื่น; `fitm_profile_3b_e07770a625c724845282f514ce3c2f90` OID106028 และ `fitm_profile_4_bed0e36feca0ec350dbe18a8e2b29bbc` OID111348ยังมีConnectionอย่างละ1ตามcatalog. ห้ามForceDrop/Terminate; ต้องข้ามแม้Backup/Restoreพร้อมภายหลัง.
+- **Backup/Restoreไม่ได้เริ่ม:** DockerAPIปฏิเสธสิทธิ์NamedPipe; ApprovalPolicyปัจจุบันneverจึงไม่ขอEscalationหรือหาทางข้าม. ไม่พบpg_dump/pg_restore/psql/initdb/postgresในPATHและตำแหน่งติดตั้งPostgreSQL/pgAdminที่ตรวจ. NodeSELECTเชื่อมDBได้แต่ไม่แทนCustomArchive/RestoreVerification. BackupSuccess0/Failed0/NOTRUN27; RestoreVerified0/Failed0/NOTRUN27. Failed0หมายถึงไม่มีBackup/Restoreattempt ไม่ใช่ผ่าน. ไม่สร้างArchive/BackupLocation/Checksums/RecoveryManifestใหม่และไม่ใช้Backupintern_systemเก่าแทน27QA. ไม่ลบBackupหรือEvidenceเดิม.
+- **ConditionalDeletion:** ไม่มีฐานผ่านBackup+RestoreGuardsครบ จึงไม่ส่งDROPstatementแม้Target25ไม่มีConnection. DeletedDatabases=[]; ไม่CREATE/ALTER/DROPDB/Role/Schema/DELETE/RESET/Terminateหรือเปลี่ยนVolumes/Secrets/Source/Auth/ApplicationData. ProtectedDatabasesModified0. เก็บExactNames+OldOIDsของSkipped27ด้านล่างเพื่อResumeโดยต้องPreflightใหม่ทุกฐาน.
+
+| Skipped database (exact allowlist) | Old OID | Blocker |
+|---|---:|---|
+| `fitm_profile_3a_01bac169b8bd7c8117e163ccb42b2a13` | 100708 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3a_2e0c4614068e45b2d0f5a9d7dd07e5e3` | 99948 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3a_5e5f6ed0ee990bb046f95d7969444a4e` | 101468 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_2cf75ff4f55b5b1a34b71baf493859c9` | 102988 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_6b8c196caa96927ad51ef24b3e06b648` | 105268 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_6f2de1a0a570002b4c543917f323ce17` | 104508 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_920a65c4cdf31e20686d80d442cc40d8` | 102228 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_bd09469d5c1d6023b6419161981354c1` | 106788 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_db852d8e331a6f45e14483494f03a46c` | 103748 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_3b_e07770a625c724845282f514ce3c2f90` | 106028 | BACKUP/RESTORE TOOL BLOCKER + CONNECTION1 |
+| `fitm_profile_4_0b160af4aa28ff95f4831f75090ab88c` | 112108 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_4_3234c7e02f424a3712f748f8e6ef5f6e` | 108308 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_4_5516f1f70bd9f928972ebf6d676f6d28` | 110588 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_4_aa37237f1a4dd411235b8228b253e72d` | 109068 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_4_bed0e36feca0ec350dbe18a8e2b29bbc` | 111348 | BACKUP/RESTORE TOOL BLOCKER + CONNECTION1 |
+| `fitm_profile_4_c41fceac3c1481edd79c051965f27b97` | 107548 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_4_d4eeaaba623c6f9bbe531bf9a01065ec` | 109828 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_1c57303390e13834f76b14f9bbba4013` | 121644 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_25b9ea81803fa3f005d26163f422019b` | 114805 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_52ef315bb7ff927b012b1df7c99a52d8` | 116324 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_696b490ac954b88a3ef97c291c4dd190` | 120124 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_91e07b6b1f59c00a71787f2357220cff` | 117084 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_c00d45efd243be26d115e826c709d349` | 115564 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_cf677ab92ab575a20d1509f9ace07271` | 120884 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_e2f4c001a704db13abbafd7a5771b2dc` | 118604 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_e55dda1a2722c73ed845724d0ffb88c0` | 117844 | BACKUP/RESTORE TOOL BLOCKER |
+| `fitm_profile_5_f3635b01fcbf5f84afba1ab72eec0ffa` | 119364 | BACKUP/RESTORE TOOL BLOCKER |
+
+- **RemainingDatabasesจริง36:** SyntheticQA27ตามตารางทั้งหมด + `fitm_profile_accept_20261105_fc1b0c2e` OID164468, `fitm_profile_accept_20261106_a9154542` OID180852, `fitm_profile_accept_20261106_d3c91ea5` OID182062, `fitm_restorecheck_20261016_000151` OID147572, `intern_cleanup_final_20261112` OID213620, `intern_system` OID16384, `postgres` OID5, `template0` OID4, `template1` OID1. ตรวจเฉพาะServerCatalogของProtected9 ไม่เปิดTransactionภายในฐานเหล่านั้นหรือแก้ไข; ชื่อ/OIDยังตรงBaseline.
+- **UPDATED FILES / Git:** แก้เฉพาะ`HANDOFF_fitm-intern.md`เพิ่มสถานะPhase1จริงและเก็บประวัติเดิมUTF-8. GitBaseline2M/0U→2M/0U; Handoffแก้ต่อBaselineเดิม ส่วนCleanupReportเดิมไม่แก้เพิ่ม. ไม่มีSource/Script/Skill/README/Envเพิ่มแก้ลบรอบนี้ ไม่Commit/Push/Reset/Stash/Clean. รายงานInventory/Preparationก่อนหน้านี้เป็นContext ไม่อ้างว่าเพิ่งรันทดสอบใหม่.
+- **Tests: NOT RUN — USER-OWNED TESTING.** Backup/RestoreVerificationได้รับอนุญาตเฉพาะงานแต่NOTRUNเพราะToolBlocker. ทำเฉพาะSource/ExecutableDiscovery/SELECTCatalogSafetyChecksที่อนุญาต; ไม่ApplicationTests/Build/Lint/Syntax/HealthChecks/Browser.
+- **PENDING DECISIONS / BLOCKERS:** ไม่มีRetentionDecisionค้างสำหรับ27QAและไม่ต้องอนุมัติซ้ำ. BlockerคือBackup/Restoretools/Permissionsไม่พร้อม และConnections2ฐาน. ต้องรักษา27ฐานออนไลน์ไว้จนArchive+Restoreครบ; ไม่ตีความว่าCleanupสำเร็จ.
+- **NEXT TASK:** ทำPhase1ต่อภายใต้Authorizationเดิมเมื่อเครื่องมือพร้อม: FullCustomBackup27นอกRepo/DataDir/Volumes+PrivateACL/Manifest/SHA→RestoreแยกEnvironmentตรวจSchema/Tables/Constraints/Indexes/ทุกTableData/OwnerMapping→ExactPreflightก่อนลบทีละฐานที่ไม่มีConnection. ข้ามที่มีConnection/DriftหรือBackupRestoreไม่ผ่าน ห้ามRoles/Protected9. **งานถัดไปตามแผน: ประเมินAcceptance/Restore/Rehearsal5ฐานหลังPhase1เสร็จ; ยังไม่เริ่มในรอบนี้.**
+
+## PREVIOUS HANDOFF — Final Development DB Cleanup COMMITTED / Files Permission Blocker — 12 November 2026
+
+**อัปเดต: 12 พฤศจิกายน 2026 เวลา19:19 Asia/Bangkok. DATABASE CLEANUP COMMITTED + POST-COMMIT VERIFIED. Student1 + Teacher23 =24 Login Accounts; StaffLogin0. FILE CLEANUPยังค้าง17Candidates/FileDeletes0.** งานFinalOne-shotอนุญาตSynthetic50+OtherStudents6+Staff2และScopedImmutableMaintenanceชัดเจน แทนขอบเขต/ข้อห้ามรอบก่อนเฉพาะงานนี้ ไม่ต้องถามซ้ำ; ผู้ใช้สั่งทำต่อให้เสร็จ.
+
+- **Backup/Restore PASS:** FullDBdumpล่าสุดก่อนลบและFullStorage33files/SHA-256/PrivateACL; Restoreฐานสำเนา`intern_cleanup_final_20261112`ครบ1176rows/58tablesจริงและRestoreStorageตรวจSHAครบ. Artifactsอยู่`C:\Users\suran\Documents\FITM-INTERN-Backups\final-cleanup-20261112`; Hashes/Receipts/รายละเอียดอยู่CleanupReportหลัก. คงBackup/สำเนาไว้ ไม่DROP/ลบทรัพยากร.
+- **ทำเสร็จจริง:** RehearsalCOMMITผ่านแล้วLiveSERIALIZABLETransaction+Locks+PrecommitGuards→COMMITเวลา18:43→NewConnectionPostcommitVerify. ลบStudents56/Rows1010ใน20ตาราง (ไม่มีTableDrop), รวมCourses250+AcademicHistory15. Staff2มีCatalogGrantSharedReferencesจึงคงHistoricalActorsและUPDATEเฉพาะis_active=false/updated_at; ไม่ลบGrant/แก้ActorIdentity. Teacher23/Head1/SuperAdminMembership1เดิมครบ. Shared/NonSyntheticCompanies12/Jobs18และข้อมูลระบบคงไว้.
+- **Protected PASS / Integrity PASS:** ProtectedStudent6706022510107/UUIDเดิมและOwnedClosure62rowsFullRowSHAตรงครบ รวมProfile/Auth/Requests/Projects/เอกสาร/Metadata/History/Dependencies. FinalReadOnly19:19ตรวจPersistent165rowsตรงExpectedทั้งหมด, FK97/Orphans0, Teachers23active/StaffLogin0/Admin1และOriginalImmutableFunctionตรง. LegacyCHECK NOT VALID2เดิมคงไว้ตรวจข้อมูลViolation0 ไม่ALTERSchema. Storageตรวจ33filesตรงก่อนLiveCOMMIT; ไม่มีFileDeleteและยังไม่ได้ตรวจPhysicalStorageใหม่ในช่วงต่อเพราะสิทธิ์Docker.
+- **Immutable SUCCESS:** Functionชั่วคราวจำกัดDB/PID/TransactionID/User/ImmutableRowIDs265/StudentTargets56/RequestOwnerและป้องกันProtected; ปฏิเสธUPDATEทุกกรณี. NegativeGuardsProtectedDELETE/TargetUPDATEถูกปฏิเสธจริง. คืนExactOriginalFunctionก่อนCOMMITและตรวจหลังCOMMIT; ไม่DisableTrigger/FK/Constraints ไม่มีMaintenanceExceptionค้างหรือแก้ApplicationPolicy. สำเนาRestoreต่างเฉพาะCHECKcastrepresentationที่Normalizeอย่างจำกัด; ฐานจริงตรวจExactSchemaก่อน/หลัง.
+- **AuthBaseline:** PersistentDataตรงOldBaseline→FreshBackupทุกแถว; OldMissingChallenge1ยืนยันหมดอายุด้วยOldDumpMetadata แยกจากPersistentAccountData. LivePre/PostcommitChallengeไม่เปลี่ยน; ล่าสุดChallenge1expired/unconsumed. ไม่เพิกเฉยPersistentDriftหรือแก้Authให้Guardผ่าน.
+- **UPDATED FILES / Git:** ช่วงเริ่มFinalRunBaseline28M/35Uมีงานเดิมทั้งหมด; เพิ่ม`backend/scripts/finalDevelopmentCleanup.cjs`เฉพาะMaintenance. ช่วงกลับมาทำต่อพบHEAD`0e8a6cf`และGitสะอาดจากการเปลี่ยนGitภายนอกCodex; Scriptอยู่ในHEADแล้ว. รอบปิดเอกสารแก้เฉพาะ`HANDOFF_fitm-intern.md`และ`docs/database/FITM_SYNTHETIC_DATA_CLEANUP_PLAN.md`: **0M/0U→2M/0U** ไม่มีเพิ่ม/ลบไฟล์ช่วงต่อ. Codexไม่Commit/Push/Reset/Clean/Stashและรักษาประวัติเดิม.
+- **RULES APPLIED / NOT MODIFIED:** AGENTS/ProjectSkill+CurrentExplicitAuthorization. ไม่Reset/TRUNCATE/DROPDatabase/ลบVolumes/SeedBack/GlobalTriggerDisable. ApplicationSource/UI/Branding/Workflow/Auth/RBAC/Schemaสุดท้าย/TeacherAccounts/StudentProtected/SharedRecords/EnvironmentSecrets/README/Skillไม่เปลี่ยนเพิ่มรอบนี้.
+- **Tests: DB restore / cleanup rehearsal / scoped negative guards / DB verification RUN — EXPLICITLY AUTHORIZED. Other tests: NOT RUN — USER-OWNED TESTING.** ไม่Build/Lint/Syntax/Browser/API/TestSuite/HealthChecks ไม่อ้างManualAcceptanceจากDBChecks.
+- **PENDING DECISIONS / BLOCKERS / REMAINING ISSUES:** ไม่มีPolicyDecision. FileStepยังไม่ทำ: Candidates17มีBackupแล้ว แต่ช่วงต่อDockerAPIผ่านNamedPipeปฏิเสธสิทธิ์และApprovalPolicyเป็นnever; ห้ามEscalation/ข้ามสิทธิ์ จึงไม่ลบFilesและไม่มีFileReceipt. ไม่อ้างว่าStorageCleanupเสร็จ. ProtectedPhysicalFilesยังไม่ได้ตรวจใหม่19:19; Browser/RuntimeAcceptanceคงUserOwned.
+- **NEXT TASK:** เมื่อสิทธิ์เครื่องมือปกติพร้อม ทำเฉพาะFileStepภายใต้Authorizationเดิม: ตรวจPersistent/Backup/StorageSHAและReferencesก่อนลบ17Candidates, ตรวจProtected/SharedFilesหลังลบแล้วอัปเดตReport. ห้ามApplyDBซ้ำ/Seedข้อมูลกลับ. งานDBเสร็จแล้ว; ยังไม่เริ่มโมดูลถัดไปเอง.
+
+## PREVIOUS HANDOFF — Cleanup Blocker Resolution / Immutable Policy Required — 12 November 2026
 
 **อัปเดต: 12 พฤศจิกายน 2026 เวลา 01:04 Asia/Bangkok. CLEANUP: BLOCKED. Deleted Students/Rows/Tables = 0/0/0; File Deletes = 0.** ตรวจ Source และฐานข้อมูลแบบ REPEATABLE READ READ ONLY แล้ว ROLLBACK; ไม่มี Writer/DELETE/COMMIT หรือการเปลี่ยน Guard/Schema/Auth/Workflow. คำอนุญาตลบ 50 Targets ยังมีเงื่อนไขห้ามยกเว้น Immutable Policy จึงหยุดตามคำสั่งปัจจุบัน ไม่ต้องขอ Phase B ซ้ำ.
 
