@@ -13,7 +13,13 @@ def match_resume(request: ResumeMatchRequest) -> list[MatchResult]:
         return []
 
     job_texts = [f"{p.position} {p.description}" for p in postings]
-    scores = rank_jobs(request.resume_text, job_texts)
+    try:
+        scores = rank_jobs(request.resume_text, job_texts)
+    except ValueError as error:
+        # Match the job-matching fallback when preprocessing removes every token.
+        if "empty vocabulary" not in str(error).lower():
+            raise
+        scores = [0.0] * len(job_texts)
 
     results = [
         MatchResult(

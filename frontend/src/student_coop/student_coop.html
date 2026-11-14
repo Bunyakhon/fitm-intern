@@ -728,8 +728,8 @@
             <div id="jobMatchingAnalysis" hidden></div>
             <div id="jobMatchingResults" class="job-matching-results" aria-labelledby="jobMatchingResultsTitle" aria-busy="false"></div>
             <div id="jobMatchingEmpty" class="empty-state" hidden>
-              <h4>ยังไม่พบตำแหน่งงานที่คะแนนข้อความถึงเกณฑ์แสดงผล</h4>
-              <p>ผลนี้ไม่ใช่การตัดสินคุณสมบัติ ลองตรวจสอบข้อมูลที่บันทึกแล้วและประกาศที่มีในระบบก่อนค้นหาใหม่</p>
+              <h4>วิเคราะห์เสร็จแล้ว แต่ยังไม่มีประกาศที่มีคะแนนความสอดคล้องของข้อความถึงเกณฑ์แนะนำ</h4>
+              <p>ลองตรวจสอบทักษะที่บันทึกไว้ หรือค้นหาประกาศทั้งหมดด้านล่าง ผลนี้ไม่ใช่การตัดสินคุณสมบัติ</p>
             </div>
           </div>
 
@@ -738,10 +738,31 @@
             <p class="job-matching-note">ค้นหาประกาศทั่วไปแยกจากอันดับงานแนะนำ ไม่มีคะแนนจากการวิเคราะห์ในส่วนนี้</p>
             <form id="jobBrowserForm" class="job-browser-form" role="search">
               <label>ตำแหน่ง บริษัท หรือทักษะ<input type="search" name="q" maxlength="255" placeholder="ค้นหาตำแหน่งหรือสถานประกอบการ" /></label>
-              <label>หมวดหมู่<select name="category"><option value="">ทุกหมวดหมู่</option value="information_technology">เทคโนโลยีสารสนเทศ</option><option value="engineering">วิศวกรรม</option><option value="design">ออกแบบ / สื่อ</option><option value="business">ธุรกิจ</option><option value="other">อื่น ๆ</option></select></label>
-              <label>จังหวัด<input type="search" name="province" maxlength="100" placeholder="ทุกจังหวัด" /></label>
+              <label>หมวดหมู่<select name="category"><option value="">ทุกหมวดหมู่</option><option value="information_technology">เทคโนโลยีสารสนเทศ</option><option value="engineering">วิศวกรรม</option><option value="design">ออกแบบ / สื่อ</option><option value="business">ธุรกิจ</option><option value="other">อื่น ๆ</option></select></label>
+              <label>สายงาน IT / เทคโนโลยี<select name="specialization" aria-describedby="jobBrowserFilterHelp">
+                <option value="">ทุกสายงาน</option>
+                <option value="software_development">Software Development / Programming</option>
+                <option value="frontend">Frontend Development</option>
+                <option value="backend">Backend Development</option>
+                <option value="full_stack">Full Stack Development</option>
+                <option value="it_support">IT Support / Helpdesk</option>
+                <option value="network">Network Engineering / Network Administration</option>
+                <option value="system_administration">System Administration / IT Infrastructure</option>
+                <option value="cloud_devops">Cloud Computing / DevOps</option>
+                <option value="cybersecurity">Cybersecurity / Network Security</option>
+                <option value="database_data_engineering">Database / Data Engineering</option>
+                <option value="data_analysis">Data Analyst / Data Science</option>
+                <option value="ai_ml">AI / Machine Learning</option>
+                <option value="software_testing">Software Testing / QA</option>
+                <option value="mobile">Mobile Application Development</option>
+                <option value="ui_ux">UI/UX และงานออกแบบดิจิทัล</option>
+                <option value="other">อื่น ๆ (ตามหมวดหลักที่บันทึก)</option>
+              </select></label>
+              <label>จังหวัด<input type="search" name="province" list="jobProvinceOptions" maxlength="100" placeholder="ทุกจังหวัด" autocomplete="off" /><datalist id="jobProvinceOptions"></datalist></label>
               <button type="submit" class="btn-secondary">ค้นหาประกาศ</button>
+              <button type="reset" class="btn-secondary">ล้างตัวกรอง</button>
             </form>
+            <p id="jobBrowserFilterHelp" class="job-matching-note">พิมพ์ค้นหาจังหวัดจากรายการ 77 จังหวัดได้ สายงานย่อยค้นจากคำในชื่อตำแหน่งและรายละเอียด จึงอาจไม่ครอบคลุมทุกประกาศและไม่ใช่การยืนยันคุณสมบัติ</p>
             <p id="jobBrowserMessage" class="message" role="status" aria-live="polite"></p>
             <div id="jobBrowserResults" class="job-matching-results" aria-busy="false" aria-labelledby="jobBrowserTitle"></div>
             <nav class="job-browser-pagination" aria-label="หน้าประกาศงาน">

@@ -1,4 +1,4 @@
-import { workspaceFields, ProfileSectionDraft, validateProfileDocument, canonicalWorkspaceValue, safeFriendFacebookUrl, profileGenderForPrefix, profilePrefixGenderError } from "./studentProfileWorkspaceDraft.js";
+import { workspaceFields, ProfileSectionDraft, validateProfileDocument, canonicalWorkspaceValue, safeFriendFacebookUrl, profileGenderForPrefix } from "./studentProfileWorkspaceDraft.js";
 import { updateMyStudentProfile, updateStudentInfo, createStudentProfileRecord, updateStudentProfileRecord, deleteStudentProfileRecord,
   uploadStudentProfileDocument, updateStudentProfileDocument, deleteStudentProfileDocument, downloadStudentProfileDocument, updateStudentProfileAggregate } from "../api/studentProfile.api.js";
 import { showToast, showConfirmModal, setButtonLoading } from "../ui/feedback.js";
@@ -116,16 +116,14 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
   }
   function identityFeedback() {
     if (!thaiIdentity) return;
-    const prefix = thaiIdentity.inputs.get("prefix"), gender = thaiIdentity.inputs.get("gender");
-    const message = profilePrefixGenderError(prefix.value, gender.value);
+    const gender = thaiIdentity.inputs.get("gender");
     for (const input of [gender, englishGender].filter(Boolean)) {
-      if (message) profileFieldError(input, message, false); else clearProfileFieldError(input);
+      clearProfileFieldError(input);
     }
-    return message;
   }
   function afterIdentityEvent() {
     // The shared document listener clears old field errors after input bubbling.
-    // Render this pair's current validation afterwards without dispatching events.
+    // Clear both mirrors afterwards without changing the selected prefix or gender.
     if (document.defaultView?.queueMicrotask) document.defaultView.queueMicrotask(identityFeedback);
     else identityFeedback();
   }
@@ -405,12 +403,6 @@ export function mountStudentProfileWorkspace({ document, onCommit, reload, exter
         }
       }
       const state = { ...(snapshot.profile || {}), ...payload.profile };
-      const identityError = profilePrefixGenderError(state.prefix, state.gender);
-      if (identityError) {
-        const gender = thaiIdentity.inputs.get("gender");
-        reveal(gender); identityFeedback(); profileFieldError(gender, identityError);
-        throw new Error(identityError);
-      }
       for (const [field, message] of [
         [state.national_id_issue_date && state.national_id_expiry_date && state.national_id_expiry_date < state.national_id_issue_date ? "national_id_expiry_date" : null, "วันหมดอายุบัตรต้องไม่ก่อนวันออกบัตร"],
         [state.has_driving_license === false && ["driving_license_number", "driving_license_type", "driving_license_expiry_date"].some(key => state[key] != null) ? "has_driving_license" : null, "กรุณายืนยันล้างรายละเอียดใบขับขี่"]

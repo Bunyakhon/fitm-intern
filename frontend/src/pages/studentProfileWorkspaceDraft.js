@@ -1,7 +1,7 @@
 import { validateProfileBirthDate } from "./studentProfileDraft.js";
 // Field names and limits follow the installed Phase 3A API, not PDF row counts.
 const field = (key, label, type = "text", extra = {}) => ({ key, label, type, max: 255, ...extra });
-// Form consistency only. Keep stored representations and all other identities intact.
+// Infer gender only after an explicit prefix change; keep manual gender choices independent.
 const prefixGenders = new Map([["นาย", "male"], ["นาง", "female"], ["นางสาว", "female"]]);
 const genderCategories = new Map([["male", "male"], ["female", "female"], ["ชาย", "male"], ["หญิง", "female"]]);
 const binaryGender = value => genderCategories.get(String(value ?? "").trim().toLowerCase());
@@ -10,10 +10,6 @@ export function profileGenderForPrefix(prefix, current) {
   if (!expected || (String(current ?? "").trim() && !binaryGender(current))) return current;
   if (binaryGender(current) === expected) return current;
   return ["ชาย", "หญิง"].includes(current) ? expected === "male" ? "ชาย" : "หญิง" : expected;
-}
-export function profilePrefixGenderError(prefix, gender) {
-  const expected = prefixGenders.get(String(prefix ?? "").trim()), actual = binaryGender(gender);
-  return expected && actual && expected !== actual ? "คำนำหน้าและเพศไม่สอดคล้องกัน กรุณาตรวจสอบข้อมูล" : null;
 }
 export const proficiencyOptions = [["very_good", "ดีมาก"], ["good", "ดี"], ["moderate", "ปานกลาง"], ["fair", "พอใช้"]];
 export const workspaceFields = {

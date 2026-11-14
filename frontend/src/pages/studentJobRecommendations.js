@@ -18,17 +18,20 @@ function contactSection(job) {
   section.setAttribute("aria-label", "ติดต่อสถานประกอบการ");
   section.append(element("h5", "ติดต่อสถานประกอบการ"));
   if (contact.synthetic && contact.samples_visible) {
-    section.append(element("p", "ข้อมูลจำลองสำหรับทดสอบ", "job-contact-synthetic-label"));
+    section.append(element("p", "ข้อมูลจำลองสำหรับ Development", "job-contact-synthetic-label"));
   }
   const fields = element("dl", null, "job-contact-fields");
   const row = (label, value) => {
-    if (!value) return;
+    if (!value) value = "ยังไม่มีข้อมูล";
     const description = element("dd");
     if (typeof value === "string") description.textContent = value;
     else description.append(value);
     fields.append(element("dt", label), description);
   };
   row("บริษัท", job.company?.name || "ไม่ระบุสถานประกอบการ");
+  const unavailable = field => contact.provenance?.[field] === "UNVERIFIED"
+    ? "ข้อมูลติดต่อยังไม่ได้รับการยืนยัน"
+    : contact.provenance?.[field] === "SYNTHETIC" ? "ข้อมูลจำลองสำหรับ Development" : "ยังไม่มีข้อมูล";
   const canShowContact = !contact.synthetic || contact.samples_visible === true;
   if (canShowContact && contact.phone) {
     let phone = contact.phone;
@@ -37,7 +40,7 @@ function contactSection(job) {
       phone.href = `tel:${contact.phone.replace(/[^+\d]/g, "")}`;
     }
     row("โทร", phone);
-  }
+  } else row("โทร", unavailable("phone"));
   if (canShowContact && contact.email) {
     let email = contact.email;
     if (!contact.synthetic && (contact.email_source_verified || contact.email_verified)) {
@@ -45,7 +48,8 @@ function contactSection(job) {
       email.href = `mailto:${encodeURIComponent(contact.email)}`;
     }
     row("อีเมลทั่วไป", email);
-  }
+  } else row("อีเมลทั่วไป", unavailable("email"));
+  let shownWebsite = false;
   if (!contact.synthetic && contact.source?.type === "company_website") {
     try {
       const website = new URL(contact.website);
@@ -53,12 +57,16 @@ function contactSection(job) {
         const link = element("a", website.hostname);
         link.href = website.href; link.target = "_blank"; link.rel = "noopener noreferrer";
         row("เว็บไซต์", link);
+        shownWebsite = true;
       }
     } catch { /* Omit malformed URLs without adding debug text. */ }
   }
-  if (canShowContact) row("ที่อยู่สำนักงาน", contact.office_address);
+  if (!shownWebsite) row("เว็บไซต์", unavailable("website"));
+  row("ที่อยู่สำนักงาน", canShowContact && contact.office_address || unavailable("office_address"));
   row("ประกาศต้นฉบับ", sourceLink(job.source_url));
   section.append(fields);
+  if (contact.source?.type === "company_website") section.append(element("p", "ข้อมูลติดต่อทั่วไปอ้างอิงจากเว็บไซต์บริษัท ไม่ใช่การยืนยัน Email Ownership, ผู้ติดต่อ HR หรือการเปิดรับนักศึกษาปัจจุบัน", "job-matching-note"));
+  else if (!contact.synthetic && Object.values(contact.provenance || {}).includes("UNVERIFIED")) section.append(element("p", "ข้อมูลติดต่อยังไม่ได้รับการยืนยัน", "job-matching-note"));
   if (!contact.phone && !contact.email) section.append(element("p", "ยังไม่มีข้อมูลติดต่อที่ยืนยันแหล่งที่มา", "job-matching-note"));
   section.append(element("p", "แนะนำให้ติดต่อสถานประกอบการเพื่อสอบถามการรับนักศึกษาสหกิจศึกษาก่อนเขียนคำร้อง", "job-matching-note"));
   return section;
@@ -96,6 +104,7 @@ export function createJobCard(job, { recommendation = true, canWrite = false } =
     card.append(score, bar);
   }
   if (job.development_data) card.append(element("p", job.development_label || "ชุดข้อมูล Development · ยังไม่ยืนยันการเปิดรับจริง", "job-development-label"));
+  if (job.hiring_status === "UNKNOWN / UNVERIFIED") card.append(element("p", "สถานะเปิดรับนักศึกษายังไม่ได้รับการยืนยัน กรุณาตรวจสอบกับสถานประกอบการ", "job-matching-note"));
   const metadata = element("div", null, "job-matching-metadata");
   if (job.company?.province) metadata.append(element("span", job.company.province));
   if (job.quota) metadata.append(element("span", `จำนวนตามประกาศ ${job.quota} คน`));

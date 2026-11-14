@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
-import { workspaceFields, ProfileSectionDraft, canonicalWorkspaceValue, validateProfileDocument, safeFriendFacebookUrl, profileGenderForPrefix, profilePrefixGenderError } from '../src/pages/studentProfileWorkspaceDraft.js';
+import { workspaceFields, ProfileSectionDraft, canonicalWorkspaceValue, validateProfileDocument, safeFriendFacebookUrl, profileGenderForPrefix } from '../src/pages/studentProfileWorkspaceDraft.js';
 import { pdfFieldSpecs, buildProfilePdfChanges } from '../src/pages/studentProfilePdfDraft.js';
 import { renderProfileAdvisors } from '../src/pages/studentProfileAdvisors.js';
 import { StudentProfileDraft, readProfileInputs, writeProfileInputs, PROFILE_INPUTS } from '../src/pages/studentProfileDraft.js';
@@ -44,7 +44,7 @@ function workspace(save, options = {}) {
   const document = dom(), toasts = [], commits = [], errors = [], revealed = [], confirmations = [];
   const source = fs.readFileSync(new URL('../src/pages/studentProfileWorkspace.js', import.meta.url), 'utf8')
     .replace(/^import[\s\S]*?from ["'][^"']+["'];\r?\n/gm, '').replace('export function mountStudentProfileWorkspace', 'function mountStudentProfileWorkspace');
-  const context = { workspaceFields, ProfileSectionDraft, canonicalWorkspaceValue, validateProfileDocument, safeFriendFacebookUrl, profileGenderForPrefix, profilePrefixGenderError, mountProfileBirthCalendar, mountProfileAddressSearch,
+  const context = { workspaceFields, ProfileSectionDraft, canonicalWorkspaceValue, validateProfileDocument, safeFriendFacebookUrl, profileGenderForPrefix, mountProfileBirthCalendar, mountProfileAddressSearch,
     updateStudentProfileAggregate: save, showToast: (...args) => toasts.push(args), showConfirmModal: options => confirmations.push(options),
     setButtonLoading(node, busy) { node.disabled = busy; node.setAttribute('aria-busy', String(busy)); }, notifyProfileChange() {}, clearProfileErrors() {},
     clearProfileFieldError(input) { if (input) { delete input.fixtureError; input.removeAttribute('aria-invalid'); } },
@@ -75,7 +75,69 @@ function documentCard(h, type = 'transcript') {
 }
 const walkNodes = node => [node, ...node.children.flatMap(walkNodes)];
 
-const identityError = 'คำนำหน้าและเพศไม่สอดคล้องกัน กรุณาตรวจสอบข้อมูล';
+function accountOverview(saved) {
+  const document = dom();
+  for (const id of ['studentAccountProfileOverview', 'studentAccountProfileStatus', 'studentAccountProfileReload', 'studentAccountProfileGroups']) {
+    const element = document.createElement('div'); element.id = id;
+  }
+  // The saved-details view must not depend on labels in the old edit form.
+  document.querySelector = () => { throw Error('legacy form labels are unavailable'); };
+  const source = fs.readFileSync(new URL('../src/pages/studentAccountOverview.js', import.meta.url), 'utf8')
+    .replace(/^import .*;\r?\n/gm, '').replace(/^export /gm, '');
+  const context = { workspaceFields, PROFILE_INPUTS };
+  vm.runInNewContext(source, context); context.renderAccountProfile(document, saved);
+  const groups = document.getElementById('studentAccountProfileGroups').children;
+  const rows = index => groups[index].children[1].children[0].children;
+  return { document, groups, rows };
+}
+
+test('saved personal/contact details reuse Thai workspace labels without legacy DOM labels or missing/reordered fields', () => {
+  const h = accountOverview(snapshot()), contact = key => /^(hometown|current|father|mother|parent|emergency)_/.test(key);
+  const personalKeys = [...Object.keys(PROFILE_INPUTS).filter(key => !contact(key)), ...workspaceFields.personal.map(spec => spec.key)];
+  const contactKeys = [...Object.keys(PROFILE_INPUTS).filter(contact), ...workspaceFields.family.map(spec => spec.key)];
+  const specs = new Map(Object.values(workspaceFields).flat().map(spec => [spec.key, spec]));
+  assert.equal(h.groups[1].children[0].textContent, 'ข้อมูลส่วนตัว (1)');
+  assert.equal(h.groups[2].children[0].textContent, 'ติดต่อ / ครอบครัว / ฉุกเฉิน (1)');
+  assert.equal(personalKeys.length, 24); assert.equal(contactKeys.length, 22);
+  for (const [index, keys] of [[1, personalKeys], [2, contactKeys]]) {
+    const rows = h.rows(index); assert.equal(rows.length, keys.length);
+    rows.forEach((row, i) => {
+      const key = keys[i], expected = key === 'english_prefix' ? 'คำนำหน้าภาษาอังกฤษ' : specs.get(key).label;
+      assert.equal(row.tagName, 'DIV'); assert.deepEqual(row.children.map(node => node.tagName), ['DT', 'DD']);
+      assert.equal(row.children[0].textContent, expected); assert.match(expected, /[ก-๙]/u); assert.notEqual(expected, key);
+      assert.equal(row.children[1].textContent, 'ยังไม่ระบุ');
+    });
+  }
+  assert.equal(h.groups.length, 9); assert.equal(walkNodes(h.groups[1]).some(node => ['INPUT', 'SELECT', 'TEXTAREA'].includes(node.tagName)), false);
+  assert.equal(h.document.getElementById('studentAccountProfileOverview').getAttribute('aria-busy'), 'false');
+});
+
+test('saved Thai detail labels retain values, order, masking and the input snapshot while only translating known gender enums', () => {
+  const profile = Object.fromEntries([...Object.keys(PROFILE_INPUTS), ...workspaceFields.personal.map(spec => spec.key), ...workspaceFields.family.map(spec => spec.key)]
+    .map(key => [key, 'ค่าเดิม ' + key]));
+  Object.assign(profile, { prefix: 'นาย', gender: 'female', english_prefix: 'Dr.', english_first_name: 'Jane', english_last_name: 'Smith',
+    birth_date: '2001-02-03', height_cm: 170.5, weight_kg: 65, father_age: 0, mother_age: null,
+    hometown_phone: '+66 (02) 000-0000', current_address: '123 Legacy Road\nBangkok', national_id: '0000000000000',
+    has_driving_license: false, driving_license_number: 'LEGACY-1234', military_status: 'served' });
+  const saved = snapshot([], 'r7', { profile }), before = plain(saved), h = accountOverview(saved);
+  const personalKeys = [...Object.keys(PROFILE_INPUTS).filter(key => !/^(hometown|current|father|mother|parent|emergency)_/.test(key)), ...workspaceFields.personal.map(spec => spec.key)];
+  const contactKeys = [...Object.keys(PROFILE_INPUTS).filter(key => /^(hometown|current|father|mother|parent|emergency)_/.test(key)), ...workspaceFields.family.map(spec => spec.key)];
+  const expected = { gender: 'หญิง', mother_age: 'ยังไม่ระบุ', has_driving_license: 'ไม่มี', driving_license_number: '••••1234', military_status: 'รับการเกณฑ์แล้ว' };
+  for (const [index, keys] of [[1, personalKeys], [2, contactKeys]]) h.rows(index).forEach((row, i) => {
+    const key = keys[i]; assert.equal(row.children[1].textContent, expected[key] ?? String(profile[key]), key);
+  });
+  assert.deepEqual(saved, before); assert.equal(profile.gender, 'female'); assert.equal(profile.prefix, 'นาย'); assert.equal(profile.english_prefix, 'Dr.');
+  assert.equal(workspaceFields.personal.find(spec => spec.key === 'english_prefix').label, 'Title (English)');
+});
+
+test('saved gender display preserves unknown legacy and empty values without inferring from prefix', () => {
+  for (const [gender, expected] of [['male', 'ชาย'], ['female', 'หญิง'], ['ชาย', 'ชาย'], ['หญิง', 'หญิง'], ['other', 'other'], ['legacy value', 'legacy value'], ['ไม่ประสงค์ระบุ', 'ไม่ประสงค์ระบุ'], [null, 'ยังไม่ระบุ'], [undefined, 'ยังไม่ระบุ'], ['', 'ยังไม่ระบุ']]) {
+    const saved = snapshot([], 'r1', { profile: { prefix: 'นาย', gender } }), h = accountOverview(saved);
+    assert.equal(h.rows(1).find(row => row.children[0].textContent === 'เพศ').children[1].textContent, expected);
+    assert.equal(saved.profile.gender, gender); assert.equal(saved.profile.prefix, 'นาย');
+  }
+});
+
 test('explicit Thai prefix changes map one gender draft and English mirror without requests or an input/change loop', () => {
   for (const [prefix, expected, label] of [['นาย', 'male', 'Male'], ['นาง', 'female', 'Female'], ['นางสาว', 'female', 'Female']]) {
     for (const original of ['', 'male', 'female', 'ชาย', 'หญิง']) {
@@ -91,19 +153,48 @@ test('explicit Thai prefix changes map one gender draft and English mirror witho
   const h = workspace(async () => {}); h.controller.acceptSnapshot(snapshot());
   const prefix = h.input('basics', 'prefix'), gender = h.input('basics', 'gender'); prefix.value = 'นาย'; prefix.events.input();
   gender.value = 'female'; gender.events.change(); prefix.events.change();
-  assert.equal(gender.value, 'female'); assert.equal(gender.fixtureError, identityError); assert.equal(prefix.value, 'นาย');
+  assert.equal(gender.value, 'female'); assert.equal(gender.fixtureError, undefined); assert.equal(prefix.value, 'นาย');
 });
-test('known conflicting pairs show inline errors and block both Save All buttons until corrected', async () => {
+test('manual gender changes save independently from both buttons and reload without changing either title', async () => {
   for (const [prefix, correct, wrong] of [['นาย', 'male', 'female'], ['นาย', 'ชาย', 'หญิง'], ['นาง', 'female', 'male'], ['นาง', 'หญิง', 'ชาย'], ['นางสาว', 'female', 'male'], ['นางสาว', 'หญิง', 'ชาย']]) {
-    let calls = 0; const h = workspace(async body => { calls++; return snapshot([], 'r2', { profile: { prefix, gender: body.profile.gender } }); });
-    h.controller.acceptSnapshot(snapshot([], 'r1', { profile: { prefix, gender: correct } })); const gender = h.input('basics', 'gender');
+    const calls = []; let revision = 1, saved = { prefix, gender: correct, english_prefix: 'Dr.' };
+    const h = workspace(async (body, expectedRevision) => {
+      calls.push({ body: plain(body), revision: expectedRevision });
+      saved = { ...saved, ...rules.normalizeProfile(body.profile) };
+      return snapshot([], `r${++revision}`, { profile: saved });
+    });
+    h.controller.acceptSnapshot(snapshot([], 'r1', { profile: saved })); const gender = h.input('basics', 'gender');
     gender.value = gender.children.find(option => option.textContent === (['male', 'ชาย'].includes(wrong) ? 'ชาย' : 'หญิง')).value;
-    gender.events.change(); assert.equal(gender.fixtureError, identityError); assert.equal(h.input('basics', 'prefix').value, prefix);
-    assert.equal(await h.document.getElementById('profileSaveAllTop').events.click(), false); assert.equal(await h.document.getElementById('profileSaveAll').events.click(), false); assert.equal(calls, 0);
-    assert.equal(h.document.activeElement, gender); assert.equal(h.controller.hasChanges(), true);
-    const english = h.document.getElementById('profileEnglishGender'); english.value = 'ไม่ประสงค์ระบุ'; english.events.change();
-    assert.equal(gender.value, 'ไม่ประสงค์ระบุ'); assert.equal(gender.fixtureError, undefined); assert.equal(english.fixtureError, undefined);
-    assert.equal(await h.controller.saveAll(), true); assert.equal(calls, 1);
+    const selected = gender.value; gender.events.change();
+    const english = h.document.getElementById('profileEnglishGender');
+    assert.equal(gender.fixtureError, undefined); assert.equal(english.fixtureError, undefined); assert.equal(english.value, selected);
+    assert.equal(h.input('basics', 'prefix').value, prefix); assert.equal(h.input('identity', 'english_prefix').value, 'Dr.');
+    assert.equal(h.controller.hasChanges(), true); assert.equal(h.document.activeElement, undefined);
+    assert.equal(await h.document.getElementById('profileSaveAllTop').events.click(), true);
+    assert.deepEqual(calls, [{ body: { profile: { gender: selected } }, revision: 'r1' }]);
+    const fresh = workspace(async () => { throw Error('must not auto-save'); });
+    fresh.controller.acceptSnapshot(snapshot([], 'r2', { profile: saved }));
+    assert.equal(fresh.input('basics', 'prefix').value, prefix); assert.equal(fresh.input('basics', 'gender').value, selected);
+    assert.equal(fresh.document.getElementById('profileEnglishGender').value, selected); assert.equal(fresh.input('identity', 'english_prefix').value, 'Dr.');
+    assert.equal(fresh.input('basics', 'gender').fixtureError, undefined); assert.equal(fresh.controller.hasChanges(), false);
+    english.value = english.children.find(option => option.textContent === (['male', 'ชาย'].includes(correct) ? 'Male' : 'Female')).value;
+    const reverse = english.value; english.events.change();
+    assert.equal(gender.value, reverse); assert.equal(h.input('basics', 'prefix').value, prefix);
+    assert.equal(await h.document.getElementById('profileSaveAll').events.click(), true);
+    assert.deepEqual(calls[1], { body: { profile: { gender: reverse } }, revision: 'r2' });
+    h.controller.acceptSnapshot(snapshot([], 'r3', { profile: saved }));
+    assert.equal(gender.value, reverse); assert.equal(english.value, reverse); assert.equal(h.input('basics', 'prefix').value, prefix);
+    assert.equal(h.input('identity', 'english_prefix').value, 'Dr.'); assert.equal(h.controller.hasChanges(), false);
+  }
+});
+test('changing an existing Thai prefix still infers gender in both directions without changing English Title', () => {
+  for (const [before, gender, after, expected] of [['นาย', 'male', 'นางสาว', 'female'], ['นางสาว', 'female', 'นาย', 'male'], ['นาย', 'male', 'นาง', 'female']]) {
+    const h = workspace(async () => { throw Error('must not auto-save'); });
+    h.controller.acceptSnapshot(snapshot([], 'r1', { profile: { prefix: before, gender, english_prefix: 'Ms.' } }));
+    const prefix = h.input('basics', 'prefix'); prefix.value = after; prefix.events.input(); prefix.events.change();
+    assert.equal(prefix.value, after); assert.equal(h.input('basics', 'gender').value, expected);
+    assert.equal(h.document.getElementById('profileEnglishGender').value, expected); assert.equal(h.input('identity', 'english_prefix').value, 'Ms.');
+    assert.equal(h.controller.hasChanges(), true); assert.equal(h.commits.length, 0);
   }
 });
 test('changing prefix touches only gender controls and preserves an unfinished numeric draft', async () => {
@@ -114,13 +205,15 @@ test('changing prefix touches only gender controls and preserves an unfinished n
   assert.equal(assignments, 0); assert.equal(height.validity.badInput, true); assert.equal(h.input('basics', 'gender').value, 'male');
   assert.equal(await h.controller.saveAll(), false); assert.equal(calls, 0); assert.equal(h.errors.at(-1).input, height);
 });
-test('legacy mismatches warn without rewriting, focus changes or dirty state; empty and non-form identities stay intact', async () => {
+test('existing independent prefix/gender pairs allow unrelated saves without rewriting; empty and non-form identities stay intact', async () => {
   for (const profile of [{ prefix: 'นาย', gender: 'หญิง' }, { prefix: 'นาง', gender: 'male' }, { prefix: 'นางสาว', gender: 'ชาย' }]) {
-    let calls = 0; const h = workspace(async () => { calls++; }); h.controller.acceptSnapshot(snapshot([], 'r1', { profile }));
-    assert.equal(h.input('basics', 'gender').value, profile.gender); assert.equal(h.input('basics', 'gender').fixtureError, identityError);
+    const calls = []; const h = workspace(async body => { calls.push(plain(body)); return snapshot([], 'r3', { profile: { ...profile, ...body.profile } }); }); h.controller.acceptSnapshot(snapshot([], 'r1', { profile }));
+    assert.equal(h.input('basics', 'gender').value, profile.gender); assert.equal(h.input('basics', 'gender').fixtureError, undefined);
     assert.equal(h.controller.hasChanges(), false); assert.equal(h.document.activeElement, undefined);
     h.controller.acceptSnapshot(snapshot([], 'r2', { profile })); assert.equal(h.controller.hasChanges(), false);
-    h.input('abilities', 'related_skills').value = 'unrelated draft'; assert.equal(await h.controller.saveAll(), false); assert.equal(calls, 0);
+    h.input('abilities', 'related_skills').value = 'unrelated draft'; assert.equal(await h.controller.saveAll(), true);
+    assert.deepEqual(calls, [{ profile: { related_skills: 'unrelated draft' } }]);
+    assert.equal(h.input('basics', 'prefix').value, profile.prefix); assert.equal(h.input('basics', 'gender').value, profile.gender);
   }
   for (const gender of ['ไม่ประสงค์ระบุ', 'ไม่ระบุ', 'unspecified', 'other', 'legacy value', 'constructor']) {
     const h = workspace(async () => {}); h.controller.acceptSnapshot(snapshot([], 'r1', { profile: { gender } })); const prefix = h.input('basics', 'prefix');
@@ -147,14 +240,16 @@ test('prefix and mapped gender save together from top/bottom, keep late edits an
   const fresh = workspace(async () => {}); fresh.controller.acceptSnapshot(saved);
   assert.equal(fresh.controller.profileValues().gender, 'female'); assert.equal(fresh.document.getElementById('profileEnglishGender').value, 'female'); assert.equal(fresh.controller.hasChanges(), false);
 });
-test('prefix/gender pair and English mirror survive network failure and 409 review without automatic re-inference', async () => {
+test('independent prefix/gender draft and English mirror survive network failure and 409 review without re-inference', async () => {
   for (const failure of [undefined, 409]) {
     let h, attempts = 0; const remote = snapshot([], 'r2', { profile: { prefix: 'นาง', gender: 'หญิง' } });
     h = workspace(async body => { if (++attempts === 1) throw Object.assign(Error('fixture'), { status: failure, data: failure === 409 ? remote : undefined }); return snapshot([], 'r3', { profile: { ...remote.profile, ...body.profile } }); }, { reload: async () => { h.controller.acceptSnapshot(remote); return remote; } });
     h.controller.acceptSnapshot(snapshot()); const prefix = h.input('basics', 'prefix'); prefix.value = 'นาย'; prefix.events.change();
-    assert.equal(await h.controller.saveAll(), false); assert.equal(prefix.value, 'นาย'); assert.equal(h.input('basics', 'gender').value, 'male'); assert.equal(h.toasts.length, 0);
+    const gender = h.input('basics', 'gender'); gender.value = 'female'; gender.events.change();
+    assert.equal(await h.controller.saveAll(), false); assert.equal(prefix.value, 'นาย'); assert.equal(gender.value, 'female'); assert.equal(h.toasts.length, 0);
     if (failure === 409) { h.document.getElementById('profileReviewAll').events.click(); await h.confirmations.pop().onConfirm(); }
-    assert.equal(h.document.getElementById('profileEnglishGender').value, 'male'); assert.equal(await h.controller.saveAll(), true);
+    assert.equal(h.document.getElementById('profileEnglishGender').value, 'female'); assert.equal(await h.controller.saveAll(), true);
+    assert.equal(prefix.value, 'นาย'); assert.equal(gender.value, 'female');
   }
 });
 test('PDF/programmatic snapshots keep explicit prefix/gender choices; opening or review never applies prefix mapping', () => {
@@ -162,7 +257,7 @@ test('PDF/programmatic snapshots keep explicit prefix/gender choices; opening or
   assert.deepEqual(buildProfilePdfChanges(original, [{ scope: 'profile', key: 'prefix', mode: 'keep', value: 'นางสาว' }, { scope: 'profile', key: 'gender', mode: 'keep', value: 'หญิง' }], []), {});
   assert.deepEqual(buildProfilePdfChanges(original, [{ scope: 'profile', key: 'prefix', mode: 'pdf', value: 'นางสาว' }], []), { profile: { prefix: 'นางสาว' } });
   const h = workspace(async () => {}); h.controller.acceptSnapshot(original); h.controller.acceptSnapshot(snapshot([], 'r2', { profile: { prefix: 'นางสาว', gender: 'male' } }));
-  assert.equal(h.controller.profileValues().gender, 'male'); assert.equal(h.controller.hasChanges(), false); assert.equal(h.input('basics', 'gender').fixtureError, identityError);
+  assert.equal(h.controller.profileValues().gender, 'male'); assert.equal(h.controller.hasChanges(), false); assert.equal(h.input('basics', 'gender').fixtureError, undefined);
   h.controller.setProfileField('prefix', 'นาง'); assert.equal(h.controller.profileValues().gender, 'male');
 });
 

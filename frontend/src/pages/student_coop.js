@@ -20,6 +20,7 @@ import { getCurrentStudent } from "../api/auth.api.js";
 import { getStudentToken, clearStudentSession, updateStoredStudent, subscribeStudentSession } from "../auth/studentAuthStorage.js";
 import { getMyJobMatches, getMyJobMatchingSource, getPublishedJobs } from "../api/jobMatching.api.js";
 import { createJobCard, renderMatchingAnalysis } from "./studentJobRecommendations.js";
+import { addressOptions } from "./studentProfileAddress.js";
 import {
   getMyStudentProfile,
   getStudentProfileImage,
@@ -2256,7 +2257,7 @@ const JOB_MATCHING_ERRORS = {
 };
 
 const JOB_MATCHING_SOURCE_LABELS = {
-  skills: "ทักษะและสาขา",
+  skills: "ทักษะ",
   resume: "Resume",
 };
 
@@ -2332,7 +2333,15 @@ async function loadJobMatches(source) {
     if (result.matches.length) {
       showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว พบตำแหน่งงานตามคะแนนความคล้ายข้อความ ${result.matches.length} ตำแหน่ง`, "success");
     } else {
-      showMessage(jobMatchingMessage, `วิเคราะห์จาก${sourceLabel}เสร็จแล้ว`, "success");
+      const noCandidates = result.matching_analysis?.candidate_job_count === 0 || result.matching_analysis?.computed === false;
+      const message = noCandidates
+        ? "ยังไม่มีประกาศที่พร้อมวิเคราะห์"
+        : "วิเคราะห์เสร็จแล้ว แต่ยังไม่มีประกาศที่มีคะแนนความสอดคล้องของข้อความถึงเกณฑ์แนะนำ";
+      jobMatchingEmpty.querySelector("h4").textContent = message;
+      jobMatchingEmpty.querySelector("p").textContent = noCandidates
+        ? "ลองค้นหาประกาศทั้งหมดด้านล่าง หรือลองวิเคราะห์อีกครั้งเมื่อมีประกาศที่พร้อมใช้งาน"
+        : "ลองตรวจสอบทักษะที่บันทึกไว้ หรือค้นหาประกาศทั้งหมดด้านล่าง ผลนี้ไม่ใช่การตัดสินคุณสมบัติ";
+      showMessage(jobMatchingMessage, message, "info");
     }
     jobMatchingMessage.classList.add("job-matching-content-in");
   } catch (error) {
@@ -2350,7 +2359,7 @@ async function loadJobMatches(source) {
     }
     showMessage(
       jobMatchingMessage,
-      JOB_MATCHING_CODE_ERRORS[error.data?.code] || JOB_MATCHING_ERRORS[error.status] || "ไม่สามารถค้นหาตำแหน่งงานที่เหมาะสมได้ กรุณาลองใหม่อีกครั้ง",
+      JOB_MATCHING_CODE_ERRORS[error.data?.code] || JOB_MATCHING_ERRORS[error.status] || "การวิเคราะห์เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
       "error",
     );
     jobMatchingMessage.classList.add("job-matching-content-in");
@@ -2384,12 +2393,20 @@ const jobBrowserResults = document.getElementById("jobBrowserResults");
 const jobBrowserMessage = document.getElementById("jobBrowserMessage");
 const jobBrowserPrevious = document.getElementById("jobBrowserPrevious");
 const jobBrowserNext = document.getElementById("jobBrowserNext");
+const jobProvinceNames = addressOptions({}, "province");
+const jobProvinceOptions = document.getElementById("jobProvinceOptions");
+if (jobProvinceOptions) jobProvinceOptions.replaceChildren(...["ทุกจังหวัด", ...jobProvinceNames].map(name => {
+  const option = document.createElement("option"); option.value = name; return option;
+}));
 
 function resetJobBrowser() {
   ++jobBrowserSequence;
   jobBrowserLoading = false;
   jobBrowserPage = 1;
   jobBrowserResults?.replaceChildren();
+  jobBrowserResults?.setAttribute("aria-busy", "false");
+  jobBrowserPrevious.disabled = true; jobBrowserNext.disabled = true;
+  setButtonLoading(jobBrowserForm?.querySelector('button[type="submit"]'), false, "กำลังค้นหา...", "ค้นหาประกาศ");
   clearMessage(jobBrowserMessage);
   setText(document.getElementById("jobBrowserPage"), "");
 }
@@ -2398,6 +2415,13 @@ async function loadJobBrowser(page = 1) {
   if (!jobBrowserForm) return;
   const sequence = ++jobBrowserSequence, token = getStudentToken();
   const filters = new FormData(jobBrowserForm);
+  const enteredProvince = String(filters.get("province") || "").trim().replace(/^(?:จังหวัด\s*|จ\.\s*)/u, "").trim();
+  const province = ["กรุงเทพ", "กรุงเทพฯ", "กทม", "กทม."].includes(enteredProvince) ? "กรุงเทพมหานคร" : enteredProvince === "ทุกจังหวัด" ? "" : enteredProvince;
+  if (province && !jobProvinceNames.includes(province)) {
+    resetJobBrowser();
+    showMessage(jobBrowserMessage, "กรุณาเลือกจังหวัดจากรายการ 77 จังหวัด หรือล้างเพื่อค้นหาทุกจังหวัด", "error");
+    return;
+  }
   jobBrowserLoading = true;
   jobBrowserResults.replaceChildren();
   jobBrowserResults.setAttribute("aria-busy", "true");
@@ -2406,7 +2430,7 @@ async function loadJobBrowser(page = 1) {
   setButtonLoading(searchButton, true, "กำลังค้นหา...", "ค้นหาประกาศ");
   showMessage(jobBrowserMessage, "กำลังค้นหาประกาศ...", "loading");
   try {
-    const result = await getPublishedJobs({ q: filters.get("q"), category: filters.get("category"), province: filters.get("province"), page });
+    const result = await getPublishedJobs({ q: filters.get("q"), category: filters.get("category"), specialization: filters.get("specialization") || "", province, page });
     if (sequence !== jobBrowserSequence || token !== getStudentToken()) return;
     if (!Array.isArray(result.jobs)) throw new Error("ข้อมูลประกาศไม่สมบูรณ์ กรุณาลองใหม่");
     jobBrowserPage = result.page;
@@ -2428,6 +2452,10 @@ async function loadJobBrowser(page = 1) {
   }
 }
 jobBrowserForm?.addEventListener("submit", (event) => { event.preventDefault(); if (!jobBrowserLoading) loadJobBrowser(1); });
+for (const event of ["input", "change", "reset"]) jobBrowserForm?.addEventListener(event, () => {
+  resetJobBrowser();
+  showMessage(jobBrowserMessage, "ตัวกรองเปลี่ยนแล้ว กดค้นหาเพื่อดูประกาศจากหน้าแรก", "info");
+});
 jobBrowserPrevious?.addEventListener("click", () => { if (!jobBrowserLoading) loadJobBrowser(Math.max(1, jobBrowserPage - 1)); });
 jobBrowserNext?.addEventListener("click", () => { if (!jobBrowserLoading) loadJobBrowser(jobBrowserPage + 1); });
 
@@ -3192,7 +3220,7 @@ function applyCoopCompany(company, { preserveJob = false } = {}) {
     const option = document.createElement("option"); option.value = company.province; option.textContent = company.province; province.append(option); province.value = company.province;
   }
   const companyAddress = company ? [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ") : "";
-  address.value = company?.development_data ? `ข้อมูลจำลองสำหรับ Development: ${companyAddress}` : companyAddress;
+  address.value = company?.request_address || (company?.development_data ? `ข้อมูลจำลองสำหรับ Development: ${companyAddress}` : companyAddress);
   syncCoopCompanyFieldOwnership();
   if (coopCompanySearchResults) coopCompanySearchResults.replaceChildren();
   if (coopCompanyDuplicateMessage) coopCompanyDuplicateMessage.textContent = "";

@@ -2,6 +2,268 @@
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
 
+## Project Advisor Reassignment — Design Proposal — 13 พฤศจิกายน 2026
+
+**ออกแบบแล้ว ยังไม่ได้เปลี่ยน Schema/Service/UI หรือเปิด Reassignment.** แนะนำ **Option B: ขยายตาราง Request เดิม** โดยคง Confirmed/Rejected เป็นประวัติ, เปลี่ยน Unique ให้จำกัดเฉพาะ Pending ต่อนักศึกษา และเพิ่ม Student workflow revision / Request selection revision / Previous advisor รวม 3 ฟิลด์. คง CHECK state/time เดิมและ `confirmed_at` ทุกแถว; อาจารย์ปัจจุบันยังอิง `coop_advisor_teacher_id` ไม่ใช่ทุกแถวที่ status=confirmed. A คงเป็นปัจจุบันระหว่างรอ B และหลัง B ปฏิเสธ; สลับเฉพาะเมื่อ B ยอมรับและ transaction commit. Class Advisor `advisor_teacher_id` ไม่เปลี่ยน.
+
+เปรียบเทียบ Option A/B, DDL Draft ที่ **ไม่ได้รัน**, revision/idempotency/locking, API/Shared Confirmation Modal, ไฟล์ที่จะต้องแก้, installation/rollback และผลกระทบอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). **Pending Decisions:** Period/unknown NULL, สิทธิ์นิเทศและเอกสารย้อนหลัง, active exam/approval policy และ guard ปิดบัญชีอาจารย์เมื่อ Confirmed กลายเป็น history. ไม่ให้สิทธิ์ใหม่หรือย้าย author/approval/appointment ตามข้อเสนอโดยอัตโนมัติ.
+
+ผลรอบ design นี้: Read-only SQL 9 checks; mock/reference-model 8 tests (371 state paths) และ actual-source confirmed-guard 1 test ผ่าน. ไม่ใช่ผลทดสอบ implementation ใหม่; DDL apply/real concurrency/API/UI/Browser ยัง **NOT TESTED**. **NEXT TASK:** อนุมัติแนวทาง/Policy และมอบหมาย implementation แยกก่อนแก้ Schema; workflow ปัจจุบันยังคง Guard เดิม. งาน Company/Job Filters/NLP ด้านล่างไม่ได้เปลี่ยนในรอบนี้.
+
+## Current Company Fixes / Student Job Filters — 13 พฤศจิกายน 2026
+
+งานรอบนี้แก้ Source ตามผล Company Audit; **ข้อมูลประกาศยังเป็น Development / ไม่ยืนยันเปิดรับจริง**. ผล Audit เดิมอยู่หัวข้อถัดไปและเก็บเป็นประวัติ ไม่ใช่สถานะว่า Source ยังไม่ได้แก้ทั้งหมด.
+
+- **Company visibility (CJA-02):** อ้าง Company ID ตรงหรือผ่าน Job ต้องผ่าน policy เดียวกับ Search; รวม ID/visibility ด้วย AND และตรวจ Job publication/expiry/relationship ซ้ำที่ Backend. Hidden/missing company คืน 404 `COMPANY_UNAVAILABLE` เหมือนกัน; published-job read คืน 404 `JOB_POSTING_UNAVAILABLE`; malformed ID คืน 400 `COOP_REFERENCE_INVALID`, mismatch คืน 400 `JOB_COMPANY_MISMATCH`. คง manual company entry และ owner/RBAC เดิม.
+- **คำร้องใหม่ (CJA-01):** เมื่ออ้าง Company ที่มีในระบบ Backend เก็บป้าย synthetic/source-backed/unverified พร้อมที่อยู่ใน `company_address` TEXT เดิม ณ เวลาส่ง และ Company API ส่ง `request_address` ให้ Prefill ตรงกัน. Focal address ที่ตรงหลักฐานใช้ป้ายที่อยู่จากเว็บไซต์บริษัทพร้อมขอบเขตว่าไม่ยืนยันการเปิดรับ; ไม่ใช้ป้าย synthetic เหมารวม. Readers Student/Teacher/Head/Staff/เอกสารใช้ snapshot เดิมจึงคงข้อความนี้. ไม่เปลี่ยน Schema หรือ backfill คำร้องเก่า; structured provenance ยัง Pending Decision. Manual entry ไม่ถูกอ้างว่า verified.
+- **Contact display / CJA-08:** แยก `ข้อมูลจำลองสำหรับ Development`, `ข้อมูลติดต่อยังไม่ได้รับการยืนยัน`, source-backed และ `ยังไม่มีข้อมูล`. Focal เป็นข้อมูลติดต่อทั่วไปจากเว็บไซต์บริษัท ไม่ยืนยัน Email Ownership, HR หรือการเปิดรับ; synthetic ไม่มี tel:/mailto:. คง HTTPS/Internth link guards และเพิ่มคำเตือน current hiring ยังไม่ยืนยัน โดยไม่แก้สถานะ Published.
+- **ค้นหาประกาศทั้งหมด:** จังหวัดเป็น native searchable datalist จากชุดที่อยู่ไทยเดิม ครบ 77 จังหวัด + `ทุกจังหวัด` มีล้างตัวกรอง; normalize จังหวัด/จ./Bangkok aliases เฉพาะ query/SQL comparison ไม่เขียน DB. เปลี่ยนตัวกรองแล้วกดค้นหาเริ่มหน้า 1, ป้องกัน response เก่าทับผลล่าสุด และคง loading/empty/retry/filtered total/pagination.
+- **Filter contract:** `GET /api/job-matches/me/jobs?q=Network&category=information_technology&specialization=network&province=กรุงเทพมหานคร&page=1`. คง category หลัก 5 ค่า; specialization มี 16 ตัวเลือก + default ทุกสายงาน โดย Software/Frontend/Backend/Full Stack/IT Support/Network/System/Cloud-DevOps/Cybersecurity/Database-Data Engineering/Data Analysis/AI-ML/Testing/Mobile/UI-UX ค้นคำและ aliases ใน title/description; `other` ใช้ stored category `other`. นิยามจริงอยู่ [jobSearchFilters.js](backend/src/services/jobSearchFilters.js). ทุกเงื่อนไขรวมด้วย AND, specialization ใช้ title OR description, ไม่ใช่ structured job classification; อาจมีผลทับซ้อน/ขาดบางงานเพราะข้อความต้นทางไม่ครบ. ไม่เติม Skills/แก้ category ใน DB หรือเปลี่ยน NLP ranking.
+
+**Project Advisor Reassignment — PENDING DECISION / BLOCKED:** unique `project_advisor_one_current_per_student` รับเพียงหนึ่ง non-superseded request; `project_advisor_request_state_check` ไม่ให้ superseded เก็บ confirmed_at เดิม. จึงยังทำ pending ใหม่พร้อมเก็บประวัติ confirmed ทั้งหมดไม่ได้ภายใต้ข้อห้ามแก้ Constraints/Schema. คง Dropdown/`ADVISOR_CONFIRMED` guard; ไม่เปิด workflow ที่ Backend ยังไม่รองรับ. ต้องกำหนด schema/history และสิทธิ์เดิม/ใหม่ต่อ Academic/Document/Exam ก่อน; Class Advisor ไม่เปลี่ยน.
+
+**Focused verification ที่อนุญาตเฉพาะรอบนี้:** `node backend/test/companyJobFixes.test.js` 13/13, `node frontend/test/jobMatching.test.js` 14/14, `node frontend/test/coopRequestReadiness.test.js` 4/4 ผ่าน ทั้งหมดใช้ mocks/in-memory fixtures ไม่แก้ข้อมูลจริง; syntax checks ของ 7 source + 3 test JS ผ่าน. Frontend Vite `build({configLoader:'native',build:{write:false,emptyOutDir:false}})` ผ่าน 191 modules/73 outputs ในหน่วยความจำ/0 warnings โดยไม่เปลี่ยน Configuration ถาวร. ไม่อ้างว่าระบบทั้งหมดผ่าน.
+
+**NOT TESTED / Remaining Issues:** Browser desktop/mobile/native keyboard, real authenticated API/DB filtering/concurrency และ advisor reassignment ที่ยัง blocked. ข้อมูลที่รอยืนยัน: 5 source pages เคยระบุปิดรับ, จังหวัดจริง, work mode/ค่าตอบแทน/ตารางงานจำลอง, หน่วย 400 ของ Focal, Skills/Descriptions ที่ตกหล่น และ Email ownership/HR/current hiring; ไม่เปลี่ยน dataset หรือคำร้องเก่าในงานนี้. **NEXT TASK:** ผู้ใช้ทำ Manual Acceptance ของ Browse/Contact/Prefill/Submit; กำหนดขอบเขต schema/policy Advisor และอนุมัติการ reconcile ข้อมูลแยกก่อนเริ่มงานนั้น. รายการไฟล์/ผลทดสอบ/ข้อจำกัดเต็มอยู่ [Handoff](HANDOFF_fitm-intern.md).
+
+## Previous Company / Job Data Audit — 13 พฤศจิกายน 2026
+
+**AUDIT ONLY — ยังไม่พร้อมใช้เป็นข้อมูลประกาศจริงใน Production.** SELECT-only โดย connection read-only พบ **12 Companies / 18 Jobs / 12 Submissions / 0 Job Reviews**. ทั้ง18 Local Publishedแต่ Email Verificationยังไม่มีและ Submissionsยังpending_email_verification; Publishนี้มาจากDevelopment workflow ไม่ใช่หลักฐานว่าบริษัทเปิดรับหรือมหาวิทยาลัยรับรอง. ไม่มีการแก้ Source/Database/Environment ในงานAudit.
+
+**Contact provenance:** 11บริษัท/17งานยังใช้ phone/email/addressตรงSynthetic Fixtures (Email example.test); ใช้ได้เพื่อDevพร้อมป้าย ไม่ใช่ข้อมูลติดต่อจริง. Focal Solutionเท่านั้นที่ข้อมูลติดต่อทั่วไปตรงDB/Source constantsและ[เว็บไซต์บริษัท](https://focalsolution.com/)ที่อ่านรอบนี้ แต่ Email ownership/current hiringยังUNVERIFIED. Modelไม่มีwebsite/company-status/structured-provenancefields; websiteในContact APIมาจากFocal constant. ไม่พบชื่อ/Email/Phoneซ้ำหรือCompany/Submission orphanในข้อมูลปัจจุบัน.
+
+**ปัญหาสำคัญที่ยังไม่ได้แก้:** CJA-01 พบคำร้องเดิม3รายการเก็บที่อยู่ตัวอย่าง/Development; CJA-02 createCoopRequestเส้นทางcompany-onlyไม่ได้ใช้companyVisibilityWhereเหมือนSearch จึงมีSource policy gapสำหรับบริษัทDevที่ถูกซ่อนนอกDevelopment. SourceปัจจุบันยังแสดงContact syntheticเป็นข้อความพร้อมป้ายและไม่สร้างtel:/mailto:ให้; Company/Job IDสัมพันธ์กันและrequest owner guardsยังอยู่ แต่ไม่ใช่ผลทดสอบRBAC.
+
+**Data completeness/currentness:** 17งานไม่มีworkmodesและใช้pay/วันทำงานจำลอง; หน้าแหล่งอย่างน้อย5รายการระบุปิดรับ: [15104](https://internth.com/job/15104), [17213](https://internth.com/job/17213), [10373](https://internth.com/job/10373), [19736](https://internth.com/job/19736), [14165](https://internth.com/job/14165). [Focal16858](https://internth.com/job/16858)ระบุ400บาท/เดือนขณะที่Localยังบอกหน่วยไม่ชัด ต้องreconcileก่อนแก้. ข้อมูลเว็บอาจCached/Crawled ไม่ถือเป็นการยืนยันจากบริษัทโดยตรง.
+
+**ชี้แจง Matching ก่อนหน้า:** Local descriptionsไม่มีExpress/HTML/CSS แต่[12910](https://internth.com/job/12910)ต้นทางมีExpress/JavaScript และ[16633](https://internth.com/job/16633)/[19736](https://internth.com/job/19736)มีJavaScript/HTML/CSS. Datasetเก็บเพียงSkills/Work summaryจึงขาดรายละเอียด; ผลว่างจากCorpus Localเดิมไม่ได้พิสูจน์ว่าทุกต้นทางไม่มีทักษะเหล่านี้. งานนี้ไม่แก้ข้อความประกาศหรือAlgorithmและไม่รันMatchingซ้ำ.
+
+รายงานครบ12บริษัท/18งาน, สถานะContact, Source/Workflow findings CJA-01..08 และข้อเสนอแก้อยู่ใน [Handoff](HANDOFF_fitm-intern.md). **Tests: NOT RUN — USER-OWNED TESTING**; ไม่รันBuild/Browser Automation/health/API tests. เทียบFrontendจากSourceเท่านั้น ยังไม่ได้เปิดBrowserที่Loginจริง. **Remaining Issues/NEXT TASK:** จัดขอบเขตแก้visibility/snapshot provenanceก่อนProduction แล้วจึงreconcileข้อมูลต้นทาง. **Pending Decisions:** เกณฑ์ยืนยันเปิดรับ/การจัดการsnapshotเดิมต้องกำหนดก่อนแก้ ไม่เปลี่ยนนโยบายมหาวิทยาลัยหรือข้อมูลย้อนหลังเอง.
+
+## Previous Student Job Matching — ผลว่างและสถานะวิเคราะห์ — 13 พฤศจิกายน 2026
+
+Browse พบประกาศไม่ได้หมายความว่าทุกประกาศจะผ่าน Matching. รอบนี้ตรวจ PostgreSQL แบบ Read-only พบ 18 ประกาศที่ Published/ไม่หมดอายุ/มี Company และ Description ครบ ทั้งหมดเป็น Development Internth. ใช้ Controller จริงกับ Read-only SQL adapters และ NLP HTTP ที่รันอยู่ พบ Browse total18 (หน้าแรก12), ส่งเข้า NLP18, ผลผ่านเกณฑ์0; เป็นการ replay ตาม Source ไม่ใช่การ Login/เรียก Backend HTTP ด้วยบัญชีผู้ใช้.
+
+Skills mode อ่านชื่อ Computer Skills ที่บันทึกจริง + Related Skills ถ้ามีทุกครั้ง ไม่อ่าน Draft/ไม่ใช้ระดับทักษะเป็น Weight/ไม่ใช้สาขา IT/INE คิดคะแนน. ชุด Express + JavaScript + HTML/CSS ที่ตรวจไม่มีงานผ่าน `0.05`; ข้อความประกาศพบ JavaScript เพียง1รายการ ไม่พบ Express/HTML/CSS เป็นคำตรง. ทดสอบ JavaScript เดี่ยวได้ Software Engineer (Frontend) score0.0861 แต่คะแนนนี้ไม่ใช่คะแนนของชุดทักษะจริง. ผลว่างไม่ได้แปลว่าทุกคะแนนเป็น0 หรือไม่ผ่านคุณสมบัติ; endpoint ไม่ส่งคะแนนต่ำกว่าเกณฑ์กลับมา. ไม่พบหลักฐาน Matching/Tokenization Bug และไม่เปลี่ยน Algorithm/ข้อมูล/เกณฑ์เพื่อบังคับผลลัพธ์.
+
+แก้เฉพาะข้อความใน `frontend/src/pages/student_coop.js` และ `frontend/src/student_coop/student_coop.html`: ใช้ “วิเคราะห์จากทักษะ”, ผลว่างเมื่อมีประกาศแสดง “วิเคราะห์เสร็จแล้ว แต่ยังไม่มีประกาศที่มีคะแนนความสอดคล้องของข้อความถึงเกณฑ์แนะนำ” แบบ info พร้อมชวนตรวจทักษะ/ค้นหาประกาศทั้งหมด. แยก “ยังไม่มีประกาศที่พร้อมวิเคราะห์” จาก NLP Error/Retry และมี Matches จึงแสดง Success. คง TF-IDF/cosine, min_score0.05, top10, ordering/response, Resume/Browse, Development/contact labels และสิทธิ์เขียนคำร้องเดิม; ไม่มีการเติมงานทั่วไปเป็นผลแนะนำ.
+
+**Focused verification:** `node test/jobMatching.test.js` จาก frontend/ **8/8 ผ่าน** (ไฟล์ใหม่, DOM/API/model substitutes ไม่มี DB writes); NLP HTTP inline unittest **8/8 ผ่าน** (case/slash/ทุกSkill/18 unrelated/น้อยกว่า10/top10/stopwords/Thai-English); `python -B nlp-service/tests/test_resume_matching.py` **11/11 ผ่าน**. Frontend Build ด้วย Vite native loader แบบ write:false/emptyOutDir:false ผ่าน **191 modules / 73 outputs / 0 warnings** ไม่เขียน dist หรือแก้ Config ถาวร. ไม่มีการสร้างบัญชี/ประกาศ/Backup/Vault หรือแก้ PostgreSQL.
+
+**Remaining Issues / NEXT TASK:** ผู้ใช้ตรวจ Browser ด้วยบัญชีเดิมว่า Empty State/Retry/Browse ถูกต้อง; ยังไม่ยืนยัน authenticated Backend HTTP/Browser E2E หรือคะแนนย่อยที่ต่ำกว่าเกณฑ์. หลังแก้ UI ผลจากชุดทักษะจริงยังเป็น0ตาม NLP. **Pending Decisions:** ไม่มีเพิ่ม; Alias/semantic matching/แก้ประกาศ/เปลี่ยนเกณฑ์ไม่อยู่ในงานนี้.
+
+## Previous Student Profile — ชื่อฟิลด์รายละเอียดภาษาไทย — 13 พฤศจิกายน 2026
+
+รายละเอียดประวัติที่บันทึกแล้วในหัวข้อ “ข้อมูลส่วนตัว (1)” และ “ติดต่อ / ครอบครัว / ฉุกเฉิน (1)” ใช้ Label ภาษาไทยจาก `workspaceFields` เดียวกับฟอร์มแก้ไข แทนการพึ่ง Label ของฟอร์มเก่าที่หายไปแล้วแสดง Raw API Keys. แก้การเลือก Label 28 legacy fields และแปล English Title ในรายละเอียดอีก 1 ฟิลด์; รวมสองหัวข้อมี Label ไทยครบ **46 ฟิลด์ (24 + 22)** โดยไม่เพิ่ม/ลบ/เรียงฟิลด์ใหม่.
+
+แก้ `frontend/src/pages/studentAccountOverview.js` เท่านั้นในส่วน Production: แปลค่าที่แสดง `male/female` เป็น ชาย/หญิง โดยไม่เปลี่ยน Raw Value, Snapshot หรือ API Payload. ค่า Legacy/ชื่อภาษาอังกฤษ/วันที่/เบอร์/รหัสและค่าว่างแสดงตามเดิม; English Title ในฟอร์มแก้ไขและ Workflow Gender/Prefix ด้านล่างไม่เปลี่ยน. ไม่แก้ CSS/Layout/Backend/Schema/Auth/RBAC.
+
+**Focused verification รอบ Label:** จาก `frontend/` รัน `node test/studentProfileContacts.test.js` **82/82 ผ่าน** (เพิ่ม 3 Cases ในไฟล์เดิม ตรวจ Labels/ค่าครบ/ลำดับ/ไม่มี legacy DOM labels/ไม่ mutate Snapshot และรวม Regression Gender/Prefix/Save/Draft/Payload เดิม). Build ด้วย Vite native loader แบบ `write:false, emptyOutDir:false` ผ่าน **191 modules / 73 outputs / 0 warnings**; ไม่เขียน/ล้าง dist หรือแก้ Config ถาวร. ใช้ DOM/API substitutes ไม่เรียก PostgreSQL หรือแก้ข้อมูลจริง; ไม่รัน Backend/NLP/Database tests.
+
+**Remaining Issues / NEXT TASK:** รอผู้ใช้ตรวจ Browser ด้วยบัญชีเดิม โดยเปิดทั้งสองหัวข้อและดูข้อความ/ค่าที่ 1280/390/320px รวม Gender/Prefix และ Save→Reload. โครงสร้าง DOM และ Responsive CSS คงเดิม แต่ผล Harness ไม่ใช่การยืนยัน Browser rendering หรือ Full System PASS. **Pending Decisions:** ไม่มีเพิ่มสำหรับงาน Label.
+
+## Previous Student Profile — Gender แก้ไขอิสระ — 13 พฤศจิกายน 2026
+
+เปลี่ยน Dropdown เพศด้วยตนเองได้ทั้งชาย→หญิงและหญิง→ชาย โดยคำนำหน้าไทยและ English Title ไม่เปลี่ยน. บันทึกได้แม้ Prefix/Gender ต่างกัน และโหลด Snapshot กลับตามค่าที่บันทึก; Gender (English) ยังสะท้อน `profile.gender` เดียวกับภาษาไทย ไม่มี API field เพิ่ม.
+
+**การเปลี่ยนคำนำหน้ายังคงพฤติกรรมเดิม:** `profileGenderForPrefix()` และ Event Handler เดิมยังปรับ นาย→ชาย, นาง/นางสาว→หญิงเมื่อผู้ใช้เปลี่ยน Prefix จริง. รักษารูปแบบ raw ไทย/อังกฤษและข้อยกเว้นค่าไม่ระบุ/legacy เดิม; ไม่อนุมานเพศใหม่เมื่อเปิดหน้า/Reload/PDF/Review. ข้อกำหนดนี้แทนที่เฉพาะคำเตือนและ Save guard ที่บังคับ Prefix/Gender ให้ตรงกันในประวัติวันที่ 6 พฤศจิกายน 2026.
+
+แก้ `frontend/src/pages/studentProfileWorkspace.js` และ `studentProfileWorkspaceDraft.js` เพื่อลบ `profilePrefixGenderError()`/การปฏิเสธคู่ค่าจาก `identityFeedback()` และ `saveAll()` พร้อมปรับ `frontend/test/studentProfileContacts.test.js`. Draft Preservation, If-Match/Profile Revision, late edits, network/409 handling และ Validation อื่นใช้เดิม. ไม่เปลี่ยน UI/Layout/ตัวเลือก Prefix/Backend/Schema/Auth/RBAC.
+
+**Focused tests ที่รันจริง:** จาก `frontend/` ใช้ `node test/studentProfileContacts.test.js` — **79/79 ผ่าน**. Harness ใช้ Workspace Source จริงกับ DOM/API substitutes และ Backend pure normalizer; ครอบคลุม manual gender ทั้งสองทิศทาง, Prefix mapping เดิม, Save All บน/ล่าง, fresh Workspace read-back, English mirror/Title และ Draft/Validation regressions. ไม่เรียก PostgreSQL/API จริง ไม่สร้างบัญชีหรือไฟล์ข้อมูล.
+
+**Remaining Issues / NEXT TASK:** รอผู้ใช้ตรวจ Browser ด้วยบัญชีเดิม: เปลี่ยนเฉพาะ Gender → Save → Reload แล้ว Prefix/Gender/English Gender/English Title คงค่าถูกต้อง และเปลี่ยน Prefix แล้วยังปรับเพศเดิม. รอบนี้ไม่รัน Build/Browser/live persistence หรือ NLP/Backend ทั้งชุด; ผล Harness ไม่ใช่ Full System หรือ Manual Acceptance. **Pending Decisions:** ไม่มีเพิ่มสำหรับงานนี้; ขอบเขต Public Search ที่ยังรอตัดสินใจด้านล่างคงเดิม.
+
+## Previous HTML / IT Dropdown Verification — 13 พฤศจิกายน 2026
+
+แก้ `frontend/src/student_coop/student_coop.html:741` เพียงบรรทัดเดียว: `</option value="information_technology">` → `</option><option value="information_technology">`. HTML เดิมใช้ closing tag แทน opening option ทำให้ parse5 เตือนและหมวด IT ไม่มี option ที่ถูกต้อง. รักษา `jobBrowserForm`, `name="category"`, values/ข้อความ/ลำดับเดิมและ Event Bindings ทั้งหมด; ไม่แก้ CSS/JavaScript/Backend/NLP/Database หรือ Vite config.
+
+**Dropdown นี้เป็นหมวดหมู่งาน ไม่ใช่สาขานักศึกษา IT/INE:** ค่า IT คือ `information_technology` / “เทคโนโลยีสารสนเทศ”. ตัวเลือกกำหนดใน HTML ไม่ได้โหลดจาก Academic Catalog; ครบ6ค่า `""`, `information_technology`, `engineering`, `design`, `business`, `other`. ไม่มี selected attribute จึงใช้ตัวแรก “ทุกหมวดหมู่” เป็นค่าเริ่มต้น. ผลประกาศจึงค่อยโหลดผ่าน API หลัง Submit.
+
+การเปลี่ยนตัวเลือกยังคงค่าใน Form; เมื่อกดค้นหา `loadJobBrowser(1)` อ่าน FormData → `getPublishedJobs` → `GET /api/job-matches/me/jobs?category=information_technology` พร้อม q/province/page. Controller ยังคง allowlist/400สำหรับค่าปลอม, published/expiry filters และ paginationเดิม. Job category ไม่ถูกแปลงจาก major และใช้ร่วมกันได้สำหรับ Student IT/INE; ไม่มีการเพิ่ม INE เป็น job category หรือแก้รายวิชา/เกณฑ์สหกิจ.
+
+| Focused verification รอบ HTML fix | Actual result | ขอบเขตหลักฐาน |
+|---|---|---|
+| HTML option/value/default + Dropdown data flow | **7/7 PASS** | ตัวตรวจชั่วคราวในmemoryใช้HTMLและSourceจริงของloadJobBrowser/APIadapter/listPublishedJobs; DOM/FormData/Modelsเป็นsubstitutes ไม่เรียกDatabaseหรือAPIจริง |
+| Regression cases | PASS | IT/INEส่งITcategoryเดิม, Submitกลับpage1, ทุกหมวดค่าเดิม, failureรักษาตัวเลือก/Retry/ปล่อยbusy, incomplete response, forgedcategoryถูกปฏิเสธก่อนquery |
+| Native Vite build / HTML parser | **PASS:191modules/73assets, warnings0/HTMLwarnings0** | configLoader native + write:false/emptyOutDir:false; ไม่เขียนหรือทับdistเดิม ไม่แก้configถาวร |
+| Real Browser / signed-in account / live DB filtering | **NOT TESTED** | ผลข้างต้นไม่ใช่Browser rendering/ManualAcceptanceหรือFullSystemPASS; ไม่รันBackend/NLPทั้งชุดซ้ำ |
+
+การทดสอบไม่ได้สร้างไฟล์ใหม่; ตัวตรวจชั่วคราวรอบแรกติดPowerShell→Node encodingก่อนรันtests และแก้เฉพาะUTF-8ของshell processจึงรัน7casesได้ครบ ไม่แก้Environment files/OS settings. ผลNLP11/Frontend8ในหัวข้อก่อนหน้าเป็นผลคนละรอบ ไม่รวมเป็นผลใหม่.
+
+**Public search proposal:** Referencesเดิม3ตำแหน่งยังอยู่และยังไม่สร้างหน้า. อ่านScope Traceability/Feature Matrix/GAP reportวันที่10ตุลาคมกับMockupในindex.html/index.jsและBackendปัจจุบันแล้ว; ไม่พบต้นฉบับทก.01ในRepository และTraceabilityระบุOFFICIAL SOURCE UNAVAILABLE จึงเป็นข้อเสนอชั่วคราว ไม่ใช่Official Requirementที่รับรองแล้ว. รายละเอียดfilter/ข้อมูลที่Backendมี/APIที่ใช้ซ้ำได้/สิ่งที่ยังต้องตัดสินใจอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). Protected Student API ใช้เป็นanonymous public endpointตรงๆไม่ได้และไม่เปลี่ยนRBACในงานนี้.
+
+**UPDATED FILES:** รอบนี้แก้เฉพาะstudent_coop.html, README.md, HANDOFF_fitm-intern.md; ไม่เพิ่ม/ลบไฟล์และรักษาBaseline4M/1Uจากงานก่อน → หลัง5M/1U. ไม่สร้างสองprivatefolders/Backup/Restore/บัญชี ไม่Commit/Push. **Remaining Issues / Pending Decisions:** publicsearchต้องยืนยันoriginalscope/publicfields/filtercontracts; Browser/real-account acceptanceยังรอผู้ใช้ และDocker/pgAdminlimitsเดิมไม่ตรวจซ้ำ. **NEXT TASK:** ผู้ใช้ตรวจDropdownจริงในStudentIT/INE; กำหนดขอบเขตpublicsearchก่อนมอบหมายพัฒนา โดยไม่เริ่มหน้า/APIใหม่เอง.
+
+## Previous Confirmed Issue Fixes — 13 พฤศจิกายน 2026 ก่อนแก้ HTML
+
+**FOCUSED FIXES VERIFIED — ไม่ใช่ Full System PASS.** งานนี้แก้เฉพาะ legacy NLP empty vocabulary และ Frontend test harness; ตรวจ Missing Feature/Build/Docker/pgAdmin ตามคำสั่งผู้ใช้. ผล Full System Verification ก่อนแก้ไขอยู่หัวข้อถัดไปและคงเป็นประวัติ แยกจากผลรอบนี้. `.local-db-backups/` และ `.local-dev-accounts/` ยังไม่มีและไม่ได้สร้างกลับ.
+
+| Issue | Root Cause | Fix / disposition | Actual focused result | Status |
+|---|---|---|---|---|
+| `/api/v1/resume-match` HTTP500 | TF-IDF ยก ValueError เมื่อ preprocessing ลบคำหมดทั้ง corpus | `app/services/matching_service.py` จับเฉพาะ ValueError ที่มี empty vocabulary แล้วให้คะแนน0ต่อjobตามแนวทางเดิมของ job_matching_service; ValueError อื่นยังส่งต่อ | Live Local NLP HTTP tests11/11ผ่าน รวมข้อความปกติ/ว่าง/whitespace/stopwords/punctuation/ไทย/อังกฤษ/ผสม/no jobs และ canonical job-matching regression | FIXED |
+| Company-selection harness | Extract เฉพาะ applyCoopCompany ทำให้ helper จริงและ coopRequestSubmitting ไม่อยู่ใน harness scope | `frontend/test/coopRequestReadiness.test.js` extract ตั้งแต่ syncCoopCompanyFieldOwnership และเตรียม state; ตรวจ readOnly/disabled/preserveJob/clearJob/submitting ด้วย Source functions จริง | Readiness4/4 + Academic regression4/4 ผ่าน | FIXED; production JS ไม่เปลี่ยน |
+| search_company.html 3 references | ไม่มีหน้าค้นหาสาธารณะใน HTML/Vite entries; homepage searchJobs และ Apply Filter ยังเป็น mockup | ไม่เปลี่ยนลิงก์เป็น placeholder/home redirect และไม่ชี้ไป Student-only dashboard ที่เปลี่ยน audience | Source: index.html:41,125; recruit_student.html:26; index.js:101. ลิงก์เดิมยังค้าง | MISSING FEATURE |
+| Frontend Build | Previous default bundled loader พบ spawn EPERM/native dependency bundling errors; host Node24.11.1 รองรับ Vite8.2.2 และ Tailwind4.3.3/native package มีจริง | ใช้ supported configLoader native ผ่าน Vite API แบบ write:false โดยไม่แก้ config/dependencies/security | Build exit0,191modules,73outputassetsในmemory; มี HTML warning1จุด | PASS WITH WARNING; default loader ไม่ได้รันซ้ำ |
+| Docker API | Named-pipe permission denied | ไม่เปลี่ยนสิทธิ์/ไม่ข้าม policy; Compose config --quiet ผ่าน | docker compose ps ยังถูกปฏิเสธสิทธิ์ | BLOCKED |
+| pgAdmin/login401 | เป็น authentication response; ยังไม่ยืนยัน login contract/session ของ installed image | ไม่จัดเป็น Source Bug/ไม่เปลี่ยน credentials | GET / →302 /browser/; /misc/ping →200; /login →401JSON จาก gunicorn | REACHABLE; authenticated UI NOT TESTED |
+
+NLP fix ไม่เปลี่ยน vectorizer/tokenization/TF-IDF/cosine algorithm, threshold, top_k, sorting, score rounding หรือ response schema. Default threshold เดิมกรองคะแนนศูนย์ออกจึงคืน `{"matches":[]}` เมื่อไม่มี vocabulary. `similarity.py` และ `job_matching_service.py` อ่านประกอบแต่ไม่แก้ เพื่อคงพฤติกรรม callers อื่นและ canonical matching เดิม.
+
+Public company-search **ยังไม่มีปลายทางที่ใช้แทนได้จริง**. การค้นหาที่มี Source ใช้งานอยู่เป็น Student job browser ภายใน `student_coop.html` → `getPublishedJobs` → protected `GET /api/job-matches/me/jobs`; ไม่ใช่หน้าสาธารณะสำหรับผู้ใช้ Homepage/Company. แนวทางงานแยก:กำหนด public audience/ข้อมูลที่เผยแพร่/filter/pagination/RBAC contract ก่อน แล้วใช้โครงสร้างประกาศเดิมและเพิ่ม Vite entry เฉพาะเมื่อได้รับงานพัฒนาหน้าจริง; ไม่เปิด protected API เป็น public เอง. จึงคง HTML/Vite config/UI เดิมทั้งหมดในงานนี้.
+
+**Build warning ที่พบใหม่:** `frontend/src/student_coop/student_coop.html:741` มี `</option value="information_technology">` แทนการปิด option แล้วเปิด option ใหม่ ทำให้ parse5 แจ้ง `end-tag-with-attributes`. Build ยังสำเร็จ แต่ควรแก้ markup หนึ่งจุดและตรวจ IT dropdown ในงานถัดไป. ไม่รวมเป็นเหตุของ EPERM และไม่ได้แก้ markup ในงานแก้ harness นี้.
+
+### Focused Testing รอบแก้ไข
+
+ผู้ใช้อนุญาตเฉพาะ Focused Tests รอบนี้; ไม่ใช้สิทธิ์รอบ Full Verification แทนงานใหม่. Tests รวม **19 PASS / 0 FAIL**: Frontend8 + Live NLP11. Python AST4filesและV8 JS parse3filesผ่าน; ไม่ใช่ Browser rendering/Full Regression/Provider E2E. ไม่ทดสอบหรือเปลี่ยน Development DB/Accounts/Schema/Volumes.
+
+ชุดทดสอบที่รันจริง (Frontend ใช้ cwd frontend; ด้านล่างแสดง path สำหรับ Repository root):
+
+```powershell
+node frontend/test/coopRequestReadiness.test.js
+node frontend/test/coopAcademic.test.js
+python -B nlp-service/tests/test_resume_matching.py
+```
+
+NLP test ใหม่ใช้ unittest/urllib จาก Python standard library และ synthetic HTTP bodies ไป `127.0.0.1:8000` เท่านั้น ต้องมี Local NLP service เปิดอยู่แล้ว. ไม่มีการติดตั้ง dependencies/เริ่ม service/สร้างไฟล์ข้อมูล/เชื่อม DB. HTTP contracts ทดสอบกับ service ที่ตอบจริง ไม่ใช้ mocks; host Python ไม่ต้องติดตั้ง FastAPI/scikit-learn สำหรับ test client นี้. ไม่ถือผลนี้เป็น FAQ/PDF/OCR acceptance.
+
+คำสั่ง build ที่รันจริงจาก `frontend/` ใช้ dependency ที่ติดตั้งแล้วและไม่เขียน/ล้าง `frontend/dist`:
+
+```powershell
+@'
+import { build } from 'vite';
+await build({configLoader:'native',build:{write:false,emptyOutDir:false}});
+'@ | node --input-type=module
+```
+
+`configLoader:native` เป็น option ของ Vite ไม่ใช่การเปลี่ยนเครื่องหรือข้าม security policy. ไม่ monkey-patch child processes, ไม่เพิ่ม permissions/dependencies และไม่แก้ build config เพื่อซ่อน errors. ผลเดิมของ bundled/runner loadersยังเป็นประวัติ ไม่ใช่ผลของ native build รอบนี้.
+
+**UPDATED FILES:** แก้ `nlp-service/app/services/matching_service.py`, `frontend/test/coopRequestReadiness.test.js`, `README.md`, `HANDOFF_fitm-intern.md`; เพิ่ม test fileเดียว `nlp-service/tests/test_resume_matching.py`. รักษา baseline README/Handoffที่Modifiedอยู่แล้ว2ไฟล์. ไม่แก้ productionFrontendJS/HTML/ViteConfig/Auth/RBAC/Environment/Database/Volumes ไม่Backup/Restore/Seed/สร้างบัญชี/Commit/Push.
+
+**REMAINING ISSUES / PENDING DECISIONS:** Public company-search เป็น Missing Featureตามหลักฐาน; ต้องกำหนดขอบเขตหน้า/APIก่อนพัฒนา. HTML option warningยังค้าง; Docker permissionและpgAdminauthenticated UIยังไม่ยืนยัน. ไม่ต้องตัดสินใจ Empty Vocabulary เพิ่ม:ใช้zero-score/finalfilterตามcontractเดิมแล้ว. Browser/real-account workflows/SMTP/Provider/PDF/OCR/production readinessยังไม่ได้ตรวจรอบนี้.
+
+**NEXT TASK:** แก้ HTML option typoและตรวจITdropdownในขอบเขตแยก; พัฒนา public company-searchเมื่อได้รับrequirementชัดเจน; ตรวจDocker/pgAdminในenvironmentที่เข้าถึงได้ตามสิทธิ์. หยุดงานรอบนี้หลังFocusedFixesและเอกสาร ไม่เริ่มfeatureหรือแก้สิทธิ์เอง.
+
+## Previous Development Verification — 13 พฤศจิกายน 2026 ก่อนแก้ไข
+
+**DEVELOPMENT ONLY / PARTIAL VERIFICATION — ยังไม่ผ่านการตรวจทั้งระบบ.** ผู้ใช้ลบ `.local-db-backups/` และ `.local-dev-accounts/` ออกจาก Local Workspace แล้ว; ตรวจ `Test-Path` รอบนี้ไม่พบทั้งสองโฟลเดอร์. ไม่สร้างกลับ ไม่ Backup/Restore/Seeder/สร้างบัญชี/เปลี่ยนข้อมูลจริง. ผู้ใช้อนุญาต safe static/unit/integration/health/read-only DB checks เฉพาะงานนี้ แทนข้อห้ามทดสอบทั่วไปเฉพาะรอบนี้; Manual Acceptance และงานครั้งถัดไปยังเป็น User-Owned Testing ตาม AGENTS.md.
+
+หัวข้อนี้บันทึกผล Full Verification ก่อนแก้ไข; สถานะหลังแก้ไขดู Current HTML / IT Dropdown Verification และผลแก้NLP/Harnessด้านบน. ผลนี้แทนคำกล่าวเรื่องไฟล์ private ที่ยังเก็บอยู่/เปิด credential viewer ได้/จำนวนตาราง/ผล smoke ในหัวข้อที่เก่ากว่า. ประวัติเก็บไว้ตามวันที่ ไม่ใช่หลักฐานว่า archive, vault, receipts หรือ restore databases เดิมยังมีอยู่. คำสั่ง migration/runner ที่ถูกลบในส่วน Historical Project Documentation ไม่ใช่คำสั่งใช้งานปัจจุบัน.
+
+### Architecture / Roles / API ที่มีใน Source
+
+```text
+Browser → Vite multipage / Axios → Express API → Sequelize Models → PostgreSQL 16
+                                            → Private Storage (intern_storage)
+                                            → FastAPI NLP / PDF / OCR
+Developer Console บน host แยกจาก Application Super Admin
+```
+
+- Frontend: `frontend/vite.config.js`, HTML/CSS/JavaScript, shared feedback/session components. API base คือ `VITE_API_URL`; fallback `http://localhost:5000`.
+- Backend: `backend/src/app.js`; startup โหลด Models/Associations และ authenticate ฐานข้อมูล ไม่มี automatic sync/alter/seed. Models + `models/schemaIntegrity.js` + `db/postgresIntegrity.js` เป็น schema contract; ไม่มี migration runner ปัจจุบัน.
+- Login หลัก `/login.html` → `POST /api/auth/unified-login`; Backend ระบุ Student/Teacher/Head/Staff และ Super Admin context จาก actor จริง. Head ใช้ Teacher/DB flag/department scope; JWT signature/live actor/RBAC ตรวจที่ Backend. Frontend decoding ไม่ใช่การให้สิทธิ์. Google อยู่เหนือ Email/Password และไม่มี Role Selector.
+- API families: `/api/auth`, `/api/student-profile`, `/api/teachers` (รวม dashboard/project-documents/profile image), `/api/department-head`, `/api/staff`, `/api/admin`, `/api/coop-requests`, `/api/student-coop`, `/api/coop-topic-exams`, `/api/internship-logs`, `/api/supervision`, `/api/coop-activities`, `/api/mentors`, `/api/mentor-verification`, `/api/job-submissions`, `/api/job-matches`. ดู routes/controller จริงสำหรับ method/payload; ไม่ใช่ทุก endpoint เปิด anonymous.
+- Workflow เดิม: Student → `advisor_review` → Class Advisor → `department_head_review` → Head → `approved`; Staff จัดการเอกสารตาม scope เดิม. Approval ไม่ใช่ Academic Certification; Project Advisor และ Mentor capabilities แยกกัน.
+- NLP: Python 3.11 image / FastAPI / Pydantic, TF-IDF + cosine similarity, PyThaiNLP; Chatbot train Logistic Regression จาก FAQ ตอน lifespan startup ในหน่วยความจำ. PyMuPDF/Pillow/pytesseract/Tesseract tha+eng รองรับ PDF/OCR. ไม่มี LLM ใน implementation นี้.
+- NLP endpoints: `GET /health`; `POST /api/v1/resume-match`, `/api/v1/job-matches`, `/api/v1/chat`, `/api/v1/resume-ocr`, `/api/v1/profile-pdf`. Backend matching client ใช้ `/job-matches` contract `job-matching.v1`; profile PDF/OCR ใช้ private internal processors. Website Chatbot ใน `frontend/src/pages/index.js:569` ยังตอบข้อความระหว่างพัฒนาด้วย timer ไม่ได้ bridge ไป `/chat`.
+
+### Development Setup / Service Connections
+
+ใช้ Environment เดิมของผู้ใช้; รอบนี้ไม่ได้แก้หรือพิมพ์ค่าลับ. Checkout ใหม่ต้องเตรียม Environment จาก `.env.example` ของแต่ละ service โดยไม่ทับไฟล์เดิม. Root `.env` ใช้ `POSTGRES_PASSWORD`; Backend ใช้ `DB_*`, `JWT_SECRET`, origin/storage/SMTP และ NLP configuration; Frontend ใช้ `VITE_API_URL` และ public values เท่านั้น. ห้ามใส่ secret ใน `VITE_*`.
+
+| Compose service | Container / Local port | Mount / dependencies จาก Compose |
+|---|---|---|
+| `postgres` | `intern_postgres` / `127.0.0.1:5432` | PostgreSQL 16; `postgres_data:/var/lib/postgresql/data`; มี healthcheck |
+| `backend` | `intern_backend` / `127.0.0.1:5000` | `./backend:/app`, isolated node_modules, `intern_storage:/app/storage`; รอ PostgreSQL healthy และ NLP started |
+| `frontend` | `intern_frontend` / `127.0.0.1:5173` | `./frontend:/app`, isolated node_modules; depends on Backend |
+| `nlp-service` | `intern_nlp_service` / `127.0.0.1:8000` | `nlp-service/app` และ `data`; Uvicorn reload; ไม่ได้กำหนด healthcheck ใน Compose |
+| `pgadmin` | `intern_pgadmin` / `127.0.0.1:5050` | `pgadmin_data`; รอ PostgreSQL healthy |
+
+Compose ใช้ default network/service DNS: Backend DB host `postgres`, NLP base `http://nlp-service:8000`. บน host ใช้ Local mapped ports; matching/profile PDF ต้องตั้ง `NLP_SERVICE_BASE_URL` ให้เหมาะกับตำแหน่งรัน. OCR client มี fallback `http://localhost:8000` ต่างจาก matching fallback จึงควรกำหนด NLP base ให้ชัดเจน. ไม่แก้ configuration ในงานนี้.
+
+คำสั่งเริ่ม Development ด้านล่างเป็นคู่มือให้เจ้าของเครื่องใช้เมื่อพร้อม ไม่ใช่คำสั่งที่รันในงานตรวจนี้; ไม่ initialize ฐานข้อมูลหรือสร้างบัญชีให้อัตโนมัติ:
+
+```powershell
+# Repository root; ใช้ Environment/ฐานข้อมูลเดิม ไม่ reset/seed
+docker compose config --quiet
+docker compose up -d postgres nlp-service pgadmin backend frontend
+
+# ทางเลือกบน host เมื่อมี dependencies และ Environment พร้อมแล้ว
+npm.cmd --prefix backend run dev
+npm.cmd --prefix frontend run dev
+# NLP: เข้า nlp-service และใช้ Python environment ที่ติดตั้ง requirements.txt แล้ว
+# python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+ห้ามรัน host services ชนกับ ports ของ Compose. Host Node ที่ตรวจคือ 24.11.1, Python 3.14.0; Python ตัวนี้ไม่มี NLP requirements ติดตั้ง จึงยังใช้เริ่ม NLP บน host ไม่ได้. ไม่ติดตั้ง dependencies ในงานนี้. Dockerfiles ประกาศ Backend Node20 / Frontend Node22 / NLP Python3.11; ไม่ยืนยัน runtime versions ภายใน containers เพราะ Docker API ถูกปฏิเสธสิทธิ์.
+
+### ผลตรวจจริงรอบ 13 พฤศจิกายน 2026
+
+| Component | Static Check | Runtime | Integration | Issues / limits |
+|---|---|---|---|---|
+| Frontend | JS parser ผ่าน; literal relative imports ไม่พบไฟล์ขาด; HTML พบลิงก์ขาด 3 ตำแหน่งไปหน้าเดียว | HTML หลัก 9 URLs ตอบ 200; ไม่ใช่ Browser execution | Unit/DOM substitutes 14 PASS / 1 FAIL | Build BLOCKED; Browser/responsive/session จริง NOT TESTED |
+| Backend | โหลด routes/models/associations ใน isolated harness ผ่าน | `/` และ `/health/db` 200; safe suites 33 PASS | Read-only DB และ host-side Backend NLP client ผ่าน | Startup ของ process/container ใหม่และ authenticated business workflows NOT TESTED |
+| NLP Service | Python AST 32 files ผ่าน; อ่าน schemas/services/handlers | health/resume-match/chat และ invalid-payload probes ทำงานตามกรณีที่ระบุ | 7 synthetic contract probes: 6 PASS / 1 FAIL รวม actual Backend client จาก host | Legacy `/resume-match` คืน 500 เมื่อไม่มี vocabulary; PDF/OCR execution NOT TESTED |
+| PostgreSQL | โหลด 58 Models/Associations; SELECT metadata พบ 58 public tables และไม่ขาด Model columns | PostgreSQL 16.15; `BEGIN READ ONLY` ยืนยัน read-only แล้ว ROLLBACK | Backend health/db และ direct Local connectivity ผ่าน | ไม่ตรวจ account rows; ไม่รับรองชนิด/constraints/triggers/transaction behavior ทั้งหมด |
+| Docker Compose | `docker compose config --quiet` exit 0; อ่าน ports/mounts/startup dependencies | `docker compose ps` BLOCKED: named-pipe permission denied | Internal container DNS/network/mount state ไม่ได้ยืนยัน | pgAdmin Local `/login` คืน 401 JSON จึงยังไม่ยืนยันว่า UI ใช้งานได้ |
+| Authentication | Unified roles/ambiguity, JWT/live actor/admin guards ผ่านใน mocks; Google อยู่เหนือ form | Anonymous GET ของ Student/Teacher/Head/Staff/Admin `/me` ทั้ง 5 คืน 401; Google config 200 enabled=true/onboardingEnabled=true | ไม่มี real-account login/provider E2E | ไม่เปลี่ยน flags; Google challenge/login และ Admin login อาจบันทึก nonce/audit จึงไม่รัน |
+
+รายละเอียดขอบเขตหลักฐาน:
+
+- V8 parse แบบไม่ execute: **352 JS/CJS/MJS files** (Backend src/tests/scripts, Frontend src/tests/config, Developer Console src); ESM110/CJS242. ตรวจ literal relative JS imports/requires **680 references** ไม่พบ unresolved; ไม่ใช่หลักฐานว่า dynamic paths/ทุก external dependency/ทุก branch ทำงานครบ. `node --check` แบบ child process ถูก `spawn EPERM` จึงใช้ parser ใน process โดยไม่โหลด application.
+- HTML literal links/assets: **17 files / 134 references** พบ missing `search_company.html` ที่ `frontend/index.html:41,125` และ `frontend/src/recruit_student/recruit_student.html:26`. Live URL คืน 200 แต่เนื้อหาเหมือน `/index.html` ทุก byteจาก Vite fallback; ไม่ใช่หน้าค้นหาที่มีจริง.
+- Existing safe tests รวม **48 tests: 47 PASS / 1 FAIL**. Backend33/33; Frontend14/15. อ่าน Source/side effects ก่อนรัน; mocks/SQL guards ไม่เขียน Development Database. จำนวนนี้ไม่ใช่ Full Regression/Manual Acceptance.
+- Frontend FAIL: `frontend/test/coopRequestReadiness.test.js:51` ใช้ `new Function` ตัดเฉพาะ `applyCoopCompany` แต่ไม่เตรียม `syncCoopCompanyFieldOwnership` จึงเกิด ReferenceError. Helper มีจริงใน `student_coop.js:3168` และถูกเรียกที่3196; หลักฐานชี้ test harness ไม่ทัน Source ไม่ใช่การขาด helper ในหน้าเว็บ. ไม่แก้ tests/Source ในงานนี้.
+- NLP probes: resume-match valid200/invalid422, job-matches invalid422, chat valid200/invalid422 และ actual `nlpMatching.client.js` จาก host ไป live `/job-matches` ผ่าน schema/id/rank/score assertions. กรณี resume-match ข้อความ `the and` กับประกาศที่เหลือแต่ stopwords คืน **500**: `matching_service.py:16` เรียก `similarity.py:19` โดยไม่มี empty-vocabulary fallback; canonical `/job-matches` มี fallback ใน Source แยกต่างหาก. Chat200 ยืนยันรูปแบบ response ไม่ใช่ FAQ accuracy.
+- Frontend build ใช้ Vite build API ของ dependency ที่มีอยู่ ตั้ง `write:false, emptyOutDir:false` เพื่อไม่ทับ `frontend/dist` เดิม. Default config loader ติด `spawn EPERM` และ Tailwind native `.node` dependency ถูกอ่านเป็น UTF-8; การลอง configLoader runner แยกก่อนหน้านั้นติด `require is not defined`. ยังไม่มี build สำเร็จ ไม่เปลี่ยน loader/config/dependencies เพื่อให้ผ่าน.
+- Browser smoke/responsive/keyboard/preview/download จริงไม่รัน: subprocess ถูกจำกัด และการเปิด Login แบบ execute JS เมื่อ Google enabled อาจสร้าง challenge ใน DB. ไม่สร้าง temporary browser profile หรือข้อมูลบัญชี. SQL/Development integration suites ที่อาจเขียนข้อมูลถูกข้าม **NOT TESTED** แม้มี rollback; ไม่มีการเปิด opt-in flags.
+
+### Testing Commands ปัจจุบัน
+
+ชุดทดสอบต่อไปนี้รันจริงในรอบนี้ โดยใช้ working directory ของ Backend/Frontend ตามชุดและแต่ละไฟล์ใช้ process แยก; ตัวอย่างด้านล่างเขียน path สำหรับเรียกจาก Repository root (ไม่ใช้ glob รวม SQL suites):
+
+```powershell
+node backend/test/securityWaveA.test.js
+node backend/test/coopAcademic.test.js
+node backend/test/coopTopicExams.test.js
+node backend/test/mentorVerificationEmail.test.js
+node frontend/test/coopAcademic.test.js
+node frontend/test/coopRequestReadiness.test.js
+node frontend/test/mentorVerification.test.js
+node --test-name-pattern '^(permission,|existing four roles|all admin endpoints|signed admin JWT)' backend/src/services/superAdmin.test.js
+node --test-name-pattern '^membership evidence' backend/src/services/teacherAdminGrant.test.js
+```
+
+Read-only smoke ที่ใช้ได้จริง: `GET http://127.0.0.1:5000/`, `/health/db`, `/api/auth/google/config`; NLP `GET http://127.0.0.1:8000/health`. การรันซ้ำครั้งถัดไปต้องได้รับสิทธิ์ตาม AGENTS.md ของงานนั้น. Frontend build script ที่มีจริงคือ `npm.cmd --prefix frontend run build` แต่ยังไม่รับรองว่า build ผ่านบนเครื่องมือที่จำกัดสิทธิ์นี้; รอบนี้ใช้ API แบบไม่เขียน output ตามรายละเอียดข้างต้น. ไม่มี `npm test`, migration scripts หรือ isolated runner เก่าตามประวัติให้ถือเป็นคำสั่งปัจจุบัน. `nlp-service/tests/` ไม่มี test source ปัจจุบัน และ pytest/httpx ไม่ได้ประกาศใน requirements; ผล pytest เก่าไม่ใช่ผลรอบนี้.
+
+### ผลกระทบของ Local Folders ที่ลบแล้ว
+
+ไม่พบ runtime dependency จาก Frontend/Backend startup/NLP มายังสองโฟลเดอร์. PostgreSQL และ private storage อยู่คนละ named volume ตาม Compose; credential hashes/roles เป็นข้อมูล DB ไม่ใช่ vault บน host. ไม่ได้ยืนยันรหัสผ่านของบัญชีใดในงานนี้.
+
+| Script / reference | หน้าที่และ path ที่พึ่งพา | ความจำเป็นต่อเว็บ / ผลเมื่อไฟล์หาย |
+|---|---|---|
+| `backend/src/seeders/prepareDevelopmentAccounts.ps1:6,7,31` + `developmentCredentialVault.ps1:3,34`; JS wrapper `prepareDevelopmentAccounts.js:5` | Viewer/Verify/Fixtures อ่าน DPAPI vault; Apply สามารถสร้าง vault ใหม่ | Development only; viewer/verification เดิมใช้ไม่ได้. **ห้ามรัน Apply/Protect เพื่อสร้างกลับ** |
+| `backend/src/seeders/teacherDashboardDemoSafety.js:29,179` ผ่าน `teacherDashboardDemo.js:211` | สร้างชื่อ receipt แบบ database+teacher แล้วอ่านเพื่อ Verify/Apply | Development only; Verify ขาด receipt; Apply อาจสร้าง directory/pending และเปลี่ยน DB จึงไม่รัน |
+| `backend/src/seeders/teacherDashboardDemoCompletion.js:199` | ใช้ receiptPath ของ Safety และอ่าน original receipt | Development only; completion เดิมขาดหลักฐานและใช้ต่อไม่ได้ |
+| `backend/src/seeders/teacherSearchDemo.js:12,243,253` | อ่าน Teacher Search receipt; Verify บังคับ COMMITTED receipt | Development only; Verify ใช้ไม่ได้; ไม่ replay/recreate fixture |
+| `backend/scripts/prepareSyntheticCleanup.cjs:79` | enumerate receipt names จาก directory | Historical maintenance; อ่าน directory ที่หายไม่สำเร็จ; ไม่เกี่ยวกับ API startup |
+| `backend/scripts/analyzeSyntheticCleanup.cjs:56` | อ่าน receipt ตาม inventory และเทียบ digest | Historical maintenance; ขาด receipt evidence; ไม่รัน script เพราะมี artifact/storage backup side effects |
+| `backend/src/db/prepareSuperAdmin.ps1:24` + `prepareSuperAdminSchema.js:25` และ `prepareTeacherAdminSchema.js:6` | สร้าง/ตรวจ fresh encrypted backup proof ก่อน DDL | Maintenance only; `npm run admin:prepare` สามารถสร้างโฟลเดอร์กลับ จึงห้ามรันในขอบเขตนี้. Runtime Super Admin ไม่อ่าน archive เก่า |
+| `docs/testing/COOP_REQUEST_MANUAL_TEST_CHECKLIST.md:9,14` และ README ประวัติ | ลิงก์บัญชี private/คำสั่ง viewer และ archive paths | Checklist59กรณียังอยู่ แต่ prerequisites/private roster/viewer เหล่านี้ใช้ไม่ได้แล้ว; ไม่แก้ checklist นอกสองไฟล์ที่อนุญาต |
+
+Scripts/receipts/keys/Chrome profiles/builds ที่เคยอยู่ภายใน `.local-db-backups/` หายไปพร้อมโฟลเดอร์ตามคำสั่งผู้ใช้. ไม่สามารถใช้เป็น local recovery หรือเรียก private harness เดิมได้อีก; ไม่สร้างทดแทน. การมี script ใน Source ไม่ได้หมายความว่าปัจจุบันยังถูกเรียกอัตโนมัติ. Ignore rules เดิมคงไว้; ไม่เปลี่ยน `.gitignore`.
+
+### Remaining Issues / Pending Decisions / NEXT TASK
+
+1. แก้ test harness ของ company selection ให้เตรียม helper/dependencies ปัจจุบัน แล้วรันทดสอบเฉพาะงานที่อนุญาต.
+2. กำหนดและแก้พฤติกรรม empty vocabulary ของ legacy `/resume-match` ให้คืนผลว่างหรือ validation error ตาม contract แทน500; canonical job matching กับ legacy endpoint เป็นคนละเส้นทาง.
+3. ตัดสินใจปลายทางลิงก์ `search_company.html` ที่ไม่มีจริง โดยใช้ workflow ที่มีอยู่หรือมอบหมายหน้าใหม่อย่างชัดเจน; ไม่เพิ่ม feature ในงานตรวจนี้.
+4. Build/Browser/pgAdmin/container network และ authenticated business flows รวม Upload/Preview/Download/PDF/OCR/Google provider/SMTP/concurrency ยังต้องตรวจใน environment ที่มีสิทธิ์และขอบเขต non-mutating เหมาะสม. ไม่ถือ HTTP200 ของ HTML เป็น UI acceptance.
+5. Website Chatbot bridge ยังไม่พัฒนา; การเชื่อมเป็นงาน feature แยก ไม่รวมในการแก้ error ของ NLP. ไม่มี Pending Decision ให้กู้ vault/backup: ผู้ใช้สั่งลบทิ้งและห้ามสร้างกลับแล้ว.
+
+**NEXT TASK:** มอบหมายแก้ confirmed issues ข้างต้นเป็นขอบเขตถัดไป; รอบนี้หยุดที่ verification + documentation. ไม่แก้ Source/RBAC/Schema/Environment/Volumes ไม่สร้างบัญชีหรือเปิด flags ไม่ Commit/Push. ดูรายละเอียดการตรวจรอบนี้ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
 ## Teacher/Head Profile — 12 พฤศจิกายน 2026
 
 หน้า Account แก้ชื่อไทย/อังกฤษ, `academic_title` และ `major` จาก Catalog จริงผ่าน `PATCH /api/teachers/me` หรือ `/api/department-head/me`; ตัวเลือกอ่านจาก `GET .../me/profile-options`. ภาควิชายังคงเดิม เพราะมีผลต่อ Authorization Scope และยังไม่มีนโยบาย/Flow อนุมัติการย้ายภาควิชา. Protected Fields และ Google Linking เดิมไม่เปลี่ยน.
@@ -176,7 +438,9 @@ Source ปรับส่วนจัดส่งหนังสือให้�
 
 **NEXT TASK:** `Await user-reported results from the 59-case Manual Acceptance Checklist and fix confirmed issues only.`
 
-## เตรียม User Manual Acceptance — รายงานวันที่ 7 พฤศจิกายน 2026
+## ประวัติ — เตรียม User Manual Acceptance — รายงานวันที่ 7 พฤศจิกายน 2026
+
+**สถานะ superseded วันที่13พฤศจิกายน2026:** Private roster/DPAPI viewer และ backup paths ที่กล่าวถึงในหัวข้อนี้ถูกลบแล้ว. ไม่ใช้คำแนะนำเปิด viewer/เรียก private harness เดิมเป็น prerequisites ปัจจุบัน และห้ามสร้างกลับในงานตรวจนี้. ผลวันที่7–8พฤศจิกายนด้านล่างคงเป็นประวัติ ไม่ใช่ผลตรวจซ้ำ.
 
 เตรียมวันที่ **7 พฤศจิกายน 2026 (Asia/Bangkok)**: Student→Class Advisor→Department Head→Staff Catalog และ Academic Eligibility พร้อมตรวจรับใน Developmentตามรายงานเดิม ไม่ได้รันยืนยันใหม่วันที่8พฤศจิกายน. เปิด [Checklist ภาษาไทย59กรณี](docs/testing/COOP_REQUEST_MANUAL_TEST_CHECKLIST.md) ซึ่งมีขั้นตอน/Expected/ช่องActualและPASS/FAIL/BLOCKED/Screenshot, IT+INE และDesktop/Mobile. **Manual Acceptance: PENDING USER RESULTS; Google INE Login = USER MANUAL TEST PENDING** ตามคำตอบผู้ใช้ ไม่สร้างบัญชี/Passwordใหม่หรือเปลี่ยนtrack/Googleflags. แก้จำนวนจาก58ในข้อความเดิมให้ตรง23+7+7+14+8 โดยไม่เปลี่ยนChecklist.
 
@@ -948,7 +1212,7 @@ Remember Me ใช้ sessionStorage/localStorage ตามการเลือ
 
 ระบบจัดการสหกิจศึกษาสำหรับ Student `co_op`, อาจารย์/Class Advisor หัวหน้าภาควิชา เจ้าหน้าที่ สถานประกอบการ และพี่เลี้ยง. คำร้องใช้ Student → Class Advisor → Department Head; Project Advisor ต้องยืนยันความสัมพันธ์แยกต่างหาก. Shared Student architecture และประวัติ Internship คงอยู่ โดยการปิดสิทธิ์บังคับจาก Backend และ Dashboard admission.
 
-Declarationsปัจจุบัน: Vite ^8.2.2, Tailwind ^4.3.3, JavaScript multipage, Axios ^1.19.0; Express ^5.2.1, Sequelize ^6.37.8, pg/JWT/bcrypt. Dockerfilesใช้ Backend Node20 และ Frontend Node22; ไม่ query runtime patch versions รอบนี้. PostgreSQLตรวจจริง16.15. NLPใช้ Python3.11 image, FastAPI0.115.0, scikit-learn1.6.1, PyThaiNLP5.0.4, NumPy2.2.6, PyMuPDF1.24.14, pytesseract0.3.13, Pillow11.0.0 และ Tesseract tha+eng. เป็น classical NLPตามรายละเอียด Auditด้านบน; ไม่พบ embedding/LLM. Umzug/pytest/httpxไม่มีใน declarationsปัจจุบัน; package-lock.jsonถูกignoreเดิม จึงไม่รับรอง reproducible dependency resolutionจากSourceอย่างเดียว.
+Declarationsปัจจุบัน: Vite ^8.2.2, Tailwind ^4.3.3, JavaScript multipage, Axios ^1.19.0; Express ^5.2.1, Sequelize ^6.37.8, pg/JWT/bcrypt. Dockerfilesใช้ Backend Node20 และ Frontend Node22; ไม่ query runtime patch versions ภายในcontainersรอบนี้. PostgreSQLตรวจจริง16.15. NLPใช้ Python3.11 image, FastAPI0.115.0, scikit-learn1.6.1, PyThaiNLP5.0.4, NumPy2.2.6, PyMuPDF1.24.14, pytesseract0.3.13, Pillow11.0.0 และ Tesseract tha+eng. เป็น classical NLPตามรายละเอียดด้านบน; ไม่พบ embedding/LLM. Umzug/pytest/httpxไม่มีใน declarationsปัจจุบัน. **แก้ข้อมูลlockวันที่13พฤศจิกายน:** `backend/package-lock.json`ถูกtrackจริงตามexceptionใน.gitignore; Frontend lockยังถูกignore. Dependency compatibility testที่รันรอบนี้ตรวจBackend installed versionsเทียบlockผ่านตามรายการในtest ไม่ใช่การรับรองdependenciesทุกpackage/ทุกplatform.
 
 ```text
 Browser/Vite → Express → Sequelize Models → PostgreSQL 16

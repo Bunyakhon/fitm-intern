@@ -62,9 +62,27 @@ function companyVisibilityWhere(database) {
 
 function decorateCompany(company) {
   const plain = typeof company?.get === "function" ? company.get({ plain: true }) : company;
-  return COMPANY_IDS.includes(plain.id)
-    ? { ...plain, development_data: true, development_label: DEVELOPMENT_LABEL }
-    : plain;
+  return { ...plain, address_provenance: companyAddressProvenance(plain), request_address: companyRequestAddress(plain),
+    ...(COMPANY_IDS.includes(plain.id) ? { development_data: true, development_label: DEVELOPMENT_LABEL } : {}) };
+}
+
+function companyAddressProvenance(company) {
+  const focal = company.id === companyId("focal") && company.name === FOCAL_SOURCE.company_name
+    && !String(company.moo ?? "").trim()
+    && ["address_no", "subdistrict", "district", "province"].every(key => company[key] === FOCAL_SOURCE[key]);
+  return { classification: focal ? "VERIFIED_SOURCE" : COMPANY_IDS.includes(company.id) ? "SYNTHETIC" : "UNVERIFIED",
+    source_url: focal ? FOCAL_SOURCE.company_source_url : null, scope: "company_address_not_hiring_or_email_ownership" };
+}
+
+function companyRequestAddress(company) {
+  const address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
+  const provenance = companyAddressProvenance(company);
+  const label = provenance.classification === "SYNTHETIC" ? DEVELOPMENT_LABEL
+    : provenance.classification === "VERIFIED_SOURCE" ? `ที่อยู่จากแหล่งอ้างอิง ${provenance.source_url} (ไม่ยืนยันการเปิดรับ)`
+    : "ข้อมูลที่อยู่ยังไม่ได้รับการยืนยัน";
+  // Store the evidence available at submission time in the existing TEXT snapshot.
+  // Never derive or rewrite provenance for historical requests on read.
+  return `${label}: ${address || "ยังไม่มีข้อมูล"}`;
 }
 
 function decorateDevelopmentJob(job) {
@@ -96,6 +114,7 @@ function jobDisplayInformation(job, database) {
   const verifiedEmail = !synthetic && company.email_verified_at && typeof company.email === "string"
     ? company.email : null;
   const summary = sourceId ? plain.description?.match(/Skills\/Work summary: ([^\n]+)/)?.[1] : null;
+  const provenance = value => !value ? "MISSING" : focal ? "VERIFIED_SOURCE" : synthetic ? "SYNTHETIC" : "UNVERIFIED";
   return {
     development_data: developmentData,
     development_label: developmentData ? "ชุดข้อมูล Development · ยังไม่ยืนยันการเปิดรับจริง" : null,
@@ -108,6 +127,8 @@ function jobDisplayInformation(job, database) {
     work_schedule: focal?.work_schedule || null,
     work_schedule_synthetic: synthetic,
     contact: { synthetic, samples_visible: showSamples,
+      provenance: { phone: provenance(company.phone), email: provenance(company.email),
+        office_address: provenance(company.address_no), website: focal ? "VERIFIED_SOURCE" : "MISSING" },
       email: focal ? company.email : verifiedEmail || (showSamples ? company.email : null),
       email_verified: Boolean(verifiedEmail), email_source_verified: Boolean(focal),
       phone: focal || showSamples ? company.phone : null,
@@ -124,4 +145,5 @@ function jobDisplayInformation(job, database) {
 module.exports = { COMPANY_KEYS, COMPANY_IDS, JOB_SOURCE_IDS, JOB_IDS, DEVELOPMENT_LABEL,
   companyId, submissionId, jobId, sourceUrl, isDevelopmentDatabase,
   companyVisibilityWhere, decorateCompany, decorateDevelopmentJob, jobDisplayInformation,
+  companyAddressProvenance, companyRequestAddress,
   FOCAL_SOURCE, FOCAL_PROVENANCE_LINE, focalSourceInformation };

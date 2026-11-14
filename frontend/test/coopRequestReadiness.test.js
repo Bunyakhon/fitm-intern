@@ -50,11 +50,26 @@ test('Student detail renders persisted teacher identity/time and full review his
 
 test('selecting a company clears old job context; explicit job-prefill can preserve it', () => {
   const elements = Object.fromEntries(['coopCompanyName', 'coopCompanyProvince', 'coopCompanyAddress'].map(id => [id, { value: '', append() {} }]));
-  const code = section('function applyCoopCompany(', 'function openCoopRequestModal()');
+  const code = section('function syncCoopCompanyFieldOwnership(', 'function openCoopRequestModal()');
   const h = new Function('document', `let selectedCoopJobPostingId='old-job',selectedCoopCompanyId=null,companySearchSequence=0,companyDuplicateSequence=0;
+    let coopRequestSubmitting=false;
     const coopSelectedJobPosting={hidden:false,textContent:'old-job'},coopCompanySearchResults=null,coopCompanyDuplicateMessage=null;
-    ${code};return {applyCoopCompany,job:()=>selectedCoopJobPostingId,banner:coopSelectedJobPosting};
+    ${code};return {applyCoopCompany,job:()=>selectedCoopJobPostingId,banner:coopSelectedJobPosting,
+      setSubmitting(value){coopRequestSubmitting=value;syncCoopCompanyFieldOwnership();}};
   `)({ getElementById: id => elements[id] });
   h.applyCoopCompany({ id: 'company', name: 'Saved', province: 'Province' }, { preserveJob: true }); assert.equal(h.job(), 'old-job');
+  assert.equal(elements.coopCompanyName.readOnly, true); assert.equal(elements.coopCompanyAddress.readOnly, true);
+  assert.equal(elements.coopCompanyProvince.disabled, true);
+  const sourceAddress = 'ที่อยู่จากแหล่งอ้างอิง https://focalsolution.com/ (ไม่ยืนยันการเปิดรับ): Fixture';
+  h.applyCoopCompany({ id: 'source-company', name: 'Sourced', province: 'Province', development_data: true, request_address: sourceAddress });
+  assert.equal(elements.coopCompanyAddress.value, sourceAddress);
+  assert.doesNotMatch(elements.coopCompanyAddress.value, /ข้อมูลจำลอง/);
+  h.setSubmitting(true); h.setSubmitting(false); assert.equal(elements.coopCompanyProvince.disabled, true);
+  h.applyCoopCompany({ id: 'other-company', name: 'Other', province: 'Other Province' });
+  assert.equal(h.job(), null); assert.equal(elements.coopCompanyName.value, 'Other');
   h.applyCoopCompany(null); assert.equal(h.job(), null); assert.equal(h.banner.hidden, true);
+  assert.equal(elements.coopCompanyName.readOnly, false); assert.equal(elements.coopCompanyAddress.readOnly, false);
+  assert.equal(elements.coopCompanyProvince.disabled, false);
+  h.setSubmitting(true); assert.equal(elements.coopCompanyProvince.disabled, true);
+  h.setSubmitting(false); assert.equal(elements.coopCompanyProvince.disabled, false);
 });

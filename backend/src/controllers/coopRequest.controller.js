@@ -19,7 +19,7 @@ const REVIEW_INCLUDE = {model: CoopRequestReview, as: 'reviews', attributes: ['a
   separate: true, order: [['created_at','ASC'],['id','ASC']]};
 const { Op } = require("sequelize");
 const { publishedJobWhere, isPublishedJobAvailable } = require("../services/jobEligibility");
-const { companyVisibilityWhere, decorateCompany } = require("../services/internthDevelopmentData");
+const { companyVisibilityWhere, decorateCompany, companyRequestAddress } = require("../services/internthDevelopmentData");
 const { requireClassAdvisor } = require('../services/coopClassAdvisor.service');
 const { readDepartmentHead } = require('../services/coopDepartmentHead.service');
 const { authorizeActor } = require('../services/unifiedAuth.service');
@@ -133,7 +133,7 @@ function normalizeOptionalText(value, field, maxLength) {
 function normalizeOptionalUuid(value, field) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
-    throw validationError(`${field} must be a valid identifier`);
+    throw Object.assign(validationError(`${field} must be a valid identifier`), { code: "COOP_REFERENCE_INVALID" });
   }
   return value;
 }
@@ -207,7 +207,7 @@ function toErrorResponse(error, res, fallbackMessage) {
   if (error.status === 403 && error.code === 'ACCOUNT_UNAUTHORIZED') return res.status(403).json({ success: false, code: error.code, message: error.message });
   if (error.status === 409 && (error.code?.startsWith('COOP_PREREQUISITE_') || error.code?.startsWith('COOP_ACADEMIC_'))) return res.status(409).json({ success: false, code: error.code, message: error.message });
   if (error.status === 400) {
-    return res.status(400).json({ success: false, message: error.message });
+    return res.status(400).json({ success: false, message: error.message, ...(error.code === "COOP_REFERENCE_INVALID" ? { code: error.code } : {}) });
   }
   if (error.name === "SequelizeValidationError") {
     return res.status(400).json({
@@ -283,24 +283,24 @@ exports.createCoopRequest = async (req, res) => {
 
     let company = null;
     if (payload.company_id) {
-      company = await Company.findByPk(payload.company_id, { transaction });
-      if (!company) { await transaction.rollback(); transaction = null; return res.status(404).json({ success: false, message: "Company was not found" }); }
+      company = await Company.findOne({ where: { [Op.and]: [{ id: payload.company_id }, companyVisibilityWhere(sequelize)] }, transaction, lock: transaction.LOCK.SHARE });
+      if (!company) { await transaction.rollback(); transaction = null; return res.status(404).json({ success: false, code: "COMPANY_UNAVAILABLE", message: "Company is unavailable" }); }
       payload.company_name = company.name;
       payload.company_province = company.province;
-      payload.company_address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
+      payload.company_address = companyRequestAddress(company);
     }
     let jobPosting;
     if (payload.job_posting_id) {
       jobPosting = await JobPosting.findByPk(payload.job_posting_id, { transaction, lock: transaction.LOCK.SHARE });
-      if (!isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
-      if (company && jobPosting.company_id !== company.id) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting does not belong to the selected company" }); }
+      if (!isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, code: "JOB_POSTING_UNAVAILABLE", message: "Job posting is unavailable" }); }
+      if (company && jobPosting.company_id !== company.id) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, code: "JOB_COMPANY_MISMATCH", message: "Job posting does not belong to the selected company" }); }
       if (!company) {
-        company = await Company.findByPk(jobPosting.company_id, { transaction });
-        if (!company) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting company is unavailable" }); }
+        company = await Company.findOne({ where: { [Op.and]: [{ id: jobPosting.company_id }, companyVisibilityWhere(sequelize)] }, transaction, lock: transaction.LOCK.SHARE });
+        if (!company) { await transaction.rollback(); transaction = null; return res.status(404).json({ success: false, code: "COMPANY_UNAVAILABLE", message: "Company is unavailable" }); }
         payload.company_id = company.id;
         payload.company_name = company.name;
         payload.company_province = company.province;
-        payload.company_address = [company.address_no, company.moo, company.subdistrict, company.district, company.province].filter(Boolean).join(" ");
+        payload.company_address = companyRequestAddress(company);
       }
     }
 
@@ -347,7 +347,7 @@ exports.createCoopRequest = async (req, res) => {
     }
 
     // Expiration can pass while waiting for the owner's submission lock.
-    if (jobPosting && !isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, message: "Job posting is unavailable" }); }
+    if (jobPosting && !isPublishedJobAvailable(jobPosting)) { await transaction.rollback(); transaction = null; return res.status(400).json({ success: false, code: "JOB_POSTING_UNAVAILABLE", message: "Job posting is unavailable" }); }
     const request = await CoopRequest.create(
       {
         ...payload,
@@ -460,8 +460,10 @@ exports.checkCompanyDuplicate = async (req, res) => {
 
 exports.getPublishedJobPostingForCoopRequest = async (req, res) => {
   try {
-    const job = await JobPosting.findOne({ where: { id: req.params.id, ...publishedJobWhere() }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
-    if (!job || !job.company) return res.status(404).json({ success: false, message: "Published job posting was not found" });
+    const id = normalizeOptionalUuid(req.params.id, "job_posting_id");
+    if (!id) throw Object.assign(validationError("job_posting_id must be a valid identifier"), { code: "COOP_REFERENCE_INVALID" });
+    const job = await JobPosting.findOne({ where: { id, ...publishedJobWhere() }, attributes: ["id", "title", "company_id"], include: [{ model: Company, as: "company", required: true, where: companyVisibilityWhere(sequelize), attributes: ["id", "name", "province", "address_no", "moo", "subdistrict", "district"] }] });
+    if (!job || !job.company) return res.status(404).json({ success: false, code: "JOB_POSTING_UNAVAILABLE", message: "Published job posting was not found" });
     const plain = job.get({ plain: true });
     return res.json({ success: true, data: { ...plain, company: decorateCompany(plain.company) } });
   } catch (error) { return toErrorResponse(error, res, "Unable to load job posting"); }

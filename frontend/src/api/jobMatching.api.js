@@ -4,8 +4,9 @@ export function getMyJobMatchingSource() {
   return apiRequest("/api/job-matches/me/source", { method: "GET", headers: { "Cache-Control": "no-cache" } });
 }
 
-export function getPublishedJobs({ q = "", category = "", province = "", page = 1 } = {}) {
+export function getPublishedJobs({ q = "", category = "", specialization = "", province = "", page = 1 } = {}) {
   const query = new URLSearchParams({ q, category, province, page: String(page) });
+  if (specialization) query.set("specialization", specialization);
   return apiRequest(`/api/job-matches/me/jobs?${query}`, { method: "GET", headers: { "Cache-Control": "no-cache" } });
 }
 
