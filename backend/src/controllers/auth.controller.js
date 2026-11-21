@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
-const { Student, sequelize } = require("../models");
+const models = require("../models");
+const { Student, sequelize } = models;
+const { assertAccountAccess } = require("../services/adminAccountAccess.service");
 const { applicationSession, authorizeActor } = require("../services/unifiedAuth.service");
 const { studentIdFromEmail } = require("../services/studentIdentity");
 const { MAX_PERSON_NAME_LENGTH, isThaiPersonName } = require("../validators/personName.validator");
@@ -44,7 +46,7 @@ exports.registerStudent = async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
     const studentId = studentIdFromEmail(normalizedEmail);
     if (!studentId) {
-      return res.status(400).json({ success: false, message: "กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @email.kmutnb.ac.th" });
+      return res.status(400).json({ success: false, message: "กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @kmutnb.ac.th หรือโดเมนนักศึกษาเดิมที่ระบบรองรับ" });
     }
 
     // ตรวจอีเมลซ้ำ
@@ -168,6 +170,10 @@ exports.loginStudent = async (req, res) => {
 
     // The live Student row must satisfy the same eligibility as Unified Login.
     authorizeActor(student, "student");
+
+    // New login: check central enablement before issuing a token. Do not pass
+    // an old session's iat; revoked_before must not permanently block login.
+    await assertAccountAccess(models, "student", student.id);
 
     // สร้าง JWT
     const token = jwt.sign(

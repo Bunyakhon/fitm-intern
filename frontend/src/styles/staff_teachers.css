@@ -1,0 +1,37 @@
+/* Scoped to the Staff teacher directory; reuse the existing workspace tokens. */
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-card { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--white); box-shadow: var(--shadow-sm); }
+body[data-workflow-role="department_staff"] #staffTeachers :is(p,small,dt) { color: var(--muted); }
+body[data-workflow-role="department_staff"] #staffTeachers :is(p,small,label,dd) { overflow-wrap: anywhere; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-note { margin-top: 8px; font-size: .9rem; }
+body[data-workflow-role="department_staff"] #staffTeachers small { display: block; margin-top: 6px; font-size: .85rem; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-list { display: grid; gap: 16px; margin-top: 20px; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px 16px; min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card h2 { font-size: 1.1rem; line-height: 1.5; margin: 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card dl { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px 16px; font-size: 1rem; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card dd { margin: 0; min-width: 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card button { grid-column: 1 / -1; justify-self: start; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-empty { padding: 28px 16px; border: 1px dashed var(--border); border-radius: 12px; background: var(--bg); text-align: center; }
+body[data-workflow-role="department_staff"] #staffTeacherDetail { margin-top: 24px; scroll-margin-top: 100px; }
+body[data-workflow-role="department_staff"] #staffTeacherEditor { margin-top: 24px; scroll-margin-top: 100px; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-fields { border: 0; padding: 0; margin: 20px 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; min-width: 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-fields label { display: grid; align-content: start; gap: 6px; min-width: 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-fields :is(input,select) { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font: inherit; color: inherit; }
+body[data-workflow-role="department_staff"] #staffTeachers input[readonly] { background: var(--bg); color: var(--muted); }
+body[data-workflow-role="department_staff"] #staffTeachers [aria-invalid="true"] { border-color: var(--danger); }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-field-error { color: var(--danger); font-size: .85rem; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-security { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 24px; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-security p { margin: 12px 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-info { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin: 20px 0; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-info > div { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-info dt { font-size: .85rem; }
+body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-info dd { margin: 6px 0 0; font-size: 1rem; }
+body[data-workflow-role="department_staff"] #staffTeachers [data-type="error"] { margin-block: 16px; color: var(--danger); }
+body[data-workflow-role="department_staff"] #staffTeachers .teacher-status[data-tone="success"] { color: #166534; background: #dcfce7; }
+@media (max-width: 767px) {
+  body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-card { padding: 20px 16px; }
+  body[data-workflow-role="department_staff"] #staffTeachers :is(.staff-teacher-card,.staff-teacher-info,.staff-teacher-fields) { grid-template-columns: minmax(0,1fr); }
+  body[data-workflow-role="department_staff"] #staffTeachers .staff-teacher-card .teacher-status { justify-self: start; }
+  body[data-workflow-role="department_staff"] #staffTeachers .staff-teachers-actions .teacher-button { flex: 1 1 180px; }
+  body[data-workflow-role="department_staff"] #staffTeachers .teacher-pagination { justify-content: start; }
+}

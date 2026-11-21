@@ -8,7 +8,9 @@ export const destinations = {
 };
 export function acceptLoginSession(result, { remember = false, saveStudent = saveStudentSession,
   saveRole = saveRoleSession, clearStudent = clearStudentSession, clearRole = clearRoleSession } = {}) {
-  if (!Object.hasOwn(destinations, result?.role) || result.redirect !== destinations[result.role]
+  const forced = result?.role === 'teacher' && result.must_change_password === true;
+  const destination = forced ? '/src/teacher_coop/first_password_change.html' : destinations[result?.role];
+  if (!Object.hasOwn(destinations, result?.role) || result.redirect !== destination
     || typeof result.token !== "string" || !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(result.token)) throw new Error("ข้อมูลเข้าสู่ระบบไม่ถูกต้อง");
   let header, claims;
   try {
@@ -29,5 +31,5 @@ export function acceptLoginSession(result, { remember = false, saveStudent = sav
   clearStudent(); clearRole("teacher"); clearRole("department_staff"); clearRole('super_admin');
   if (type === "student") saveStudent({ token: result.token, student: profile, remember });
   else saveRole(type, { token: result.token, profile, remember });
-  return destinations[result.role];
+  return destination;
 }

@@ -2,6 +2,7 @@ import { showConfirmModal, setButtonLoading } from '../ui/feedback.js';
 import { teacherStatusBadge } from './teacherStatus.js';
 import { mountTeacherGoogleAccount } from './teacherGoogleAccount.js';
 import { mountTeacherProfileImage } from './teacherProfileImage.js';
+import { mountTeacherPassword } from './teacherPassword.js';
 import '../styles/teacher_account.css';
 
 export function mountTeacherAccountEditor({ document, target, root, content, message, retry, request, getToken, toast }) {
@@ -62,7 +63,7 @@ export function mountTeacherAccountEditor({ document, target, root, content, mes
   const recovery = el('div', '', 'teacher-account-recovery'); recovery.append(retry);
   personal.append(personalHeader, message, view, form, departmentNote, catalogNote, catalogRetry, recovery); layout.append(personal, protectedRoot);
   content.classList.add('teacher-account-content'); content.replaceChildren(summary, layout);
-  let row = null, editing = false, busy = false, loadFailed = false, serial = 0, loadedToken = getToken(), google, photo;
+  let row = null, editing = false, busy = false, loadFailed = false, serial = 0, loadedToken = getToken(), google, photo, security;
   let majors = [], catalogBusy = false, catalogAvailable = false;
   const normalized = (key, value) => ['first_name', 'last_name'].includes(key) ? String(value ?? '').trim() : String(value ?? '').trim() || null;
   const changes = () => Object.fromEntries(fields.filter(([key]) => key !== 'department' && normalized(key, inputs[key].value) !== normalized(key, row?.[key])).map(([key]) => [key, normalized(key, inputs[key].value)]));
@@ -72,13 +73,14 @@ export function mountTeacherAccountEditor({ document, target, root, content, mes
     if (text) inputs[key].setAttribute('aria-invalid', 'true'); else inputs[key].removeAttribute('aria-invalid');
   }
   function controls() {
-    const googleBusy = google?.isBusy() || photo?.isBusy();
+    const googleBusy = google?.isBusy() || photo?.isBusy() || security?.isBusy();
     edit.hidden = editing || !row; edit.disabled = busy || googleBusy;
     view.hidden = editing; form.hidden = !editing; fieldset.disabled = busy || googleBusy;
     save.disabled = busy || googleBusy || !Object.keys(changes()).length;
     inputs.major.disabled = busy || googleBusy || !catalogAvailable;
     catalogRetry.disabled = busy || googleBusy || catalogBusy;
-    photo?.setBlocked(busy || editing || !!google?.isBusy());
+    photo?.setBlocked(busy || editing || !!google?.isBusy() || !!security?.isBusy());
+    security?.setBlocked(busy || editing || !!google?.isBusy() || !!photo?.isBusy());
     retry.disabled = busy || editing || googleBusy; retry.hidden = !loadFailed || busy;
     recovery.hidden = retry.hidden;
     root.dataset.accountMode = editing ? 'edit' : 'view';
@@ -207,6 +209,11 @@ export function mountTeacherAccountEditor({ document, target, root, content, mes
     } finally { if (ticket === serial) { busy = false; setButtonLoading(save, false, 'กำลังบันทึก...', 'บันทึกการเปลี่ยนแปลง'); controls(); if (saved && !editing) edit.focus(); } }
   });
   google = mountTeacherGoogleAccount({ document, target, root: personal, getToken, toast, onBusyChange: controls });
+  if (!head) {
+    const securityRoot = el('section'); content.append(securityRoot);
+    security = mountTeacherPassword({ document, target, root: securityRoot, request, getToken, toast,
+      onBusyChange: () => { google?.setEditing(editing || !!security?.isBusy()); controls(); } });
+  }
   photo = mountTeacherProfileImage({ document, target, summary, avatar, path, request, getToken, toast,
     onBusyChange: value => { google?.setEditing(editing || value); controls(); } });
   catalogRetry.addEventListener('click', loadOptions);
@@ -216,7 +223,7 @@ export function mountTeacherAccountEditor({ document, target, root, content, mes
     avatar.textContent = '—'; summaryName.textContent = 'ยังไม่ได้โหลดข้อมูลบัญชี'; summaryPosition.textContent = '—'; summaryDepartment.textContent = '—';
     summaryStatus.textContent = 'ยังไม่ได้ตรวจสอบ'; summaryStatus.dataset.tone = 'neutral'; accountId.textContent = '—'; technical.open = false;
     for (const [key] of fields) showFieldError(key);
-    google.clear(); google.setEditing(false); controls(); say('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่', true);
+    security?.clear(); google.clear(); google.setEditing(false); controls(); say('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่', true);
     photo.clear(); majors = []; catalogAvailable = false; catalogNote.textContent = ''; catalogRetry.hidden = true;
   }
   const onView = event => { if (event.detail.view === 'own-account') { load(); if (!editing) google.load(); } };

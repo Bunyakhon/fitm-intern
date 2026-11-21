@@ -100,6 +100,37 @@ body[data-workflow-role="department_head"] .app-toast--warning { color: var(--he
 body[data-workflow-role="department_head"] .teacher-message[data-type="success"] { color: var(--head-success); }
 body[data-workflow-role="department_head"] .head-skip-link { position: fixed; top: -100px; left: 16px; z-index: 2000; padding: 12px 16px; color: #fff; background: var(--primary); border-radius: 8px; }
 body[data-workflow-role="department_head"] .head-skip-link:focus { top: 12px; }
+/* Teacher management reuses the Head cards, buttons and navigation above. */
+body[data-workflow-role="department_head"] .head-teachers :is(input, select) { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); color: var(--text); font: inherit; font-size: 1rem; }
+body[data-workflow-role="department_head"] .head-teachers :is(input, select):disabled { background: var(--bg); color: var(--muted); }
+body[data-workflow-role="department_head"] :is(.head-teachers-filters, .head-teacher-fields) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+body[data-workflow-role="department_head"] .head-teachers label { display: flex; flex-direction: column; gap: 8px; min-width: 0; font-size: 1rem; }
+body[data-workflow-role="department_head"] .head-teachers small { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+body[data-workflow-role="department_head"] .head-teachers-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+body[data-workflow-role="department_head"] .head-teachers-list { display: grid; gap: 16px; margin-top: 20px; }
+body[data-workflow-role="department_head"] .head-teacher-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 12px 16px; min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--white); }
+body[data-workflow-role="department_head"] .head-teacher-card h2 { font-size: 1.1rem; line-height: 1.5; margin: 0; }
+body[data-workflow-role="department_head"] .head-teacher-card dl { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 1rem; }
+body[data-workflow-role="department_head"] .head-teacher-card dt { color: var(--muted); }
+body[data-workflow-role="department_head"] .head-teacher-card dd { min-width: 0; margin: 0; }
+body[data-workflow-role="department_head"] .head-teacher-card .head-teachers-actions { grid-column: 1 / -1; }
+body[data-workflow-role="department_head"] .head-teacher-detail { margin-top: 24px; scroll-margin-top: 100px; }
+body[data-workflow-role="department_head"] .head-teacher-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+body[data-workflow-role="department_head"] .head-teacher-info > div { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+body[data-workflow-role="department_head"] .head-teacher-info dt { color: var(--muted); font-size: .85rem; }
+body[data-workflow-role="department_head"] .head-teacher-info dd { margin: 6px 0 0; font-size: 1rem; }
+body[data-workflow-role="department_head"] #headTeacherFields { min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; }
+body[data-workflow-role="department_head"] #headTeacherFields legend { padding: 0 8px; font-size: 1rem; }
+body[data-workflow-role="department_head"] .head-teacher-field-error { color: var(--danger); font-size: .9rem; }
+body[data-workflow-role="department_head"] .head-teachers [aria-invalid="true"] { border-color: var(--danger); }
+body[data-workflow-role="department_head"] #headTeacherReload { margin-top: 16px; }
+@media (max-width: 767px) {
+  body[data-workflow-role="department_head"] :is(.head-teachers-filters, .head-teacher-fields, .head-teacher-info) { grid-template-columns: minmax(0, 1fr); }
+  body[data-workflow-role="department_head"] .head-teacher-card { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  body[data-workflow-role="department_head"] .head-teacher-card .teacher-status { justify-self: start; }
+  body[data-workflow-role="department_head"] .head-teachers-actions .teacher-button { flex: 1 1 180px; }
+  body[data-workflow-role="department_head"] .head-teachers .teacher-pagination { justify-content: start; }
+}
 @media (max-width: 1100px) {
   body[data-workflow-role="department_head"] .head-dashboard-columns { grid-template-columns: minmax(0, 1fr); }
   body[data-workflow-role="department_head"] .head-metrics { grid-template-columns: minmax(0, 1fr); }

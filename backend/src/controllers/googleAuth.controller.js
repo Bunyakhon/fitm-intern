@@ -16,9 +16,16 @@ function createGoogleAuthController({ service = createGoogleAuthService(), confi
         return res.json(await service[action](req.body, context));
       } catch (error) {
         const status = [400, 401, 403, 409, 503].includes(error.status) ? error.status : 500;
+        const messages = {
+          GOOGLE_DOMAIN: 'กรุณาใช้บัญชี Google มหาวิทยาลัยที่ได้รับอนุญาต',
+          GOOGLE_HOSTED_DOMAIN: 'บัญชี Google นี้ยังไม่ผ่านเงื่อนไข Workspace ของมหาวิทยาลัย กรุณาใช้บัญชีที่ได้รับอนุญาต',
+          GOOGLE_IDENTITY: 'ยังยืนยันบัญชี Google นี้ไม่ได้ กรุณาใช้บัญชีมหาวิทยาลัยที่ยืนยันอีเมลแล้ว',
+          GOOGLE_CREDENTIAL: 'การยืนยัน Google ไม่สำเร็จหรือหมดอายุ กรุณาลองใหม่',
+          GOOGLE_CONFIGURATION: 'Google ยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
+        };
         // No raw provider/ORM errors or credentials are logged or serialized.
         return res.status(status).json({ code: status === 500 ? "GOOGLE_UNAVAILABLE" : error.code,
-          message: status === 500 ? "ไม่สามารถเชื่อมต่อ Google Login ได้ กรุณาลองใหม่" : error.message });
+          message: status === 500 ? "ไม่สามารถเชื่อมต่อ Google Login ได้ กรุณาลองใหม่" : messages[error.code] || error.message });
       }
     };
   }

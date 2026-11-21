@@ -9,6 +9,8 @@ const { issueDepartmentStaffToken, toSafeDepartmentStaffProfile } = require("./s
 const { createUnifiedAuthService, applicationSession, authorizeActor } = require("./unifiedAuth.service");
 const { studentIdFromEmail } = require("./studentIdentity");
 const { assertAccountAccess } = require('./adminAccountAccess.service');
+const { requireChangedPassword } = require('./teacherPassword.policy');
+const { createGoogleStudentProfileService } = require('./googleStudentProfile.service');
 const hash = value => createHash("sha256").update(value).digest("hex");
 const fail = (status, code, message) => { throw Object.assign(new Error(message), { status, code }); };
 const actorType = role => role === "department_head" ? "teacher" : role;
@@ -37,6 +39,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
   verify = createGoogleTokenVerifier(), now = Date.now } = {}) {
   const actorModels = { student: models.Student, teacher: models.Teacher, department_staff: models.DepartmentStaff };
   const unified = createUnifiedAuthService({ models });
+  const studentProfiles = createGoogleStudentProfileService(models, { englishName: englishNameFromClaim });
   function enabled() {
     const cfg = config();
     if (!cfg.enabled) fail(503, "GOOGLE_DISABLED", "Google Login ยังไม่เปิดใช้งาน");
@@ -46,7 +49,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
     const [row] = await models.sequelize.query("SELECT to_regclass('public.google_identities') IS NOT NULL AND to_regclass('public.google_auth_requests') IS NOT NULL AS ready", { type: QueryTypes.SELECT });
     if (!row?.ready) fail(503, "GOOGLE_SCHEMA_REQUIRED", "Google Login รอการติดตั้งที่ได้รับอนุมัติ");
   }
-  function active(actor, role) {
+  async function active(actor, role) {
     if (role === "student") authorizeActor(actor, "student");
     if (!actor
       || (actorType(role) === "teacher" && actor.status !== "active")
@@ -55,6 +58,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       || (actorType(role) === "teacher" && actor.is_department_head && !actor.department?.trim())) {
       fail(403, "GOOGLE_ACCOUNT_UNAUTHORIZED", "บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานบทบาทที่เลือก");
     }
+    if (actorType(role) === 'teacher') await requireChangedPassword(actor);
   }
   function session(actor, role) {
     if (role === "student") {
@@ -91,6 +95,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
     const expiresAt = new Date(now() + 2 * 60 * 1000), requestId = randomUUID();
     const payload = Buffer.from(JSON.stringify({ kind: "confirmation", requestId, type, role, actorId: actor.id,
       subject: identity.subject, email: identity.email, hostedDomain: identity.hostedDomain,
+      ...(type === 'student' && identity.studentProfile ? { studentProfile: identity.studentProfile } : {}),
       ...(context ? { dashboard: true, session: hash(context.token) } : {}),
       ownership: hash(context && type === 'teacher' ? actor.password_hash || '' : actor.password_hash),
       target: targetFingerprint(actor, type), expiresAt: expiresAt.getTime() })).toString("base64url");
@@ -99,12 +104,14 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       nonce_hash: hash(identity.subject), role, purpose: "link", expires_at: expiresAt }, { transaction });
     return { confirmationRequired: true, confirmationToken, expiresAt: expiresAt.toISOString(),
       target: { role: authorizeActor(actor, type), email: actor.email,
-        name: `${actor.first_name || ""} ${actor.last_name || ""}`.trim(),
+        name: `${actor.first_name || ""} ${actor.last_name || ""}`.trim()
+          || (type === 'student' ? identity.studentProfile?.display_name || 'ยังไม่ระบุชื่อ' : ''),
         ...(type === "student" ? { student_id: actor.student_id } : {}) }, googleEmail: identity.email };
   }
   function readReceipt(token, kind = "confirmation") {
     try {
-      if (typeof token !== "string" || token.length > 4096 || !/^[\w-]+\.[\w-]{43}$/.test(token)) throw Error();
+      // Confirmation may also carry bounded, verified Student profile claims.
+      if (typeof token !== "string" || token.length > 16384 || !/^[\w-]+\.[\w-]{43}$/.test(token)) throw Error();
       const [payload, signature] = token.split(".");
       if (!timingSafeEqual(Buffer.from(signature), Buffer.from(signReceipt(payload)))) throw Error();
       const receipt = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
@@ -138,8 +145,19 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
         fail(409, "GOOGLE_IDENTITY_CONFLICT", "บัญชี Google นี้เชื่อมกับบัญชีอื่นแล้ว กรุณาเข้าสู่ระบบจากหน้า Login");
       const existing = await models.Student.findOne({ where: { [Op.or]: [
         { email: identity.email }, ...(studentId ? [{ student_id: studentId }] : []),
-      ] }, transaction });
-      if (existing) fail(409, "GOOGLE_DASHBOARD_LINK_REQUIRED", "พบบัญชีเว็บไซต์เดิม กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่านเดิม แล้วไปที่ จัดการบัญชี → เชื่อมต่อ Google OAuth ใน Student Dashboard");
+      ] }, transaction, lock: transaction.LOCK.UPDATE });
+      if (existing) {
+        await active(existing, 'student');
+        await assertAccountAccess(models, 'student', existing.id, { transaction });
+        checkGoogleIdentity(verifiedPayload(identity), cfg, 'student');
+        const linked = await models.GoogleIdentity.findOne({ where: { student_id: existing.id, actor_type: 'student' }, transaction });
+        if (linked?.subject === identity.subject) {
+          await studentProfiles.fill(existing, identity.studentProfile, transaction);
+          return applicationSession(existing, 'student');
+        }
+        if (linked) fail(409, 'GOOGLE_OTHER_ACCOUNT_LINKED', 'บัญชีนี้เชื่อม Google แล้ว กรุณาใช้บัญชี Google ที่เชื่อมไว้ หรือเข้าสู่ระบบด้วยรหัสผ่าน');
+        fail(409, 'GOOGLE_DASHBOARD_LINK_REQUIRED', 'มีบัญชีแล้ว กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน แล้วเชื่อม Google ที่จัดการบัญชี');
+      }
       if (studentId) {
         if (role === "auto") {
           for (const type of ["teacher", "department_staff"]) {
@@ -148,20 +166,19 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
           }
         }
         checkGoogleIdentity(verifiedPayload(identity), cfg, "student");
-        if (!cfg.onboardingEnabled) fail(503, "GOOGLE_ONBOARDING_DISABLED", "ยังไม่เปิดรับสมัครนักศึกษาใหม่ด้วย Google กรุณาสมัครด้วยอีเมลและรหัสผ่านก่อน");
+        if (!cfg.onboardingEnabled) fail(503, "GOOGLE_ONBOARDING_DISABLED", "การสมัครผ่าน Google ยังไม่เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ หรือเลือกสมัครด้วยอีเมล");
         try { requireDevelopment(models.sequelize); }
         catch { fail(503, "GOOGLE_ONBOARDING_ENVIRONMENT", "การสมัครนักศึกษาใหม่ด้วย Google ยังไม่พร้อมใช้งานในระบบนี้"); }
         const actor = await models.Student.create({ student_id: studentId, email: identity.email,
           first_name: null, last_name: null, password_hash: null, track: "co_op", status: "pending" },
         { transaction, googleOnlyCreation: true });
-        await models.StudentProfile.create({ student_id: actor.id,
-          english_first_name: englishNameFromClaim(claims.given_name),
-          english_last_name: englishNameFromClaim(claims.family_name) }, { transaction });
         await assertAccountAccess(models, 'student', actor.id, { transaction });
         await models.GoogleIdentity.create({ subject: identity.subject, actor_type: "student", student_id: actor.id }, { transaction });
-        return { ...applicationSession(actor, "student"), message: "สมัครสมาชิกด้วย Google สำเร็จ" };
+        await studentProfiles.fill(actor, identity.studentProfile, transaction);
+        return { ...applicationSession(actor, "student"), message: "สมัครและเชื่อม Google สำเร็จ" };
       }
-      if (role === "student") fail(403, "GOOGLE_STUDENT_EMAIL", "สมัครด้วย Google ต้องใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @email.kmutnb.ac.th");
+      if (role === "student" || identity.email.endsWith('@kmutnb.ac.th') || identity.email.endsWith('@email.kmutnb.ac.th'))
+        fail(403, "GOOGLE_STUDENT_EMAIL", "สมัครด้วย Google ต้องใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @kmutnb.ac.th หรือโดเมนนักศึกษาเดิมที่รองรับ");
     }
     // Existing personnel linking keeps its original ownership/role policies.
     return requireLink(identity, role, cfg, transaction);
@@ -172,7 +189,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
     const actor = await models.Student.findByPk(context.user.id, {
       ...(transaction ? { transaction, lock: transaction.LOCK.UPDATE } : {}),
     });
-    active(actor, "student");
+    await active(actor, "student");
     if (actor.student_id !== context.user.student_id) fail(401, "GOOGLE_SESSION_CHANGED", "ข้อมูลบัญชีเปลี่ยนแปลง กรุณาเข้าสู่ระบบใหม่");
     await assertAccountAccess(models, 'student', actor.id, { transaction, issuedAt: context.user.iat });
     return actor;
@@ -189,7 +206,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       fail(401, 'GOOGLE_SESSION_REQUIRED', 'กรุณาเข้าสู่ระบบบัญชีอาจารย์ก่อน');
     const actor = await models.Teacher.findByPk(user.id, { attributes: [...TEACHER_PROFILE_FIELDS, 'password_hash'],
       ...(transaction ? { transaction, lock: transaction.LOCK.UPDATE } : {}) });
-    active(actor, user.role);
+    await active(actor, user.role);
     if (authorizeActor(actor, 'teacher') !== user.role)
       fail(403, 'GOOGLE_SESSION_CHANGED', 'สิทธิ์บัญชีเปลี่ยนแปลง กรุณาเข้าสู่ระบบใหม่');
     // Middleware verifies the JWT signature on every endpoint. Lock waits must
@@ -215,7 +232,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       fail(401, 'GOOGLE_SESSION_REQUIRED', 'กรุณาเข้าสู่ระบบบัญชีเจ้าหน้าที่ก่อน');
     const actor = await models.DepartmentStaff.findByPk(user.id, {
       ...(transaction ? { transaction, lock: transaction.LOCK.UPDATE } : {}) });
-    active(actor, 'department_staff');
+    await active(actor, 'department_staff');
     // A lock wait cannot extend the session or bypass a central revocation.
     if (user.exp * 1000 <= now()) fail(401, 'GOOGLE_SESSION_REQUIRED', 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่');
     await assertAccountAccess(models, 'department_staff', actor.id, { transaction, issuedAt: user.iat });
@@ -337,16 +354,17 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       const cfg = config();
       await ready();
       const mapping = await models.GoogleIdentity.findOne({ where: { student_id: actor.id } });
-      return { linked: !!mapping, enabled: cfg.enabled === true && cfg.linkingEnabled === true,
+      return { linked: !!mapping, account: mapping ? { label: 'บัญชี Google ที่ยืนยันและเชื่อมกับบัญชีนี้แล้ว' } : null,
+        enabled: cfg.enabled === true && cfg.linkingEnabled === true,
         canLink: !mapping && !!actor.password_hash && cfg.enabled === true && cfg.linkingEnabled === true };
     },
     async studentChallenge(_input, context) {
       const cfg = enabled();
       if (!cfg.linkingEnabled) fail(503, "GOOGLE_LINK_APPROVAL_REQUIRED", "การเชื่อม Google ยังไม่เปิดใช้งาน");
       const actor = await dashboardActor(context);
-      if (!actor.password_hash) fail(409, "GOOGLE_ALREADY_LINKED", "บัญชีนี้ใช้ Google อยู่แล้ว ไม่ต้องเชื่อมซ้ำ");
       await ready();
       if (await models.GoogleIdentity.findOne({ where: { student_id: actor.id } })) fail(409, "GOOGLE_ALREADY_LINKED", "บัญชีนี้เชื่อม Google แล้ว");
+      if (!actor.password_hash) fail(409, 'GOOGLE_LINK_OWNERSHIP_REQUIRED', 'บัญชีนี้ยังไม่พร้อมยืนยันเจ้าของเพื่อเชื่อม Google กรุณาติดต่อผู้ดูแลระบบ');
       const requestId = randomUUID(), nonce = randomBytes(32).toString("base64url"), expiresAt = new Date(now() + 5 * 60 * 1000);
       const payload = Buffer.from(JSON.stringify({ kind: "dashboard-challenge", requestId, actorId: actor.id,
         role: "student", session: hash(context.token), expiresAt: expiresAt.getTime() })).toString("base64url");
@@ -362,7 +380,9 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       dashboardBinding(receipt, context);
       if (input.requestId !== receipt.requestId || typeof input.password !== "string" || !input.password || input.password.length > 100)
         fail(400, "GOOGLE_INPUT", "กรุณายืนยันรหัสผ่านบัญชีเว็บไซต์ปัจจุบัน");
-      const identity = checkGoogleIdentity(await verify(input.credential, cfg.clientId), cfg, "student");
+      const verifiedClaims = await verify(input.credential, cfg.clientId);
+      const identity = checkGoogleIdentity(verifiedClaims, cfg, "student");
+      identity.studentProfile = studentProfiles.claims(verifiedClaims);
       await ready();
       return models.sequelize.transaction(async transaction => {
         await consume({ ...input, role: "student", purpose: "link" }, identity, transaction);
@@ -410,6 +430,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
       if (input.purpose === "link" && input.role === "student") studentLinkOnlyInDashboard("student");
       const claims = await verify(input.credential, cfg.clientId);
       const identity = checkGoogleIdentity(claims, cfg, input.role === "auto" ? undefined : input.role);
+      identity.studentProfile = studentProfiles.claims(claims);
       await ready();
       try {
         return await models.sequelize.transaction(async transaction => {
@@ -438,10 +459,11 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
                 || (existing && existing.subject !== identity.subject)) fail(409, "GOOGLE_IDENTITY_CONFLICT", "บัญชี Google หรือบัญชีภายในถูกผูกกับบัญชีอื่นแล้ว");
             }
             const role = authorizeActor(actor, type);
-            active(actor, role);
+            await active(actor, role);
             checkGoogleIdentity(verifiedPayload(identity), cfg, role);
             await assertAccountAccess(models, type, actor.id, { transaction });
             if (input.purpose === "link") return previewLink(actor, type, input.role, identity, transaction);
+            if (type === 'student') await studentProfiles.fill(actor, identity.studentProfile, transaction);
             return applicationSession(actor, type);
           }
           const type = actorType(input.role), field = actorFields[type], Actor = actorModels[type];
@@ -449,10 +471,11 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
           if (input.purpose === "login") {
             if (!mapping) return unmapped(identity, input.role, cfg, transaction, claims);
             const actor = await Actor.findByPk(mapping[field], { transaction, lock: transaction.LOCK.UPDATE });
-            active(actor, input.role);
+            await active(actor, input.role);
             // Recheck the current role policy when a Teacher account is a Head.
             if (type === "teacher" && actor.is_department_head) checkGoogleIdentity(verifiedPayload(identity), cfg, "department_head");
             await assertAccountAccess(models, type, actor.id, { transaction });
+            if (type === 'student') await studentProfiles.fill(actor, identity.studentProfile, transaction);
             return session(actor, input.role);
           }
           const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
@@ -460,7 +483,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
             || (type !== "student" && Buffer.byteLength(input.password, "utf8") > 72)) fail(400, "GOOGLE_INPUT", "กรุณากรอกอีเมลและรหัสผ่านบัญชีเดิม");
           const actor = await Actor.findOne({ where: { email }, transaction, lock: transaction.LOCK.UPDATE });
           if (!actor?.password_hash || !(await actor.comparePassword(input.password))) fail(401, "GOOGLE_OWNERSHIP", "ไม่สามารถยืนยันเจ้าของบัญชีได้");
-          active(actor, input.role);
+          await active(actor, input.role);
           if (type === "teacher" && actor.is_department_head) checkGoogleIdentity(verifiedPayload(identity), cfg, "department_head");
           await assertAccountAccess(models, type, actor.id, { transaction });
           const existing = await models.GoogleIdentity.findOne({ where: { [field]: actor.id }, transaction });
@@ -498,7 +521,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
         }
         const role = receipt.role === "auto" ? authorizeActor(actor, type) : receipt.role;
         studentLinkOnlyInDashboard(type);
-        active(actor, role);
+        await active(actor, role);
         checkGoogleIdentity(verifiedPayload(identity), cfg, authorizeActor(actor, type));
         await assertAccountAccess(models, type, actor.id, { transaction });
         const mappings = await models.GoogleIdentity.findAll({ where: { subject: receipt.subject }, transaction });
@@ -521,7 +544,8 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
         else if (receipt.type === 'department_staff') await staffDashboardActor(context);
         else await dashboardActor(context);
       } else studentLinkOnlyInDashboard(receipt.type);
-      const identity = { subject: receipt.subject, email: receipt.email, hostedDomain: receipt.hostedDomain };
+      const identity = { subject: receipt.subject, email: receipt.email, hostedDomain: receipt.hostedDomain,
+        ...(receipt.type === 'student' ? { studentProfile: receipt.studentProfile } : {}) };
       checkGoogleIdentity(verifiedPayload(identity), cfg, receipt.role === "auto" ? undefined : receipt.role);
       await ready();
       try {
@@ -536,7 +560,7 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
           const actor = teacherDashboard ? await teacherDashboardActor(context, transaction)
             : staffDashboard ? await staffDashboardActor(context, transaction)
             : await actorModels[receipt.type].findByPk(receipt.actorId, { transaction, lock: transaction.LOCK.UPDATE });
-          active(actor, receipt.role === "auto" ? authorizeActor(actor, receipt.type) : receipt.role);
+          await active(actor, receipt.role === "auto" ? authorizeActor(actor, receipt.type) : receipt.role);
           if (!teacherDashboard && !staffDashboard) await assertAccountAccess(models, receipt.type, actor.id, {
             transaction, ...(receipt.dashboard ? { issuedAt: context.user.iat } : {}) });
           if ((!teacherDashboard && !actor.password_hash) || hash(actor.password_hash || '') !== receipt.ownership
@@ -560,7 +584,9 @@ function createGoogleAuthService({ models = require("../models"), config = getGo
             transaction, ...(receipt.dashboard ? { issuedAt: context.user.iat } : {}) });
           if (receipt.expiresAt <= now()) fail(401, 'GOOGLE_LINK_CONFIRMATION_INVALID', 'การยืนยันหมดอายุ กรุณาเริ่มใหม่');
           if (!mapping) await models.GoogleIdentity.create({ subject: receipt.subject, actor_type: receipt.type, [field]: actor.id }, { transaction });
-          return receipt.dashboard ? { linked: true, message: "เชื่อมต่อ Google สำเร็จ" }
+          if (receipt.type === 'student') await studentProfiles.fill(actor, identity.studentProfile, transaction);
+          return receipt.dashboard ? { linked: true, message: "เชื่อมต่อ Google สำเร็จ",
+            ...(receipt.type === 'student' ? { googleAccount: { email: receipt.email } } : {}) }
             : receipt.role === "auto" ? applicationSession(actor, receipt.type) : session(actor, receipt.role);
         });
       } catch (error) {

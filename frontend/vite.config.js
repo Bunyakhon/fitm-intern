@@ -13,6 +13,7 @@ export default defineConfig({
         superAdmin: fileURLToPath(new URL('./src/super_admin/super_admin.html', import.meta.url)),
         teacherLogin: fileURLToPath(new URL('./teacher-login.html', import.meta.url)),
         teacherCoop: fileURLToPath(new URL('./src/teacher_coop/teacher_coop.html', import.meta.url)),
+        teacherFirstPassword: fileURLToPath(new URL('./src/teacher_coop/first_password_change.html', import.meta.url)),
         departmentHeadLogin: fileURLToPath(new URL('./department-head-login.html', import.meta.url)),
         departmentHead: fileURLToPath(new URL('./src/department_head/department_head.html', import.meta.url)),
         staffLogin: fileURLToPath(new URL('./staff-login.html', import.meta.url)),

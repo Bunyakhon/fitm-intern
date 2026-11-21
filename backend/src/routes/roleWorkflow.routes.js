@@ -38,6 +38,7 @@ function createRoleWorkflowRouter(role, registry = models) {
       "/auth/login",
       createLoginRateLimiter(),
       createTeacherLoginHandler({
+        models: registry,
         TeacherModel: registry.Teacher,
         headOnly: role === "department_head",
       }),
@@ -58,6 +59,11 @@ function createRoleWorkflowRouter(role, registry = models) {
     router.use('/me/profile-image', require('./teacherProfileImage.routes').createTeacherProfileImageRouter(registry));
   }
   if (role === "teacher") {
+    const password = require('../controllers/teacherPassword.controller').createTeacherPasswordController(
+      require('../services/teacherPassword.service').createTeacherPasswordService(registry));
+    router.get('/account-security', password.status);
+    router.post('/account-security', createLoginRateLimiter(), password.change);
+    router.post('/account-security/logout', password.logout);
     router.get('/admin-access', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ available: process.env.NODE_ENV === 'development' && !!req.superAdmin?.is_active }); });
     const advisor = createCoopProjectAdvisorController(createCoopProjectAdvisorService(registry));
     router.get("/project-advisor-requests", advisor.list);
@@ -76,6 +82,15 @@ function createRoleWorkflowRouter(role, registry = models) {
     controller.reviewRequest(role, "reject"),
   );
   if (role === "department_staff") {
+    const teachers = require('../controllers/staffTeachers.controller').createStaffTeachersController(
+      require('../services/staffTeachers.service').createStaffTeachersService(registry));
+    router.get('/teachers', controller.listStaffTeachers);
+    router.get('/teachers/options', teachers.options);
+    router.get('/teachers/:id', controller.staffTeacherDetail);
+    router.post('/teachers', teachers.create);
+    router.patch('/teachers/:id', teachers.update);
+    router.patch('/teachers/:id/deactivate', teachers.deactivate);
+    router.post('/teachers/:id/reset-password', createLoginRateLimiter(), teachers.resetPassword);
     router.use('/coop-prerequisite-catalog', require('./coopPrerequisiteCatalog.routes').createCatalogRouter(registry));
     router.use('/document-requests', require('./staffDocuments.routes').createStaffDocumentsRouter(registry));
     router.post('/coop-requests/:id/cancel', controller.reviewRequest(role, 'cancel'));

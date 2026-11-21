@@ -18,7 +18,7 @@ function toSafeTeacherProfile(teacher) {
     TEACHER_PROFILE_FIELDS.map((key) => [key, teacher[key]]),
   );
 }
-function issueTeacherToken(teacher, { adminGrant } = {}) {
+function issueTeacherToken(teacher, { adminGrant, passwordChangeRequired = false } = {}) {
   return jwt.sign(
     {
       id: teacher.id,
@@ -28,7 +28,7 @@ function issueTeacherToken(teacher, { adminGrant } = {}) {
       ...(adminGrant ? { admin_grant_id: adminGrant.id, admin_session_version: adminGrant.session_version } : {}),
     },
     process.env.JWT_SECRET,
-    { algorithm: "HS256", expiresIn: adminGrant ? '15m' : process.env.JWT_EXPIRES_IN || "1d" },
+    { algorithm: "HS256", expiresIn: adminGrant || passwordChangeRequired ? '15m' : process.env.JWT_EXPIRES_IN || "1d" },
   );
 }
 module.exports = {

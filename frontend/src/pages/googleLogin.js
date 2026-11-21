@@ -3,6 +3,16 @@ import { saveStudentSession } from "../auth/studentAuthStorage.js";
 import { acceptGoogleSession } from "../auth/googleSession.js";
 import { showToast, showConfirmModal } from "../ui/feedback.js";
 
+export function googleErrorMessage(error, fallback = 'ยืนยัน Google ไม่สำเร็จ กรุณาลองใหม่') {
+  const code = error.data?.code || error.code;
+  if (code === 'GOOGLE_DASHBOARD_LINK_REQUIRED') return 'มีบัญชีแล้ว กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน แล้วเชื่อม Google ที่จัดการบัญชี';
+  if (code === 'GOOGLE_OTHER_ACCOUNT_LINKED') return 'บัญชีนี้เชื่อม Google แล้ว กรุณาใช้บัญชี Google ที่เชื่อมไว้ หรือเข้าสู่ระบบด้วยรหัสผ่าน';
+  if (code === 'GOOGLE_DOMAIN') return 'กรุณาใช้บัญชี Google มหาวิทยาลัยที่ได้รับอนุญาต';
+  if (code === 'GOOGLE_CREDENTIAL') return 'การยืนยัน Google หมดอายุหรือไม่สำเร็จ กรุณาลองใหม่';
+  if (error.status && typeof error.data?.message === 'string' && /[\u0e00-\u0e7f]/.test(error.data.message)) return error.data.message;
+  return error.status ? fallback : 'ยังติดต่อ Google หรือระบบไม่ได้ กรุณาตรวจการเชื่อมต่อแล้วลองใหม่';
+}
+
 export function confirmGoogleLink(preview, { confirm = googleConfirmLink, target = window, signal } = {}) {
   return new Promise(resolve => {
     let result = null, expired = false, expiry;
@@ -85,13 +95,14 @@ export function mountGoogleLogin({ document, target = window, config = googleCon
             if (ticket !== generation) return;
             // Anonymous Google login never mounts account-linking controls.
             if (result.linkRequired || result.confirmationRequired)
-              throw new Error("กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่านเดิม แล้วเชื่อม Google จากหน้าจัดการบัญชีใน Dashboard");
+              throw Object.assign(new Error('Existing account ownership required'), { code: 'GOOGLE_DASHBOARD_LINK_REQUIRED' });
+            say(result.message || 'เข้าสู่ระบบด้วย Google สำเร็จ');
             accept(result, role, { saveStudentSession: saveStudent, storage: target.sessionStorage,
               remember: !!document.getElementById("rememberMe")?.checked, location: target.location });
             completed = true; ++generation;
           } catch (error) {
             if (ticket !== generation) return;
-            say(error.message || "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่", true); toast(message.textContent, "error");
+            say(googleErrorMessage(error), true); toast(message.textContent, "error");
             retry.hidden = false; ++generation; container.replaceChildren(); showFallback();
           } finally { exchanging = false; lock(completed); }
         },
@@ -107,12 +118,12 @@ export function mountGoogleLogin({ document, target = window, config = googleCon
           }, 60000);
         }, locale: "th" });
       if (fallback) fallback.hidden = true;
-      say(document.body.classList.contains("register-page") && cfg.onboardingEnabled === false
-        ? "ยังไม่เปิดสมัครบัญชีใหม่ด้วย Google กรุณาสมัครด้วยอีเมลและรหัสผ่านก่อน"
-        : "ดำเนินการต่อด้วยบัญชี Google มหาวิทยาลัย");
+      say(cfg.onboardingEnabled === false
+        ? 'บัญชีที่เชื่อม Google แล้วเข้าสู่ระบบได้ ส่วนการสมัครนักศึกษาใหม่ผ่าน Google ยังไม่เปิดใช้งาน'
+        : 'นักศึกษาใช้ Google สมัครครั้งแรกได้ หรือเข้าสู่บัญชีที่เชื่อม Google แล้ว');
       expiryTimer = target.setTimeout(() => { if (ticket === generation && !busy) { ++generation; container.replaceChildren(); showFallback(); retry.hidden = false; say("คำขอหมดอายุ กรุณาลอง Google อีกครั้ง"); } }, 290000);
     } catch (error) {
-      if (ticket === generation) { showFallback(); say(error.message || "Google ยังไม่พร้อมใช้งาน", true); retry.hidden = false; }
+      if (ticket === generation) { showFallback(); say(googleErrorMessage(error, 'Google ยังไม่พร้อมใช้งาน กรุณาลองใหม่'), true); retry.hidden = false; }
     } finally { preparing = false; if (ticket === generation) { root.setAttribute("aria-busy", "false"); retry.disabled = false; if (fallback) fallback.disabled = busy; } }
   }
   fallback?.addEventListener("click", () => {

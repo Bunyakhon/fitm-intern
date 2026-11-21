@@ -409,6 +409,55 @@ function createRoleWorkflowService(m = models) {
       ...page(query),
     });
   }
+  async function staffTeacherScope(staffId, transaction) {
+    const staff = await actor('department_staff', staffId, transaction, transaction.LOCK.SHARE);
+    // Null/blank is not a global grant. Never infer department from email,
+    // position, catalog grants or an unrelated Staff workflow.
+    if (typeof staff.department !== 'string' || !staff.department.trim())
+      throw new WorkflowError('Staff department scope is not assigned', 403);
+    return staff.department;
+  }
+  async function listStaffTeachers(staffId, query = {}) {
+    object(query, ['q', 'major', 'status', 'department', 'limit', 'offset'], { empty: true });
+    for (const key of ['limit', 'offset']) {
+      if (query[key] !== undefined && !['string', 'number'].includes(typeof query[key]))
+        throw new WorkflowError('Invalid pagination');
+    }
+    const pagination = page(query);
+    return m.sequelize.transaction(async transaction => {
+      const department = await staffTeacherScope(staffId, transaction);
+      const where = { department };
+      if (query.department !== undefined && text(query.department, 'department') !== department)
+        throw new WorkflowError('Department is outside your scope', 403);
+      if (query.major !== undefined) where.major = text(query.major, 'major');
+      if (query.status !== undefined) {
+        if (!['active', 'inactive'].includes(query.status)) throw new WorkflowError('Unsupported teacher status');
+        where.status = query.status;
+      }
+      if (query.q !== undefined) {
+        const search = text(query.q, 'q', 100).replace(/[\\%_]/g, '\\$&');
+        where[Op.or] = ['first_name', 'last_name', 'email'].map(key => ({ [key]: { [Op.iLike]: `%${search}%` } }));
+      }
+      return m.Teacher.findAll({ where, attributes: TEACHER_PROFILE_FIELDS,
+        order: [['first_name', 'ASC'], ['id', 'ASC']], ...pagination, transaction });
+    });
+  }
+  async function staffTeacherDetail(staffId, teacherId) {
+    uuid(teacherId);
+    return m.sequelize.transaction(async transaction => {
+      const department = await staffTeacherScope(staffId, transaction);
+      const teacher = await m.Teacher.findOne({ where: { id: teacherId, department },
+        attributes: TEACHER_PROFILE_FIELDS, transaction });
+      // Missing and out-of-department IDs deliberately share the same response.
+      if (!teacher) throw new WorkflowError('Teacher was not found', 404);
+      const { membershipReady } = require('./teacherAdminGrant.service');
+      const admin = await membershipReady(m, transaction) && !!await m.SuperAdmin.count({ where: { teacher_id: teacherId }, transaction });
+      return { ...toSafeTeacherProfile(teacher), has_admin_membership: admin,
+        can_reset_password: !teacher.is_department_head && !admin,
+        password_reset_reason: teacher.is_department_head ? 'เจ้าหน้าที่รีเซ็ตรหัสผ่านบัญชีหัวหน้าภาควิชาไม่ได้'
+          : admin ? 'เจ้าหน้าที่รีเซ็ตรหัสผ่านบัญชีผู้ดูแลระบบไม่ได้' : '' };
+    });
+  }
   async function updateOwnProfile(role, actorId, body) {
     if (!['teacher', 'department_head'].includes(role)) throw new WorkflowError('Teacher authorization is required', 403);
     const values = teacherSelfProfile(body);
@@ -486,6 +535,8 @@ function createRoleWorkflowService(m = models) {
     jobDetail,
     reviewJob,
     listTeachers,
+    listStaffTeachers,
+    staffTeacherDetail,
     updateTeacher,
     assignProjectAdvisor,
   };

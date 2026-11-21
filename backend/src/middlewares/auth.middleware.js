@@ -20,7 +20,7 @@ function createAuthenticateToken({
 } = {}) {
   const actors = {
     student: { Model: StudentModel, fields: ["id", "student_id", "status", "track"] },
-    teacher: { Model: TeacherModel, fields: ["id", "status", "is_department_head", "department"] },
+    teacher: { Model: TeacherModel, fields: ["id", "status", "is_department_head", "department", "password_hash"] },
     department_staff: { Model: StaffModel, fields: ["id", "is_active"] },
     super_admin: { Model: SuperAdminModel, fields: ['id', 'email', 'first_name', 'last_name', 'is_active', 'permissions', 'session_version', 'teacher_id'] },
   };
@@ -65,6 +65,7 @@ function createAuthenticateToken({
         && decoded.role === undefined && typeof decoded.student_id === "string"
         && decoded.teacher_id === undefined && decoded.staff_id === undefined;
       const type = legacyStudent ? "student" : decoded.actor_type;
+      if (type === 'teacher' && !Number.isFinite(decoded.iat)) throw new jwt.JsonWebTokenError('Invalid teacher session issuance');
       if (typeof type !== "string" || !Object.hasOwn(actors, type)
         || (type === "student" && (typeof decoded.student_id !== "string" || !decoded.student_id
           || decoded.teacher_id !== undefined || decoded.staff_id !== undefined || decoded.super_admin_id !== undefined))
@@ -95,6 +96,15 @@ function createAuthenticateToken({
         return res.status(401).json({ success: false, message: "Token ไม่ถูกต้อง" });
       }
 
+      if (type === 'teacher' && await require('../services/teacherPassword.policy').mustChangePassword(actor)) {
+        const path = req.originalUrl?.split('?')[0];
+        const allowed = path === '/api/teachers/account-security' && ['GET', 'POST'].includes(req.method)
+          || path === '/api/teachers/account-security/logout' && req.method === 'POST';
+        // A password prerequisite is distinct from revoked/invalid RBAC. Keep
+        // the limited session so clients can complete the password screen.
+        if (!allowed) return res.status(428).json({ success: false, code: 'TEACHER_PASSWORD_CHANGE_REQUIRED',
+          message: 'กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งานระบบ', redirect: '/src/teacher_coop/first_password_change.html' });
+      }
       req.user = { ...decoded, actor_type: type, role, ...(type === "student" ? { track: actor.track } : {}) };
       if (type === 'super_admin') req.superAdmin = actor;
       if (type === 'teacher' && decoded.admin_grant_id !== undefined) req.superAdmin = await resolveTeacherAdmin(req.user);

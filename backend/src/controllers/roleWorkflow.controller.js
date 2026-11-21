@@ -31,6 +31,10 @@ function handler(action) {
   };
 }
 function createRoleWorkflowController(service = createRoleWorkflowService()) {
+  const privateRead = action => {
+    const read = handler(action);
+    return (req, res) => { res.set('Cache-Control', 'private, no-store'); return read(req, res); };
+  };
   const roleHandler = (role, action) =>
     handler((req) => action(req, req.user.id, role));
   return {
@@ -55,6 +59,8 @@ function createRoleWorkflowController(service = createRoleWorkflowService()) {
     listTeachers: handler((req) =>
       service.listTeachers(req.user.id, req.query),
     ),
+    listStaffTeachers: privateRead(req => service.listStaffTeachers(req.user.id, req.query)),
+    staffTeacherDetail: privateRead(req => service.staffTeacherDetail(req.user.id, req.params.id)),
     updateTeacher: handler((req) =>
       service.updateTeacher(req.user.id, req.params.id, req.body),
     ),

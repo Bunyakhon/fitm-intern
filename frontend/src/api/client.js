@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getStudentToken } from "../auth/studentAuthStorage.js";
+import { getRoleToken } from '../auth/roleAuthStorage.js';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -91,6 +92,10 @@ export async function apiRequest(path, options = {}) {
     // A delayed success/401 from an old account must not render that account or
     // clear a newer login. Explicit Teacher/Head/Staff requests are unaffected.
     if (sessionChanged(error.config)) throw sessionChangedError();
+    if (error.response?.data?.code === 'TEACHER_PASSWORD_CHANGE_REQUIRED' && typeof window !== 'undefined'
+      && headers?.Authorization === `Bearer ${getRoleToken('teacher')}`
+      && window.location.pathname !== '/src/teacher_coop/first_password_change.html')
+      window.location.replace('/src/teacher_coop/first_password_change.html');
     if (error.data?.code === "STUDENT_SESSION_CHANGED") throw error;
     throw normalizeError(error);
   }

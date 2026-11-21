@@ -101,8 +101,8 @@ registerForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!/^s[0-9]{13}@email\.kmutnb\.ac\.th$/.test(email)) {
-    setRegisterMessage("กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @email.kmutnb.ac.th", "error");
+  if (!/^s[0-9]{13}@(?:email\.)?kmutnb\.ac\.th$/.test(email)) {
+    setRegisterMessage("กรุณาใช้อีเมล s ตามด้วยรหัสนักศึกษา 13 หลัก @kmutnb.ac.th หรือโดเมนนักศึกษาเดิมที่ระบบรองรับ", "error");
     return;
   }
 

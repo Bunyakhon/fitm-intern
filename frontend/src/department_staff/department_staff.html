@@ -9,6 +9,7 @@
 <div class="teacher-menu-group"><p class="teacher-menu-label">งานสหกิจศึกษา</p>
 <a class="sidebar-item" href="#staffCoopRequests" data-staff-view><span class="staff-menu-icon" aria-hidden="true">☑</span><span>ตรวจสอบคำร้องสหกิจศึกษา</span></a>
 <a class="sidebar-item" href="#documents" data-staff-view><span class="staff-menu-icon" aria-hidden="true">▤</span><span>จัดการเอกสารสหกิจศึกษา</span></a>
+<a class="sidebar-item" href="#staffTeachers" data-staff-view><span class="staff-menu-icon" aria-hidden="true">◎</span><span>จัดการข้อมูลอาจารย์</span></a>
 <a class="sidebar-item" href="#staffPrerequisiteCatalog" data-staff-view hidden><span class="staff-menu-icon" aria-hidden="true">▥</span><span>รายวิชาก่อนออกสหกิจศึกษา</span></a>
 <a class="sidebar-item" href="#staffJobs" data-staff-view><span class="staff-menu-icon" aria-hidden="true">◉</span><span>พิจารณาประกาศรับสมัครงาน</span></a>
 <a class="sidebar-item" href="#co09Manager" data-staff-view><span class="staff-menu-icon" aria-hidden="true">▣</span><span>จัดการสอบหัวข้อ CO-09</span></a>
@@ -65,5 +66,45 @@
 <p id="staffJobsMessage" role="status" aria-live="polite"></p><div id="staffJobsList" class="teacher-request-list"></div>
 <div class="teacher-pagination"><button class="teacher-button" id="staffJobsPrev" type="button" disabled>ก่อนหน้า</button><span id="staffJobsPage">หน้า 1</span><button class="teacher-button" id="staffJobsNext" type="button" disabled>ถัดไป</button></div>
 <section id="staffJobDetail" class="teacher-detail" aria-labelledby="staffJobDetailHeading" hidden><div class="teacher-heading"><h2 id="staffJobDetailHeading" tabindex="-1">รายละเอียดประกาศ</h2><button id="staffJobClose" type="button" class="teacher-button">ปิดรายละเอียด</button></div><p id="staffJobMessage" role="status" aria-live="polite"></p><div id="staffJobBody"></div><p id="staffJobEligibility"></p><div class="teacher-card-actions"><button id="staffJobPublish" type="button" class="teacher-button teacher-button--accept" disabled>✓ เผยแพร่ประกาศ</button><button id="staffJobReject" type="button" class="teacher-button teacher-button--reject" disabled>× ปฏิเสธประกาศ</button></div></section>
+</section>
+<section id="staffTeachers" data-staff-panel hidden aria-labelledby="staffTeachersHeading">
+  <div class="teacher-heading"><div><h1 id="staffTeachersHeading" tabindex="-1">จัดการข้อมูลอาจารย์</h1><p>ค้นหาและจัดการข้อมูลอาจารย์ภายในภาควิชาที่ได้รับมอบหมาย</p></div><div class="staff-teachers-actions"><button id="staffTeachersAdd" class="teacher-button teacher-button--primary" type="button" disabled>+ เพิ่มอาจารย์</button><button id="staffTeachersRefresh" class="teacher-button" type="button">รีเฟรชรายชื่อ</button></div></div>
+  <div class="staff-teachers-card">
+    <p id="staffTeachersScope">กำลังตรวจสอบสิทธิ์ภาควิชา...</p><p class="staff-teachers-note">แก้ไขได้เฉพาะชื่อ นามสกุล คำนำหน้าวิชาการ และสาขา · บัญชีหัวหน้าภาควิชาอ่านได้เท่านั้น</p>
+    <form id="staffTeachersFilters" class="staff-filters" role="search" aria-label="ค้นหาอาจารย์">
+      <label for="staffTeachersQuery">ชื่อ นามสกุล หรืออีเมล<input id="staffTeachersQuery" name="q" type="search" maxlength="100" autocomplete="off"></label>
+      <label for="staffTeachersMajor">สาขาวิชา<input id="staffTeachersMajor" name="major" type="text" maxlength="255" placeholder="ทุกสาขา" aria-describedby="staffTeachersMajorHint"><small id="staffTeachersMajorHint">กรอกสาขาให้ตรงกับข้อมูลที่บันทึก หรือเว้นว่างเพื่อดูทุกสาขา</small></label>
+      <label for="staffTeachersStatus">สถานะบัญชี<select id="staffTeachersStatus" name="status"><option value="">ทุกสถานะ</option><option value="active">ใช้งานอยู่</option><option value="inactive">ไม่เปิดใช้งาน</option></select></label>
+      <div class="staff-teachers-actions"><button id="staffTeachersSearch" class="teacher-button teacher-button--primary" type="submit">ค้นหา</button><button id="staffTeachersClear" class="teacher-button" type="button">ล้างตัวกรอง</button></div>
+    </form>
+    <p id="staffTeachersMessage" role="status" aria-live="polite"></p><button id="staffTeachersRetry" class="teacher-button" type="button" hidden>ลองโหลดรายชื่ออีกครั้ง</button>
+    <div id="staffTeachersList" class="staff-teachers-list" aria-busy="false"></div>
+    <div class="teacher-pagination" aria-label="หน้ารายชื่ออาจารย์"><button id="staffTeachersPrevious" class="teacher-button" type="button" disabled>ก่อนหน้า</button><span id="staffTeachersPage" role="status" aria-live="polite"></span><button id="staffTeachersNext" class="teacher-button" type="button" disabled>ถัดไป</button></div>
+  </div>
+  <section id="staffTeacherEditor" class="staff-teachers-card" aria-labelledby="staffTeacherEditorHeading" hidden>
+    <h2 id="staffTeacherEditorHeading" tabindex="-1">เพิ่มอาจารย์</h2>
+    <p id="staffTeacherActivationNote" class="staff-teachers-note"></p>
+    <form id="staffTeacherForm">
+      <fieldset id="staffTeacherFields" class="staff-teacher-fields"><legend class="sr-only">ข้อมูลอาจารย์</legend>
+        <label for="staffTeacherFirstName">ชื่อจริง (ภาษาไทย) *<input id="staffTeacherFirstName" name="first_name" type="text" required maxlength="255" autocomplete="off"></label>
+        <label for="staffTeacherLastName">นามสกุล (ภาษาไทย) *<input id="staffTeacherLastName" name="last_name" type="text" required maxlength="255" autocomplete="off"></label>
+        <label for="staffTeacherTitle">คำนำหน้าทางวิชาการ<input id="staffTeacherTitle" name="academic_title" type="text" maxlength="255" placeholder="เช่น ผศ.ดร." autocomplete="off"><small>เว้นว่างได้ ตามรูปแบบข้อมูลอาจารย์เดิม</small></label>
+        <label for="staffTeacherMajorValue">สาขาวิชา<select id="staffTeacherMajorValue" name="major" aria-describedby="staffTeacherCatalogNote"><option value="">ยังไม่ระบุ</option></select></label>
+        <label for="staffTeacherEmail">อีเมลมหาวิทยาลัย *<input id="staffTeacherEmail" name="email" type="email" required maxlength="254" autocomplete="off"><small id="staffTeacherEmailHint">ใช้ @itm.kmutnb.ac.th เป็นอีเมลเริ่มต้น เจ้าหน้าที่เปลี่ยนหลังสร้างไม่ได้</small></label>
+        <label for="staffTeacherDepartment">ภาควิชา<input id="staffTeacherDepartment" type="text" readonly></label>
+        <label for="staffTeacherAccountStatus">สถานะบัญชี<input id="staffTeacherAccountStatus" type="text" readonly></label>
+        <label for="staffTeacherRole">บทบาท<input id="staffTeacherRole" type="text" readonly value="อาจารย์"></label>
+      </fieldset>
+      <p id="staffTeacherCatalogNote" role="status" aria-live="polite"></p><button id="staffTeacherCatalogRetry" class="teacher-button" type="button" hidden>โหลดสาขาอีกครั้ง</button>
+      <p id="staffTeacherDraft" role="status" aria-live="polite"></p><p id="staffTeacherSaveMessage" role="status" aria-live="polite"></p>
+      <div class="staff-teachers-actions"><button id="staffTeacherSave" class="teacher-button teacher-button--primary" type="submit">บันทึกข้อมูล</button><button id="staffTeacherCancel" class="teacher-button" type="button">ยกเลิก</button><button id="staffTeacherReconcile" class="teacher-button" type="button" hidden>โหลดข้อมูลล่าสุดโดยเก็บร่าง</button></div>
+    </form>
+  </section>
+  <section id="staffTeacherDetail" class="staff-teachers-card" aria-labelledby="staffTeacherDetailHeading" hidden>
+    <div class="teacher-heading"><h2 id="staffTeacherDetailHeading" tabindex="-1">รายละเอียดอาจารย์</h2><button id="staffTeacherClose" class="teacher-button" type="button">ปิดรายละเอียด</button></div>
+    <p id="staffTeacherMessage" role="status" aria-live="polite"></p><dl id="staffTeacherInfo" class="staff-teacher-info"></dl><button id="staffTeacherRetry" class="teacher-button" type="button" hidden>ลองโหลดรายละเอียดอีกครั้ง</button>
+    <p id="staffTeacherProtection" class="staff-teachers-note"></p><div class="staff-teachers-actions"><button id="staffTeacherEdit" class="teacher-button teacher-button--primary" type="button" hidden>แก้ไขข้อมูล</button><button id="staffTeacherDeactivate" class="teacher-button" type="button" hidden>ปิดใช้งานบัญชี</button></div>
+    <section class="staff-teacher-security" aria-labelledby="staffTeacherSecurityHeading"><h3 id="staffTeacherSecurityHeading">ความปลอดภัยบัญชี</h3><p>การรีเซ็ตรหัสผ่านจะเพิกถอน Session เดิม และบังคับเปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ ไม่เปลี่ยนสถานะเปิดหรือปิดใช้งานบัญชี</p><p id="staffTeacherResetReason" role="status"></p><button id="staffTeacherResetPassword" class="teacher-button" type="button" hidden>รีเซ็ตรหัสผ่าน</button></section>
+  </section>
 </section>
 <section id="co09Manager" data-staff-panel hidden aria-label="จัดตารางสอบหัวข้อ CO-09"></section><section id="activities" data-staff-panel hidden><div id="activityCalendar"></div></section></main></div><script type="module" src="/src/pages/staffPrerequisiteCatalog.js"></script><script type="module" src="/src/pages/staffDocuments.js"></script><script type="module" src="/src/pages/staffCoopRequests.js"></script><script type="module" src="/src/pages/coopActivities.js"></script><script type="module" src="/src/pages/roleAccount.js"></script><script type="module" src="/src/pages/coopTopicExams.js"></script></body></html>

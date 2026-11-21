@@ -3,6 +3,7 @@ import { STAFF_TOKEN_KEY, staffRequest, getCurrentStaff, getDocumentQueue, getDo
 import { getStaffCoopRequests } from '../api/staffCoopRequests.api.js';
 import { listActivities } from '../api/coopActivities.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
+import { mountStaffTeachers } from './staffTeachers.js';
 const PAGE_SIZE = 25;
 const STATUS = { approved: 'อนุมัติแล้ว', document_issued: 'ออกเอกสารแล้ว', in_progress: 'กำลังปฏิบัติงาน', advisor_review: 'รออาจารย์ที่ปรึกษา', department_head_review: 'รอหัวหน้าภาควิชา', rejected: 'ไม่ได้รับการอนุมัติ', cancelled: 'ยกเลิกแล้ว' };
 const DOCUMENT_STATUS = { draft: 'ร่าง', generated: 'มีฉบับตัวอย่าง' };
@@ -212,6 +213,7 @@ function mountStaffWorkspace({ document, target, sessionReady }) {
     staffOverview: 'ภาพรวมงานเจ้าหน้าที่', staffCoopRequests: 'ตรวจสอบคำร้องสหกิจศึกษา',
     documents: 'จัดการเอกสารสหกิจศึกษา', staffPrerequisiteCatalog: 'รายวิชาก่อนออกสหกิจศึกษา',
     staffJobs: 'พิจารณาประกาศรับสมัครงาน', co09Manager: 'จัดการสอบหัวข้อ CO-09',
+    staffTeachers: 'จัดการข้อมูลอาจารย์',
     activities: 'ปฏิทินกิจกรรมสหกิจศึกษา', 'own-account': 'ข้อมูลบัญชีของฉัน',
   };
   const jobLabels = { pending_review: 'รอพิจารณา', published: 'เผยแพร่แล้ว', rejected: 'ปฏิเสธแล้ว',
@@ -219,6 +221,7 @@ function mountStaffWorkspace({ document, target, sessionReady }) {
   let authorized = false, overviewBusy = false, overviewLoaded = false, activeView;
   let jobBusy = false, jobModal = false, jobLoaded = false, jobOffset = 0, jobNext = false, currentJob = null;
   let overviewSerial = 0, jobSerial = 0;
+  const teachers = mountStaffTeachers({ document, target, storage: roleSessionStorage });
   const node = (tag, text, cls) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; };
   const say = (id, text, error = false) => { get(id).textContent = text; get(id).setAttribute('role', error ? 'alert' : 'status'); };
   const date = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(value)) : 'ไม่ระบุ';
@@ -256,6 +259,11 @@ function mountStaffWorkspace({ document, target, sessionReady }) {
     let hash; try { hash = decodeURIComponent(target.location.hash.slice(1)); } catch { hash = ''; }
     const nested = get(hash)?.closest('[data-staff-panel]')?.id;
     const view = Object.hasOwn(views, hash) ? hash : Object.hasOwn(views, nested) ? nested : 'staffOverview';
+    if (activeView === 'staffTeachers' && view !== activeView && !teachers?.canLeave()) {
+      target.history.replaceState(null, '', '#staffTeachers');
+      showToast('กรุณาบันทึกหรือยกเลิกร่างก่อนเปลี่ยนหน้า และรอให้การบันทึกเสร็จ', 'warning');
+      return;
+    }
     for (const [id] of Object.entries(views)) { const panel = get(id); if (panel) panel.hidden = id !== view; }
     for (const link of document.querySelectorAll('.sidebar-menu [data-staff-view]')) {
       const selected = link.hash === `#${view}`; link.classList.toggle('active', selected);
@@ -269,6 +277,7 @@ function mountStaffWorkspace({ document, target, sessionReady }) {
     }
     const changed = activeView !== view;
     activeView = view; menu(false);
+    teachers?.setActive(view === 'staffTeachers');
     if (authorized && live()) {
       if (view === 'staffOverview' && (!overviewLoaded || changed)) refreshOverview();
       if (view === 'staffJobs' && !jobLoaded) refreshJobs();

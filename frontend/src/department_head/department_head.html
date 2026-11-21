@@ -19,7 +19,7 @@
       <aside class="dashboard-sidebar" aria-labelledby="headSidebarTitle"><div class="sidebar-header"><span class="sidebar-title" id="headSidebarTitle">พื้นที่หัวหน้าภาค</span><small>สหกิจศึกษา · CWIE-IT CoopConnect</small></div>
         <nav class="sidebar-menu" aria-label="เมนูหัวหน้าภาควิชา">
           <div class="teacher-menu-group" role="group" aria-labelledby="headWorkMenu"><p class="teacher-menu-label" id="headWorkMenu">พื้นที่ทำงาน</p><a class="sidebar-item active" href="#headOverview" data-head-view aria-current="page"><span class="head-menu-icon" aria-hidden="true">▦</span><span>ภาพรวม</span></a><a class="sidebar-item" href="#coopApprovals" data-head-view><span class="head-menu-icon" aria-hidden="true">☑</span><span>อนุมัติคำร้องสหกิจ</span></a></div>
-          <div class="teacher-menu-group" role="group" aria-labelledby="headTeacherMenu"><p class="teacher-menu-label" id="headTeacherMenu">บทบาทอาจารย์</p><a class="sidebar-item" href="/src/teacher_coop/teacher_coop.html"><span class="head-menu-icon" aria-hidden="true">↗</span><span>งานอาจารย์</span></a></div>
+          <div class="teacher-menu-group" role="group" aria-labelledby="headTeacherMenu"><p class="teacher-menu-label" id="headTeacherMenu">บทบาทอาจารย์</p><a class="sidebar-item" href="#headTeachers" data-head-view><span class="head-menu-icon" aria-hidden="true">◎</span><span>จัดการข้อมูลอาจารย์</span></a><a class="sidebar-item" href="/src/teacher_coop/teacher_coop.html"><span class="head-menu-icon" aria-hidden="true">↗</span><span>งานอาจารย์</span></a></div>
           <div class="teacher-menu-group" role="group" aria-labelledby="headAccountMenu"><p class="teacher-menu-label" id="headAccountMenu">บัญชีผู้ใช้</p><a class="sidebar-item" href="#own-account" data-head-view><span class="head-menu-icon" aria-hidden="true">◎</span><span>ข้อมูลส่วนตัว</span></a></div>
         </nav>
       </aside>
@@ -50,6 +50,41 @@
           <div class="teacher-pagination"><button class="teacher-button" id="teacherCoopPrevious" type="button" disabled>ก่อนหน้า</button><span id="teacherCoopPage"></span><button class="teacher-button" id="teacherCoopNext" type="button" disabled>ถัดไป</button></div>
           </div>
           <section id="teacherCoopDetail" class="teacher-request-card teacher-coop-detail" aria-labelledby="teacherCoopDetailHeading" hidden tabindex="-1"><div class="teacher-heading"><h2 id="teacherCoopDetailHeading">รายละเอียดคำร้อง</h2><button id="teacherCoopCloseDetail" class="teacher-button" type="button">ปิดรายละเอียด</button></div><p id="teacherCoopDetailMessage" role="status" aria-live="polite"></p><div id="teacherCoopDetailBody"></div></section>
+        </section>
+        <section id="headTeachers" class="head-teachers" aria-labelledby="headTeachersHeading" hidden>
+          <div class="teacher-heading"><div><h1 id="headTeachersHeading" tabindex="-1">จัดการข้อมูลอาจารย์</h1><p>ค้นหาและแก้ไขข้อมูลอาจารย์ภายในภาควิชาที่ได้รับสิทธิ์</p></div><button id="headTeachersRefresh" class="teacher-button" type="button">รีเฟรชรายชื่อ</button></div>
+          <div class="head-card">
+            <p id="headTeachersScope" class="head-count-note">กำลังตรวจสอบภาควิชา...</p>
+            <form id="headTeachersFilters" class="head-teachers-filters" role="search" aria-label="ค้นหาอาจารย์">
+              <label for="headTeachersQuery">ชื่อ นามสกุล หรืออีเมล<input id="headTeachersQuery" name="q" type="search" maxlength="100" autocomplete="off" /></label>
+              <label for="headTeachersMajor">สาขาวิชา<input id="headTeachersMajor" name="major" type="text" maxlength="255" placeholder="ทุกสาขา" aria-describedby="headTeachersMajorHint" /><small id="headTeachersMajorHint">กรอกชื่อสาขาให้ตรงกับข้อมูลที่บันทึก หรือเว้นว่างเพื่อดูทุกสาขา</small></label>
+              <label for="headTeachersStatus">สถานะบัญชี<select id="headTeachersStatus" name="status"><option value="">ทุกสถานะ</option><option value="active">ใช้งานอยู่</option><option value="inactive">ไม่เปิดใช้งาน</option></select></label>
+              <div class="head-teachers-actions"><button id="headTeachersSearch" class="teacher-button teacher-button--primary" type="submit">ค้นหา</button><button id="headTeachersClear" class="teacher-button" type="button">ล้างตัวกรอง</button></div>
+            </form>
+            <p id="headTeachersMessage" class="teacher-message" role="status" aria-live="polite"></p>
+            <a id="headTeachersSignIn" class="teacher-button" href="/login.html" hidden>เข้าสู่ระบบหัวหน้าภาควิชาอีกครั้ง</a>
+            <button id="headTeachersRetry" class="teacher-button" type="button" hidden>ลองโหลดรายชื่ออีกครั้ง</button>
+            <div id="headTeachersList" class="head-teachers-list" aria-busy="false"></div>
+            <div class="teacher-pagination" aria-label="หน้ารายชื่ออาจารย์"><button id="headTeachersPrevious" class="teacher-button" type="button" disabled>ก่อนหน้า</button><span id="headTeachersPage" role="status" aria-live="polite"></span><button id="headTeachersNext" class="teacher-button" type="button" disabled>ถัดไป</button></div>
+          </div>
+          <section id="headTeacherDetail" class="head-card head-teacher-detail" aria-labelledby="headTeacherDetailHeading" hidden>
+            <div class="head-section-heading"><h2 id="headTeacherDetailHeading" tabindex="-1">รายละเอียดอาจารย์</h2><button id="headTeacherClose" class="teacher-button" type="button">ปิดรายละเอียด</button></div>
+            <p id="headTeacherMessage" class="teacher-message" role="status" aria-live="polite"></p>
+            <dl id="headTeacherInfo" class="head-teacher-info"></dl>
+            <button id="headTeacherEdit" class="teacher-button teacher-button--primary" type="button">แก้ไขข้อมูล</button>
+            <form id="headTeacherForm" hidden>
+              <fieldset id="headTeacherFields"><legend>แก้ไขชื่อและสาขาวิชา</legend>
+                <div class="head-teacher-fields">
+                  <label for="headTeacherFirstName">ชื่อ<input id="headTeacherFirstName" type="text" maxlength="255" required aria-describedby="headTeacherFirstNameError" /><span id="headTeacherFirstNameError" class="head-teacher-field-error" aria-live="polite"></span></label>
+                  <label for="headTeacherLastName">นามสกุล<input id="headTeacherLastName" type="text" maxlength="255" required aria-describedby="headTeacherLastNameError" /><span id="headTeacherLastNameError" class="head-teacher-field-error" aria-live="polite"></span></label>
+                  <label for="headTeacherMajorValue">สาขาวิชา<input id="headTeacherMajorValue" type="text" maxlength="255" aria-describedby="headTeacherMajorError headTeacherMajorHint" /><small id="headTeacherMajorHint">เว้นว่างได้ หากยังไม่ได้ระบุสาขาวิชา</small><span id="headTeacherMajorError" class="head-teacher-field-error" aria-live="polite"></span></label>
+                </div>
+              </fieldset>
+              <p id="headTeacherDraft" class="head-count-note" role="status" aria-live="polite"></p>
+              <div class="head-teachers-actions"><button id="headTeacherSave" class="teacher-button teacher-button--primary" type="submit">บันทึกการเปลี่ยนแปลง</button><button id="headTeacherCancel" class="teacher-button" type="button">ยกเลิก</button></div>
+            </form>
+            <button id="headTeacherReload" class="teacher-button" type="button" hidden>โหลดข้อมูลล่าสุดและเก็บร่าง</button>
+          </section>
         </section>
       </main>
     </div>

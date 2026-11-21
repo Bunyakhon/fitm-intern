@@ -4,6 +4,7 @@ import { getCurrentDepartmentHead, getHeadCoopRequests, getHeadCoopRequest, deci
 import { TEACHER_TOKEN_KEY } from "../api/teacherProjectAdvisor.api.js";
 import { showToast, setButtonLoading } from "../ui/feedback.js";
 import { teacherStatusBadge } from "./teacherStatus.js";
+import { mountDepartmentHeadTeachers } from './departmentHeadTeachers.js';
 import "./roleAccount.js";
 
 export function mountDepartmentHead(dependencies) {
@@ -13,7 +14,7 @@ export function mountDepartmentHead(dependencies) {
   const toast = dependencies.toast || showToast;
   const me = dependencies.me || getCurrentDepartmentHead;
   const list = dependencies.list || getHeadCoopRequests;
-  const views = { headOverview: "ภาพรวม", coopApprovals: "อนุมัติคำร้องสหกิจ", 'own-account': "ข้อมูลส่วนตัว" };
+  const views = { headOverview: "ภาพรวม", coopApprovals: "อนุมัติคำร้องสหกิจ", headTeachers: "จัดการข้อมูลอาจารย์", 'own-account': "ข้อมูลส่วนตัว" };
   let activeView = null, pendingStatus = null, pendingRequest = null, authorized = false;
   let sequence = 0, navigationSequence = 0, dashboardLoading = false;
   function node(tag, text, className) {
@@ -30,6 +31,22 @@ export function mountDepartmentHead(dependencies) {
       }
       return result;
     }, role: "department_head" });
+  const teachers = mountDepartmentHeadTeachers({ document, storage, location, toast,
+    onProfile: profile => {
+      authorized = true;
+      const name = [profile.academic_title, profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'หัวหน้าภาควิชา';
+      get('headName').textContent = get('headWelcomeName').textContent = name;
+      get('headDepartment').textContent = profile.department;
+    },
+    onSessionInvalid: () => {
+      authorized = false; ++sequence; dashboardLoading = false;
+      clearDashboard('เซสชันหรือสิทธิ์หัวหน้าภาคใช้ไม่ได้แล้ว กรุณาเข้าสู่ระบบอีกครั้ง');
+      get('headDashboardSignIn').hidden = false;
+      // The teacher workspace already confirmed the session loss. Reuse the
+      // existing synchronous 401 cleanup without rechecking a target-scope 403.
+      workflow.handleAuthError({ status: 401 });
+    } });
+  const canLeave = () => workflow.canLeave() && (!teachers || teachers.canLeave());
   const metrics = [
     { status: 'department_head_review', id: 'headPendingCount' },
     { status: 'approved', id: 'headApprovedCount' },
@@ -111,12 +128,13 @@ export function mountDepartmentHead(dependencies) {
   }
   async function showView({ focus = true } = {}) {
     const selected = location.hash?.slice(1), view = Object.hasOwn(views, selected) ? selected : 'headOverview';
-    if (activeView && !workflow.canLeave()) {
+    if (activeView && !canLeave()) {
       target.history.replaceState(null, '', `#${activeView}`);
       pendingStatus = null; pendingRequest = null;
-      toast('กรุณาปิดหน้าต่างยืนยันหรือรอการดำเนินการให้เสร็จก่อนเปลี่ยนเมนู', 'info'); return;
+      toast('กรุณาบันทึกหรือยกเลิกการแก้ไข ปิดหน้าต่างยืนยัน หรือรอการดำเนินการให้เสร็จก่อนเปลี่ยนเมนู', 'info'); return;
     }
     const navigation = ++navigationSequence;
+    if (activeView === 'headTeachers' && view !== activeView) teachers?.hide();
     activeView = view;
     for (const id of Object.keys(views)) if (get(id)) get(id).hidden = id !== view;
     for (const link of document.querySelectorAll('.sidebar-menu [data-head-view]')) {
@@ -131,14 +149,15 @@ export function mountDepartmentHead(dependencies) {
     const requestedStatus = pendingStatus, requestId = pendingRequest; pendingStatus = null; pendingRequest = null;
     await workflow.ready;
     if (activeView !== view || navigation !== navigationSequence) return;
-    if (view === 'headOverview') await loadDashboard();
+    if (view === 'headTeachers') await teachers?.show();
+    else if (view === 'headOverview') await loadDashboard();
     else if (view === 'coopApprovals') {
       await workflow.showRequests(requestedStatus);
       if (activeView === view && navigation === navigationSequence && requestId) await workflow.openDetail(requestId);
     }
   }
   function navigate(view, status, requestId) {
-    if (!workflow.canLeave()) { toast('กรุณาปิดหน้าต่างยืนยันหรือรอการดำเนินการให้เสร็จก่อนเปลี่ยนเมนู', 'info'); return; }
+    if (!canLeave()) { toast('กรุณาบันทึกหรือยกเลิกการแก้ไข ปิดหน้าต่างยืนยัน หรือรอการดำเนินการให้เสร็จก่อนเปลี่ยนเมนู', 'info'); return; }
     pendingStatus = status || null; pendingRequest = requestId || null;
     if (location.hash === `#${view}`) showView(); else location.hash = view;
   }

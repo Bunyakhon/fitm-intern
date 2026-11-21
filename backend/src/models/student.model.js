@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 
 const SALT_ROUNDS = 10;
 
-const ALLOWED_EMAIL_DOMAIN = "@email.kmutnb.ac.th";
+const { studentIdFromEmail, STUDENT_EMAIL_DOMAINS } = require('../services/studentIdentity');
 const passwordError = message => new ValidationError(message, [
   new ValidationErrorItem(message, "Validation error", "password"),
 ]);
@@ -158,14 +158,10 @@ module.exports = (sequelize) => {
           isKmutnbEmail(value) {
             if (
               !value ||
-              !value
-                .toLowerCase()
-                .endsWith(
-                  ALLOWED_EMAIL_DOMAIN,
-                )
+              !STUDENT_EMAIL_DOMAINS.some(domain => value.toLowerCase().endsWith(`@${domain}`))
             ) {
               throw new Error(
-                `ต้องใช้อีเมล ${ALLOWED_EMAIL_DOMAIN} เท่านั้น`,
+                'ต้องใช้อีเมลมหาวิทยาลัย @kmutnb.ac.th หรือโดเมนนักศึกษาเดิมที่ระบบรองรับ',
               );
             }
           },
@@ -347,7 +343,7 @@ module.exports = (sequelize) => {
             const googleOnly = student.isNewRecord && options.googleOnlyCreation === true;
             if (googleOnly) {
               if (!options.transaction || student.password != null || student.password_hash != null
-                || !/^s[0-9]{13}@email\.kmutnb\.ac\.th$/.test(student.email || "")) {
+                || !studentIdFromEmail(student.email || "")) {
                 throw passwordError("ข้อมูลการสมัครด้วย Google ไม่ถูกต้อง");
               }
               student.password_hash = null;

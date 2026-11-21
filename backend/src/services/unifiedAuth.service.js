@@ -3,7 +3,8 @@ const { issueTeacherToken, toSafeTeacherProfile } = require("./teacherAuth.servi
 const { issueDepartmentStaffToken, toSafeDepartmentStaffProfile } = require("./staffAuth.service");
 const { adminReady, superAdminSession } = require('./superAdminAuth.service');
 const { assertAccountAccess } = require('./adminAccountAccess.service');
-const { passwordGrant, membershipReady } = require('./teacherAdminGrant.service');
+const { passwordGrant } = require('./teacherAdminGrant.service');
+const { mustChangePassword, FIRST_PASSWORD_PAGE } = require('./teacherPassword.policy');
 
 const destinations = {
   student: "/src/student_coop/student_coop.html",
@@ -26,7 +27,7 @@ function authorizeActor(actor, type) {
   if (!Object.hasOwn(destinations, type)) fail(403, "ACCOUNT_UNAUTHORIZED", "บัญชีนี้ไม่มีสิทธิ์เข้าใช้งาน");
   return type === "teacher" && actor.is_department_head === true ? "department_head" : type;
 }
-function applicationSession(actor, type, { adminGrant } = {}) {
+function applicationSession(actor, type, { adminGrant, passwordChangeRequired = false } = {}) {
   const role = authorizeActor(actor, type);
   const result = { success: true, message: "เข้าสู่ระบบสำเร็จ", role, actor_type: type, redirect: destinations[role] };
   if (type === "student") {
@@ -34,8 +35,10 @@ function applicationSession(actor, type, { adminGrant } = {}) {
       actor_type: type, role }, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: process.env.JWT_EXPIRES_IN || "1d" });
     result.data = Object.fromEntries(["id", "student_id", "first_name", "last_name", "email", "track", "status"].map(key => [key, actor[key]]));
   } else if (type === "teacher") {
-    result.token = issueTeacherToken(actor, { adminGrant });
+    result.token = issueTeacherToken(actor, { adminGrant, passwordChangeRequired });
     result.teacher = toSafeTeacherProfile(actor);
+    if (passwordChangeRequired && role === 'teacher') Object.assign(result, { must_change_password: true, redirect: FIRST_PASSWORD_PAGE,
+      message: 'กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งานระบบ' });
   } else if (type === 'super_admin') {
     Object.assign(result, superAdminSession(actor));
   } else {
@@ -75,14 +78,15 @@ function createUnifiedAuthService({ models = require("../models") } = {}) {
   }
   return { resolveCredentials, async login(input) {
     const { actor, type } = await resolveCredentials(input);
-    if (type === 'teacher' && await membershipReady(models)) return models.sequelize.transaction(async transaction => {
+    if (type === 'teacher') return models.sequelize.transaction(async transaction => {
       await models.sequelize.query('SELECT pg_advisory_xact_lock(63828018)', { transaction });
       const teacher = await models.Teacher.findByPk(actor.id, { transaction, lock: transaction.LOCK.SHARE });
       authorizeActor(teacher, type);
       if (!await teacher.comparePassword(input.password)) fail(401, 'LOGIN_CREDENTIALS', 'ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว');
       await assertAccountAccess(models, type, teacher.id, { transaction });
-      const grant = await passwordGrant(models, teacher, transaction);
-      const result = applicationSession(teacher, type, { adminGrant: grant });
+      const passwordChangeRequired = await mustChangePassword(teacher);
+      const grant = passwordChangeRequired ? null : await passwordGrant(models, teacher, transaction);
+      const result = applicationSession(teacher, type, { adminGrant: grant, passwordChangeRequired });
       if (grant) await models.AdminAuditLog.create({ actor_id: grant.id, action: 'session.login', target_type: 'teacher', target_id: teacher.id, changes: { roles: ['teacher', 'super_admin'] } }, { transaction });
       return result;
     });

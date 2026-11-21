@@ -4,6 +4,59 @@
 
 Branding ปัจจุบัน (14 พฤศจิกายน 2026): Header ใช้ **CWIE-IT CoopConnect** และคำอธิบาย **ระบบจัดการสหกิจศึกษา** สองบรรทัด พร้อมโลโก้เดิม `/images/logo_kiwi.png`; ลิงก์แบรนด์กลับ `/index.html` และ Browser Title ใช้ `ชื่อหน้า | CWIE-IT CoopConnect`. เปลี่ยนเฉพาะ Branding; เนื้อหา Privacy/Terms ยังรอเจ้าของเอกสารทบทวนชื่อเดิม. **Tests: NOT RUN — USER-OWNED TESTING; PENDING USER VERIFICATION.** รายการไฟล์และ Manual Acceptance สำหรับงานนี้อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
 
+## Local Student Data Maintenance — 22 พฤศจิกายน 2026
+
+เครื่องมือ One-shot `backend/scripts/studentDataCleanup.cjs` ใช้ Models/Primary Keys และ Foreign Keys ของฐานจริงสร้างลำดับลบ Student-owned Records โดยไม่ใช้ Email เป็นเกณฑ์. ไม่ถูกเรียกตอน Startup และไม่สร้าง Backup/Dump/Snapshot/Export. ทุกครั้งต้องตรวจ Docker Context ว่าเป็น Local Docker Desktop และ Compose Labels/Bind Mount/Network ว่าตรง Workspace นี้ก่อน; Script ไม่สามารถพิสูจน์ Docker Host Context จากภายใน Container แทนผู้ดำเนินการได้.
+
+Windows CMD หลังตรวจ Project/Target ตามข้างต้นแล้ว (IP ด้านล่างเป็นค่าที่ตรวจจริงวันที่ 22 พฤศจิกายน 2026 ต้องตรวจใหม่เมื่อ Container เปลี่ยน):
+
+```cmd
+docker context inspect --format "{{.Endpoints.docker.Host}}"
+docker inspect --format "{{json .Config.Labels}}" intern_backend intern_postgres
+docker inspect --format "{{json .NetworkSettings.Networks}}" intern_backend intern_postgres
+docker inspect --format "{{json .Mounts}}" intern_backend intern_postgres
+set "FITM_CLEANUP_SERVER=172.18.0.5"
+docker exec intern_backend node scripts/studentDataCleanup.cjs --dry-run --expect-server=%FITM_CLEANUP_SERVER%
+```
+
+Execute เป็นคำสั่งแยกที่ต้องระบุ No-backup Confirmation ชัดเจน และตรวจ Actual Environment/Schema/Dependencies ใหม่ภายใน Transaction ที่ Lock Tables ก่อนลบ:
+
+```cmd
+docker exec intern_backend node scripts/studentDataCleanup.cjs --execute --expect-server=%FITM_CLEANUP_SERVER% --confirm=DELETE-STUDENT-DATA-NO-BACKUP
+```
+
+**ผลปัจจุบัน:** PostgreSQL 16.15 `intern_system`/`public` ยืนยันแล้ว แต่ Student ทั้ง 2 บัญชีติด Course Snapshots 25 รายการที่ `coop_academic_snapshot_immutable` ห้ามลบ. Execute รอบนี้ Rollback ก่อน DELETE (`attemptedDeletes=0`). ไม่มีการปิด Trigger/Foreign Key/Guard หรือแก้ Schema เพื่อให้ผ่าน. Company ทั้ง 3 รายการเชื่อมกับ Job Catalog จึงคงไว้; ไม่ลบ Shared Job Data. รายละเอียด Counts/Protected Comparison อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+Script หยุดเมื่อมี Delete Trigger/Unknown Dependency/Shared Actor/Model PK Drift หรือ Target ไม่ตรง; ไม่ถือ Dry-run ว่าลบสำเร็จ. Company ต้องมี FK Link กับ Student-owned Scope และไม่มี Shared Dependents จึงเข้าแผนลบ. หากไม่มี Blocker จึงลบตาม FK Order, เปรียบเทียบเนื้อหา Records ที่ต้องเก็บในหน่วยความจำ และตรวจ Durable Outcome ก่อนลบเฉพาะ Regular Files ใต้ Student Owner Roots ที่ยืนยันได้ โดยข้ามไฟล์ที่ยังมีผู้ใช้อื่นอ้างอิง/Symlinks/Ownership ไม่ชัด. DB และ File Storage ไม่ Atomic ร่วมกัน; ผล Partial/Commit Outcome ไม่ชัดจะรายงานตามจริง ไม่ลบไฟล์เมื่อผล Commit ยังไม่ยืนยัน. Mutation/File Deletion Path ยังไม่ถูกใช้งานจริงในรอบนี้เพราะติด Guard. **Tests: NOT RUN — USER-OWNED TESTING.** ไม่แก้ Password UX/UI หรือ Source Features ของ Week 1.
+
+**Root-cause diagnostics เพิ่มเติม — 22 พฤศจิกายน 2026:** Dry-run/Execute รายงาน `academicRetention` จาก Catalog จริง: Trigger Events/Function Body Match, Named FK Definitions/Actions, Nullability ของ Ownership Columns, จำนวน Request/Snapshot ต่อ Student Group แบบไม่แสดง Identity และจำนวน Shared Academic Catalogs ที่คงไว้. เมื่อพบเส้นทาง Immutable Snapshot → Required Request → Required Student ที่ยืนยันครบ จะระบุ `PENDING DECISION — IMMUTABLE HISTORY RETENTION`; Execute หยุดก่อน DELETE ด้วย `IMMUTABLE_HISTORY_POLICY_DECISION_REQUIRED`. ไม่แก้ Snapshot, ไม่เปลี่ยน Owner ไปยังบัญชีอื่น, ไม่ใช้ Cancel เป็น Account Delete และไม่สร้าง Placeholder Student เพื่อรายงานว่าลบหมด. การถอด Ownership/กำหนด Retention Owner แยกจาก Login Account หรืออนุญาต Purge ต้องเป็น Policy/Schema Decision ในอนาคต ไม่ทำในเครื่องมือนี้.
+
+Source ใหม่ยังไม่ได้รันกับฐานจริง: Docker Inspect รอบสืบสวนล่าสุดถูกปฏิเสธสิทธิ์ จึงไม่ Retry/เปลี่ยนช่องทางเข้าฐานข้อมูล. Counts และผล Execute ข้างต้นเป็นหลักฐานจาก Maintenance รอบก่อนวันที่ 22 พฤศจิกายน 2026 ไม่ใช่ผล Runtime ใหม่. Seeder เดิมระบุ `DEVELOPMENT_RETAIN_DEMO_NO_ROW_DELETE`; Legacy Cleanup ที่เปลี่ยน Trigger Function ไม่ใช่ Lifecycle ที่ใช้ได้ภายใต้ข้อห้ามปัจจุบัน.
+
+## Student Google Authentication / First Login UX — 21 พฤศจิกายน 2026
+
+Student สมัครด้วย Email/Password หรือ Google ตั้งแต่ครั้งแรกได้ตาม Runtime Gates เดิม. Registration Pattern ปัจจุบันคือ `s` + รหัสนักศึกษา 13 หลัก + `@kmutnb.ac.th`; คง `@email.kmutnb.ac.th` เพื่อรองรับบัญชี/Workflow เดิม. รูปแบบอีเมลไม่ใช่หลักฐาน Enrollment หรือ Ownership. Teacher/Head/Staff ยังคง `@itm.kmutnb.ac.th` และ Hosted Domain Policy เดิม.
+
+Google-first สร้าง Student และ Subject Mapping ใน Transaction เดียว; การ Login ครั้งถัดไปใช้ Mapping เดิม ไม่ถาม Password หรือให้เชื่อมซ้ำ. บัญชี Email/Password ที่ยังไม่เชื่อมต้อง Login ก่อน แล้วเชื่อมจาก Account Management ด้วย Current Password + Verified Google + Shared Confirmation; ไม่มี Email Auto-Link. บัญชีที่เชื่อม Google อื่นแล้วได้รับคำแนะนำให้ใช้บัญชีที่เชื่อมไว้.
+
+ชื่อจาก Verified Claims เติมเฉพาะช่องว่าง: ชื่อไทยลง Student ตาม Validator เดิม และชื่ออังกฤษลง StudentProfile เดิม; ไม่แยก Full Name โดยเดา ไม่เปลี่ยน Student ID/ข้อมูลการศึกษา. รูปเดิมมีลำดับก่อนรูป Google; รูป Google ที่ผ่าน HTTPS Provider Host/MIME/Signature/ขนาดไม่เกิน 5 MB จะเก็บใน Private Storage และอ่านผ่าน API เดิม. ไม่มีรูปหรืออ่าน/แสดงไม่ได้ใช้ Avatar เริ่มต้น. Dashboard Refresh หลัง Confirm ใช้ Aggregate/Draft/Revision Flow เดิม. Google Account Status อ่าน Mapping จริง; Schema ไม่มี Provider Email แยก จึงแสดงอีเมลที่ยืนยันเฉพาะหลัง Confirm ในหน้าปัจจุบัน และใช้ข้อความสถานะปลอดภัยหลังเปิดหน้าใหม่.
+
+หน้า First Login Password Change ใช้หัวข้อ/คำอธิบายเดียว และคำแนะนำสั้นว่า “รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร และไม่ซ้ำกับรหัสผ่านเดิม”; ข้อผิดพลาดแสดงเฉพาะเงื่อนไขที่ไม่ผ่าน โดยอธิบายขนาด 72 ไบต์/ภาษาไทยเมื่อเกี่ยวข้อง. คง Eye/Eye-off พร้อม Accessible Labels และ Actions เดิม; ไม่มีปุ่มโหลดสถานะแยก. ถ้า GET Status ขัดข้อง Action เปลี่ยนรหัสจะตรวจสถานะจริงใหม่ก่อนส่ง Password Mutation หรือผู้ใช้ออกจากระบบได้. คง Forced Change, Backend Guards และ Password Policy เดิม.
+
+**Deployment:** ไม่เปิด Flags หรือแก้ `.env` ในงานนี้. Global และ Student Runtime Allowlists ต้องรองรับโดเมนใหม่ด้วย; `GOOGLE_STUDENT_ONBOARDING_ENABLED` ยังจำกัด Development ตามเดิม และ Hosted Domain ต้องผ่าน Allowlist จริง. รูปที่ดาวน์โหลดไม่ได้เป็น Optional Fallback; การดาวน์โหลดอาจเพิ่มเวลาภายใน Transaction สูงสุดประมาณ 5 วินาที. **Tests: NOT RUN — USER-OWNED TESTING.** รายการตรวจรับ/ข้อจำกัดอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+## Staff Teacher Management — 21 พฤศจิกายน 2026
+
+เมนู `จัดการข้อมูลอาจารย์` / `#staffTeachers` ใน Staff Workspace ค้นหา ดูรายละเอียด เพิ่ม แก้ชื่อไทย/นามสกุล/คำนำหน้าวิชาการ/สาขา และปิดใช้งานอาจารย์ในภาควิชาของ Staff ที่ตรวจจาก Database. คง Filter/Pagination เดิม; รายละเอียดบัญชี Head อ่านได้เท่านั้น. Email เปลี่ยนได้เฉพาะตอนสร้าง ไม่รับ Password/Department/Role/Permissions จากฟอร์ม. Major เลือกจาก Catalog เดิม (หรือคงค่าเดิมตอนแก้); Title เป็นข้อความ nullable ตาม Teacher Model.
+
+API ใช้ `GET /api/staff/teachers`, `GET /api/staff/teachers/:id`, `GET /api/staff/teachers/options`, `POST /api/staff/teachers`, `PATCH /api/staff/teachers/:id` และ `PATCH /api/staff/teachers/:id/deactivate`. Mutation ตรวจ Live Staff/Central Control/Department ซ้ำใน Transaction. ปิดใช้งานเปลี่ยนเป็น `inactive` และใช้ Central Revocation เมื่อมีตารางเดิม; งาน Advisor/นัดนิเทศที่ยังไม่เสร็จ/กรรมการสอบที่ยังไม่เสร็จ/Active Admin Membership ได้ 409 โดยไม่ย้ายงานหรือลบประวัติ.
+
+**นโยบาย Teacher Password ใหม่ — 21 พฤศจิกายน 2026:** แทนนโยบาย Pending Activation รอบก่อน. Staff สร้าง Teacher ใหม่ด้วยอีเมล `@itm.kmutnb.ac.th` เป็น `active` และ Backend Hash รหัสเริ่มต้นตามนโยบายผู้ใช้ด้วย Model Hook เดิม. Response ไม่คืนรหัส/Hash และระบุ `activation.state=password_change_required`, `login_ready=false` สำหรับการใช้งานปกติ. หลังยืนยัน Credentials ระบบพาไปหน้าเปลี่ยนรหัสครั้งแรก; JWT จำกัดอายุ 15 นาทีและเข้าถึงได้เฉพาะ Account Security/Logout จนเปลี่ยนสำเร็จ. บังคับจาก Hash ที่เก็บใน Database โดยตรง ไม่เพิ่ม Client Flag หรือเปลี่ยน Schema.
+
+Staff Reset ใช้ `POST /api/staff/teachers/:id/reset-password` ผ่าน Confirmation: ตรวจ Scope/Head/Admin, Hash รหัสเริ่มต้นและเพิกถอน Session เดิมใน Transaction โดยไม่เปิดบัญชี Inactive/Central Disabled กลับมา. Teacher ของตนเองใช้ `GET/POST /api/teachers/account-security` และ `POST /api/teachers/account-security/logout`; ต้องยืนยันรหัสปัจจุบัน/รหัสใหม่/ยืนยันรหัสใหม่. เปลี่ยนสำเร็จให้เข้าสู่ระบบใหม่ทุกอุปกรณ์. มีส่วนความปลอดภัยใน Teacher Account เดิม; Head/Staff ไม่ได้สิทธิ์ API นี้เพิ่ม. Google Login/Linking ปฏิเสธระหว่าง Forced Change โดยคง Domain/Signature/Subject Mapping/Confirmation/Flags เดิม.
+
+Create/Password Mutations ต้องมี `admin_account_controls` ตาม Model เดิมสำหรับ Revocation; ถ้า Deployment ไม่มีจะคืน 503 โดยไม่เปลี่ยน Schema หรือข้าม Guard. Application Audit หลัง Commit ไม่เก็บค่า Password/Hash/Token; Durable Staff Audit ยังติด FK ที่อ้างอิง Super Admin เดิม. **Known Risk:** รหัสเริ่มต้นร่วมกันเสี่ยง Account Takeover ก่อนเจ้าของเปลี่ยนรหัส แม้มี Forced Change; ไม่มี Ownership Invitation เพิ่ม จึงไม่รับรอง Production Readiness. **Tests: NOT RUN — USER-OWNED TESTING.** รายการตรวจรับรวมทั้ง 7 Requirements อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
 ## Department Staff Workspace — 16 พฤศจิกายน 2026
 
 หน้า `/src/department_staff/department_staff.html` ใช้รูปแบบ Header/Sidebar/Spacing จาก Department Head และแบ่งงานตาม Hash: `#staffOverview`, `#staffCoopRequests`, `#documents`, `#staffPrerequisiteCatalog`, `#staffJobs`, `#co09Manager`, `#activities`, `#own-account`. ข้อมูลบัญชีและ Google Workspace อยู่เมนูเดียวกัน; ใช้ชื่อ/อักษรย่อจาก Staff Profile จริงและ Logout/Session เดิม. เมนู Catalog แสดงเมื่อ API คืน Program Grants; กรณีไม่มีสิทธิ์หรือโหลดสิทธิ์ไม่ได้แสดงข้อความใน Overview และยังเปิด Hash รายวิชาเพื่อตรวจสถานะ/โหลดใหม่ได้.
@@ -14,15 +67,15 @@ Overview แสดงคิวจาก API เดิมสูงสุดหั
 
 ## Google OAuth / Staff Account Linking — 14 พฤศจิกายน 2026
 
-**IMPLEMENTED — PENDING USER VERIFICATION. Tests: NOT RUN — USER-OWNED TESTING.** Domain contract รอบนี้แทนตัวอย่าง Email Domains เก่าในประวัติด้านล่าง: Student ใช้ `email.kmutnb.ac.th`; Teacher/Department Head/Department Staff ใช้ `itm.kmutnb.ac.th` เท่านั้น. Runtime allowlists จำกัดเพิ่มเติมได้แต่ขยายเกิน policy นี้ไม่ได้; Domain ไม่ให้บทบาทและไม่สร้างบัญชีบุคลากร. ต้องมีบัญชีเว็บไซต์เดิมและ Google subject mapping ที่ยืนยัน ownership แล้ว.
+**IMPLEMENTED — PENDING USER VERIFICATION. Tests: NOT RUN — USER-OWNED TESTING.** Teacher/Department Head/Department Staff ใช้ `itm.kmutnb.ac.th` เท่านั้น. **Student Domain Contract ส่วนนี้ถูกแทนที่วันที่ 21 พฤศจิกายน 2026** ตามหัวข้อ Student Google Authentication ด้านบน: เพิ่ม `kmutnb.ac.th` พร้อมคง `email.kmutnb.ac.th` เดิม. Runtime allowlists จำกัดเพิ่มเติมได้แต่ขยายเกิน Source Policy ไม่ได้; Domain ไม่ให้บทบาทและไม่สร้างบัญชีบุคลากร. บุคลากรต้องมีบัญชีเว็บไซต์เดิมและ Google subject mapping ที่ยืนยัน ownership แล้ว.
 
 Staff: Login Email/Password เดิม → จัดการบัญชี → ยืนยันรหัสผ่านปัจจุบัน → Google Workspace → ตรวจสองบัญชีใน Shared Confirmation → Confirm จึงสร้าง mapping → สถานะเชื่อมแล้ว. ใช้ `/api/auth/google/staff/{status,challenge,link,link/confirm}` หลัง JWT/Staff guards; Password ตรวจใน challenge ก่อนโหลด GIS, challenge/confirmation ผูกกับ Staff/session และใช้ครั้งเดียว. ไม่เปลี่ยน Email/Password/Role/Session เดิม; คราวต่อไป Google Login กลับ Staff Dashboard. Teacher/Head คง Live Session linking โดยไม่ถาม Password ซ้ำ; Student registration/onboarding/ID extraction เดิมคงไว้.
 
 ผู้ดูแลต้องทบทวน Runtime Configuration เองตามค่าที่ไม่ใช่ความลับด้านล่าง; งานนี้ไม่ได้อ่านหรือแก้ `.env` จริง ไม่เปิด flags และไม่ restart/deploy services:
 
 ```env
-GOOGLE_ALLOWED_EMAIL_DOMAINS=email.kmutnb.ac.th,itm.kmutnb.ac.th
-GOOGLE_ALLOWED_EMAIL_DOMAINS_STUDENT=email.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS=kmutnb.ac.th,email.kmutnb.ac.th,itm.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS_STUDENT=kmutnb.ac.th,email.kmutnb.ac.th
 GOOGLE_ALLOWED_EMAIL_DOMAINS_TEACHER=itm.kmutnb.ac.th
 GOOGLE_ALLOWED_EMAIL_DOMAINS_DEPARTMENT_HEAD=itm.kmutnb.ac.th
 GOOGLE_ALLOWED_EMAIL_DOMAINS_DEPARTMENT_STAFF=itm.kmutnb.ac.th

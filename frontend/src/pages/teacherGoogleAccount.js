@@ -9,8 +9,9 @@ export function mountTeacherGoogleAccount({ document, target, root, getToken, on
   link = googleTeacherLink, confirm = googleTeacherConfirm, toast = showToast,
   loadProvider = () => loadGoogleProvider(document, target) }) {
   const el = (tag, text = '', cls = '') => { const node = document.createElement(tag); node.textContent = text; node.className = cls; return node; };
+  const teacherWorkspace = document.body.dataset.workflowRole === 'teacher';
   const card = el('section', '', 'teacher-google-account');
-  const title = el('h3', 'การเชื่อมต่อบัญชี Google'); title.id = 'teacherGoogleHeading'; card.setAttribute('aria-labelledby', title.id);
+  const title = el('h3', teacherWorkspace ? 'เชื่อมต่อ Google Workspace' : 'การเชื่อมต่อบัญชี Google'); title.id = 'teacherGoogleHeading'; card.setAttribute('aria-labelledby', title.id);
   const header = el('div', '', 'teacher-account-card-heading'), brand = el('span', '', 'teacher-google-brand');
   const logo = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   logo.setAttribute('viewBox', '0 0 24 24'); logo.setAttribute('aria-hidden', 'true'); logo.setAttribute('focusable', 'false');
@@ -21,7 +22,8 @@ export function mountTeacherGoogleAccount({ document, target, root, getToken, on
     ['#EA4335', 'M12 5.17c1.62 0 3.07.56 4.21 1.64l3.16-3.16A10.6 10.6 0 0 0 12 1a11 11 0 0 0-9.72 6.05l3.54 2.66C6.69 7.11 9.13 5.17 12 5.17z'],
   ]) { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('fill', fill); path.setAttribute('d', d); logo.append(path); }
   brand.append(logo);
-  const intro = el('div', '', 'teacher-google-intro'); intro.append(title, el('p', 'เชื่อมบัญชี Google เพื่อเข้าสู่ระบบด้วยบัญชีเดิมของคุณ'));
+  const intro = el('div', '', 'teacher-google-intro'); intro.append(title, el('p', teacherWorkspace
+    ? 'ใช้บัญชีมหาวิทยาลัย @itm.kmutnb.ac.th และเปลี่ยนรหัสผ่านเริ่มต้นก่อนเชื่อมต่อ' : 'เชื่อมบัญชี Google เพื่อเข้าสู่ระบบด้วยบัญชีเดิมของคุณ'));
   const badge = teacherStatusBadge(document, 'กำลังตรวจสอบ', 'pending');
   header.append(brand, intro, badge);
   const message = el('p', '', 'teacher-account-message'); message.setAttribute('aria-live', 'polite');
@@ -74,7 +76,8 @@ export function mountTeacherGoogleAccount({ document, target, root, getToken, on
       const result = await status(); if (!current(ticket, token)) return;
       if (typeof result?.linked !== 'boolean' || typeof result.enabled !== 'boolean' || typeof result.canLink !== 'boolean') throw Error('ยังยืนยันสถานะ Google ไม่ได้');
       allowed = result.enabled && !result.linked && result.canLink;
-      state(result.linked ? 'เชื่อมต่อแล้ว' : !result.enabled ? 'ยังไม่เปิดใช้งาน' : 'ยังไม่ได้เชื่อมต่อ', result.linked ? 'success' : 'neutral');
+      state(result.linked ? teacherWorkspace ? 'เชื่อม Google Workspace แล้ว' : 'เชื่อมต่อแล้ว'
+        : !result.enabled ? 'ยังไม่เปิดใช้งาน' : teacherWorkspace ? 'ยังไม่ได้เชื่อม Google Workspace' : 'ยังไม่ได้เชื่อมต่อ', result.linked ? 'success' : 'neutral');
       message.textContent = result.linked ? 'บัญชีนี้เชื่อมต่อ Google แล้ว'
         : !result.enabled ? 'ยังไม่เปิดใช้งานการเชื่อมต่อ Google'
           : allowed ? 'เลือกบัญชี Google แล้วตรวจสอบบัญชีทั้งสองก่อนยืนยันการเชื่อมต่อ'

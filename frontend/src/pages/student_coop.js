@@ -807,6 +807,7 @@ function clearProfileImageObjectUrl() {
 function resetProfileImagePreview() {
   clearProfileImageObjectUrl();
   if (profileAvatarImage) {
+    profileAvatarImage.onerror = null;
     profileAvatarImage.removeAttribute("src");
     profileAvatarImage.hidden = true;
   }
@@ -815,6 +816,7 @@ function resetProfileImagePreview() {
     profileAvatarPlaceholder.style.display = "flex";
   }
   if (modalProfileImage) {
+    modalProfileImage.onerror = null;
     modalProfileImage.removeAttribute("src");
     modalProfileImage.hidden = true;
   }
@@ -826,7 +828,9 @@ function resetProfileImagePreview() {
 function showProfileImagePreview(objectUrl) {
   clearProfileImageObjectUrl();
   profileImageObjectUrl = objectUrl;
+  const fallback = () => { if (profileImageObjectUrl === objectUrl) resetProfileImagePreview(); };
   if (profileAvatarImage) {
+    profileAvatarImage.onerror = fallback;
     profileAvatarImage.src = objectUrl;
     profileAvatarImage.hidden = false;
   }
@@ -835,6 +839,7 @@ function showProfileImagePreview(objectUrl) {
     profileAvatarPlaceholder.style.display = "none";
   }
   if (modalProfileImage) {
+    modalProfileImage.onerror = fallback;
     modalProfileImage.src = objectUrl;
     modalProfileImage.hidden = false;
   }
@@ -1979,6 +1984,12 @@ function handleStudentSessionChange() {
 }
 
 document.getElementById("studentAccountProfileReload")?.addEventListener("click", () => loadStudentProfile());
+document.addEventListener('student:google-profile-updated', () => {
+  if (!studentLogoutCompleted && !studentLogoutInProgress && getStudentToken() && currentStudent?.id) {
+    // Existing aggregate refresh retains unsaved profile/academic/image drafts.
+    loadStudentProfile();
+  }
+});
 document.getElementById("studentAccountProfileEdit")?.addEventListener("click", () => {
   document.querySelector('.sidebar-item[data-target="panel-profile"]')?.click();
   document.getElementById("profilePersonalTab")?.focus();
