@@ -1,5 +1,6 @@
 import { apiRequest } from "./client.js";
 import { teacherRequest } from './teacherProjectAdvisor.api.js';
+import { staffRequest } from './staffDocuments.api.js';
 export const googleConfig = () => apiRequest("/api/auth/google/config", { auth: false });
 export const googleChallenge = body => apiRequest("/api/auth/google/challenge", { method: "POST", body, auth: false });
 export const googleAuthenticate = body => apiRequest("/api/auth/google/login", { method: "POST", body, auth: false });
@@ -13,3 +14,7 @@ export const googleTeacherStatus = () => teacherRequest('/api/auth/google/teache
 export const googleTeacherChallenge = body => teacherRequest('/api/auth/google/teacher/challenge', { method: 'POST', body });
 export const googleTeacherLink = body => teacherRequest('/api/auth/google/teacher/link', { method: 'POST', body });
 export const googleTeacherConfirm = body => teacherRequest('/api/auth/google/teacher/link/confirm', { method: 'POST', body });
+export const googleStaffStatus = () => staffRequest('/api/auth/google/staff/status');
+export const googleStaffChallenge = body => staffRequest('/api/auth/google/staff/challenge', { method: 'POST', body });
+export const googleStaffLink = body => staffRequest('/api/auth/google/staff/link', { method: 'POST', body });
+export const googleStaffConfirm = body => staffRequest('/api/auth/google/staff/link/confirm', { method: 'POST', body });

@@ -3,9 +3,9 @@ import { saveStudentSession } from "../auth/studentAuthStorage.js";
 import { acceptGoogleSession } from "../auth/googleSession.js";
 import { showToast, showConfirmModal } from "../ui/feedback.js";
 
-export function confirmGoogleLink(preview, { confirm = googleConfirmLink, target = window } = {}) {
+export function confirmGoogleLink(preview, { confirm = googleConfirmLink, target = window, signal } = {}) {
   return new Promise(resolve => {
-    let result = null, expired = false;
+    let result = null, expired = false, expiry;
     const roleNames = { student: "นักศึกษา", teacher: "อาจารย์", department_head: "หัวหน้าภาควิชา", department_staff: "เจ้าหน้าที่" };
     const account = preview.target;
     const close = showConfirmModal({ title: "ยืนยันการผูกบัญชี Google", confirmLabel: "ยืนยันการผูกบัญชี",
@@ -14,12 +14,16 @@ export function confirmGoogleLink(preview, { confirm = googleConfirmLink, target
         + `\nบัญชี Google: ${preview.googleEmail}\nยืนยันว่าคุณเป็นเจ้าของทั้งสองบัญชีและต้องการผูกบัญชีเหล่านี้`,
       onConfirm: async () => {
         if (expired) throw new Error("การยืนยันหมดอายุ กรุณาเริ่มใหม่");
-        result = await confirm({ confirmationToken: preview.confirmationToken });
+        try { result = await confirm({ confirmationToken: preview.confirmationToken }); }
+        catch (error) { if (signal?.aborted) target.setTimeout(close, 0); throw error; }
       },
-      onClose: () => { target.clearTimeout(expiry); resolve(result); },
+      onClose: () => { target.clearTimeout(expiry); signal?.removeEventListener('abort', abort); resolve(result); },
     });
+    const abort = () => { expired = true; close(); };
     document.getElementById("appConfirmMessage").closest(".app-confirm-overlay").classList.add("google-link-confirmation");
-    const expiry = target.setTimeout(() => { expired = true; close(); }, Math.max(0, Date.parse(preview.expiresAt) - Date.now()));
+    expiry = target.setTimeout(() => { expired = true; close(); }, Math.max(0, Date.parse(preview.expiresAt) - Date.now()));
+    signal?.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) abort();
   });
 }
 

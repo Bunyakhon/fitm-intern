@@ -19,7 +19,11 @@ function createCoopTopicExamsRouter({ models = require('../models'), authenticat
     }
   };
   const result = (res, data) => { if (data.version !== undefined) res.set('ETag', `"${data.version}"`); res.json({ success: true, data }); };
-  const manager = wrap(async (req, res, next) => { req.topicExamActor = await policy.manager(req, models); next(); });
+  const manager = wrap(async (req, res, next) => {
+    req.topicExamContext = await policy.managerContext(req, models);
+    req.topicExamActor = req.topicExamContext.actor;
+    next();
+  });
   router.get('/me', requireCoopStudent, wrap(async (req, res) => result(res, await service.detail(req.user.id))));
   router.put('/me/document-url', requireCoopStudent, wrap(async (req, res) => result(res, await service.saveDocument(req.user.id, req.body, req.get('If-Match')))));
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: rules.MAX_PDF_BYTES, files: 1, fields: 0, parts: 2 }, fileFilter: (req, file, done) => done(null, file.mimetype === 'application/pdf' && /\.pdf$/i.test(file.originalname)) }).single('file');
@@ -37,8 +41,8 @@ function createCoopTopicExamsRouter({ models = require('../models'), authenticat
   router.get('/manage/students', wrap(async (req, res) => res.json({ success: true, ...await service.list(req.query) })));
   router.get('/manage/teachers', wrap(async (req, res) => res.json({ success: true, ...await service.directory() })));
   router.get('/manage/students/:id', wrap(async (req, res) => result(res, await service.detail(req.params.id, true))));
-  router.put('/manage/students/:id/review', wrap(async (req, res) => result(res, await service.review(req.params.id, req.body, req.get('If-Match'), req.topicExamActor))));
-  router.put('/manage/students/:id/schedule', wrap(async (req, res) => result(res, await service.saveSchedule(req.params.id, req.body, req.get('If-Match'), req.topicExamActor))));
+  router.put('/manage/students/:id/review', wrap(async (req, res) => result(res, await service.review(req.params.id, req.body, req.get('If-Match'), req.topicExamContext))));
+  router.put('/manage/students/:id/schedule', wrap(async (req, res) => result(res, await service.saveSchedule(req.params.id, req.body, req.get('If-Match'), req.topicExamContext))));
   router.get('/manage/students/:id/document/preview', send(req => req.params.id, 'inline'));
   router.get('/manage/students/:id/document/download', send(req => req.params.id, 'attachment'));
   return router;

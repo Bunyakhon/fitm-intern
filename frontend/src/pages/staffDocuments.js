@@ -1,5 +1,7 @@
 import { roleSessionStorage } from "../auth/roleAuthStorage.js";
-import { STAFF_TOKEN_KEY, getCurrentStaff, getDocumentQueue, getDocumentRequest, saveStaffDocument, getStaffDocumentContent, saveCompanyResponse } from '../api/staffDocuments.api.js';
+import { STAFF_TOKEN_KEY, staffRequest, getCurrentStaff, getDocumentQueue, getDocumentRequest, saveStaffDocument, getStaffDocumentContent, saveCompanyResponse } from '../api/staffDocuments.api.js';
+import { getStaffCoopRequests } from '../api/staffCoopRequests.api.js';
+import { listActivities } from '../api/coopActivities.api.js';
 import { showConfirmModal, showToast, setButtonLoading } from '../ui/feedback.js';
 const PAGE_SIZE = 25;
 const STATUS = { approved: 'อนุมัติแล้ว', document_issued: 'ออกเอกสารแล้ว', in_progress: 'กำลังปฏิบัติงาน', advisor_review: 'รออาจารย์ที่ปรึกษา', department_head_review: 'รอหัวหน้าภาควิชา', rejected: 'ไม่ได้รับการอนุมัติ', cancelled: 'ยกเลิกแล้ว' };
@@ -194,9 +196,216 @@ export function mountStaffDocuments({ document, storage, location, me = getCurre
   controls();
   const ready = (async () => {
     if (!token) { revoke(); return; }
-    try { const response = await me(); if (storage.getItem(STAFF_TOKEN_KEY) !== token) return; if (!response.data?.id || response.data.is_active !== true) { revoke(); return; } authorized = true; get('staffName').textContent = `${response.data.first_name} ${response.data.last_name}`; await refresh(); }
+    try { const response = await me(); if (storage.getItem(STAFF_TOKEN_KEY) !== token) return; if (!response.data?.id || response.data.is_active !== true) { revoke(); return; } authorized = true; get('staffName').textContent = `${response.data.first_name} ${response.data.last_name}`; await refresh(); return response.data; }
     catch (error) { if (!handle(error)) { say('ตรวจสอบบัญชีเจ้าหน้าที่ไม่สำเร็จ กรุณาโหลดหน้าใหม่', true); controls(); } }
   })();
   return { ready, refresh, openDetail };
 }
-if (typeof document !== 'undefined') mountStaffDocuments({ document, storage: roleSessionStorage, location: window.location });
+// Staff-only shell reuses the document session, APIs and mounted workspaces.
+function mountStaffWorkspace({ document, target, sessionReady }) {
+  if (!document.body.hasAttribute('data-staff-workspace') || document.body.dataset.staffMounted) return;
+  document.body.dataset.staffMounted = 'true';
+  const get = id => document.getElementById(id);
+  const token = roleSessionStorage.getItem(STAFF_TOKEN_KEY);
+  const live = () => !!token && roleSessionStorage.getItem(STAFF_TOKEN_KEY) === token;
+  const views = {
+    staffOverview: 'ภาพรวมงานเจ้าหน้าที่', staffCoopRequests: 'ตรวจสอบคำร้องสหกิจศึกษา',
+    documents: 'จัดการเอกสารสหกิจศึกษา', staffPrerequisiteCatalog: 'รายวิชาก่อนออกสหกิจศึกษา',
+    staffJobs: 'พิจารณาประกาศรับสมัครงาน', co09Manager: 'จัดการสอบหัวข้อ CO-09',
+    activities: 'ปฏิทินกิจกรรมสหกิจศึกษา', 'own-account': 'ข้อมูลบัญชีของฉัน',
+  };
+  const jobLabels = { pending_review: 'รอพิจารณา', published: 'เผยแพร่แล้ว', rejected: 'ปฏิเสธแล้ว',
+    pending_email_verification: 'รอยืนยันอีเมล', withdrawn: 'ถอนประกาศ', expired: 'หมดอายุ' };
+  let authorized = false, overviewBusy = false, overviewLoaded = false, activeView;
+  let jobBusy = false, jobModal = false, jobLoaded = false, jobOffset = 0, jobNext = false, currentJob = null;
+  let overviewSerial = 0, jobSerial = 0;
+  const node = (tag, text, cls) => { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; };
+  const say = (id, text, error = false) => { get(id).textContent = text; get(id).setAttribute('role', error ? 'alert' : 'status'); };
+  const date = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(value)) : 'ไม่ระบุ';
+  function accessError(error) {
+    if (!live() || [401, 403].includes(error.status)) {
+      authorized = false; ++jobSerial; ++overviewSerial; currentJob = null;
+      get('staffOverviewQueues').replaceChildren(); get('staffJobsList').replaceChildren(); get('staffJobBody').replaceChildren(); get('staffJobDetail').hidden = true;
+      controls(); return true;
+    }
+    return false;
+  }
+  function controls() {
+    const blocked = !authorized || !live() || jobBusy || jobModal;
+    for (const id of ['staffJobsStatus', 'staffJobsSearch', 'staffJobsRefresh']) get(id).disabled = blocked;
+    get('staffJobsPrev').disabled = blocked || jobOffset === 0;
+    get('staffJobsNext').disabled = blocked || !jobNext;
+    get('staffJobClose').disabled = jobBusy || jobModal;
+    for (const root of [get('staffJobsList'), get('staffJobBody')]) for (const button of root.querySelectorAll('button')) button.disabled = blocked;
+    const job = currentJob?.job;
+    const eligible = job?.status === 'pending_review' && job.submission?.verification_status === 'verified'
+      && (!job.expires_at || Date.parse(job.expires_at) > Date.now());
+    for (const id of ['staffJobPublish', 'staffJobReject']) get(id).disabled = blocked || !eligible;
+    get('staffJobEligibility').textContent = !job ? '' : eligible ? 'สามารถเผยแพร่หรือปฏิเสธประกาศได้ ระบบตรวจเงื่อนไขซ้ำเมื่อยืนยัน'
+      : 'อ่านอย่างเดียว: ต้องเป็นประกาศรอพิจารณา ยืนยันอีเมลแล้ว และยังไม่หมดอายุ';
+    get('staffOverviewRefresh').disabled = !authorized || !live() || overviewBusy;
+    get('staffOverviewQueues').setAttribute('aria-busy', String(overviewBusy));
+    get('staffJobs').setAttribute('aria-busy', String(jobBusy));
+  }
+  function menu(open, focus = false) {
+    get('staffMenuToggle').setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('staff-menu-open', open);
+    if (focus) (open ? get('staffSidebar').querySelector('a:not([hidden])') : get('staffMenuToggle'))?.focus();
+  }
+  function navigate(focus = false) {
+    let hash; try { hash = decodeURIComponent(target.location.hash.slice(1)); } catch { hash = ''; }
+    const nested = get(hash)?.closest('[data-staff-panel]')?.id;
+    const view = Object.hasOwn(views, hash) ? hash : Object.hasOwn(views, nested) ? nested : 'staffOverview';
+    for (const [id] of Object.entries(views)) { const panel = get(id); if (panel) panel.hidden = id !== view; }
+    for (const link of document.querySelectorAll('.sidebar-menu [data-staff-view]')) {
+      const selected = link.hash === `#${view}`; link.classList.toggle('active', selected);
+      if (selected) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
+    }
+    get('staffPageContext').textContent = views[view];
+    document.title = `${views[view]} | CWIE-IT CoopConnect`;
+    if (focus && activeView !== view) {
+      const heading = get(view)?.querySelector('h1, h2');
+      if (heading) { heading.tabIndex = -1; heading.focus(); } else get('staffWorkspace').focus();
+    }
+    const changed = activeView !== view;
+    activeView = view; menu(false);
+    if (authorized && live()) {
+      if (view === 'staffOverview' && (!overviewLoaded || changed)) refreshOverview();
+      if (view === 'staffJobs' && !jobLoaded) refreshJobs();
+    }
+  }
+  get('staffMenuToggle').addEventListener('click', () => menu(get('staffMenuToggle').getAttribute('aria-expanded') !== 'true', true));
+  get('staffSidebar').addEventListener('keydown', event => { if (event.key === 'Escape' && document.body.classList.contains('staff-menu-open')) { event.preventDefault(); menu(false, true); } });
+  document.querySelector('.staff-skip-link').addEventListener('click', event => { event.preventDefault(); get('staffWorkspace').focus(); });
+  document.addEventListener('click', event => {
+    const link = event.target.closest('[data-staff-view]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (link.hash === target.location.hash) { event.preventDefault(); navigate(true); get(activeView)?.querySelector('h1, h2')?.focus(); }
+  });
+  target.addEventListener('hashchange', () => navigate(true));
+  document.addEventListener('staff:accountmounted', () => navigate());
+  const mobile = target.matchMedia('(max-width: 767px)');
+  mobile.addEventListener('change', () => {
+    if (mobile.matches && get('staffSidebar').contains(document.activeElement)) menu(false, true);
+    else { menu(false); if (!mobile.matches && document.activeElement === get('staffMenuToggle')) get('staffSidebar').querySelector('a.active:not([hidden]),a:not([hidden])')?.focus(); }
+  });
+
+  async function refreshOverview() {
+    if (!authorized || !live() || overviewBusy) return;
+    overviewBusy = true; const ticket = ++overviewSerial; controls();
+    const root = get('staffOverviewQueues'); root.replaceChildren(); say('staffOverviewMessage', 'กำลังโหลดคิวงาน...');
+    const queues = [
+      { title: 'คำร้องรออาจารย์ที่ปรึกษา', href: '#staffCoopRequests', load: () => getStaffCoopRequests({ status: 'advisor_review', limit: 5, offset: 0 }), rows: result => result.data, label: row => `${row.student?.first_name || ''} ${row.student?.last_name || ''} · ${row.company_name || 'ไม่ระบุสถานประกอบการ'}` },
+      { title: 'คำร้องที่ยังไม่มีหนังสือขอความอนุเคราะห์', href: '#documents', load: () => getDocumentQueue({ document_status: 'missing', limit: 5, offset: 0 }), rows: result => result.data, label: row => `${row.student?.first_name || ''} ${row.student?.last_name || ''} · ${row.company_name || 'ไม่ระบุสถานประกอบการ'}` },
+      { title: 'ประกาศรับสมัครงานรอพิจารณา', href: '#staffJobs', load: () => staffRequest('/api/staff/job-postings?status=pending_review&limit=5&offset=0'), rows: result => result.data, label: row => `${row.title} · ${row.company?.name || 'ไม่ระบุสถานประกอบการ'}` },
+      { title: 'กิจกรรมที่ยังไม่สิ้นสุด', href: '#activities', load: () => listActivities({ from: new Date().toISOString(), limit: 5, offset: 0 }, true), rows: result => result.activities, label: row => `${row.title} · ${date(row.starts_at)}` },
+    ];
+    const results = await Promise.allSettled(queues.map(queue => queue.load()));
+    if (!live() || ticket !== overviewSerial) { overviewBusy = false; controls(); return; }
+    const denied = results.find(result => result.status === 'rejected' && [401, 403].includes(result.reason.status));
+    if (denied) { accessError(denied.reason); overviewBusy = false; say('staffOverviewMessage', 'ไม่มีสิทธิ์โหลดภาพรวม กรุณาเข้าสู่ระบบใหม่', true); controls(); return; }
+    let failures = 0;
+    results.forEach((result, index) => {
+      const queue = queues[index], card = node('section', undefined, 'staff-card'); card.append(node('h2', queue.title));
+      const rows = result.status === 'fulfilled' ? queue.rows(result.value) : null;
+      if (!Array.isArray(rows)) { ++failures; card.append(node('p', 'โหลดข้อมูลไม่สำเร็จ กดรีเฟรชภาพรวมเพื่อลองใหม่', 'staff-empty')); }
+      else {
+        if (index === 3 && Number.isInteger(result.value.total)) card.append(node('p', `รวม ${result.value.total} กิจกรรมที่ตรงเงื่อนไข · รวมร่าง / เผยแพร่ / ยกเลิก`));
+        else card.append(node('p', 'ไม่มีจำนวนสรุปรวม · แสดงรายการจากคิวล่าสุด', 'staff-count-note'));
+        if (!rows.length) card.append(node('p', 'ยังไม่มีรายการตรงเงื่อนไข', 'staff-empty'));
+        else { const list = node('ul', undefined, 'staff-queue-list'); for (const row of rows) list.append(node('li', queue.label(row))); card.append(list); }
+      }
+      const link = node('a', 'เปิดพื้นที่งาน →', 'teacher-button'); link.href = queue.href; link.dataset.staffView = ''; card.append(link); root.append(card);
+    });
+    overviewBusy = false; overviewLoaded = true;
+    say('staffOverviewMessage', failures ? 'โหลดคิวงานได้บางส่วน กดรีเฟรชเพื่อลองใหม่' : `ข้อมูลที่โหลดเมื่อ ${date(new Date().toISOString())} · เปิดพื้นที่งานเพื่อดูรายละเอียดและตัวกรอง`, !!failures); controls();
+  }
+  function closeJob() { ++jobSerial; currentJob = null; get('staffJobDetail').hidden = true; get('staffJobBody').replaceChildren(); controls(); }
+  async function refreshJobs() {
+    if (!authorized || !live() || jobBusy || jobModal) return;
+    closeJob(); jobBusy = true; const ticket = ++jobSerial; controls(); say('staffJobsMessage', 'กำลังโหลดประกาศ...'); get('staffJobsList').replaceChildren();
+    try {
+      const result = await staffRequest(`/api/staff/job-postings?${new URLSearchParams({ status: get('staffJobsStatus').value, offset: jobOffset, limit: PAGE_SIZE + 1 })}`);
+      if (!live() || ticket !== jobSerial) return;
+      if (!Array.isArray(result.data)) throw Error('รูปแบบข้อมูลประกาศไม่ถูกต้อง');
+      if (!result.data.length && jobOffset > 0) { jobOffset = Math.max(0, jobOffset - PAGE_SIZE); jobBusy = false; return refreshJobs(); }
+      jobNext = result.data.length > PAGE_SIZE;
+      for (const row of result.data.slice(0, PAGE_SIZE)) {
+        const card = node('article', undefined, 'teacher-request-card');
+        card.append(node('h2', row.title), node('p', row.company?.name || 'ไม่ระบุสถานประกอบการ'), node('p', jobLabels[row.status] || row.status), node('p', `ยื่นเมื่อ ${date(row.submitted_at)} · ${row.submission?.verification_status === 'verified' ? 'ยืนยันอีเมลแล้ว' : 'ยังไม่ผ่านเงื่อนไขยืนยันอีเมล'}`));
+        const button = node('button', 'ดูรายละเอียด', 'teacher-button teacher-button--primary'); button.type = 'button'; button.addEventListener('click', () => openJob(row.id)); card.append(button); get('staffJobsList').append(card);
+      }
+      jobLoaded = true; get('staffJobsPage').textContent = `หน้า ${jobOffset / PAGE_SIZE + 1}`;
+      say('staffJobsMessage', result.data.length ? 'เรียงวันที่ยื่นเก่าสุดก่อน' : 'ยังไม่มีประกาศตรงกับสถานะที่เลือก');
+    } catch (error) { accessError(error); say('staffJobsMessage', error.message || 'โหลดประกาศไม่สำเร็จ กรุณากดรีเฟรช', true); }
+    finally { jobBusy = false; controls(); }
+  }
+  async function openJob(id) {
+    if (!authorized || !live() || jobBusy || jobModal) return;
+    closeJob(); jobBusy = true; const ticket = ++jobSerial; get('staffJobDetail').hidden = false; say('staffJobMessage', 'กำลังโหลดรายละเอียด...'); controls();
+    try {
+      const result = await staffRequest(`/api/staff/job-postings/${encodeURIComponent(id)}`);
+      if (!live() || ticket !== jobSerial) return;
+      const data = result.data; if (!data?.job?.id) throw Error('รูปแบบรายละเอียดประกาศไม่ถูกต้อง'); currentJob = data;
+      const job = data.job, grid = node('dl', undefined, 'staff-detail-grid');
+      for (const [label, value] of [['ตำแหน่ง', job.title], ['สถานประกอบการ', job.company?.name], ['จังหวัด', job.company?.province], ['สถานะ', jobLabels[job.status] || job.status], ['หมวดงาน', ({ information_technology: 'เทคโนโลยีสารสนเทศ', business: 'ธุรกิจ', design: 'ออกแบบ', engineering: 'วิศวกรรม', other: 'อื่น ๆ' })[job.category] || job.category], ['จำนวนรับ', job.quota], ['ค่าตอบแทน', job.compensation_text], ['วันทำงานต่อสัปดาห์', job.work_days_per_week], ['รูปแบบงาน', (job.workModes || []).map(row => ({ onsite: 'ที่สถานประกอบการ', work_from_home: 'ทำงานจากที่บ้าน', hybrid: 'ผสมผสาน' })[row.mode] || row.mode).join(' / ')], ['วันที่ยื่น', date(job.submitted_at)], ['หมดอายุ', date(job.expires_at)], ['การยืนยันอีเมล', job.submission?.verification_status === 'verified' ? 'ยืนยันแล้ว' : 'ยังไม่ผ่านเงื่อนไขยืนยัน'], ['เหตุผลปฏิเสธ', job.rejection_reason]]) grid.append(node('dt', label), node('dd', value == null || value === '' ? 'ไม่ระบุ' : String(value)));
+      const body = get('staffJobBody'); body.append(grid, node('h3', 'รายละเอียดงาน'), node('p', job.description, 'staff-preserve-lines'));
+      body.append(node('h3', 'ประกาศอื่นในชุดการยื่นเดียวกัน'));
+      const others = (data.jobs || []).filter(row => row.id !== job.id);
+      if (!others.length) body.append(node('p', 'ไม่มีประกาศอื่นในชุดนี้'));
+      for (const row of others) { const button = node('button', `${row.title} · ${jobLabels[row.status] || row.status}`, 'teacher-button'); button.type = 'button'; button.addEventListener('click', () => openJob(row.id)); body.append(button); }
+      body.append(node('h3', 'ประวัติการพิจารณา'));
+      if (!data.reviews?.length) body.append(node('p', 'ยังไม่มีประวัติการพิจารณา'));
+      for (const review of data.reviews || []) body.append(node('p', `${date(review.createdAt)} · ${jobLabels[review.from_status] || review.from_status} → ${jobLabels[review.to_status] || review.to_status}${review.reason ? ` · ${review.reason}` : ''}`, 'staff-document-history-item'));
+      say('staffJobMessage', ''); get('staffJobDetailHeading').focus();
+    } catch (error) { accessError(error); say('staffJobMessage', error.message || 'โหลดรายละเอียดไม่สำเร็จ กรุณาเปิดรายการอีกครั้ง', true); }
+    finally { jobBusy = false; controls(); }
+  }
+  function reviewJob(decision) {
+    const button = get(decision === 'publish' ? 'staffJobPublish' : 'staffJobReject');
+    if (!authorized || !live() || button.disabled || !currentJob || jobBusy || jobModal) return;
+    const job = currentJob.job; jobModal = true; controls();
+    showConfirmModal({ title: decision === 'publish' ? 'ยืนยันเผยแพร่ประกาศ' : 'ยืนยันปฏิเสธประกาศ', message: `${job.title} · ${job.company?.name || 'สถานประกอบการ'} การดำเนินการจะเก็บประวัติการพิจารณา`,
+      variant: decision === 'publish' ? 'success' : 'danger', confirmLabel: decision === 'publish' ? 'เผยแพร่ประกาศ' : 'ปฏิเสธประกาศ',
+      reasonLabel: decision === 'reject' ? 'เหตุผลปฏิเสธ (จำเป็น)' : '', returnFocus: button, fallbackFocus: get('staffJobsRefresh'),
+      onClose: () => { jobModal = false; controls(); }, onConfirm: async reason => {
+        if (!authorized || !live()) throw Error('สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่');
+        if (currentJob?.job.id !== job.id) throw Error('กรุณาปิดหน้าต่างยืนยันและโหลดรายละเอียดล่าสุดก่อนพิจารณาใหม่');
+        jobBusy = true; setButtonLoading(button, true, 'กำลังบันทึก...'); controls();
+        try {
+          await staffRequest(`/api/staff/job-postings/${encodeURIComponent(job.id)}/${decision}`, { method: 'POST', body: decision === 'reject' ? { reason } : {} });
+          if (!live()) return;
+          showToast(decision === 'publish' ? 'เผยแพร่ประกาศแล้ว' : 'บันทึกผลปฏิเสธแล้ว', 'success');
+          jobBusy = false; jobModal = false; overviewLoaded = false; await refreshJobs(); await openJob(job.id);
+        } catch (error) {
+          accessError(error); say('staffJobMessage', error.status === 409 ? 'ประกาศเปลี่ยนแปลงหรือไม่เข้าเงื่อนไข กรุณาปิดหน้าต่างยืนยันแล้วรีเฟรชก่อนพิจารณาใหม่' : error.message, true);
+          if (error.status === 409) currentJob = null;
+          throw error;
+        } finally { jobBusy = false; setButtonLoading(button, false); controls(); }
+      },
+    });
+  }
+  get('staffOverviewRefresh').addEventListener('click', refreshOverview);
+  get('staffJobsRefresh').addEventListener('click', refreshJobs);
+  get('staffJobsFilters').addEventListener('submit', event => { event.preventDefault(); jobOffset = 0; refreshJobs(); });
+  get('staffJobsStatus').addEventListener('change', () => { jobOffset = 0; refreshJobs(); });
+  get('staffJobsPrev').addEventListener('click', () => { jobOffset = Math.max(0, jobOffset - PAGE_SIZE); refreshJobs(); });
+  get('staffJobsNext').addEventListener('click', () => { jobOffset += PAGE_SIZE; refreshJobs(); });
+  get('staffJobClose').addEventListener('click', () => { closeJob(); get('staffJobsRefresh').focus(); });
+  get('staffJobPublish').addEventListener('click', () => reviewJob('publish'));
+  get('staffJobReject').addEventListener('click', () => reviewJob('reject'));
+  controls(); navigate();
+  sessionReady.then(profile => {
+    if (!profile || !live()) { say('staffOverviewMessage', 'ยังโหลดบัญชีไม่ได้ กรุณาโหลดหน้าใหม่หรือเข้าสู่ระบบอีกครั้ง', true); return; }
+    authorized = true;
+    const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ');
+    get('staffWelcomeName').textContent = name;
+    get('staffAvatar').textContent = [profile.first_name, profile.last_name].filter(Boolean).map(part => Array.from(part.trim())[0] || '').join('');
+    get('staffDepartment').textContent = profile.department || 'ยังไม่ระบุภาควิชา';
+    controls(); navigate();
+  });
+}
+if (typeof document !== 'undefined' && document.getElementById('staffDocumentList')) {
+  const documents = mountStaffDocuments({ document, storage: roleSessionStorage, location: window.location });
+  mountStaffWorkspace({ document, target: window, sessionReady: documents.ready });
+}

@@ -326,6 +326,44 @@ button.is-loading::before {
   white-space: nowrap;
 }
 
+/* Shared two-line product branding, including the mentor verification header. */
+.brand > .brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.brand > .brand-text > strong {
+  color: var(--primary-dark);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.brand > .brand-text > span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.brand:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (max-width: 767px) {
+  .brand > .brand-text > strong { font-size: 1rem; }
+}
+
 .nav-links {
   flex: 1;
   display: flex;

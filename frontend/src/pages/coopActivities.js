@@ -6,7 +6,7 @@ import { bangkokLocal, monthRange, calendarDays, node, renderActivity, statusLab
 export function mountCoopActivities({ document, container, staff = false, services = api, confirm = showConfirmModal, toast = showToast, loading = setButtonLoading, storage = staff ? roleSessionStorage : localStorage } = {}) {
   if (!container) return;
   container.classList.add('activity-widget');
-  container.innerHTML = `<div class="teacher-heading"><div><h2>ปฏิทินกิจกรรม</h2><p>กิจกรรมสหกิจศึกษา · วันเวลาประเทศไทย (Asia/Bangkok)</p></div><button id="activityRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
+  container.innerHTML = `<div class="teacher-heading"><div><${staff ? 'h1 tabindex="-1"' : 'h2'}>ปฏิทินกิจกรรม</${staff ? 'h1' : 'h2'}><p>กิจกรรมสหกิจศึกษา · วันเวลาประเทศไทย (Asia/Bangkok)</p></div><button id="activityRefresh" type="button" class="teacher-button">รีเฟรช</button></div>
     <form id="activityFilters" class="activity-filters"><label>ค้นหากิจกรรม<input id="activitySearch" maxlength="100"></label><label>ประเภท<select id="activityCategory"><option value="">ทุกประเภท</option><option value="orientation">ปฐมนิเทศ</option><option value="training">อบรม</option><option value="presentation">นำเสนอ</option><option value="other">อื่น ๆ</option></select></label><label>สถานะ<select id="activityStatus"><option value="">ทุกสถานะ</option>${staff ? '<option value="draft">ร่าง</option>' : ''}<option value="published">เผยแพร่</option><option value="canceled">ยกเลิก</option></select></label><label>รูปแบบ<select id="activityView"><option value="month">รายเดือน</option><option value="list">รายการตามเวลา</option></select></label><label id="activityMonthLabel">เดือน<input id="activityMonth" type="month" required></label><label id="activityFromLabel" hidden>รายการตั้งแต่<input id="activityFrom" type="date"></label><label id="activityToLabel" hidden>ถึงวันที่<input id="activityTo" type="date"></label><button class="teacher-button" type="submit">ค้นหา</button></form>
     <p id="activityMessage" role="status" aria-live="polite"></p><div id="activityResults"></div><div class="activity-paging"><button id="activityPrev" type="button">ก่อนหน้า</button><span id="activityPage"></span><button id="activityNext" type="button">ถัดไป</button></div>
     ${staff ? '<button id="activityNew" type="button" class="teacher-button">สร้างกิจกรรม</button>' : ''}
@@ -21,7 +21,7 @@ export function mountCoopActivities({ document, container, staff = false, servic
     if ([401,403].includes(error.status)) { authorized = false; get('activityResults').replaceChildren(); closeDetail(); get('activityDetailBody').replaceChildren(); get('activityHistory').replaceChildren(); if (staff) { get('activityForm').hidden = true; get('activityForm').reset(); } editing = null; creationKey = null; }
     say(error.message || 'โหลดกิจกรรมไม่สำเร็จ'); toast(error.message || 'ดำเนินการไม่สำเร็จ','error');
   }
-  const button = (label, action) => { const el = node(document,'button',label,'teacher-button'); el.type = 'button'; el.addEventListener('click',action); return el; };
+  const button = (label, action, intent) => { const el = node(document,'button',label,'teacher-button'); el.type = 'button'; if (staff && intent) el.dataset.intent = intent; el.addEventListener('click',action); return el; };
   function closeDetail() { current = null; get('activityDetail').hidden = true; get('activityActions').replaceChildren(); }
   async function refresh() {
     if (busy || modal || !live() || !authorized) return;
@@ -59,7 +59,7 @@ export function mountCoopActivities({ document, container, staff = false, servic
       const root = get('activityDetailBody'); root.replaceChildren(); renderActivity(root,current); get('activityHistory').replaceChildren();
       if (staff) {
         root.append(node(document,'p',`บันทึกภายใน: ${current.internal_notes || '-'}`));
-        if (current.status !== 'canceled') get('activityActions').append(button('แก้ไขกิจกรรม',() => openForm(current)),button('ยกเลิกกิจกรรม',askCancel));
+        if (current.status !== 'canceled') get('activityActions').append(button('แก้ไขกิจกรรม',() => openForm(current)),button('ยกเลิกกิจกรรม',askCancel,'danger'));
         for (const event of data.history) { const section = node(document,'details'), summary = node(document,'summary',`ฉบับ ${event.version} · ${event.actor_name} · ${event.action} · ${activityDate(event.created_at)}`); section.append(summary,node(document,'p',event.reason)); renderActivity(section,event.snapshot); section.append(node(document,'p',`บันทึกภายใน: ${event.snapshot.internal_notes || '-'}`)); get('activityHistory').append(section); }
       }
       get('activityDetail').hidden = false; say('โหลดรายละเอียดแล้ว');
@@ -75,7 +75,7 @@ export function mountCoopActivities({ document, container, staff = false, servic
   }
   function ask(operation, message) {
     if (busy || modal || !live()) return; modal = true; controls();
-    confirm({ title: message, message: 'ตรวจสอบข้อมูลก่อนยืนยัน การดำเนินการนี้จะเก็บประวัติ', reasonLabel: operation === 'cancel' ? 'เหตุผลยกเลิก (บันทึกภายใน)' : '', onClose: () => { modal = false; controls(); }, onConfirm: async reason => {
+    confirm({ variant: operation === 'cancel' ? 'danger' : 'primary', title: message, message: 'ตรวจสอบข้อมูลก่อนยืนยัน การดำเนินการนี้จะเก็บประวัติ', reasonLabel: operation === 'cancel' ? 'เหตุผลยกเลิก (บันทึกภายใน)' : '', onClose: () => { modal = false; controls(); }, onConfirm: async reason => {
       if (!live()) throw Error('กรุณาเข้าสู่ระบบใหม่'); busy = true; loading(get(staff ? 'activitySave' : 'activityRefresh'),true,'กำลังบันทึก...'); controls();
       try {
         let result;
@@ -98,6 +98,9 @@ export function mountCoopActivities({ document, container, staff = false, servic
 }
 if (typeof document !== 'undefined' && document.body.dataset.workflowRole === 'department_staff') {
   mountCoopActivities({ document,container: document.getElementById('activityCalendar'),staff:true });
-  function navigate() { const calendar = location.hash === '#activities'; document.getElementById('documents').hidden = calendar; document.getElementById('activities').hidden = !calendar; for (const link of document.querySelectorAll('.sidebar-menu a')) { const selected = link.hash === (calendar ? '#activities' : '#documents'); link.classList.toggle('active',selected); if (selected) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); } }
+  // The complete Staff workspace owns navigation; keep legacy pages compatible.
+  if (!document.body.hasAttribute('data-staff-workspace')) {
+  function navigate() { const calendar = location.hash === '#activities', account = location.hash === '#own-account'; document.getElementById('documents').hidden = calendar || account; document.getElementById('activities').hidden = !calendar; for (const link of document.querySelectorAll('.sidebar-menu a')) { const selected = link.hash === (account ? '#own-account' : calendar ? '#activities' : '#documents'); link.classList.toggle('active',selected); if (selected) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); } }
   window.addEventListener('hashchange',navigate); navigate();
+  }
 }

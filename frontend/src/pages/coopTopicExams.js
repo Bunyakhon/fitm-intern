@@ -10,7 +10,7 @@ export function mountTopicExams({ document, container, role = 'student', client 
   const manager = role !== 'student', el = (tag, text, cls) => node(document, tag, text, cls);
   // A custom view belongs only to the student panel; manager markup remains unchanged.
   if (manager) view = null;
-  container.innerHTML = view?.template || `<div class="co09-heading"><h2>การสอบหัวข้อโครงการสหกิจศึกษา (CO-09)</h2><button type="button" data-co09="refresh">โหลดข้อมูลล่าสุด / ลองใหม่</button></div>
+  container.innerHTML = view?.template || `<div class="co09-heading"><${role === 'staff' ? 'h1 tabindex="-1"' : 'h2'}>การสอบหัวข้อโครงการสหกิจศึกษา (CO-09)</${role === 'staff' ? 'h1' : 'h2'}><button type="button" data-co09="refresh">โหลดข้อมูลล่าสุด / ลองใหม่</button></div>
     <p data-co09="message" role="status" aria-live="polite"></p>
     ${manager ? `<form data-co09="search"><label>ค้นหานักศึกษาจากรหัสหรือชื่อ<input name="search" maxlength="100" type="search"></label><button type="submit">ค้นหา</button></form><div data-co09="list" class="co09-list"></div><div class="co09-actions"><button data-co09="prev" type="button">ก่อนหน้า</button><span data-co09="page"></span><button data-co09="next" type="button">ถัดไป</button></div>` : ''}
     <section data-co09="workspace" ${manager ? 'hidden' : ''}><div data-co09="identity"></div><div data-co09="detail"></div><div data-co09="fileActions" class="co09-actions" hidden><button type="button" data-co09="preview">เปิดดู PDF</button><button type="button" data-co09="download">ดาวน์โหลด PDF</button></div>

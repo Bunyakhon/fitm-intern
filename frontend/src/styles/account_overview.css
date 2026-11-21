@@ -13,6 +13,14 @@
 .account-overview dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.7; }
 .account-overview article { padding-block: 12px; border-bottom: 1px dashed var(--border); }
 .account-overview .account-empty { color: var(--muted); margin-block: 12px; }
+.staff-google-account { border-top: 1px solid var(--border); padding-top: 16px; min-width: 0; }
+.staff-google-account form { display: grid; gap: 10px; max-width: 440px; }
+.staff-google-account label { font-weight: 600; }
+.staff-google-account input { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; font: inherit; }
+.staff-google-account input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.staff-google-account p { overflow-wrap: anywhere; }
+.staff-google-provider { min-width: 0; max-width: 100%; overflow-x: auto; margin-block: 12px; }
+.staff-google-account [hidden] { display: none !important; }
 @media (max-width: 760px) { .account-overview { padding: 18px 14px; } .account-overview dl { grid-template-columns: minmax(0, 1fr); } }
 /* Shared UI scale and responsive refinement; document/print layout is unchanged. */
 @media screen {

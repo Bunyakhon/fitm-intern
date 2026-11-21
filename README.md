@@ -1,6 +1,38 @@
-# FITM-INTERN (CoopConnect)
+# CWIE-IT CoopConnect (FITM-INTERN)
 
 แพลตฟอร์มจัดการสหกิจศึกษา สำหรับ Student (`co_op`), Teacher/Class Advisor, Department Head, Department Staff, Company และ Mentor. ใช้ Frontend แบบ multipage, Backend API, PostgreSQL และ NLP/PDF/OCR service; Developer Console เป็นเครื่องมือ Local แยกจากเว็บไซต์หลัก.
+
+Branding ปัจจุบัน (14 พฤศจิกายน 2026): Header ใช้ **CWIE-IT CoopConnect** และคำอธิบาย **ระบบจัดการสหกิจศึกษา** สองบรรทัด พร้อมโลโก้เดิม `/images/logo_kiwi.png`; ลิงก์แบรนด์กลับ `/index.html` และ Browser Title ใช้ `ชื่อหน้า | CWIE-IT CoopConnect`. เปลี่ยนเฉพาะ Branding; เนื้อหา Privacy/Terms ยังรอเจ้าของเอกสารทบทวนชื่อเดิม. **Tests: NOT RUN — USER-OWNED TESTING; PENDING USER VERIFICATION.** รายการไฟล์และ Manual Acceptance สำหรับงานนี้อยู่ใน [Current Handoff](HANDOFF_fitm-intern.md).
+
+## Department Staff Workspace — 16 พฤศจิกายน 2026
+
+หน้า `/src/department_staff/department_staff.html` ใช้รูปแบบ Header/Sidebar/Spacing จาก Department Head และแบ่งงานตาม Hash: `#staffOverview`, `#staffCoopRequests`, `#documents`, `#staffPrerequisiteCatalog`, `#staffJobs`, `#co09Manager`, `#activities`, `#own-account`. ข้อมูลบัญชีและ Google Workspace อยู่เมนูเดียวกัน; ใช้ชื่อ/อักษรย่อจาก Staff Profile จริงและ Logout/Session เดิม. เมนู Catalog แสดงเมื่อ API คืน Program Grants; กรณีไม่มีสิทธิ์หรือโหลดสิทธิ์ไม่ได้แสดงข้อความใน Overview และยังเปิด Hash รายวิชาเพื่อตรวจสถานะ/โหลดใหม่ได้.
+
+Overview แสดงคิวจาก API เดิมสูงสุดหัวข้อละ 5 รายการ ไม่ใช้จำนวนในหน้าเป็นยอดรวม; จำนวนกิจกรรมอ่านจาก `total` ของ API โดยระบุว่ารวมร่าง/เผยแพร่/ยกเลิกที่ยังไม่สิ้นสุด. Job Review ใช้ `/api/staff/job-postings` สำหรับรายการ/รายละเอียด/เผยแพร่/ปฏิเสธ พร้อมเหตุผลและประวัติเดิม; Backend ตรวจสถานะรอพิจารณา การยืนยันอีเมล และวันหมดอายุซ้ำ. เอกสารยังเป็นฉบับตัวอย่างและรักษา Version/Snapshot/Company Response guards เดิม.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** Responsive/Keyboard/Session และ Manual Acceptance S01–S20 ยัง **PENDING USER RESULTS**. Focused Backend/Environment Audit เป็นการอ่าน Source เท่านั้น; Findings และข้อจำกัดอยู่ใน [Current Handoff](HANDOFF_fitm-intern.md). ไม่เปลี่ยน Backend, Environment, Docker, Database หรือ Auth/RBAC Policy ในงานนี้.
+
+## Google OAuth / Staff Account Linking — 14 พฤศจิกายน 2026
+
+**IMPLEMENTED — PENDING USER VERIFICATION. Tests: NOT RUN — USER-OWNED TESTING.** Domain contract รอบนี้แทนตัวอย่าง Email Domains เก่าในประวัติด้านล่าง: Student ใช้ `email.kmutnb.ac.th`; Teacher/Department Head/Department Staff ใช้ `itm.kmutnb.ac.th` เท่านั้น. Runtime allowlists จำกัดเพิ่มเติมได้แต่ขยายเกิน policy นี้ไม่ได้; Domain ไม่ให้บทบาทและไม่สร้างบัญชีบุคลากร. ต้องมีบัญชีเว็บไซต์เดิมและ Google subject mapping ที่ยืนยัน ownership แล้ว.
+
+Staff: Login Email/Password เดิม → จัดการบัญชี → ยืนยันรหัสผ่านปัจจุบัน → Google Workspace → ตรวจสองบัญชีใน Shared Confirmation → Confirm จึงสร้าง mapping → สถานะเชื่อมแล้ว. ใช้ `/api/auth/google/staff/{status,challenge,link,link/confirm}` หลัง JWT/Staff guards; Password ตรวจใน challenge ก่อนโหลด GIS, challenge/confirmation ผูกกับ Staff/session และใช้ครั้งเดียว. ไม่เปลี่ยน Email/Password/Role/Session เดิม; คราวต่อไป Google Login กลับ Staff Dashboard. Teacher/Head คง Live Session linking โดยไม่ถาม Password ซ้ำ; Student registration/onboarding/ID extraction เดิมคงไว้.
+
+ผู้ดูแลต้องทบทวน Runtime Configuration เองตามค่าที่ไม่ใช่ความลับด้านล่าง; งานนี้ไม่ได้อ่านหรือแก้ `.env` จริง ไม่เปิด flags และไม่ restart/deploy services:
+
+```env
+GOOGLE_ALLOWED_EMAIL_DOMAINS=email.kmutnb.ac.th,itm.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS_STUDENT=email.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS_TEACHER=itm.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS_DEPARTMENT_HEAD=itm.kmutnb.ac.th
+GOOGLE_ALLOWED_EMAIL_DOMAINS_DEPARTMENT_STAFF=itm.kmutnb.ac.th
+```
+
+คง `GOOGLE_HOSTED_DOMAIN_POLICY=required` และ Hosted Domain allowlist เดิม; ตัวอย่างยังเป็น `kmutnb.ac.th` แต่ยังไม่มีหลักฐาน `hd` ของบุคลากร `@itm.kmutnb.ac.th` รอบนี้. ห้ามถือ Email Domain เป็นค่า `hd` หรือเพิ่ม allowlist/ใช้ `email_only` เพื่อให้ผ่าน. ถ้า runtime global/role lists เดิมไม่รวม `itm.kmutnb.ac.th` บุคลากรจะยังถูกปฏิเสธอย่างปลอดภัย; การมี mapping เดิมไม่ยกเว้น Domain Policy ใหม่.
+
+**การตรวจ `hd` อย่างปลอดภัยโดยผู้ดูแล:** ใช้บัญชีที่ได้รับอนุญาตใน Local Development และ Local Backend debugger ที่ไม่เปิดออกเครือข่าย; หยุดใน `checkGoogleIdentity` หลัง caller ผ่าน `googleToken.service` verification แล้ว ตรวจเฉพาะ `payload.hd` และ `payload.email_verified` จากคำขอ Google ของบัญชีบุคลากร. ไม่ขยาย/พิมพ์ payload ทั้งก้อน ไม่คัดลอก ID token/JWT/password ไม่เก็บ HAR/request bodies หรือ screenshot ที่มี credentials. ใช้ nonce/session guards เดิมต่อและยกเลิกก่อน Confirm ถ้าต้องการตรวจ claim เท่านั้น; debugger pause อาจทำให้คำขอหมดอายุ ต้องเริ่มใหม่แทนการข้าม guard. บันทึกเฉพาะ `hd`, วันที่ และสถานะ signature/audience/issuer/email verification ที่ตรวจจริง แล้วให้ผู้ดูแลตัดสินใจ allowlist. Diagnostic เก่าเป็น flow สำหรับ Student/flags-off และมีหลักฐานไฟล์เดิม จึงไม่ใช้เป็นหลักฐาน personnel โดยอัตโนมัติหรือรันทับผลเก่า.
+
+Google Login/Linking ตรวจ Central Account Control เดิมก่อนออก JWT/สร้าง mapping; session-bound flows ตรวจ revocation ด้วย `iat` ส่วน login ใหม่ไม่ใช้ `revoked_before` เป็นการปิดบัญชีถาวร. GA-03 ไม่เปลี่ยน: subject หลาย actor ยังคืน `409 AUTH_CONTEXT_AMBIGUOUS`. รายละเอียดไฟล์/ข้อจำกัด/Manual Acceptance Checklist อยู่ใน Current Handoff; Runtime/Provider/Browser/Database persistence และ Concurrency ยังรอผลผู้ใช้.
 
 ## Project Advisor Reassignment — Design Proposal — 13 พฤศจิกายน 2026
 

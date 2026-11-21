@@ -210,7 +210,7 @@ export function showConfirmModal({
   const modal = document.createElement("div");
 
   modal.className = "app-confirm-overlay";
-  if (['teacher', 'department_head'].includes(document.body.dataset.workflowRole)) modal.dataset.intent = ['primary', 'success', 'danger'].includes(variant) ? variant : 'primary';
+  if (['teacher', 'department_head', 'department_staff'].includes(document.body.dataset.workflowRole)) modal.dataset.intent = ['primary', 'success', 'danger'].includes(variant) ? variant : 'primary';
   modal.innerHTML = `
     <section class="app-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" aria-describedby="appConfirmMessage">
       <div class="app-confirm-modal__icon" aria-hidden="true">!</div>

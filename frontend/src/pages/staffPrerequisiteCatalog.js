@@ -4,12 +4,20 @@ import { setButtonLoading, showConfirmModal, showToast } from '../ui/feedback.js
 const root = document.getElementById('staffPrerequisiteCatalog');
 if (root) {
   const get = id => document.getElementById(id), form = get('staffCatalogForm'), list = get('staffCatalogCourses'), message = get('staffCatalogMessage');
-  let programs = [], revision = null, courses = [], editing = null, busy = false;
+  let programs = [], revision = null, courses = [], editing = null, busy = false, permissionsKnown = false;
   const say = (text, error = false) => { message.textContent = text; message.setAttribute('role', error ? 'alert' : 'status'); };
+  function showAccess() {
+    const link = document.querySelector('.sidebar-menu a[href="#staffPrerequisiteCatalog"]');
+    if (link) link.hidden = !programs.length;
+    const summary = get('staffCatalogAccess');
+    if (summary) summary.textContent = !permissionsKnown ? 'Catalog รายวิชา: โหลดสิทธิ์ไม่สำเร็จ กรุณากดโหลดสิทธิ์อีกครั้ง'
+      : programs.length ? `Catalog รายวิชา: ได้รับสิทธิ์สาขา ${programs.join(' / ')}` : 'Catalog รายวิชา: ไม่มีสิทธิ์จัดการในสาขาที่ได้รับมอบหมาย';
+  }
   function controls() {
     root.setAttribute('aria-busy', String(busy));
     get('staffCatalogProgram').disabled = busy || !programs.length;
     get('staffCatalogRefresh').disabled = busy;
+    if (get('staffCatalogAccessRetry')) get('staffCatalogAccessRetry').disabled = busy;
     for (const control of form.querySelectorAll('input,select,button')) control.disabled = busy || !programs.length || !revision;
     // New courses use the revision of the program currently listed. Switch the
     // list first to create in another program; existing courses can still move.
@@ -62,15 +70,18 @@ if (root) {
     busy = true; revision = null; form.hidden = true; list.replaceChildren(); controls(); say('กำลังโหลด Catalog รายวิชา...');
     try {
       if (withPermissions) {
-        const result = await getCatalogPermissions(); programs = result?.data?.programs || [];
+        permissionsKnown = false;
+        const result = await getCatalogPermissions();
+        if (!Array.isArray(result?.data?.programs)) throw Error('โหลดสิทธิ์ Catalog ไม่สำเร็จ');
+        programs = result.data.programs; permissionsKnown = true;
         options(get('staffCatalogProgram'), get('staffCatalogProgram').value); options(get('staffCatalogCourseProgram'), get('staffCatalogProgram').value);
       }
       if (!programs.length) { list.replaceChildren(); form.hidden = true; revision = null; say('ไม่มีสิทธิ์ coop_prerequisite_catalog.manage ในสาขา IT / INE ที่ได้รับมอบหมาย'); return; }
       await loadList(); resetForm(); say('เลือกสาขาที่ได้รับมอบหมายด้านบนก่อนเพิ่มรายวิชา การแก้ Catalog ไม่เปลี่ยนคำร้องเดิม');
     } catch (error) {
-      if ([401, 403].includes(error.status)) { programs = []; revision = null; list.replaceChildren(); form.hidden = true; }
+      if (!permissionsKnown || [401, 403].includes(error.status)) { programs = []; revision = null; list.replaceChildren(); form.hidden = true; }
       say(error.message || 'โหลดรายวิชาไม่สำเร็จ กรุณาลองอีกครั้ง', true);
-    } finally { busy = false; controls(); }
+    } finally { busy = false; showAccess(); controls(); }
   }
   async function mutate(id, body) {
     if (busy) return;
@@ -82,7 +93,7 @@ if (root) {
     } catch (error) {
       if ([401, 403].includes(error.status)) { programs = []; revision = null; form.hidden = true; list.replaceChildren(); }
       say(error.message || 'บันทึกรายวิชาไม่สำเร็จ', true); showToast(error.message || 'บันทึกรายวิชาไม่สำเร็จ', 'error'); throw error;
-    } finally { busy = false; setButtonLoading(get('staffCatalogSave'), false, '', 'บันทึกรายวิชา'); controls(); }
+    } finally { busy = false; showAccess(); setButtonLoading(get('staffCatalogSave'), false, '', 'บันทึกรายวิชา'); controls(); }
   }
   form.addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !revision) return;
@@ -94,6 +105,7 @@ if (root) {
   });
   get('staffCatalogProgram').addEventListener('change', () => refresh());
   get('staffCatalogRefresh').addEventListener('click', () => refresh(true));
+  get('staffCatalogAccessRetry')?.addEventListener('click', () => refresh(true));
   get('staffCatalogNew').addEventListener('click', resetForm);
   refresh(true);
 }

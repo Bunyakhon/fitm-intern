@@ -2,21 +2,28 @@ const { Op, QueryTypes, Transaction } = require('sequelize');
 const r = require('./coopTopicExam.rules');
 const { uuid } = require('../validators/roleWorkflow.validator');
 const { createTopicDocumentStorage } = require('./coopTopicDocumentStorage');
+const policy = require('./coopTopicExam.policy');
+const { ADMIN_LOCK } = require('./superAdmin.service');
 const ACTIVE = ['scheduled', 'rescheduled'];
 const studentFields = ['id','student_id','first_name','last_name','major','coop_advisor_teacher_id'];
 const teacherFields = ['id','academic_title','first_name','last_name'];
 function createCoopTopicExamService(models, { storage = createTopicDocumentStorage() } = {}) {
   const { sequelize, Student, Teacher, CoopProject, CoopTopicDocument: Document, CoopTopicExam: Exam, CoopTopicExamCommitteeMember: Member, CoopTopicExamHistory: History } = models;
-  async function tx(work) {
+  async function tx(work, managerContext) {
     const transaction = await sequelize.transaction({ isolationLevel: Transaction.ISOLATION_LEVELS.READ_COMMITTED });
     let committing = false;
     try {
       await sequelize.query("SET LOCAL lock_timeout = '5s'", { transaction });
       await sequelize.query("SET LOCAL statement_timeout = '15s'", { transaction });
+      // Match status/permission/logout/membership writers (including creation
+      // of a previously absent account-control row): ADMIN before CO-09 locks.
+      if (managerContext !== undefined) await sequelize.query(ADMIN_LOCK, { transaction });
       // One common lock for scheduling/review/upload prevents cross-student room /
       // teacher phantoms across concurrent requests and application instances.
       await sequelize.query('SELECT pg_advisory_xact_lock(2140909)', { transaction });
-      const result = await work(transaction);
+      const actor = managerContext === undefined ? undefined : await policy.revalidateManager(managerContext, models, transaction);
+      const result = await work(transaction, actor);
+      if (managerContext !== undefined) policy.assertManagerSession(managerContext);
       committing = true; await transaction.commit(); return result;
     } catch (error) {
       if (!transaction.finished) await transaction.rollback().catch(() => {});
@@ -73,21 +80,24 @@ function createCoopTopicExamService(models, { storage = createTopicDocumentStora
       return documentDTO(row);
     });
   }
-  async function review(studentId, body, header, actor) {
+  async function review(studentId, body, header, managerContext) {
+    policy.assertManagerSession(managerContext);
     r.object(body, ['review_status','review_reason']);
     if (!['needs_revision','approved'].includes(body.review_status)) r.fail('สถานะตรวจเอกสารไม่ถูกต้อง');
     const reason = r.text(body.review_reason, 2000, body.review_status === 'needs_revision');
-    return tx(async transaction => {
+    return tx(async (transaction, actor) => {
       await owner(studentId, transaction, true);
       const row = await Document.findOne({ where: { student_id: studentId }, transaction, lock: transaction.LOCK.UPDATE });
       r.revision(header, row?.version || 0);
       if (!row || (!row.storage_path && !row.document_url)) r.fail('ยังไม่มีเอกสารให้ตรวจ', 409);
+      policy.assertManagerSession(managerContext);
       await row.update({ review_status: body.review_status, review_reason: reason, reviewed_at: new Date(), reviewed_by: actor, version: row.version + 1 }, { transaction });
       return documentDTO(row);
-    });
+    }, managerContext);
   }
-  async function saveSchedule(studentId, body, header, actor) {
-    return tx(async transaction => {
+  async function saveSchedule(studentId, body, header, managerContext) {
+    policy.assertManagerSession(managerContext);
+    return tx(async (transaction, actor) => {
       await owner(studentId, transaction, true);
       let row = await Exam.findOne({ where: { student_id: studentId }, transaction, lock: transaction.LOCK.UPDATE });
       r.revision(header, row?.version || 0);
@@ -109,6 +119,7 @@ function createCoopTopicExamService(models, { storage = createTopicDocumentStora
       }
       const { committee, ...changes } = values;
       Object.assign(changes, { location_key, project_id: project.id, updated_by: actor, version: (row?.version || 0) + 1 });
+      policy.assertManagerSession(managerContext);
       if (row) await row.update(changes, { transaction });
       else row = await Exam.create({ student_id: studentId, created_by: actor, ...changes }, { transaction });
       await Member.destroy({ where: { exam_id: row.id }, transaction });
@@ -116,7 +127,7 @@ function createCoopTopicExamService(models, { storage = createTopicDocumentStora
       const result = await examDTO(row, transaction);
       await History.create({ exam_id: row.id, version: row.version, actor, snapshot: { ...result, topic: project.topic } }, { transaction });
       return result;
-    });
+    }, managerContext);
   }
   async function list(query) {
     r.object(query, ['search','page']);

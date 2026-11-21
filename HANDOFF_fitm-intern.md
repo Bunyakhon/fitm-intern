@@ -1,6 +1,288 @@
 # FITM-INTERN PROJECT HANDOFF
 
-## CURRENT HANDOFF — Project Advisor Reassignment: Schema & Workflow Design — 13 November 2026
+## CURRENT HANDOFF — DS-A01 / DS-A02 / DS-A03 Backend Hardening — 16 November 2026
+
+**อัปเดต: 16 พฤศจิกายน 2026 (Asia/Bangkok). งานที่ได้รับ:** แก้ทั้ง 3 Findings ใน Local Working Tree รอบเดียว โดยไม่เปลี่ยน Staff UX/UI, Database/Accounts/Environment/Docker หรือ Auth/RBAC Policy. **COMPLETED — SOURCE IMPLEMENTATION; PENDING USER RESULTS.** ผู้ใช้ระบุในคำสั่งงานรอบนี้ว่า Staff Dashboard ผ่าน User Acceptance แล้ว; เป็นข้อมูลจากผู้ใช้ ไม่ใช่ผลที่ Codex ทดสอบ และไม่ได้อนุมานผลรายข้อของ Checklist เก่า.
+
+**Baseline / Git:** ก่อนงานจริง **40 Modified / 1 Untracked** จาก Branding/Google Linking/Staff UX รวม Handoff และ README. Diff ก่อนแก้ของ Backend 6 ไฟล์ในรอบนี้ว่างทั้งหมด. หลังงาน **46 Modified / 1 Untracked**: แก้ Backend ที่เดิมสะอาด 6 ไฟล์ + Handoff ใน baseline 1 ไฟล์; เพิ่ม/ลบไฟล์ 0. `staffGoogleAccount.js` ที่ Untracked และ Frontend/README/Backend OAuth/Environment examples ที่ Modified อยู่ก่อนคงเดิม. ไม่มี Commit/Push/Deploy/Reset/Clean/Stash/Checkout/Restore, Backup/Temporary Artifact หรือการเปลี่ยน Branch.
+
+**DS-A01 — Legacy Staff Login**
+
+`createStaffLoginHandler` คง injectable DepartmentStaff/issueToken เดิม และเพิ่ม injectable models/checkAccountAccess โดย default เรียก assertAccountAccess กลาง. ตรวจ is_active===true, Password และ Staff UUID ก่อนตรวจ Central Account Control ของ department_staff แล้วจึงเรียก Token Issuer. ไม่ส่ง issuedAt ของ Session เก่าในการ Login ใหม่ จึงไม่แปล revoked_before เป็น Disabled Account. Native inactive/Password ผิดยังได้ 401 แบบเดิม; central disabled ได้ 403 พร้อมข้อความทั่วไป, lookup/error อื่นได้ 500 ทั่วไป และไม่ออก JWT. Success `{message,token,staff}` / Error `{message}` และ Rate Limiter เดิมคงอยู่. ไม่มี Email enumeration เพิ่มก่อนยืนยัน credentials; ไม่ส่งต่อ SQL/error รายละเอียด. Compatibility สำหรับ central-control table ที่ยังไม่มีคงตาม helper กลางเดิม; lookup exception จริงไม่ถูกกลืนหรือแปลงเป็น Allowed.
+
+**DS-A02 — Database Environment Fail-fast**
+
+ใช้ `config/env.js` ที่เดิมเป็นไฟล์ว่างสำหรับ pure `databaseEnvironment(env)` แล้วเรียกใน database.js หลัง dotenv และก่อนสร้าง Sequelize instance. บังคับ DB_NAME/DB_USER/DB_PASSWORD/DB_HOST/DB_PORT เป็น string ที่ไม่ว่าง/ไม่ใช่ whitespace ล้วน/ไม่มี NUL; Port ต้องเป็นเลขฐานสิบ integer 1–65535 ไม่รับ whitespace/ทศนิยม/เลขยกกำลัง/ค่าที่แปลงเป็นพอร์ตผิด. ไม่ trim หรือเปลี่ยนค่าของชื่อ/credentials ที่ยอมรับ; Password ที่มีช่องว่างที่มีนัยสำคัญคงเดิม. Error ระบุเฉพาะชื่อ Keys ไม่ใส่ Values, Password หรือ Connection URI.
+
+ลบ Silent Defaults ทั้ง 5 ค่าในทุก NODE_ENV รวม Development/Test/Production; ไม่มี test-mode fallback. คง PostgreSQL dialect/logging=false และ Sequelize singleton export เดิม. `app.js` ไม่ต้องเปลี่ยน: import database.js ก่อน Models/เริ่ม HTTP อยู่แล้ว จึง fail-fast ผ่านจุดเดิม รวม CLI ที่ import config นี้. JWT_SECRET ยังใช้ guard ของ issuers เดิม; ไม่ขยายงานเป็น Startup Validation ของ Environment อื่น.
+
+Environment loading ยังคงเดิม: Compose env_file=`./backend/.env`, Docker WORKDIR=/app, bind-mount Backend ไป /app; app.js และ database.js เรียก dotenv.config() แบบ CWD และไม่ override process.env ที่ inject แล้ว. `.env.example` ไม่ใช่ runtime loader. รัน Local จาก backend/ อ่าน backend/.env; เรียกจาก root โดยไม่มี process env ครบจะหยุดแทนเชื่อม target จาก defaults. ไม่อ่าน/แก้ actual `.env` หรือ process/container environment เพื่อยืนยัน Runtime และไม่เปิด Connection ทดลอง.
+
+**DS-A03 — Manager Revalidation / Synchronization**
+
+- คง authenticateToken และ manager() guard ก่อนเข้าพื้นที่ /manage. Route สร้าง server-only manager context หลัง guard ผ่าน: snapshot เฉพาะ verified JWT claims ที่จำเป็นแบบ frozen และผูก context กับ registry ผ่าน WeakMap ภายใน policy. ไม่ใช้ Actor/Role จาก Body; actor string, object ที่ copy/serialize มา หรือ context ต่าง registry ใช้แทนไม่ได้. manager() เดิมยังคืน actor string สำหรับ callers เดิม; HTTP request/response shape ไม่เปลี่ยน. ไม่สร้าง JWT/Session/Authentication system ใหม่.
+- Review Document และ Save/Reschedule Exam รับ context นี้แทน actor string แล้วเริ่ม READ COMMITTED transaction เดิม. Lock order คือ **ADMIN_LOCK 63828018 → CO-09 2140909 → live principal/grant SHARE → Student/Document/Exam/Committee locks เดิม**. Reuse ADMIN_LOCK ที่ export จาก superAdmin.service ไม่แก้ Revocation Writers. ลำดับตรงกับ CO-09 Development helper เดิมด้วย.
+- อ่าน Source ยืนยัน central status/permissions/membership/logout/password writers ใน superAdmin.service, assignTeacherAdmin และ CO-09 membership activation ใช้ ADMIN_LOCK เดียวกัน จึง serialize รวมกรณีสร้าง control row ที่ยังไม่มี ไม่พึ่ง lock ของแถวที่ไม่มีอยู่. ถ้า Revocation commit ก่อน manager ได้ lock การ revalidation จะเห็นสถานะใหม่และปฏิเสธ; ถ้า CO-09 ได้ lock ก่อน Revocation ต้องรอ CO-09 commit/rollback ตามลำดับ ไม่ใช่อ้างว่าเวลาส่งคำขอเพิกถอนทำให้ Transaction ที่ได้ lock ไปแล้วถูกย้อนกลับ.
+- หลังได้ทั้ง Advisory Locks ตรวจ Staff actor_type/role/id/staff_id/UUID, live is_active และ assertAccountAccess พร้อม signed iat ภายใน transaction เดียวกัน. Staff row SHARE lock อยู่จน transaction จบ. Lookup failure โยน error/rollback ไม่คืน Allowed.
+- Admin ตรวจ Development-only, actor claims และใช้ resolveAdminPrincipal ใหม่จาก DB พร้อม SHARE locks ไม่ใช้ req.superAdmin ที่อ่านไว้ก่อนรอ lock. ครอบคลุม Native Admin active/session_version/central control และ Teacher-linked membership: Teacher active/non-head, signed grant/version/short session, credential stamp, live grant active/permissions และ central controls ทั้ง Teacher/Admin. requirePermission(topic-exams.manage) ใช้ principal ปัจจุบัน แล้วเทียบ audit actor กับ context เดิม.
+- ตรวจ signed iat/exp และ expiry ก่อน transaction, หลัง live revalidation, ก่อน first write และก่อนส่ง COMMIT. Authorization state ถูกคงไว้ด้วย row locks + advisory protocol; เวลา Session ตรวจซ้ำเพื่อไม่ใช้ผลเช็กก่อนรอ row locks. Error ก่อน Commit ทำให้ rollback ทั้ง Document/Exam/Committee/History. เก็บ actor string เดิมใน reviewed_by/updated_by/history ไม่มี claims/token ลง DB.
+- คง Scheduling Lock, Revision/ETag/If-Match/428/409, Room/Committee Conflicts, Transitions, History, Student upload/URL/PDF/owner flow และ timeout/error envelopes เดิม. Student mutation ไม่รับ ADMIN_LOCK เพิ่มและไม่ต้องมี manager context. Manager reads/preview/download ใช้ guard เดิม ไม่มีการขยายสิทธิ์.
+
+**FINDING RESULTS — เป็นผล Implementation จาก Source ไม่ใช่ผลทดสอบ**
+
+| Finding | Before | Changes | After ที่คาดหวังตาม Source | Status |
+|---|---|---|---|---|
+| DS-A01 | Legacy Login ไม่ตรวจ central control | Shared account check หลัง password/active/UUID ก่อน issuer | Disabled/lookup failure ไม่ออก JWT; Login ใหม่ไม่ใช้ revoked_before ของ Session เก่า | IMPLEMENTED — PENDING USER RESULTS |
+| DS-A02 | DB_* หายแล้ว fallback | Required Keys + strict port ก่อน Sequelize | Env ไม่ครบ/ผิดหยุดก่อนสร้าง config connection; error ไม่มี Values | IMPLEMENTED — PENDING USER RESULTS |
+| DS-A03 | Manager ตรวจเฉพาะก่อน lock | Server context + ADMIN→CO09 locks + live transactional revalidation/session checks | Committed revocation ที่มาก่อน lock ถูกปฏิเสธก่อน write; transaction failure rollback | IMPLEMENTED — PENDING USER RESULTS |
+
+**UPDATED FILES — แก้ 7 / เพิ่ม 0 / ลบ 0**
+
+1. `backend/src/controllers/staffAuth.controller.js` — DS-A01 / DI / safe error.
+2. `backend/src/config/env.js` — DS-A02 / pure DB environment validation ในไฟล์เดิม.
+3. `backend/src/config/database.js` — DS-A02 / ใช้ validated values โดยไม่มี default.
+4. `backend/src/services/coopTopicExam.policy.js` — DS-A03 / server context และ live Staff/Admin/Membership revalidation.
+5. `backend/src/routes/coopTopicExams.routes.js` — DS-A03 / ส่ง verified server context เข้า mutation services.
+6. `backend/src/services/coopTopicExam.service.js` — DS-A03 / lock order/revalidation/session checks ใน transaction เดิม.
+7. `HANDOFF_fitm-intern.md` — Implementation, Compatibility, Residual Risks และ Manual Acceptance; เก็บประวัติเดิม.
+
+**SECURITY CONTROLS / RULES APPLIED:** ใช้ AGENTS.md และ fitm-intern-workflow; User-Owned Testing/No Questions/Preserve Baseline. คง Role Permissions, live JWT signature/expiry/claims checks, Active/Central Control/revoked_before, Unified Login/ambiguity, Rate Limits, Remember Me/Logout/cross-tab, Google domain/hosted-domain/linking policies, transaction/revision/ETag/history/Academic Snapshot guards. ไม่เปลี่ยนนโยบายมหาวิทยาลัย.
+
+**COMPATIBILITY / Behavior Changes:** Development/Production ที่มี Environment ครบยังใช้ target/credentials เดิมตาม Source; ค่าขาดจะหยุดทุก environment รวม tests แทน silent fallback. CLI ที่ import singleton ต้องเตรียม Environment ครบเหมือน runtime. Fixtures ที่สร้าง Sequelize เองหรือใช้ explicit config/models substitutes ไม่ผ่าน helper นี้; historical fixtures เช่น securityWaveA ที่ปิด dotenv แล้ว import registry โดยไม่ตั้ง DB_* ต้องเตรียม explicit fixture environment/config ในงานทดสอบแยก ไม่เพิ่ม production-accessible test exception. Legacy Login DI เดิมยังใช้ได้ แต่ fixtures ต้อง inject checkAccountAccess/models ให้ครอบคลุม check ใหม่ ไม่ข้าม security check อัตโนมัติ. CO-09 mutation internal callers ต้องใช้ context จาก guard; พบ Route callers ที่เกี่ยวข้องและแก้ครบแล้ว. Public endpoints/payloads/response shapes และ audit actor format คงเดิม; ไม่มีผลทดสอบรับรอง compatibility.
+
+**NOT MODIFIED:** Frontend ทุกไฟล์และ Staff UX ที่ผู้ใช้ยอมรับ, README/Project Skill/AGENTS, Models/Schema/Database/Records/Staff Accounts/Passwords, actual .env/.env.example, Compose/Docker, OAuth flags/policies/mappings, Unified/Teacher/Head/Admin Login และ Student CO-09 source flow. ไม่รัน app/CLI/Provider/SQL, ไม่ Reset/Migrate/Init/Sync/Grant และไม่ Restart/Recreate Containers. ไฟล์นอกขอบเขตบางส่วนยัง Modified จาก baseline เดิม ไม่ใช่งานรอบนี้.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** ไม่รัน Tests, Build, Lint/Typecheck, Syntax/Automated Validation, Browser/API/Database/Health Checks. ตรวจโดยอ่าน Source/Diff/Git Status และเนื้อหา UTF-8 เท่านั้น. ไม่มีผล PASS/FAIL ที่สร้างขึ้นหรือใช้ผลเก่ารับรองรอบนี้.
+
+**MANUAL ACCEPTANCE — ทุกข้อ PENDING USER RESULTS**
+
+| ID | สิ่งที่ผู้ใช้ควรตรวจ / Expected |
+|---|---|
+| A01 | Staff บัญชีแรกที่ผู้ใช้ระบุ: Unified/Legacy Email-Password ถูกต้อง เข้า Dashboard เดิม; ไม่มีการเปลี่ยนชื่อ/credentials/profile |
+| A02 | Staff บัญชีที่สองที่ผู้ใช้ระบุ: Login/Session/Logout และ Staff UI เดิม; wrong password/inactive ไม่ออก JWT |
+| A03 | Central disabled ในบัญชีทดสอบที่ได้รับอนุญาต: Legacy 403 ไม่มี JWT; lookup failure ไม่มี JWT; revoked_before อย่างเดียวไม่ปิด Login ใหม่ |
+| A04 | Unified Login/Actor/RBAC/ambiguity/Teacher/Head/Admin/Google Linking และ Remember Me/cross-tab เดิมไม่เปลี่ยน |
+| A05 | ผู้ใช้เริ่ม Backend ด้วย DB Environment ครบ: target เดิม/พอร์ตที่กำหนด และไม่มีการ sync/reset/schema writes |
+| A06 | ใน Environment ทดสอบแยกเท่านั้น: Missing/Empty/Whitespace/NUL/Invalid Port/0/>65535 หยุดก่อน Sequelize; Error แสดงเฉพาะ Key; valid ports/config และ explicit injected fixture ใช้ได้ตามกำหนด |
+| A07 | CO-09 Authorized Staff review/save/reschedule ตามสิทธิ์เดิม, audit actor/version/history ตรง; forged/missing context และ role อื่นถูกปฏิเสธ |
+| A08 | Authorized Native Admin และ Teacher-linked membership มี topic-exams.manage ใช้งานได้ใน Development; inactive/version/credential/grant/permission/control ผิดหรืออยู่นอก Development ถูกปฏิเสธ |
+| A09 | ใน isolated authorized setup: สองลำดับการแข่งขันกับ disable/central-control creation/revoke/logout/grant/permission change; revocation ที่ commit ก่อน manager ได้ ADMIN→CO09 locks ต้องปฏิเสธและไม่เขียน Document/Exam/Committee/History; Session หมดอายุระหว่างรอต้อง rollback |
+| A10 | CO-09 stale/missing If-Match, Room/Committee Conflicts, Transaction Failure/Timeout และ Student upload/URL/PDF เดิม; ไม่มี partial writes หรือ history ซ้ำ |
+
+**Remaining Risks / Pending Decisions / Blockers:** ไม่มี Policy ใหม่ที่ต้องตัดสินใจและไม่มี Blocker ต่อ Source Implementation. Runtime/Concurrent Revocation/Lock Contention/actual configuration/HTTP/Regression ยังไม่ทดสอบทั้งหมด. การ serialize อิง existing writers ที่ใช้ ADMIN_LOCK; Direct SQL หรือ writer ภายนอกที่แก้ central controls โดยไม่ร่วม protocol ยังอยู่นอกหลักประกัน และไม่สร้าง trigger/schema/table-lock policy ใหม่ในงานนี้. การเช็ก expiry ก่อนส่ง COMMIT ไม่ใช่การรับประกันเวลา network/DB commit completion แบบ atomic กับ wall clock. Global Admin lock อาจเพิ่มการรอของงาน Admin ระหว่าง Manager mutation; ใช้ lock_timeout/statement_timeout เดิมและคืน conflict ตาม contract แทน bypass. ไม่อ้างว่าปิด TOCTOU ทุกกรณีหรือ Security Test ผ่าน. Missing additive central-control table ยังคง compatibility ตาม policy เดิม ไม่ได้ยืนยัน installation จริง.
+
+**NEXT TASK:** รอผล A01–A10 จากผู้ใช้แล้วแก้ confirmed issues ในขอบเขต. Fixtures ที่ต้องเตรียม explicit config ให้ทำในงานทดสอบที่อนุญาตแยก; ไม่รัน/แก้เพื่อสร้างผลผ่านเอง. เก็บ Checklist สหกิจเดิม 59 กรณีและประวัติ Staff UI ตามที่มา ไม่ใช้ Source Review รอบนี้แทน Acceptance.
+
+## Previous Handoff — Department Staff UX/UI + Focused Backend Audit — 16 November 2026
+
+**อัปเดต: 16 พฤศจิกายน 2026 (Asia/Bangkok). งานที่ได้รับ:** ปรับ UX/UI ทุกพื้นที่งาน Department Staff โดยใช้ Department Head Dashboard เป็น Master และตรวจ Backend/Environment ที่เกี่ยวข้องแบบอ่าน Source. **IMPLEMENTED — PENDING USER RESULTS.** ไม่รันระบบ/API/Provider/Database หรือ automated validation; การอ่าน Source ไม่ใช่ผล Security Test หรือ Manual Acceptance.
+
+**Baseline / Git:** ก่อนเริ่มจริงมี **34 Modified / 1 Untracked** รวม Branding, Google Backend/Frontend และ `frontend/src/pages/staffGoogleAccount.js` ที่ยังไม่ tracked. รักษางานเดิมทั้งหมด. หลังงาน **40 Modified / 1 Untracked**; รอบนี้แก้ tracked files 11 ไฟล์ (5 ไฟล์อยู่ใน baseline + 6 ไฟล์ที่เดิมสะอาด), เพิ่ม/ลบไฟล์ 0. Untracked Staff Google widget ไม่ได้แก้รอบนี้. ไม่มี Commit/Push/Deploy/Branch change, Backup หรือ Temporary Artifact. อ่าน Diff/เนื้อหา UTF-8 และ Git status เท่านั้น; Git เตือน LF→CRLF ตามการตั้งค่า Working Copy ของ Windows.
+
+**UX/UI ที่ทำจริง**
+
+- Header คงโลโก้/แบรนด์สองบรรทัด/ลิงก์กลับ Home; เพิ่มวงกลมอักษรย่อจากชื่อจริงใน `/api/staff/me`, Role Label, ชื่อตัวหนา และ Logout แดง. ใช้ listener Logout และ Role Session Storage/Watcher เดิม ไม่สร้าง Session Logic ใหม่.
+- Sidebar แบ่งพื้นที่ทำงาน / งานสหกิจ / บัญชี พร้อม Icons, Active/Focus, Breadcrumb, Page Heading และ Browser Title. แยก Requests/Catalog/Documents/CO-09 ออกจาก section เอกสารเดิมโดยคง IDs และ Mounts; ใช้ Hash/Back/Forward เดิม ไม่เปลี่ยน Dashboard URL. Legacy Activity navigation ทำงานเฉพาะหน้าที่ไม่มี Staff shell; Account mount reuse link เดิมจึงไม่เพิ่มเมนูซ้ำ. เปลี่ยนหน้าโดยซ่อน panel ไม่ unmount หรือล้างแบบฟอร์มเอกสาร/กิจกรรม/CO-09; การออกจาก Account ยังคงยกเลิก Google proof/confirmation ตาม implementation เดิม.
+- Overview เรียก List APIs เดิม: คำร้อง `advisor_review`, คำร้องอนุมัติแล้วที่ยังไม่มีหนังสือขอความอนุเคราะห์, Jobs `pending_review`, กิจกรรมที่ยังไม่สิ้นสุด. แสดงสูงสุดคิวละ 5 รายการ พร้อม Loading/Empty/Partial Error/Retry และเวลาโหลด; ไม่แสดงยอดรวมคำร้อง/เอกสาร/Jobs เพราะ APIs ไม่มี total. กิจกรรมอ่าน total จริงพร้อมอธิบาย scope รวม Draft/Published/Canceled. CO-09 แสดงทางลัดและแจ้งว่าไม่มี API จำนวนงานต้องติดตามโดยเฉพาะ. กลับ Overview โหลดคิวใหม่.
+- Job Review เชื่อม API ที่ Backend มีอยู่แล้ว: Status Filter, Pagination แบบ limit+1, Details/งานอื่นใน submission เดียวกัน/ประวัติ, Publish Confirmation และ Reject พร้อมเหตุผล. แสดงข้อมูลผ่าน textContent; ไม่ inject Description HTML. เปิดการพิจารณาเฉพาะ pending_review + submission verified + ไม่หมดอายุ; Backend เป็นผู้ตัดสินซ้ำ. 409 ปิดการใช้ข้อมูลเดิมและให้โหลดใหม่ ไม่ retry mutation อัตโนมัติ. ตรวจ Session token ก่อนรับผล async.
+- Catalog menu แสดงหลัง capabilities คืน Grants จริง; ไม่มี Grant แสดงสถานะไม่มีสิทธิ์และซ่อนแบบฟอร์มตามเดิม. โหลดสิทธิ์ผิดพลาดแยกจากไม่มี Grant และมี Retry ใน Overview; Direct Hash Catalog ยังแสดงสถานะ/ปุ่มโหลดเดิม. ไม่เพิ่ม Grant หรือใช้ department/major แทนสิทธิ์.
+- ใช้ CSS เฉพาะ Staff ตาม palette ที่สั่ง: Primary #1D4ED8, Danger #B91C1C, Publish #15803D, Secondary #E2E8F0/#334155 และ Warning Amber. มี Hover/Focus/Active/Disabled/Loading; Shared Confirmation รับ intent ของ Staff และ Cancellation ใช้ Danger. ปุ่ม Save Catalog เป็น Primary. Staff CSS ไม่เปลี่ยน Head/Teacher/Student.
+- Responsive ใช้ minmax(0,1fr), ชื่อยาวตัดบรรทัด, Form หนึ่งคอลัมน์บนมือถือ และ Calendar scroll ใน container เดิม. Mobile navigation เป็น expandable navigation ใน document flow: aria-expanded/aria-controls, เปิดแล้ว focus link, Escape คืน focus toggle, เปลี่ยนหน้าคืน focus heading และปรับ focus เมื่อข้าม breakpoint. เพิ่ม Skip Link/Reduced Motion. ยังไม่ได้ตรวจ Rendering หรือวัด Contrast ใน Browser.
+
+**STAFF MENU COVERAGE — Status หมายถึง Source Implementation ไม่ใช่ผลทดสอบ**
+
+ทุก API ด้านล่างใช้ JWT actor Staff ที่ active และ Central Account Control ผ่าน middleware เดิม; ไม่มีสิทธิ์ Teacher/Head/Admin เพิ่ม.
+
+| เมนู | Frontend module / Hash | Backend เดิม | Required Permission | Status |
+|---|---|---|---|---|
+| ภาพรวม | staffDocuments.js / #staffOverview | GET /api/staff/coop-requests, /document-requests, /job-postings และ /api/coop-activities/staff | Staff อ่านคิวเดิม | IMPLEMENTED |
+| ตรวจคำร้อง | staffCoopRequests.js / #staffCoopRequests | GET /api/staff/coop-requests, /:id; POST /:id/cancel | Staff; cancel เฉพาะสถานะที่อนุญาต + reason + UI preconditions เดิม | IMPLEMENTED |
+| เอกสาร | staffDocuments.js / #documents | /api/staff/document-requests/:id, /company-response, /documents/:type และ /generate,/preview,/download | Staff + eligibility + document/response version เดิม | IMPLEMENTED |
+| รายวิชาก่อนสหกิจ | staffPrerequisiteCatalog.js / #staffPrerequisiteCatalog | GET /api/staff/coop-prerequisite-catalog/permissions, GET/POST catalog, PATCH /:id | coop_prerequisite_catalog.manage ต่อ Program; ย้ายสาขาต้องมีทั้งต้นทาง/ปลายทาง | IMPLEMENTED |
+| พิจารณาประกาศ | staffDocuments.js / #staffJobs | GET /api/staff/job-postings, /:id; POST /:id/publish,/reject | Staff + pending_review + verified submission + ไม่หมดอายุ | IMPLEMENTED |
+| CO-09 | coopTopicExams.js / #co09Manager | /api/coop-topic-exams/manage/students, /teachers, /students/:id และ /review,/schedule,/document/preview,/document/download | manager policy เดิม; Staff active; write ใช้ If-Match | IMPLEMENTED |
+| กิจกรรม | coopActivities.js / #activities | GET/POST /api/coop-activities/staff, GET/PUT /:id, POST /:id/cancel | Staff; revision/reason/transition เดิม | IMPLEMENTED |
+| บัญชีของฉัน | roleAccount.js / #own-account | GET /api/staff/me | Staff owner; Profile อ่านอย่างเดียว | IMPLEMENTED |
+| Google Workspace ในบัญชี | staffGoogleAccount.js เดิม | /api/auth/google/staff/status,/challenge,/link,/link/confirm | Staff owner + password proof + session + flags/domain/hd/subject guards | EXISTING |
+
+**ENVIRONMENT RESULT — Source only**
+
+`docker-compose.yml` inject `./backend/.env` ผ่าน env_file; `backend/Dockerfile` WORKDIR=/app และ Compose bind-mount Backend ไป /app, รัน npm run dev จาก package.json. `app.js:1` และ `config/database.js:2` เรียก dotenv.config() โดยไม่ตั้ง path/override: ใช้ `.env` ตาม process working directory และค่าใน process.env ที่ inject มาแล้วมี precedence เหนือไฟล์. Local ที่รันจาก backend/ จึงอ่าน backend/.env; เรียก node จาก root โดยตรงจะหา root/.env ตาม CWD. `.env.example` เป็นตัวอย่าง ไม่มีจุดโหลดเป็น runtime; config/env.js ปัจจุบันว่างและไม่มี caller เป็น central env loader. ไม่อ่าน actual `.env`/process/container environment จึงไม่ยืนยันค่าที่ container ใช้อยู่จริง.
+
+Database ใช้ process.env DB_* พร้อม fallbacks ไม่มี production-specific required-env validation; startup authenticate แล้วออกเมื่อเชื่อมไม่ได้ และไม่มี sync/alter. JWT_SECRET ตรวจตอนออก Staff token; ไม่พบ startup check สำหรับค่านี้. OAuth อ่านจาก config/oauth.js แบบ flags-off disabled; enabled แต่ client/origin/allowlists ไม่ครบคืน configuration error. CORS ใช้ FRONTEND_URL และเพิ่ม localhost aliases เฉพาะ NODE_ENV=development; Student Google onboarding และ Super Admin มี Development guards เดิม. Recruitment flag/limits และ STORAGE_ROOT อ่าน process.env เดิม ไม่เปลี่ยน. ไม่พิมพ์ Secrets, ไม่แก้ .env/.env.example/Compose/Docker และไม่ Restart/Recreate Containers.
+
+**FOCUSED BACKEND AUDIT — หลักฐานและข้อจำกัด**
+
+- Unified Login resolveCredentials ตรวจ password ทุก actor store, ambiguity คืน 409, Staff is_active และ central access ก่อน mint session; JWT เป็น Staff actor/role/staff_id เดิม. Middleware verify HS256/exp/claims, อ่าน actor จาก DB ทุก request, central revocation และ requireDepartmentStaff ปฏิเสธ actor อื่น. Frontend ใช้ Role Storage/expiry/Remember Me/cross-tab watcher และ Logout เดิม. ไม่มี automatic Super Admin สำหรับ Staff; Teacher admin membership เป็นเส้นทางแยก.
+- Staff Requests routes ไม่มี approve/reject; reviewRequest รับ Staff cancel เท่านั้นใน submitted/staff_review/advisor_review/department_head_review และ reason จำเป็น; UI ส่ง expected_status/expected_updated_at และ transaction lock/recheck เดิม. Staff data scope ปัจจุบันเป็น role-wide ไม่พบ department-specific Staff scope ใน service; ไม่ถือเป็น defect หรือเดานโยบายมหาวิทยาลัยใหม่.
+- Documents ตรวจ active Staff, request eligibility/approval evidence/required fields; locked Student→Request, document/response versions และ history เดิม. Placement ต้องมี generated cooperation + accepted response; correction หลังมี placement ถูกปฏิเสธ. Content เลือก revision ของ document/request เดียวกันและตรวจ digest; responses ใช้ explicit profile fields ไม่อ่าน password hash. Template official=false/HTML sample และ CSP/sandbox เดิมยังอยู่. ไม่ได้ยืนยันความพร้อมตารางหรือข้อมูลจริง.
+- Catalog ใช้ capabilities และ explicit grants ทุก affected program, sorted locks/revision/course version; เปลี่ยนเฉพาะ catalog rows. Submitted prerequisite snapshots/academic history มี immutable trigger definitions ใน coopAcademicIntegrity.js; ไม่เปลี่ยน/ข้าม trigger และไม่ได้ตรวจ installation จริงใน PostgreSQL.
+- Jobs routes อยู่หลัง Staff middleware; reviewJob lock/recheck pending_review/expiry/verified submission และบันทึก JobPostingReview ใน transaction. Frontend ที่ขาดใน baseline เชื่อมแล้วโดยไม่เพิ่ม endpoint/payload. ไม่พบ token/password columns ใน Company/JobSubmission Models ที่ include จริง; ไม่อ้างว่าได้ทำ Data Leakage Test.
+- CO-09 manager แยก Staff active ออกจาก Admin capability; service validate student co_op, directory active teacher, If-Match/ETag/428/409, Bangkok time, committee/room overlap และ serialized transaction locks. File route บังคับ owner/manager ตาม route เดิม. ดูข้อจำกัดระหว่างรอ lock ใน DS-A03 ด้านล่าง.
+- Activities แยก publicFields/staffFields; Student list/detail ต้องเคย published และไม่คืน internal_notes/history; Staff CRUD ตรวจ active actor/version/reason และ append history. Draft→Published และ Published→Canceled ใช้ transition เดิม; validation timezone/query/date เดิมไม่เปลี่ยน.
+- Local Staff Google Linking ตรวจ status/challenge/password ก่อน Provider, RS256 signature/aud/iss/exp/nonce/email_verified, confirmed itm.kmutnb.ac.th + allowlists/required hd, session/credential/target fingerprints, locks/duplicate subject/actor/central control และ confirmation ใช้ครั้งเดียว. ไม่ Auto-Link ด้วย Email, ไม่เปิด flags/เรียก Google/สร้าง Mapping และไม่เปลี่ยนนโยบาย.
+
+| Finding ID / Severity | File / Function / Evidence | Impact | Proposed Fix | Status |
+|---|---|---|---|---|
+| DS-A01 / MEDIUM | backend/src/controllers/staffAuth.controller.js:7–29 createStaffLoginHandler ตรวจ active/password แล้ว issueToken โดยไม่ assertAccountAccess; route legacy /api/staff/auth/login ยัง mount. Unified resolveCredentials ที่ unifiedAuth.service.js:73 ตรวจ central control | Legacy login อาจตอบ success/token ให้ Staff ที่ถูก central disable แต่ is_active ยัง true; protected APIs ยังปฏิเสธผ่าน middleware จึงไม่ใช่หลักฐานว่าข้าม Staff API authorization ได้ | งาน Backend แยกควร reuse central access check ก่อน issue token โดยรักษา legacy contract และ Unified Login หลัก | CONFIRMED จาก Source; ยังไม่แก้ Backend |
+| DS-A02 / MEDIUM | backend/src/config/database.js:4–10 ใช้ defaults ทุก environment; app.js:1,106 ไม่มี required-env startup validation; staffAuth.service.js:10 ตรวจ JWT_SECRET ตอน issue token | เมื่อ Env ขาดอาจเลือก DB target/default credentials โดยไม่ตั้งใจ หรือเริ่มบริการได้แต่ Login ล้มเหลวภายหลัง; ไม่ยืนยันว่า Runtime ปัจจุบันตั้งค่าผิด | งาน Backend/Config แยกควร fail-fast สำหรับ required DB/JWT settings โดยเฉพาะ Production และใช้ข้อความ error ที่ไม่เปิดค่า secrets | CONFIRMED จาก Source; Runtime values ไม่ได้ตรวจ; ยังไม่แก้ |
+| DS-A03 / MEDIUM | coopTopicExams.routes.js:22 manager ตรวจสิทธิ์ก่อนเข้า service; coopTopicExam.service.js:10–18 tx รอ advisory lock, review:76 และ saveSchedule:89 รับ actor string ไปบันทึกโดยไม่มี recheck manager/session/central หลังรอ lock | มีช่วงเวลาที่ actor อาจถูก disable/revoke หลัง middleware ผ่านแต่ก่อน mutation ทำงาน; ผล concurrent request จริงยังไม่ได้พิสูจน์ | งาน Backend แยกส่ง trusted session context และ recheck live authorization/expiry/central control หลัง lock ก่อน write โดยไม่เพิ่มสิทธิ์ | NEEDS RUNTIME VERIFICATION; ยังไม่แก้ |
+
+ไม่พบหลักฐาน CRITICAL/HIGH จาก Source ที่อ่านในขอบเขตนี้; ไม่ใช่การรับรองความปลอดภัยทั้งหมด. DS-A01/DS-A02 เป็นงาน Backend นอกสิทธิ์แก้ของรอบนี้; DS-A03 ต้องตรวจ race ในงานทดสอบที่อนุญาตแยก. ไม่มี Finding ใดทำให้เพิ่มสิทธิ์หรือเปลี่ยน Auth policy ในรอบนี้.
+
+**UPDATED FILES — รอบนี้แก้ 11 / เพิ่ม 0 / ลบ 0**
+
+- Baseline files ที่แก้ต่อ: `frontend/src/department_staff/department_staff.html`, `frontend/src/pages/coopActivities.js`, `frontend/src/pages/roleAccount.js`, `README.md`, `HANDOFF_fitm-intern.md`.
+- Tracked files ที่เดิมสะอาด: `frontend/src/pages/staffDocuments.js`, `frontend/src/pages/staffCoopRequests.js`, `frontend/src/pages/staffPrerequisiteCatalog.js`, `frontend/src/pages/coopTopicExams.js`, `frontend/src/styles/staff_documents.css`, `frontend/src/ui/feedback.js`.
+
+**RULES APPLIED / NOT MODIFIED:** ใช้ AGENTS.md และ fitm-intern-workflow; Scoped Staff Frontend + Read-only Backend Audit; User-Owned Testing/No Questions/Preserve Baseline. คง Unified Login/RBAC/Actor resolution/JWT/Remember Me/cross-tab/Logout, Google linking/domain/hd policy และ drafts/history/versions/Academic Snapshot/Model-driven Schema. ไม่แก้ Backend, Models, Database, Environment, Accounts/Passwords, Google Mapping/flags, Docker, Head/Teacher/Student/Admin Dashboard; ไฟล์เหล่านี้บางส่วนยัง Modified จาก baseline เดิม. ไม่เริ่มงานแก้ security findings เอง.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** ไม่รัน Unit/Integration/E2E/API/DB tests, Browser Automation, build, lint/typecheck, syntax checks, automated validation หรือ health checks. อ่าน Source/Diff/UTF-8/Status เท่านั้น. ไม่มีผล PASS/FAIL/BLOCKED ที่สร้างขึ้นใหม่. ไม่ได้ใช้ผลทดสอบเก่ารับรองรอบนี้.
+
+**MANUAL ACCEPTANCE — ทุกข้อ PENDING USER RESULTS**
+
+| ID | สิ่งที่ผู้ใช้ควรตรวจ / Expected |
+|---|---|
+| S01 | Header เทียบ Master, Branding/Logo ลิงก์ Home, gap/alignment และ Logout แดง |
+| S02 | สลับ Staff บัญชีจริงที่ได้รับอนุญาต: ชื่อ/นามสกุล/อักษรย่อ/ภาควิชาตรง /me ไม่ค้างบัญชีก่อน |
+| S03 | Logout ครั้งเดียวออกจากระบบ, Remember Me และ tab อื่นถูกเพิกถอนตามเดิม |
+| S04 | ครบทุกเมนู, Active/Breadcrumb/Title ตรง, เปิด Hash โดยตรง/Reload/Back/Forward ไม่ซ้อน panel หรือเพิ่มเมนูบัญชีซ้ำ |
+| S05 | Overview แสดงข้อมูลจริง/เวลาโหลด; ไม่ใช้ 5 เป็นยอดรวม; กิจกรรม total ตรงเงื่อนไขและกลับ Overview โหลดใหม่ |
+| S06 | คำร้อง Search/Status/Pagination/Details/Academic Snapshot และประวัติเดิม |
+| S07 | Cancel เฉพาะสถานะที่ Backend อนุญาต + reason + Confirmation; stale preconditions ไม่เขียนทับ; ไม่มี Approve/Reject คำร้องสำหรับ Staff |
+| S08 | Cooperation draft/save/generate/preview/download/print/history เป็นฉบับตัวอย่าง; สลับเมนูแล้วร่างยังอยู่ |
+| S09 | Company Response create/correct + reason/version/history; หลังมี placement ห้ามแก้ตาม guard |
+| S10 | Placement สร้างได้ตาม eligibility จริง, ต้อง accepted response, ความขัดแย้ง revision ต้องโหลดใหม่ |
+| S11 | Catalog ตาม grants IT/INE, ไม่มี Grant ไม่แสดงเมนู/ฟอร์ม; Direct Hash มี denial; Retry/Version/Cross-program และ snapshot เดิม |
+| S12 | Jobs filter/page/detail/sibling/history, publish เฉพาะ verified/pending/not expired, reject ต้อง reason, 409/duplicate clicks ไม่เขียนซ้ำ |
+| S13 | CO-09 directory/review/schedule/PDF/If-Match/428/409, เหตุผลและร่างเดิม; สิทธิ์ไม่เกิน Backend |
+| S14 | Activities calendar/list/search/create/edit/publish/cancel + revision/reason/Bangkok time; Student ไม่เห็น Draft/internal_notes |
+| S15 | Account read-only แสดงข้อมูลจริง; ไม่มีเมนูซ้ำ; ไม่เพิ่มสิทธิ์แก้ profile |
+| S16 | Google disabled ไม่โหลด Provider/challenge; enabled ใช้ password→account selection→preview→confirm เดิม, cancel/expiry/back-forward ไม่ค้าง proof |
+| S17 | Unified Login/Staff active/central disable/expiry/Remember Me/cross-tab/actor mismatch และสิทธิ์ role อื่นยังถูกปฏิเสธ |
+| S18 | Responsive 1440/1280/768/390/320 px; ชื่อไทยยาว/Avatar/Logout/Brand ไม่ล้น, ฟอร์มหนึ่งคอลัมน์, scroll เฉพาะ Calendar container |
+| S19 | Tab/Shift+Tab/Enter, Menu toggle/Escape/focus restore/skip link, heading focus, modal trap/return, labels และ Reduced Motion |
+| S20 | Loading/Empty/Permission/Error/Retry/Success/Disabled ทุกเมนู, โครงสร้างไม่ล้นและอ่านข้อความด้วย Screen Reader |
+
+**Remaining Issues / Pending Decisions / ข้อจำกัด:** Rendering/Contrast/Keyboard/Authenticated API/DB readiness/Provider/Concurrency ทั้งหมดรอผู้ใช้ตรวจ; ไม่รับรองว่าทุก viewport หรือ production configuration ผ่าน. ไม่มี Summary API สำหรับยอดรวมคำร้อง/เอกสาร/Jobs หรือ CO-09 งานที่ต้องติดตาม จึงใช้ข้อความ unavailable/sample scope ตามจริง. ไม่เพิ่ม Search backend ให้ Jobs เพราะ API เดิมรับเฉพาะ status/pagination. Staff role-wide data scope และเกณฑ์วิชาการ/จำนวนกรรมการ/รูปแบบเอกสารราชการยังใช้ข้อตกลงเดิม ไม่กำหนด policy เพิ่ม. DS-A01/02 รอขอบเขตแก้ Backend แยก และ DS-A03 รอ runtime verification ที่ได้รับอนุญาต; ไม่ใช่ Blocker ต่อการส่งมอบ Frontend Source. Google runtime hd/config จากประวัติยังรอยืนยันจากผู้ดูแล.
+
+**NEXT TASK:** รอผลผู้ใช้ S01–S20 แล้วแก้ปัญหาที่รายงานจริงในขอบเขต; Backend findings ทำเมื่อได้รับมอบหมายงานแก้แยก. Checklist สหกิจเดิม 59 กรณียังคง PENDING USER RESULTS ไม่ได้แทนที่ด้วย Checklist UX รอบนี้. ไม่เริ่มโมดูลถัดไปเอง.
+
+## Previous Handoff — Google OAuth GA-01 / GA-02 / GA-04 — 14 November 2026
+
+**อัปเดต: 14 พฤศจิกายน 2026 (Asia/Bangkok). งานที่ได้รับ:** ใช้ Domain Policy ที่ผู้ใช้ยืนยัน, แก้ Central Account Control สำหรับ Google Auth และทำ Staff Dashboard Google Linking ให้ครบ โดยรักษา Student/Teacher/Head เดิม. **IMPLEMENTED — PENDING USER VERIFICATION.** อ้างอิง Focused Source Audit วันที่ 14 พฤศจิกายนในบทสนทนา; ไม่สร้าง Audit Report ใหม่. ผู้ใช้แจ้งในคำขอว่าหน้าหลัก 7 หน้าและ Student Email/Password/Google ใช้งานได้ เป็นผลจากผู้ใช้ ไม่ใช่ผลที่ Codex ทดสอบรอบนี้.
+
+**Baseline / Git:** ตรวจจริงก่อนเริ่มบน `main`: 24 Modified / 0 Untracked จาก Branding (รวม AGENTS.md, README, Handoff); รักษาทั้งหมด. หลัง implementation: 34 Modified / 1 Untracked; เพิ่มงานบน tracked files ที่เดิมสะอาด 10 ไฟล์, แก้ต่อ README/Handoff ที่อยู่ใน baseline 2 ไฟล์ และเพิ่ม Staff widget 1 ไฟล์. ไม่มี Deleted; ไม่มี Commit/Push/Merge/Deploy/เปลี่ยน Branch. AGENTS.md และ Branding files อื่นยังเป็นงานเดิม ไม่ได้แก้เพิ่มรอบนี้.
+
+**GA-04 — Confirmed Domain Policy:** Student = `email.kmutnb.ac.th`; Teacher/Head/Staff = `itm.kmutnb.ac.th` เท่านั้น. ปรับ `oauth.js` ให้ตรวจ confirmed policy + runtime global allowlist + role-specific allowlist (role override ไม่กำหนดใช้ confirmed domain ของ role นั้น). Runtime settings จำกัดเพิ่มได้แต่ขยายเป็น Gmail/โดเมนอื่นไม่ได้. Automatic Login ตรวจ global identity ก่อนค้น mapping และตรวจ role domain ซ้ำด้วย actor จริง; Domain ไม่สร้างบัญชีหรือมอบ Role. `.env.example` ปรับ global/role lists ตาม policy ใหม่โดยคง flags=false, Hosted Domain `required` และตัวอย่าง allowlist เดิม `kmutnb.ac.th`. ข้อตกลงนี้แทนเฉพาะ Email Domain examples เก่า; ไม่เปลี่ยน Hosted Domain Policy. ไม่อ่าน/แก้ `.env` จริงหรือ Console settings.
+
+**GA-02 — Central Account Control:** Reuse `assertAccountAccess` เดิมใน mapped/automatic Google Login, legacy ownership/link previews, General Confirmation และก่อนสร้าง Identity Mapping; ครอบคลุม Student onboarding mapping โดยไม่เปลี่ยน Student creation/ID extraction rules. Dashboard Student เพิ่ม central guard ภายใน actor helper; Teacher/Head guard เดิมคงอยู่. Staff helper ตรวจ JWT context/expiry/live active actor/central control และตรวจซ้ำหลังรอ lock/ก่อนเขียน mapping. Session-bound calls ส่ง `issuedAt` ตาม JWT; login ใหม่ไม่ส่งเวลา session เก่า จึงไม่แปล `revoked_before` เป็น Disabled Account. General confirmation ตรวจ control/receipt expiry ก่อนบันทึกอีกครั้ง. ไม่สร้าง Account Control ใหม่ ไม่เปลี่ยน schema/middleware/JWT contracts.
+
+**GA-01 — Staff Linking ที่ทำจริง:**
+
+- เพิ่ม `GET /api/auth/google/staff/status`, `POST /staff/challenge`, `POST /staff/link`, `POST /staff/link/confirm` ใต้ `/api/auth/google` หลัง `authenticateToken` + `requireDepartmentStaff`, Origin/JSON allowlist และ rate limit เดิม. Client เลือก owner/role ไม่ได้.
+- Challenge รับเฉพาะ Password ของ Staff ปัจจุบัน; Backend ตรวจ bcrypt ก่อน mint challenge/โหลด GIS. Proof อายุ5นาทีผูก actor/session/credential/target fingerprint; ไม่เก็บ Plaintext Password หรือ Google credential ใน DB/Logs/response. Frontend ล้างช่อง Password หลังส่งและเลิกอ้างอิงเมื่อคำขอจบ. ไม่รับ Teacher passwordless exception มาใช้กับ Staff.
+- Link ตรวจ Google signature/aud/iss/exp/nonce/email_verified/global+role domains/hd เดิม ใช้ transactional consume + subject advisory lock + actor lock ตรวจ credential fingerprint/session/status/control/conflicts แล้วส่ง preview จากบัญชีจริง. Confirm receipt อายุ2นาทีผูก session เดิม ใช้ครั้งเดียว ตรวจซ้ำจึงเขียน mapping; คืน linked status โดยไม่ mint JWT ใหม่หรือแก้ Staff Email/Password/Role/Profile.
+- เพิ่ม `staffGoogleAccount.js` ตำแหน่งเดียวใน Account Settings: unlinked/linked/disabled/loading/password proof/provider selection/confirmation/success/error/conflict/session invalid/cancel/expiry/retry. ใช้ Shared Toast/Confirmation และ GIS เดิม; ไม่โหลด Provider/ไม่สร้าง challenge เมื่อ flags ปิด. ป้องกัน callback/response เก่าหลัง generation/session เปลี่ยน, เคลียร์ Password/provider/timers เมื่อเปลี่ยนหน้า/Session/pagehide. Shared `confirmGoogleLink` เพิ่ม optional abort signal สำหรับ Staff เพื่อปิด preview ที่ค้างเมื่อออกจากหน้า/Session เปลี่ยน; callers Student/Teacher/Head ไม่ส่ง signal จึงใช้ flow เดิม. ถ้า Confirm ส่งถึง server แล้วต้องอ่านสถานะจริงภายหลัง ไม่อ้างว่าการปิด UI ย้อน transaction ที่ commit แล้วได้.
+- `roleAccount.js` mount เฉพาะ Staff; `coopActivities.js` เปลี่ยนเฉพาะ hash navigation ให้ `#own-account` แสดง Account Settings และ current menu ถูกต้อง ไม่แก้ Document/Calendar business logic. CSS เพิ่มเฉพาะ `.staff-google-account`, ใช้สี/ปุ่มเดิมและรองรับหน้าจอเล็ก; ไม่แก้ Header/Branding/HTML Dashboard.
+
+**UPDATED FILES — รอบนี้ 13 ไฟล์ (แก้ 12 / เพิ่ม 1 / ลบ 0)**
+
+- GA-04: `backend/src/config/oauth.js`, `backend/.env.example`.
+- GA-02 / GA-01 Backend: `backend/src/services/googleAuth.service.js`, `backend/src/controllers/googleAuth.controller.js`, `backend/src/routes/googleAuth.routes.js`.
+- GA-01 Frontend: `frontend/src/api/googleAuth.api.js`, `frontend/src/pages/roleAccount.js`, `frontend/src/pages/coopActivities.js`, `frontend/src/pages/googleLogin.js` (optional confirmation abort เท่านั้น), `frontend/src/styles/account_overview.css`; เพิ่ม `frontend/src/pages/staffGoogleAccount.js`.
+- Documentation: `README.md`, `HANDOFF_fitm-intern.md` (เก็บประวัติเดิม).
+
+**Workflow / ข้อห้ามที่รักษา:** Unified Login หน้าเดียว/Google เหนือฟอร์ม/ไม่มี Role Selector, Email/Password เดิม, Automatic Role Detection จาก DB, Head ผ่าน Teacher actor + head flag/department, Teacher/Head ไม่ถาม Password ซ้ำ, Student registration/onboarding/extraction/profile เดิม, Remember Me/JWT/expiry/cross-tab/logout/live RBAC/redirect allowlist/drafts/shared feedback. ไม่สร้างบัญชีบุคลากร/Auto-Link จาก email/ให้สิทธิ์ใหม่. GA-03 legacy mapping/constraints/409 ambiguity คงเดิม (Staff Dashboard ใหม่ปฏิเสธ subject ที่ผูกคนอื่น). ไม่แก้ Database/Models/Schema/ข้อมูลบัญชี/Environment Secrets/Google flags/Hosted Domains/Origins/Docker/Supervision/Job Matching/Chatbot/Internship Logs/Company หรือ workflow เอกสาร/กิจกรรม.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** อ่าน Source/Git Diff/Git Status และเนื้อหา UTF-8 เท่านั้น ไม่รัน tests/build/lint/typecheck/syntax/automated validation/Browser Automation/API/Database/health checks หรือ Provider calls. ไม่สร้างผล PASS/FAIL/VERIFIED. ไม่เพิ่ม Test runner หรือสร้างบัญชี/Mapping จริง. ไม่พบ Domain test source ปัจจุบันจากรายชื่อไฟล์ที่เกี่ยวข้อง; พบแต่ evidence/test reports ใน docs/audits ซึ่งเป็นประวัติ ไม่ใช้เป็นผลใหม่.
+
+**Manual Acceptance Checklist — ทุกข้อ PENDING USER VERIFICATION**
+
+ใช้บัญชีที่ได้รับอนุญาตจริง; Confirm เชื่อมเฉพาะคู่บัญชีที่เจ้าของอนุมัติ. กรณี Disabled/Revoked/Conflict ใช้บัญชีหรือ environment ที่ได้รับอนุญาตและมีเงื่อนไขนั้นอยู่แล้ว ไม่สร้าง mapping ปลอมหรือแก้ DB เพื่อให้ทดสอบผ่าน. ถ้าไม่มีกรณีทดสอบให้คง pending.
+
+| ID | ขั้นตอนผู้ใช้ / Expected |
+|---|---|
+| G01 | Student Email/Password เดิม → Student Dashboard / Profile / Session เดิม; registration ไม่เปลี่ยน |
+| G02 | Student Google ที่เชื่อมแล้ว `@email.kmutnb.ac.th` → Student เดิม/redirect เดิม ไม่สร้างซ้ำ |
+| G03 | Student linking เฉพาะบัญชีที่อนุญาต → รหัสผ่าน/preview/confirm/status เดิม; Google-only/onboarding/ID extraction ไม่เปลี่ยน |
+| G04 | Teacher Email/Password → ข้อมูลส่วนตัว → Link `@itm.kmutnb.ac.th` → preview/confirm โดยไม่ถาม Password ซ้ำ |
+| G05 | Teacher logout → Google Login → Teacher actor/สิทธิ์/Dashboard เดิม |
+| G06 | Head บัญชีเดิม → Link ผ่าน Teacher endpoints โดยไม่ถาม Password ซ้ำ; head flag/department ไม่เปลี่ยน |
+| G07 | Head logout → Google Login → Head Dashboard; Teacher ปกติใช้ Head workflow ไม่ได้ |
+| G08 | Staff Email/Password → จัดการบัญชี; มี Google widget ครั้งเดียว เมนู/current view/ข้อมูล Staff ถูกต้อง |
+| G09 | Staff รหัสผ่านผิด → แจ้ง ownership error/Retry; ไม่มี GIS/challenge สำเร็จ/mapping และ session เดิมยังใช้ได้ |
+| G10 | Staff รหัสผ่านถูก → GIS → เลือก `@itm.kmutnb.ac.th` → preview แสดงบัญชี Staff และ Google จริง; Email สองบัญชีต่างกันได้ |
+| G11 | Staff Confirm → linked/status reload; ไม่ออก JWT ใหม่/ไม่เปลี่ยน Password/Email/Profile/Role; Refresh หน้ายัง linked |
+| G12 | Staff logout → Google Login → `/src/department_staff/department_staff.html`; Staff Email/Password ยังใช้ได้ |
+| G13 | Staff/Teacher/Head เลือก Gmail/โดเมนไม่อนุญาต → ถูกปฏิเสธ ไม่สร้าง mapping/ให้ role |
+| G14 | Student Google ใช้ domain บุคลากร หรือบุคลากรใช้ Student domain → ปฏิเสธตาม role จริง แม้ global allowlist รวมทั้งคู่ |
+| G15 | Google ของคนอื่นที่เชื่อมแล้ว → conflict; ไม่ย้าย/แทน mapping ของคนเดิม |
+| G16 | ยกเลิก GIS/Popup/Shared Confirmation → ไม่สร้าง mapping/ไม่แจ้งสำเร็จ; เริ่มใหม่ได้ (Popup ไม่มี callback ใช้60วินาที fallback) |
+| G17 | Challenge เกิน5นาที / Confirmation เกิน2นาที → ถูกปฏิเสธ เริ่มใหม่; receipt ที่ใช้สำเร็จแล้วใช้ซ้ำไม่ได้ |
+| G18 | เปลี่ยน Session/Logout/Password ระหว่าง flow → คำขอเดิมใช้เชื่อมต่อไม่ได้; ไม่มีข้อมูลเก่าทับบัญชีใหม่ |
+| G19 | บัญชีที่ central control ปิด แม้ actor ยัง active → Google Login/Confirm ถูกปฏิเสธก่อน session/mapping |
+| G20 | Session เก่าถูก revoke → dashboard linking ใช้ไม่ได้; บัญชี active ยัง login ใหม่ได้ตาม guard เดิม |
+| G21 | Linking flags ปิดใน environment ที่กำหนดไว้ → ยังไม่เปิดใช้งาน ไม่โหลด GIS/เริ่ม challenge; mapped Google Login ตาม login flag เดิม |
+| G22 | Google Login disabled → ปุ่มยังอยู่เหนือฟอร์ม กดแจ้ง Shared Toast โดยไม่เรียก Provider/challenge/login; ไม่มี Role Selector |
+| G23 | Subject หลาย actor ที่มีอยู่แล้ว → `409 AUTH_CONTEXT_AMBIGUOUS`; ไม่เลือก/รวม role/แก้ mapping |
+| G24 | Remember Me เปิด/ปิด, expiry, logout, หลายแท็บ/สลับบัญชี → cross-tab protection และ live RBAC เดิม |
+| G25 | Staff สลับเอกสาร/กิจกรรม/บัญชี และ Back/Forward/Reload/BFCache → แสดง section ถูกต้อง ไม่เปลี่ยน Draft/Business workflow |
+| G26 | Provider/API/network error → error/retry จริง ไม่มี fake success; disabled Session เข้าถึง Teacher/Head/Staff API ผิด role ไม่ได้ |
+| G27 | 1280/390/320px + Keyboard/Tab/Focus/ชื่ออีเมลยาว → form/button/provider/confirmation อ่านและใช้งานได้ ไม่ทับ Layout |
+
+**Hosted Domain / Runtime Limitations — PENDING USER VERIFICATION:** ไม่ทราบ `hd` จริงของ personnel Workspace; ไม่เพิ่ม `itm.kmutnb.ac.th` ใน hosted allowlist หรือเปลี่ยนเป็น `email_only`. README ระบุ safe manual procedure: ผู้ดูแลใช้ loopback-only Backend debugger หยุดใน `checkGoogleIdentity` หลัง ID token verification ของคำขอปกติ ตรวจเฉพาะ `payload.hd`/`payload.email_verified` ไม่ expand/log/copy payload/credential/JWT/password/HAR. บันทึกเฉพาะ hd+วันที่+สถานะ verification ที่ตรวจจริง; ยกเลิกก่อน Confirm หากต้องการดู claim อย่างเดียว. Debugger pause อาจทำให้ timeout ต้องเริ่มใหม่โดยไม่ข้าม guard. Diagnostic/evidence Student เดิมไม่ยืนยัน personnel และไม่รันทับหรือเปลี่ยน flags เพื่อใช้เครื่องมือเก่า.
+
+**Pending Decisions / Remaining Issues:** ผู้ดูแลต้องทบทวน runtime global/role lists ตาม snippet README/`.env.example` เอง (ไม่ได้ตรวจ `.env` จริง); allowlist เก่าที่ขาด itm จะยังปฏิเสธบุคลากร แม้มี mapping เดิม. Authorized Google origins/client audience และ actual schema ไม่ตรวจ runtime. GA-03 ยังรอนโยบายเดิม ไม่มีการแก้ในรอบนี้. ยังไม่ยืนยัน Browser/GIS/Real-account/persistence/concurrency/RBAC regressions; Teacher/Head accepted session-theft risk และ Logout browser-only limitations จาก Audit คงเดิม ไม่เพิ่ม server revoke policy.
+
+**NEXT TASK:** ผู้ใช้/ผู้ดูแลทบทวน Runtime Email Domain configuration และยืนยัน verified `hd` อย่างปลอดภัย จากนั้นทำ Manual Acceptance G01–G27 และส่งผลเพื่อแก้เฉพาะปัญหาที่ยืนยัน. Implementation ทั้งหมดคง **PENDING USER VERIFICATION**; ไม่เริ่ม GA-03/เปลี่ยน schema/flags/นโยบายอื่นเอง.
+
+## Previous Handoff — CWIE-IT CoopConnect Frontend Branding — 14 November 2026
+
+**อัปเดต: 14 พฤศจิกายน 2026 (Asia/Bangkok). งานที่ได้รับ:** เปลี่ยนเฉพาะ Frontend Branding / Header / Navbar / Browser Title / ชื่อผลิตภัณฑ์ใน UI ให้เป็น **CWIE-IT CoopConnect** พร้อมคำอธิบาย **ระบบจัดการสหกิจศึกษา**. **IMPLEMENTED — PENDING USER VERIFICATION.** ข้อตกลงใหม่แทนที่เฉพาะ Branding Contract เดิมใน AGENTS.md; Login/Testing/Security/Working Agreement และข้อเสนอ Project Advisor Reassignment วันที่ 13 พฤศจิกายนคงเดิม ไม่เริ่มงานตามข้อเสนอนั้น.
+
+**Baseline / Git:** ก่อนเริ่ม `git status --short` ไม่มีรายการและ `git diff --stat` ว่าง บน Branch `main`; ไม่เปลี่ยน Branch. หลังงานมี Modified 24 ไฟล์ เป็นงานรอบนี้ทั้งหมด ไม่มี Added/Deleted/Untracked. ไม่ Commit/Push/Merge/Deploy/สร้าง PR. ทบทวน Source และ Diff ตามขอบเขตเท่านั้น ไม่ใช้ผลทดสอบประวัติเป็นผลใหม่.
+
+**Implementation ที่ทำจริง**
+
+- ปรับ Browser Title ครบ 17 หน้า HTML เป็น `ชื่อหน้า | CWIE-IT CoopConnect` รวม Compatibility Redirect และ Development Diagnostic; แก้ Dynamic Title ใน `departmentHead.js` ให้คงชื่อใหม่หลังเปลี่ยนเมนู.
+- Header ที่แสดงแบรนด์ 13 หน้าใช้ `.brand` / `.brand-logo` / `.brand-text` พร้อม `<strong>` ชื่อหลักและ `<span>` คำอธิบายไทย; หน้า Mentor เปลี่ยนข้อความแนะนำระบบใน Header เดิมเป็นลิงก์แบรนด์ ไม่เพิ่ม Navbar ใหม่. คงโลโก้ `/images/logo_kiwi.png` และขนาดเดิม พร้อม Alt Text และ Focus Visible; ลิงก์แบรนด์กลับ `/index.html`. Privacy/Terms คงลิงก์กลับ Register แยกไว้.
+- ใช้ CSS ร่วมใน `main.css` สำหรับตัวหนาสีกรมท่า คำอธิบายสีรอง ข้อความที่ย่อ/ขึ้นบรรทัดได้ และขนาดชื่อบนมือถือ; `mentor.css` เพิ่มระยะใต้แบรนด์ใน Header เดิมเท่านั้น. อาศัย Header wrapping และเมนู Responsive เดิม ไม่ซ่อนชื่อหรือเปลี่ยน Workflow เมนู. การแสดงผลจริงยังรอผู้ใช้ตรวจ.
+- เปลี่ยนชื่อผลิตภัณฑ์ใน Hero, Footer, Organization Eyebrow, Dashboard Sidebar Caption และชื่อ/ข้อความทักทาย Chatbot เท่านั้น; ไม่แก้ Search, Chatbot หรือ Dashboard Logic. Redirect เก่าคง meta refresh / JavaScript / fallback `/login.html` และซ่อมข้อความชื่อหน้าที่เป็น `?` เดิมให้เป็นภาษาไทย.
+- Privacy/Terms เปลี่ยนเฉพาะ Navbar/Title; เนื้อหาเอกสารทั้งหมดคงเดิม. ชื่อ Google project `FITM-INTERN-DEV`, ชื่อไฟล์/รูป/ตัวแปร/Console Logs และคำอธิบายเชิงเทคนิคไม่ได้เปลี่ยนตามแบรนด์.
+- README ปรับชื่อและคำอธิบาย Branding ปัจจุบัน; AGENTS.md เปลี่ยนเฉพาะ Branding Contract. Project Skill ใช้ข้อยกเว้นงานที่ผู้ใช้อนุมัติเดิมได้ จึงไม่ต้องแก้ Skill.
+
+**UPDATED FILES — แก้ไข 24 ไฟล์ / ไม่มีเพิ่มหรือลบ**
+
+- เอกสาร: `AGENTS.md`, `README.md`, `HANDOFF_fitm-intern.md`.
+- หน้า Public/Auth/Legal/Compatibility (ภายใต้ `frontend/`): `index.html`, `login.html`, `register.html`, `privacy.html`, `terms.html`, `teacher-login.html`, `department-head-login.html`, `staff-login.html`, `oauth-hd-diagnostic.html`.
+- Dashboard (ภายใต้ `frontend/src/`): `student_coop/student_coop.html`, `teacher_coop/teacher_coop.html`, `department_head/department_head.html`, `department_staff/department_staff.html`, `super_admin/super_admin.html`.
+- Company/Mentor (ภายใต้ `frontend/src/`): `recruit_student/recruit_student.html`, `recruit_student/recruit_verify_email.html`, `mentor_coop/mentor_verify_user.html`.
+- ข้อความ Dynamic (ภายใต้ `frontend/src/pages/`): `departmentHead.js`, `index.js`.
+- CSS (ภายใต้ `frontend/src/styles/`): `main.css`, `mentor.css`.
+
+**Workflow / ข้อห้ามที่รักษา:** Unified `/login.html` → `POST /api/auth/unified-login`, Google เหนือ Email/Password, ไม่มี Role Selector, Remember Me, JWT/Session/cross-tab/Logout/live RBAC, Automatic Role Detection, Forms/Validation/API calls และ Dashboard URLs เดิม. ไม่แก้ Backend/Database/Models/Auth/Google flags/Environment/Docker, Student Profile/คำร้อง/Job Matching/บันทึกประจำวัน/อัปโหลด, Teacher/Head/Staff approvals หรือ Company/Mentor business workflows. ไม่เปลี่ยนเมนู การค้นหา หรือลิงก์อื่นนอก Brand Link.
+
+**Tests: NOT RUN — USER-OWNED TESTING.** ไม่รัน tests, build, lint/typecheck, syntax/automated validation, Browser Automation หรือ health checks; ไม่มีผล PASS/FAIL ที่สร้างขึ้นในงานนี้. อ่าน Git Diff/เนื้อหา UTF-8 เพื่อทบทวนขอบเขตแล้ว; ข้อความไทยที่เพิ่มผ่าน pipeline รอบแรกเสีย encoding ได้ซ่อมก่อนบันทึกสถานะนี้. ไม่รับรอง Browser Rendering/Responsive/Session Regression แทนผู้ใช้.
+
+**Manual Acceptance Checklist — PENDING USER VERIFICATION**
+
+- [ ] หน้าแรก: Header สองบรรทัด, Hero/Footer/Chatbot ใช้ชื่อใหม่; Search, ประกาศงาน, เมนู และสถานะผู้ใช้เดิมทำงาน.
+- [ ] Login/Register: Header/คำอธิบาย/Footer/Title ใช้ชื่อใหม่ ตำแหน่ง Form/ปุ่มสมัคร/ลิงก์เดิมคงอยู่; Google อยู่เหนือฟอร์มและไม่มี Role Selector.
+- [ ] Student Dashboard: Branding/Title ใหม่; Sidebar, Profile, คำร้อง, Job Matching, บันทึกประจำวัน และอัปโหลดเดิมใช้งานได้.
+- [ ] Teacher Dashboard: Branding/Title ใหม่ ข้อความพื้นที่ทำงานอาจารย์ยังอยู่; Sidebar/Drawer, Supervision, Evaluation และ Project Advisor เดิมใช้งานได้.
+- [ ] Head/Staff Dashboard: Header/Title ใหม่ รวม Title หลังเปลี่ยนเมนู Head; Approval, Staff documents, กิจกรรมและข้อมูลเดิมใช้งานได้ตามสิทธิ์.
+- [ ] Company Recruitment/Email Verification, Mentor และ Super Admin: Header/Title ใหม่พร้อมโลโก้เดิม; Forms, Navigation และ Workflow เดิมทำงาน.
+- [ ] Privacy/Terms: Navbar/Title ใหม่ เนื้อหากฎหมายเดิมและลิงก์กลับ Register ยังอยู่; Redirect เก่าทั้งสามยังไป `/login.html`; Diagnostic เปลี่ยนเฉพาะชื่อแสดงผล ไม่เปลี่ยน Provider config.
+- [ ] ทุก Header: คลิกโลโก้/ชื่อกลับ `/index.html`, โลโก้โหลดจาก Path เดิม, Tab/Enter ใช้งานได้และมี Focus Visible; ชื่อหลักเด่นกว่าคำอธิบาย ไม่ตัดข้อความจนเสียความหมาย.
+- [ ] ตรวจ 1920/1440/1280/768/390/375/320 px: ชื่อแบรนด์ยังเห็นบนมือถือ ไม่ทับเมนู/ข้อมูลผู้ใช้/ปุ่ม Login/Register/Logout และไม่เกิด Horizontal Overflow; Chatbot ชื่อใหม่ไม่ทับปุ่มปิด.
+- [ ] Login จริงใช้ Unified endpoint; Google disabled ไม่โหลด Provider/ไม่เรียก challenge/login และแจ้ง Shared Toast ตามเดิม; Logout, Remember Me, expiry, cross-tab revocation และ RBAC ทุกบทบาทยังทำงาน.
+
+**Pending Decisions / Remaining Issues / ข้อจำกัด:** ชื่อเดิมภายในเนื้อหา `privacy.html` (eyebrow และย่อหน้า Application JWT) และ `terms.html` (eyebrow/หัวข้อ 1/คำอธิบายระบบ) ต้องให้เจ้าของเอกสารทบทวนแยก ไม่เปลี่ยนโดยอัตโนมัติ. `search_company.html` ยังเป็น Missing Feature จากประวัติ ไม่มี Source หน้าจริงให้เปลี่ยน Branding; คง references เดิม ไม่สร้างหน้า/API หรือเปลี่ยนปลายทางแทน. ไม่มี Blocker ต่อการแก้ Branding ที่ได้รับมอบหมาย; การแสดงผลและ Regression ทั้งหมด **PENDING USER VERIFICATION**. ข้อเสนอ/Policy ค้างของ Project Advisor และข้อจำกัดเดิมยังอยู่ตามประวัติด้านล่าง.
+
+**NEXT TASK:** รอผล Manual Acceptance Branding จากผู้ใช้แล้วแก้เฉพาะปัญหาที่ยืนยัน; รอเจ้าของเอกสารทบทวนชื่อใน Privacy/Terms. ไม่เริ่ม Company Search, Project Advisor Reassignment หรือโมดูลอื่นเอง. Checklist สหกิจเดิม 59 กรณียังคงเป็น User-Owned Testing / PENDING USER RESULTS ตามข้อตกลงเดิม.
+
+## Previous Handoff — Project Advisor Reassignment: Schema & Workflow Design — 13 November 2026
 
 **อัปเดต: 13 พฤศจิกายน 2026 (Asia/Bangkok). งานที่ได้รับ:** ออกแบบ Schema/Workflow สำหรับเปลี่ยนอาจารย์โครงการหลัง Confirmed โดยยังไม่เปลี่ยน PostgreSQL/Source/UI. **DESIGN COMPLETED — PROPOSAL ONLY; IMPLEMENTATION / SCHEMA APPLY NOT AUTHORIZED IN THIS TASK.** อัปเดตเฉพาะ Handoff และ README; รักษาผล Company/Job Filters/NLP และ uncommitted changes เดิมทั้งหมด. ข้อเสนอด้านล่างไม่ใช่ Schema/API ที่ใช้งานแล้ว และไม่ปลด Guard ปัจจุบัน.
 

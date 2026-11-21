@@ -3,6 +3,7 @@ import { getRoleToken } from "../auth/roleAuthStorage.js";
 import { showToast } from "../ui/feedback.js";
 import "../styles/account_overview.css";
 import { mountTeacherAccountEditor } from './teacherAccountEditor.js';
+import { mountStaffGoogleAccount } from './staffGoogleAccount.js';
 
 export function mountRoleAccount({document,target=window,request=apiRequest,getToken=getRoleToken,toast=showToast}={}) {
   const role=document.body.dataset.workflowRole;
@@ -12,11 +13,11 @@ export function mountRoleAccount({document,target=window,request=apiRequest,getT
   if(!nav||!main||document.getElementById("own-account"))return;
   function el(tag,text,cls){const node=document.createElement(tag);if(text)node.textContent=text;if(cls)node.className=cls;return node;}
   const headWorkspace=role==="department_head";
-  const existingLink=role==="teacher"||headWorkspace?nav.querySelector('a[href="#own-account"]'):null;
+  const existingLink=nav.querySelector('a[href="#own-account"]');
   const link=existingLink||el("a",role==="teacher"?"ข้อมูลส่วนตัว":"จัดการบัญชี","sidebar-item");link.href="#own-account";if(!existingLink)nav.append(link);
   const root=el("section",null,"account-overview");root.id="own-account";root.setAttribute("aria-labelledby","own-account-heading");
   const teacherWorkspace=role==="teacher";
-  const heading=el("div",null,teacherWorkspace?"teacher-heading":"account-overview-heading"),title=el(teacherWorkspace||headWorkspace?"h1":"h2",teacherWorkspace||headWorkspace?"ข้อมูลส่วนตัว":"ข้อมูลบัญชีของฉัน");title.id="own-account-heading";
+  const heading=el("div",null,teacherWorkspace?"teacher-heading":"account-overview-heading"),title=el("h1",teacherWorkspace||headWorkspace?"ข้อมูลส่วนตัว":"ข้อมูลบัญชีของฉัน");title.id="own-account-heading";
   const retry=el("button",teacherWorkspace?"ลองโหลดอีกครั้ง":"โหลดข้อมูลอีกครั้ง","teacher-button");retry.type="button";retry.hidden=type==='teacher';
   const message=el("p"),content=el("div");message.setAttribute("aria-live","polite");
   if(teacherWorkspace){
@@ -31,7 +32,17 @@ export function mountRoleAccount({document,target=window,request=apiRequest,getT
     root.append(heading,message,content,retry);
   }else{heading.append(title,retry);root.append(heading,message,content);}
   main.append(root);
+  if(role==='department_staff'&&document.body.hasAttribute('data-staff-workspace')){
+    root.dataset.staffPanel='';title.tabIndex=-1;
+    document.dispatchEvent(new CustomEvent('staff:accountmounted'));
+  }
   if(type==='teacher'){root.classList.add('teacher-account-settings');return mountTeacherAccountEditor({document,target,root,content,message,retry,request,getToken:()=>getToken(type),toast});}
+  const google=mountStaffGoogleAccount({document,target,root,getToken:()=>getToken(type),toast});
+  root.hidden=target.location.hash!=='#own-account';
+  const markAccount=()=>{link.classList.toggle('active',!root.hidden);if(!root.hidden)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');};
+  markAccount();
+  const navigateAccount=()=>{root.hidden=target.location.hash!=='#own-account';markAccount();if(!root.hidden){load();google.load();}else google.cancel();};
+  target.addEventListener('hashchange',navigateAccount);
   let busy=false,loadedToken=null,serial=0;
   function say(text,error=false){message.textContent=text;message.setAttribute("role",error?"alert":"status");}
   async function load(){
@@ -57,8 +68,9 @@ export function mountRoleAccount({document,target=window,request=apiRequest,getT
   if(teacherWorkspace)document.addEventListener("teacher:viewchange",event=>{if(event.detail.view==="own-account")load();});
   if(headWorkspace)document.addEventListener("head:viewchange",event=>{if(event.detail.view==="own-account")load();});
   const clear=()=>{if(loadedToken&&loadedToken!==getToken(type)){++serial;content.replaceChildren();loadedToken=null;busy=false;retry.disabled=false;if(teacherWorkspace)retry.hidden=true;root.setAttribute("aria-busy","false");say("สถานะเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่",true);}};
-  target.addEventListener("storage",clear);target.addEventListener("pagehide",()=>{++serial;busy=false;retry.disabled=false;if(teacherWorkspace)retry.hidden=true;root.setAttribute("aria-busy","false");content.replaceChildren();say("โหลดข้อมูลบัญชีอีกครั้งเมื่อกลับมาที่หน้านี้");});
-  target.addEventListener("pageshow",event=>{if(event.persisted)load();});
+  target.addEventListener("storage",clear);target.addEventListener("pagehide",()=>{++serial;busy=false;retry.disabled=false;if(teacherWorkspace)retry.hidden=true;root.setAttribute("aria-busy","false");content.replaceChildren();google.clear();say("โหลดข้อมูลบัญชีอีกครั้งเมื่อกลับมาที่หน้านี้");});
+  target.addEventListener("pageshow",event=>{if(event.persisted){load();if(!root.hidden)google.load();}});
+  if(!root.hidden)google.load();
   const ready=load();return {ready,load};
 }
 if(typeof document!=="undefined")mountRoleAccount({document});

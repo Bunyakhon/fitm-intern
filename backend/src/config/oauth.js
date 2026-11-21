@@ -1,5 +1,12 @@
 const { getAllowedOrigins } = require("./allowedOrigins");
 const ROLES = ["student", "teacher", "department_head", "department_staff"];
+// Confirmed email policy. Runtime allowlists may narrow, never widen, it.
+const ROLE_EMAIL_DOMAINS = Object.freeze({
+  student: "email.kmutnb.ac.th",
+  teacher: "itm.kmutnb.ac.th",
+  department_head: "itm.kmutnb.ac.th",
+  department_staff: "itm.kmutnb.ac.th",
+});
 function configurationError() {
   return Object.assign(new Error("Google Login configuration is unavailable"), { status: 503, code: "GOOGLE_CONFIGURATION" });
 }
@@ -25,7 +32,7 @@ function getGoogleConfig(env = process.env) {
   const hostedDomains = policy === "required" ? domains(env.GOOGLE_ALLOWED_HOSTED_DOMAINS) : new Set();
   const roleDomains = Object.fromEntries(ROLES.map(role => {
     const key = `GOOGLE_ALLOWED_EMAIL_DOMAINS_${role.toUpperCase()}`;
-    return [role, env[key] === undefined ? allowedDomains : domains(env[key])];
+    return [role, env[key] === undefined ? new Set([ROLE_EMAIL_DOMAINS[role]]) : domains(env[key])];
   }));
   return { enabled: true, linkingEnabled: env.GOOGLE_ACCOUNT_LINKING_ENABLED === "true",
     onboardingEnabled: env.NODE_ENV === "development" && env.GOOGLE_STUDENT_ONBOARDING_ENABLED === "true",
@@ -40,7 +47,8 @@ function checkGoogleIdentity(payload, config, role) {
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+$/.test(email)) deny("GOOGLE_IDENTITY");
   const domain = email.split("@")[1];
-  if (!config.allowedDomains.has(domain) || (role !== undefined && !config.roleDomains[role].has(domain))) deny("GOOGLE_DOMAIN");
+  if (!Object.values(ROLE_EMAIL_DOMAINS).includes(domain) || !config.allowedDomains.has(domain)
+    || (role !== undefined && (domain !== ROLE_EMAIL_DOMAINS[role] || !config.roleDomains[role].has(domain)))) deny("GOOGLE_DOMAIN");
   if (config.policy === "required" && (typeof payload.hd !== "string" || !config.hostedDomains.has(payload.hd.toLowerCase()))) deny("GOOGLE_HOSTED_DOMAIN");
   return { subject: payload.sub, email, nonce: payload.nonce, hostedDomain: payload.hd };
 }

@@ -125,7 +125,7 @@ export function mountDepartmentHead(dependencies) {
       if (current) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
     }
     get('headPageContext').textContent = views[view];
-    document.title = `${views[view]} · หัวหน้าภาควิชา | KIWI`;
+    document.title = `${views[view]} · หัวหน้าภาควิชา | CWIE-IT CoopConnect`;
     document.dispatchEvent(new target.CustomEvent('head:viewchange', { detail: { view } }));
     if (focus) get(view)?.querySelector('h1')?.focus({ preventScroll: true });
     const requestedStatus = pendingStatus, requestId = pendingRequest; pendingStatus = null; pendingRequest = null;

@@ -43,6 +43,11 @@ input {
   margin-bottom: 28px;
 }
 
+.mentor-verification-header .brand {
+  max-width: 100%;
+  margin-bottom: 10px;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: #1d5eb8;

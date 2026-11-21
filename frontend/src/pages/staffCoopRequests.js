@@ -94,7 +94,7 @@ export function mountStaffCoopRequests({ document, storage, location, me = getCu
       return button && !button.disabled ? button : get('staffCoopDetailHeading');
     };
     modalOpen = true; controls();
-    closeModal = confirm({ returnFocus, fallbackFocus, title: 'ยืนยันยกเลิกคำร้องสหกิจศึกษา', message: `${name(row)} · ${row.student?.student_id || '-'} · คำร้อง ${id} · ${STATUS[row.status] || row.status} การยกเลิกจะหยุดการพิจารณาคำร้องนี้ นักศึกษาจะเห็นสถานะยกเลิก ประวัติเดิมยังคงอยู่`, reasonLabel: 'เหตุผลการยกเลิก (จำเป็น)', reasonMaxLength: 2000, confirmLabel: 'ยืนยันยกเลิกคำร้อง', cancelLabel: 'ย้อนกลับ', loadingLabel: 'กำลังยกเลิก...', onClose: () => { modalOpen = false; closeModal = undefined; controls(); }, onConfirm: async reason => {
+    closeModal = confirm({ variant: 'danger', returnFocus, fallbackFocus, title: 'ยืนยันยกเลิกคำร้องสหกิจศึกษา', message: `${name(row)} · ${row.student?.student_id || '-'} · คำร้อง ${id} · ${STATUS[row.status] || row.status} การยกเลิกจะหยุดการพิจารณาคำร้องนี้ นักศึกษาจะเห็นสถานะยกเลิก ประวัติเดิมยังคงอยู่`, reasonLabel: 'เหตุผลการยกเลิก (จำเป็น)', reasonMaxLength: 2000, confirmLabel: 'ยืนยันยกเลิกคำร้อง', cancelLabel: 'ย้อนกลับ', loadingLabel: 'กำลังยกเลิก...', onClose: () => { modalOpen = false; closeModal = undefined; controls(); }, onConfirm: async reason => {
       if (!live()) return true;
       if (submitting) return false;
       if (typeof reason !== 'string' || !reason.trim() || reason.trim().length > 2000) throw Error('กรุณาระบุเหตุผลไม่เกิน 2000 ตัวอักษร');
